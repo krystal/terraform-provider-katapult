@@ -4,7 +4,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/url"
 
@@ -13,21 +12,14 @@ import (
 	"github.com/krystal/go-katapult"
 )
 
+const defaultGeneratedNamePrefix = "tf"
+
 type Config struct {
-	Version   string
-	Commit    string
-	Date      string
-	Transport http.RoundTripper
-}
-
-type Meta struct {
-	Client *katapult.Client
-	Ctx    context.Context
-
-	APIURL         string
-	APIKey         string
-	OrganizationID string
-	DataCenterID   string
+	Version             string
+	Commit              string
+	Date                string
+	Transport           http.RoundTripper
+	GeneratedNamePrefix string
 }
 
 func New(c *Config) func() *schema.Provider {
@@ -83,25 +75,28 @@ func configure(
 		d *schema.ResourceData,
 	) (interface{}, diag.Diagnostics) {
 		m := &Meta{
-			Ctx:            ctx,
-			APIURL:         d.Get("api_url").(string),
-			APIKey:         d.Get("api_key").(string),
-			OrganizationID: d.Get("organization_id").(string),
-			DataCenterID:   d.Get("data_center_id").(string),
+			Ctx:                 ctx,
+			APIURL:              d.Get("api_url").(string),
+			APIKey:              d.Get("api_key").(string),
+			OrganizationID:      d.Get("organization_id").(string),
+			DataCenterID:        d.Get("data_center_id").(string),
+			GeneratedNamePrefix: conf.GeneratedNamePrefix,
 		}
 
-		var diags diag.Diagnostics
+		if m.GeneratedNamePrefix == "" {
+			m.GeneratedNamePrefix = defaultGeneratedNamePrefix
+		}
 
 		if m.APIKey == "" {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "No API KEY provided",
-				Detail: "No API KEY provided. Please set \"api_key\" " +
-					"provider argument, or KATAPULT_API_KEY environment " +
-					"variable.",
-			})
-
-			return m, diags
+			return m, diag.Diagnostics{
+				{
+					Severity: diag.Error,
+					Summary:  "No API KEY provided",
+					Detail: "No API KEY provided. Please set \"api_key\" " +
+						"provider argument, or KATAPULT_API_KEY environment " +
+						"variable.",
+				},
+			}
 		}
 
 		c, err := katapult.NewClient(&katapult.Config{
@@ -123,21 +118,12 @@ func configure(
 		if m.APIURL != "" {
 			u, err := url.Parse(m.APIURL)
 			if err != nil {
-				diags = append(diags, diag.Diagnostic{
-					Severity: diag.Error,
-					Summary:  "Failed to parse API URL",
-					Detail: fmt.Sprintf(
-						"Failed to parse API URL: %s",
-						m.APIURL,
-					),
-				})
-
-				return nil, diags
+				return m, diag.FromErr(err)
 			}
 
 			err = c.SetBaseURL(u)
 			if err != nil {
-				return nil, diag.FromErr(err)
+				return m, diag.FromErr(err)
 			}
 		}
 

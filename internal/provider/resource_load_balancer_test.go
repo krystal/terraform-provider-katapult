@@ -2,7 +2,6 @@ package provider
 
 import (
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -61,9 +60,7 @@ func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
 				Config: `resource "katapult_load_balancer" "main" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccKatapultCheckLoadBalancerExists(tt, res),
-					resource.TestMatchResourceAttr(res, "name",
-						regexp.MustCompile("^tf-.+-.+$"),
-					),
+					testCheckGeneratedResourceName(res),
 					resource.TestCheckResourceAttr(res,
 						"resource_type",
 						string(katapult.VirtualMachinesResourceType),
