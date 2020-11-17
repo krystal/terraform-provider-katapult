@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/krystal/go-katapult"
-	"github.com/krystal/go-katapult/pkg/namegenerator"
 )
 
 func resourceLoadBalancer() *schema.Resource {
@@ -97,7 +96,6 @@ func resourceLoadBalancerCreate(
 	m interface{},
 ) diag.Diagnostics {
 	meta := m.(*Meta)
-	c := meta.Client
 
 	orgID := d.Get("organization_id").(string)
 	if orgID == "" {
@@ -109,10 +107,7 @@ func resourceLoadBalancerCreate(
 		dcID = meta.DataCenterID
 	}
 
-	name := d.Get("name").(string)
-	if name == "" {
-		name = namegenerator.RandomName("tf")
-	}
+	name := meta.UseOrGenerateName(d.Get("name").(string))
 
 	t, ids := extractLoadBalancerResourceTypeAndIDs(d, m)
 	if t == "" {
@@ -126,7 +121,7 @@ func resourceLoadBalancerCreate(
 		DataCenter:   &katapult.DataCenter{ID: dcID},
 	}
 
-	lb, _, err := c.LoadBalancers.Create(ctx, orgID, args)
+	lb, _, err := meta.Client.LoadBalancers.Create(ctx, orgID, args)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -9,12 +9,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/dnaeon/go-vcr/cassette"
 	"github.com/dnaeon/go-vcr/recorder"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/lithammer/dedent"
@@ -79,7 +81,10 @@ func testAccPreCheck(t *testing.T) {
 func providerFactories(
 	r *recorder.Recorder,
 ) map[string]func() (*schema.Provider, error) {
-	conf := &Config{Version: testAccProviderVersion}
+	conf := &Config{
+		Version:             testAccProviderVersion,
+		GeneratedNamePrefix: testAccResourceNamePrefix,
+	}
 
 	if r != nil {
 		conf.Transport = r
@@ -219,7 +224,23 @@ func newVCRRecorder(t *testing.T) (*recorder.Recorder, func()) {
 }
 
 //
-// Tests
+// Terraform TestCheckFunc helpers
+//
+
+func testCheckGeneratedResourceName(res string) resource.TestCheckFunc {
+	return resource.TestMatchResourceAttr(
+		res, "name",
+		regexp.MustCompile(
+			fmt.Sprintf(
+				"^%s-.+-.+$",
+				regexp.QuoteMeta(testAccResourceNamePrefix),
+			),
+		),
+	)
+}
+
+//
+// Provider Tests
 //
 
 func TestProvider(t *testing.T) {

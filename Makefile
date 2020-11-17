@@ -97,6 +97,7 @@ install: build
 #
 
 TEST ?= $$(go list ./... | grep -v 'vendor')
+SWEEP_DIR ?= ./internal/provider
 
 .PHONY: clean
 clean:
@@ -126,6 +127,11 @@ lint: golangci-lint
 .PHONY: format
 format: gofumports
 	gofumports -w .
+
+sweep:
+	$(info WARNING: This will destroy infrastructure. Use only on \
+		development accounts.)
+	go test $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 60m
 
 #
 # Coverage
