@@ -38,6 +38,11 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 					),
 				),
 			},
+			{
+				ResourceName:      res,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }

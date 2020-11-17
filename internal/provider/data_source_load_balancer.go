@@ -39,7 +39,7 @@ func dataSourceLoadBalancerRead(
 
 	_ = d.Set("name", lb.Name)
 	_ = d.Set("resource_type", string(lb.ResourceType))
-	parseLoadBalancerResourceTypeAndIDs(lb.ResourceType, lb.ResourceIDs, d)
+	populateLoadBalancerTargets(d, lb.ResourceType, lb.ResourceIDs)
 	_ = d.Set("https_redirect", lb.HTTPSRedirect)
 	if lb.IPAddress != nil {
 		_ = d.Set("ip_address", lb.IPAddress.Address)

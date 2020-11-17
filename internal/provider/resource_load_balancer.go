@@ -15,6 +15,9 @@ func resourceLoadBalancer() *schema.Resource {
 		ReadContext:   resourceLoadBalancerRead,
 		UpdateContext: resourceLoadBalancerUpdate,
 		DeleteContext: resourceLoadBalancerDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 		Schema: map[string]*schema.Schema{
 			"organization_id": {
 				Type:     schema.TypeString,
@@ -111,7 +114,7 @@ func resourceLoadBalancerCreate(
 		name = namegenerator.RandomName("tf")
 	}
 
-	t, ids := extractBalancerResourceTypeAndIDs(d, m)
+	t, ids := extractLoadBalancerResourceTypeAndIDs(d, m)
 	if t == "" {
 		t = katapult.VirtualMachinesResourceType
 	}
@@ -156,7 +159,7 @@ func resourceLoadBalancerRead(
 
 	_ = d.Set("name", lb.Name)
 	_ = d.Set("resource_type", string(lb.ResourceType))
-	parseLoadBalancerResourceTypeAndIDs(lb.ResourceType, lb.ResourceIDs, d)
+	populateLoadBalancerTargets(d, lb.ResourceType, lb.ResourceIDs)
 	_ = d.Set("https_redirect", lb.HTTPSRedirect)
 	if lb.IPAddress != nil {
 		_ = d.Set("ip_address", lb.IPAddress.Address)
@@ -181,7 +184,7 @@ func resourceLoadBalancerUpdate(
 	}
 
 	if d.HasChanges("virtual_machine", "virtual_machine_group", "tag") {
-		t, ids := extractBalancerResourceTypeAndIDs(d, m)
+		t, ids := extractLoadBalancerResourceTypeAndIDs(d, m)
 		lb.ResourceType = t
 		lb.ResourceIDs = ids
 	}
@@ -211,10 +214,10 @@ func resourceLoadBalancerDelete(
 	return diag.Diagnostics{}
 }
 
-func parseLoadBalancerResourceTypeAndIDs(
+func populateLoadBalancerTargets(
+	d *schema.ResourceData,
 	t katapult.ResourceType,
 	ids []string,
-	d *schema.ResourceData,
 ) {
 	list := []map[string]string{}
 	for _, id := range ids {
@@ -231,7 +234,7 @@ func parseLoadBalancerResourceTypeAndIDs(
 	}
 }
 
-func extractBalancerResourceTypeAndIDs(
+func extractLoadBalancerResourceTypeAndIDs(
 	d *schema.ResourceData,
 	m interface{},
 ) (katapult.ResourceType, []string) {
