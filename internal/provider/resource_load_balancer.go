@@ -15,6 +15,9 @@ func resourceLoadBalancer() *schema.Resource {
 		ReadContext:   resourceLoadBalancerRead,
 		UpdateContext: resourceLoadBalancerUpdate,
 		DeleteContext: resourceLoadBalancerDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 		Schema: map[string]*schema.Schema{
 			"organization_id": {
 				Type:     schema.TypeString,
