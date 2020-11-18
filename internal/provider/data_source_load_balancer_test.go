@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/krystal/go-katapult"
+	"github.com/krystal/go-katapult/pkg/katapult"
 )
 
 func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {

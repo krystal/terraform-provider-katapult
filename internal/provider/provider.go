@@ -9,7 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/krystal/go-katapult"
+	"github.com/krystal/go-katapult/pkg/katapult"
 )
 
 const defaultGeneratedNamePrefix = "tf"
