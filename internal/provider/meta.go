@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 
-	"github.com/krystal/go-katapult"
+	"github.com/krystal/go-katapult/pkg/katapult"
 	"github.com/krystal/go-katapult/pkg/namegenerator"
 )
 
