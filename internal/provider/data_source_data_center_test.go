@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccKatapultDataSourceDataCenter_default(t *testing.T) {
@@ -23,17 +23,10 @@ func TestAccKatapultDataSourceDataCenter_default(t *testing.T) {
 			{
 				Config: `data "katapult_data_center" "main" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckDataCenterExists(tt, res),
-					resource.TestCheckResourceAttr(res,
-						"id", testAccDataCenter["id"]),
-					resource.TestCheckResourceAttr(res,
-						"name", testAccDataCenter["name"]),
-					resource.TestCheckResourceAttr(res,
-						"permalink", testAccDataCenter["permalink"]),
-					resource.TestCheckResourceAttr(res,
-						"country_id", testAccDataCenter["country_id"]),
-					resource.TestCheckResourceAttr(res,
-						"country_name", testAccDataCenter["country_name"]),
+					testAccKatapultCheckDataCenterExists(tt, res, ""),
+					resource.TestCheckResourceAttr(
+						res, "id", tt.Meta.DataCenterID,
+					),
 				),
 			},
 		},
@@ -55,20 +48,12 @@ func TestAccKatapultDataSourceDataCenter_by_id(t *testing.T) {
 					data "katapult_data_center" "main" {
 					  id = "%s"
 					}`,
-					testAccDataCenter["id"],
+					tt.Meta.DataCenterID,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckDataCenterExists(tt, res),
-					resource.TestCheckResourceAttr(res,
-						"id", testAccDataCenter["id"]),
-					resource.TestCheckResourceAttr(res,
-						"name", testAccDataCenter["name"]),
-					resource.TestCheckResourceAttr(res,
-						"permalink", testAccDataCenter["permalink"]),
-					resource.TestCheckResourceAttr(res,
-						"country_id", testAccDataCenter["country_id"]),
-					resource.TestCheckResourceAttr(res,
-						"country_name", testAccDataCenter["country_name"]),
+					testAccKatapultCheckDataCenterExists(
+						tt, res, tt.Meta.DataCenterID,
+					),
 				),
 			},
 		},
@@ -78,6 +63,9 @@ func TestAccKatapultDataSourceDataCenter_by_id(t *testing.T) {
 func TestAccKatapultDataSourceDataCenter_by_permalink(t *testing.T) {
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
+
+	dc, err := tt.DataCenter()
+	require.NoError(t, err)
 
 	res := "data.katapult_data_center.main"
 
@@ -90,20 +78,12 @@ func TestAccKatapultDataSourceDataCenter_by_permalink(t *testing.T) {
 					data "katapult_data_center" "main" {
 					  permalink = "%s"
 					}`,
-					testAccDataCenter["permalink"],
+					dc.Permalink,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckDataCenterExists(tt, res),
-					resource.TestCheckResourceAttr(res,
-						"id", testAccDataCenter["id"]),
-					resource.TestCheckResourceAttr(res,
-						"name", testAccDataCenter["name"]),
-					resource.TestCheckResourceAttr(res,
-						"permalink", testAccDataCenter["permalink"]),
-					resource.TestCheckResourceAttr(res,
-						"country_id", testAccDataCenter["country_id"]),
-					resource.TestCheckResourceAttr(res,
-						"country_name", testAccDataCenter["country_name"]),
+					testAccKatapultCheckDataCenterExists(
+						tt, res, tt.Meta.DataCenterID,
+					),
 				),
 			},
 		},
@@ -114,6 +94,9 @@ func TestAccKatapultDataSourceDataCenter_invalid(t *testing.T) {
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
 
+	dc, err := tt.DataCenter()
+	require.NoError(t, err)
+
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
@@ -123,7 +106,7 @@ func TestAccKatapultDataSourceDataCenter_invalid(t *testing.T) {
 					data "katapult_data_center" "main" {
 					  name = "%s"
 					}`,
-					testAccDataCenter["name"],
+					dc.Name,
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta("Computed attribute cannot be set"),
@@ -135,23 +118,62 @@ func TestAccKatapultDataSourceDataCenter_invalid(t *testing.T) {
 
 func testAccKatapultCheckDataCenterExists(
 	tt *TestTools,
-	n string,
+	res string,
+	id string,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := tt.Meta.Client
 
-		rs, ok := s.RootModule().Resources[n]
+		rs, ok := s.RootModule().Resources[res]
 		if !ok {
-			return fmt.Errorf("resource not found: %s", n)
+			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		lb, _, err := c.DataCenters.Get(tt.Meta.Ctx, rs.Primary.ID)
+		if id == "" {
+			id = rs.Primary.ID
+		}
+
+		obj, _, err := c.DataCenters.Get(tt.Meta.Ctx, id)
 		if err != nil {
 			return err
 		}
 
-		assert.Equal(tt.T, rs.Primary.Attributes["name"], lb.Name)
-		assert.Equal(tt.T, rs.Primary.Attributes["permalink"], lb.Permalink)
+		if rs.Primary.Attributes["id"] != obj.ID {
+			return fmt.Errorf(
+				"expected id to be \"%s\", got \"%s\"",
+				obj.ID, rs.Primary.Attributes["id"],
+			)
+		}
+
+		if rs.Primary.Attributes["name"] != obj.Name {
+			return fmt.Errorf(
+				"expected name to be \"%s\", got \"%s\"",
+				obj.Name, rs.Primary.Attributes["name"],
+			)
+		}
+
+		if rs.Primary.Attributes["permalink"] != obj.Permalink {
+			return fmt.Errorf(
+				"expected permalink attribute to be \"%s\", got \"%s\"",
+				obj.Permalink, rs.Primary.Attributes["permalink"],
+			)
+		}
+
+		if obj.Country != nil {
+			if rs.Primary.Attributes["country_id"] != obj.Country.ID {
+				return fmt.Errorf(
+					"expected country_id attribute to be \"%s\", got \"%s\"",
+					obj.Country.ID, rs.Primary.Attributes["country_id"],
+				)
+			}
+
+			if rs.Primary.Attributes["country_name"] != obj.Country.Name {
+				return fmt.Errorf(
+					"expected country_name attribute to be \"%s\", got \"%s\"",
+					obj.Country.Name, rs.Primary.Attributes["country_name"],
+				)
+			}
+		}
 
 		return nil
 	}

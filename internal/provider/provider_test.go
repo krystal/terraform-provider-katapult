@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/krystal/go-katapult/pkg/katapult"
 	"github.com/lithammer/dedent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,20 +30,11 @@ const (
 	testAccProviderVersion    = "0.0.999"
 )
 
-var testAccDataCenter = map[string]string{
-	"id":           "loc_gTvEnqqnKohbFBJR",
-	"name":         "Netwise",
-	"permalink":    "netwise",
-	"country_id":   "ctry_vDAzWmgGkPoyWMET",
-	"country_name": "United Kingdom",
-}
-
 func testAccPreCheck(t *testing.T) {
 	ctx := context.TODO()
 
 	anyMissing := false
 	envVars := []string{
-		"KATAPULT_API_URL",
 		"KATAPULT_API_KEY",
 		"KATAPULT_ORGANIZATION_ID",
 		"KATAPULT_DATA_CENTER_ID",
@@ -51,20 +43,13 @@ func testAccPreCheck(t *testing.T) {
 		if os.Getenv(name) == "" {
 			anyMissing = true
 			t.Errorf(
-				"%s environment variable must be set acceptance tests", name,
+				"%s environment variable must be set for acceptance tests",
+				name,
 			)
 		}
 	}
 	if anyMissing {
 		t.Fatal("acceptance tests cannot run due to missing configuration")
-	}
-
-	if testAccDataCenter["id"] != os.Getenv("KATAPULT_DATA_CENTER_ID") {
-		t.Fatalf(
-			"Acceptance tests require KATAPULT_DATA_CENTER_ID "+
-				"set to \"%s\" (%s)",
-			testAccDataCenter["id"], testAccDataCenter["name"],
-		)
 	}
 
 	provider, err := providerFactories(nil)["katapult"]()
@@ -139,10 +124,18 @@ func NewTestTools(t *testing.T) *TestTools {
 
 func (tt *TestTools) ResourceName(name string) string {
 	if tt.RandID == "" {
-		tt.RandID = testDataRandID(tt.T, tt.Recorder)
+		tt.RandID = testVCRRecorderRandID(tt.T, tt.Recorder)
 	}
 
 	return fmt.Sprintf("%s-%s-%s", testAccResourceNamePrefix, name, tt.RandID)
+}
+
+func (tt *TestTools) DataCenter() (*katapult.DataCenter, error) {
+	dc, _, err := tt.Meta.Client.DataCenters.Get(
+		tt.Meta.Ctx, tt.Meta.DataCenterID,
+	)
+
+	return dc, err
 }
 
 func dedentf(format string, a ...interface{}) string {
@@ -158,34 +151,6 @@ func testDataFilePath(t *testing.T, suffix string) string {
 	}
 
 	return filepath.Join(".", "testdata", baseName)
-}
-
-func testDataRandID(
-	t *testing.T,
-	r *recorder.Recorder,
-) string {
-	randPath := testDataFilePath(t, ".rand_id")
-	rand := acctest.RandStringFromCharSet(12, acctest.CharSetAlphaNum)
-
-	if r.Mode() == recorder.ModeReplaying {
-		data, err := ioutil.ReadFile(randPath)
-		if err != nil {
-			t.Fatal(fmt.Errorf("missing rand required for VCR replay: %w", err))
-		}
-		rand = string(bytes.TrimSpace(data))
-	} else if r.Mode() == recorder.ModeRecording {
-		err := os.MkdirAll(filepath.Dir(randPath), 0o755)
-		if err != nil {
-			t.Fatal(fmt.Errorf("failed to write rand VCR resource ID: %w", err))
-		}
-
-		err = ioutil.WriteFile(randPath, []byte(rand), 0o644) //nolint:gosec
-		if err != nil {
-			t.Fatal(fmt.Errorf("failed to write rand VCR resource ID: %w", err))
-		}
-	}
-
-	return rand
 }
 
 func newVCRRecorder(t *testing.T) (*recorder.Recorder, func()) {
@@ -221,6 +186,34 @@ func newVCRRecorder(t *testing.T) (*recorder.Recorder, func()) {
 	}
 
 	return r, stop
+}
+
+func testVCRRecorderRandID(
+	t *testing.T,
+	r *recorder.Recorder,
+) string {
+	randIDFile := testDataFilePath(t, ".cassette.rand_id")
+	rand := acctest.RandStringFromCharSet(12, acctest.CharSetAlphaNum)
+
+	if r.Mode() == recorder.ModeReplaying {
+		data, err := ioutil.ReadFile(randIDFile)
+		if err != nil {
+			t.Fatal(fmt.Errorf("missing rand required for VCR replay: %w", err))
+		}
+		rand = string(bytes.TrimSpace(data))
+	} else if r.Mode() == recorder.ModeRecording {
+		err := os.MkdirAll(filepath.Dir(randIDFile), 0o755)
+		if err != nil {
+			t.Fatal(fmt.Errorf("failed to write rand VCR resource ID: %w", err))
+		}
+
+		err = ioutil.WriteFile(randIDFile, []byte(rand), 0o644) //nolint:gosec
+		if err != nil {
+			t.Fatal(fmt.Errorf("failed to write rand VCR resource ID: %w", err))
+		}
+	}
+
+	return rand
 }
 
 //

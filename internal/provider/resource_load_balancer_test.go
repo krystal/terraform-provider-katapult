@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/krystal/go-katapult/pkg/katapult"
-	"github.com/stretchr/testify/assert"
 )
 
 func init() { //nolint:gochecknoinits
@@ -181,22 +180,27 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 
 func testAccKatapultCheckLoadBalancerExists(
 	tt *TestTools,
-	n string,
+	res string,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := tt.Meta.Client
 
-		rs, ok := s.RootModule().Resources[n]
+		rs, ok := s.RootModule().Resources[res]
 		if !ok {
-			return fmt.Errorf("resource not found: %s", n)
+			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		lb, _, err := c.LoadBalancers.Get(tt.Meta.Ctx, rs.Primary.ID)
+		obj, _, err := c.LoadBalancers.Get(tt.Meta.Ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}
 
-		assert.Equal(tt.T, rs.Primary.Attributes["name"], lb.Name)
+		if rs.Primary.Attributes["name"] != obj.Name {
+			return fmt.Errorf(
+				"expected name to be \"%s\", got \"%s\"",
+				obj.Name, rs.Primary.Attributes["name"],
+			)
+		}
 
 		return nil
 	}
