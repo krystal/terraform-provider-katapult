@@ -104,6 +104,10 @@ clean:
 	rm -rf $(BINARY) $(TOOLS)
 	rm -f ./coverage.out ./go.mod.tidy-check ./go.sum.tidy-check
 
+.PHONY: clean-cassettes
+clean-cassettes:
+	rm -f $(shell find * -path '*/testdata/*' -name '*.cassette.*')
+
 .PHONY: test
 test:
 	go test $(V) -count=1 -race $(TESTARGS) $(TEST)
