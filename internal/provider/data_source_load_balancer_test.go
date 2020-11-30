@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/pkg/katapult"
 )
 
@@ -19,7 +20,7 @@ func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
 		ProviderFactories: tt.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: dedentf(`
+				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "main" {
 					  name = "%s"
 					}

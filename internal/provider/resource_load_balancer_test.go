@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/pkg/katapult"
 )
 
@@ -88,7 +89,7 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 		ProviderFactories: tt.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: dedentf(`
+				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "main" {
 					  name = "%s"
 					}`,
@@ -149,7 +150,7 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 		ProviderFactories: tt.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: dedentf(`
+				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "main" {
 					  name = "%s"
 					}`,
@@ -161,7 +162,7 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 				),
 			},
 			{
-				Config: dedentf(`
+				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "main" {
 					  name = "%s"
 					}`,

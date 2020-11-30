@@ -20,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/krystal/go-katapult/pkg/katapult"
-	"github.com/lithammer/dedent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -136,10 +135,6 @@ func (tt *TestTools) DataCenter() (*katapult.DataCenter, error) {
 	)
 
 	return dc, err
-}
-
-func dedentf(format string, a ...interface{}) string {
-	return dedent.Dedent(fmt.Sprintf(format, a...))
 }
 
 func testDataFilePath(t *testing.T, suffix string) string {
