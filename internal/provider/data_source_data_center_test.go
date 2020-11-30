@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/jimeh/undent"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,7 +45,7 @@ func TestAccKatapultDataSourceDataCenter_by_id(t *testing.T) {
 		ProviderFactories: tt.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: dedentf(`
+				Config: undent.Stringf(`
 					data "katapult_data_center" "main" {
 					  id = "%s"
 					}`,
@@ -74,7 +75,7 @@ func TestAccKatapultDataSourceDataCenter_by_permalink(t *testing.T) {
 		ProviderFactories: tt.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: dedentf(`
+				Config: undent.Stringf(`
 					data "katapult_data_center" "main" {
 					  permalink = "%s"
 					}`,
@@ -102,7 +103,7 @@ func TestAccKatapultDataSourceDataCenter_invalid(t *testing.T) {
 		ProviderFactories: tt.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: dedentf(`
+				Config: undent.Stringf(`
 					data "katapult_data_center" "main" {
 					  name = "%s"
 					}`,
