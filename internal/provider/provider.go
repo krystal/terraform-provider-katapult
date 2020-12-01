@@ -55,8 +55,10 @@ func New(c *Config) func() *schema.Provider {
 				"katapult_load_balancer": resourceLoadBalancer(),
 			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"katapult_data_center":   dataSourceDataCenter(),
-				"katapult_load_balancer": dataSourceLoadBalancer(),
+				"katapult_data_center":    dataSourceDataCenter(),
+				"katapult_disk_template":  dataSourceDiskTemplate(),
+				"katapult_disk_templates": dataSourceDiskTemplates(),
+				"katapult_load_balancer":  dataSourceLoadBalancer(),
 			},
 		}
 

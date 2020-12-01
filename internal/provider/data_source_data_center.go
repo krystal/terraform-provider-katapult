@@ -10,6 +10,7 @@ import (
 
 func dataSourceDataCenter() *schema.Resource {
 	return &schema.Resource{
+		ReadContext: dataSourceDataCenterRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
 				Type:     schema.TypeString,
@@ -32,7 +33,6 @@ func dataSourceDataCenter() *schema.Resource {
 				Computed: true,
 			},
 		},
-		ReadContext: dataSourceDataCenterRead,
 	}
 }
 
