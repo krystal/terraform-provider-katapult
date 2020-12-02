@@ -37,7 +37,6 @@ func testSweepLoadBalancers(_ string) error {
 	}
 
 	for _, lb := range loadBalancers {
-		fmt.Printf("lb: %+v\n", lb)
 		if !strings.HasPrefix(lb.Name, testAccResourceNamePrefix) {
 			continue
 		}
