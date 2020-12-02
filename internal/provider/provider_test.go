@@ -215,12 +215,30 @@ func testVCRRecorderRandID(
 // Terraform TestCheckFunc helpers
 //
 
-func testCheckGeneratedResourceName(res string) resource.TestCheckFunc {
+func testCheckGeneratedResourceName(
+	name string,
+	key string,
+) resource.TestCheckFunc {
 	return resource.TestMatchResourceAttr(
-		res, "name",
+		name, key,
 		regexp.MustCompile(
 			fmt.Sprintf(
 				"^%s-.+-.+$",
+				regexp.QuoteMeta(testAccResourceNamePrefix),
+			),
+		),
+	)
+}
+
+func testCheckGeneratedHostnameName(
+	name string,
+	key string,
+) resource.TestCheckFunc {
+	return resource.TestMatchResourceAttr(
+		name, key,
+		regexp.MustCompile(
+			fmt.Sprintf(
+				"^%s-.+-.+-.+$",
 				regexp.QuoteMeta(testAccResourceNamePrefix),
 			),
 		),

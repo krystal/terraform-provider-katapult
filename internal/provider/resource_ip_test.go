@@ -41,7 +41,7 @@ func testSweepIPs(_ string) error {
 
 	for _, ip := range ips {
 		log.Printf(
-			"[DEBUG]  - Deleting IP address %s (%s)\n", ip.Address, ip.ID,
+			"[DEBUG]  - Deleting IP Address %s (%s)\n", ip.ID, ip.Address,
 		)
 		_, err := m.Client.IPAddresses.Delete(m.Ctx, ip)
 		if err != nil {
