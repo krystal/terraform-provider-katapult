@@ -114,7 +114,7 @@ test:
 
 .PHONY: testacc
 testacc:
-	TF_ACC=1 go test $(V) $(TESTARGS) $(TEST) -timeout=120m -parallel=10
+	TF_ACC=1 go test $(V) $(TESTARGS) $(TEST) -timeout=120m
 
 .PHONY: test-update
 test-update-golden:
@@ -153,7 +153,7 @@ cov-func: coverage.out
 	go tool cover -func=coverage.out
 
 coverage.out: $(SOURCES)
-	TF_ACC=1 VCR=replay go test $(V) -timeout=120m -parallel=10 \
+	TF_ACC=1 VCR=replay go test $(V) -timeout=120m \
 			-covermode=count -coverprofile=coverage.out \
 			$(TESTARGS) $(TEST)
 

@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.2.0
 	github.com/hashicorp/yamux v0.0.0-20200609203250-aecfd211c9ce // indirect
 	github.com/jimeh/undent v1.0.0
-	github.com/krystal/go-katapult v0.0.0-20201118173201-581648a77ca9
+	github.com/krystal/go-katapult v0.0.0-20201201170758-c7a796da583a
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.3.3 // indirect

@@ -22,23 +22,26 @@ func init() { //nolint:gochecknoinits
 func testSweepLoadBalancers(_ string) error {
 	m := sweepMeta()
 
-	var testLbs []*katapult.LoadBalancer
-
-	lbs, totalPages, err := testSweepLoadBalancersGetPage(m, 1)
-	if err != nil {
-		return err
-	}
-	testLbs = append(testLbs, lbs...)
-
-	for page := 2; page <= totalPages; page++ {
-		lbs, _, err := testSweepLoadBalancersGetPage(m, page)
+	var loadBalancers []*katapult.LoadBalancer
+	totalPages := 2
+	for pageNum := 1; pageNum <= totalPages; pageNum++ {
+		pageResult, resp, err := m.Client.LoadBalancers.List(
+			m.Ctx, m.OrganizationID, &katapult.ListOptions{Page: pageNum},
+		)
 		if err != nil {
 			return err
 		}
-		testLbs = append(testLbs, lbs...)
+
+		totalPages = resp.Pagination.TotalPages
+		loadBalancers = append(loadBalancers, pageResult...)
 	}
 
-	for _, lb := range testLbs {
+	for _, lb := range loadBalancers {
+		fmt.Printf("lb: %+v\n", lb)
+		if !strings.HasPrefix(lb.Name, testAccResourceNamePrefix) {
+			continue
+		}
+
 		log.Printf(
 			"[DEBUG]  - Deleting load balancer %s (%s)\n", lb.Name, lb.ID,
 		)
@@ -49,32 +52,6 @@ func testSweepLoadBalancers(_ string) error {
 	}
 
 	return nil
-}
-
-func testSweepLoadBalancersGetPage(
-	m *Meta,
-	page int,
-) ([]*katapult.LoadBalancer, int, error) {
-	lbs, resp, err := m.Client.LoadBalancers.List(
-		m.Ctx, m.OrganizationID, &katapult.ListOptions{Page: page},
-	)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	var testLbs []*katapult.LoadBalancer
-	for _, lb := range lbs {
-		if strings.HasPrefix(lb.Name, testAccResourceNamePrefix) {
-			testLbs = append(testLbs, lb)
-		}
-	}
-
-	totalPages := 1
-	if resp != nil && resp.Pagination.TotalPages != 0 {
-		totalPages = resp.Pagination.TotalPages
-	}
-
-	return testLbs, totalPages, nil
 }
 
 func TestAccKatapultLoadBalancer_basic(t *testing.T) {
