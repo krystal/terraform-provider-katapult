@@ -21,10 +21,6 @@ func dataSourceDiskTemplates() *schema.Resource {
 					Schema: dts,
 				},
 			},
-			"organization_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 		},
 	}
 }
@@ -38,16 +34,13 @@ func dataSourceDiskTemplatesRead(
 	c := meta.Client
 	var diags diag.Diagnostics
 
-	orgID := d.Get("organization_id").(string)
-	if orgID == "" {
-		orgID = meta.OrganizationID
-	}
+	org := meta.Organization()
 
 	var templates []*katapult.DiskTemplate
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		pageResult, resp, err := c.DiskTemplates.List(
-			ctx, orgID, &katapult.DiskTemplateListOptions{
+			ctx, org, &katapult.DiskTemplateListOptions{
 				IncludeUniversal: true,
 				Page:             pageNum,
 			},
@@ -65,7 +58,7 @@ func dataSourceDiskTemplatesRead(
 		return diag.FromErr(err)
 	}
 
-	d.SetId(orgID)
+	d.SetId(org.ID)
 
 	return diags
 }

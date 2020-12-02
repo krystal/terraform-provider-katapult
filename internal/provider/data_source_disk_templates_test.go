@@ -41,7 +41,8 @@ func testFetchAllDiskTemplates(
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		pageResult, resp, err := tt.Meta.Client.DiskTemplates.List(
-			tt.Meta.Ctx, tt.Meta.OrganizationID,
+			tt.Meta.Ctx,
+			&katapult.Organization{ID: tt.Meta.OrganizationID},
 			&katapult.DiskTemplateListOptions{
 				IncludeUniversal: true,
 				Page:             pageNum,

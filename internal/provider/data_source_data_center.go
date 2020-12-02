@@ -53,11 +53,11 @@ func dataSourceDataCenterRead(
 
 	switch {
 	case id != "":
-		dc, _, err = c.DataCenters.Get(ctx, id)
+		dc, _, err = c.DataCenters.GetByID(ctx, id)
 	case permalink != "":
 		dc, _, err = c.DataCenters.GetByPermalink(ctx, permalink)
 	case meta.DataCenterID != "":
-		dc, _, err = c.DataCenters.Get(ctx, meta.DataCenterID)
+		dc, _, err = c.DataCenters.GetByID(ctx, meta.DataCenterID)
 	default:
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
