@@ -106,10 +106,10 @@ func resourceLoadBalancerCreate(
 		t = katapult.VirtualMachinesResourceType
 	}
 
-	args := &katapult.LoadBalancerArguments{
+	args := &katapult.LoadBalancerCreateArguments{
 		Name:         name,
 		ResourceType: t,
-		ResourceIDs:  ids,
+		ResourceIDs:  &ids,
 		DataCenter:   &katapult.DataCenter{ID: dcID},
 	}
 
@@ -165,7 +165,7 @@ func resourceLoadBalancerUpdate(
 	id := d.Id()
 
 	lb := &katapult.LoadBalancer{ID: id}
-	args := &katapult.LoadBalancerArguments{}
+	args := &katapult.LoadBalancerUpdateArguments{}
 
 	if d.HasChange("name") {
 		args.Name = d.Get("name").(string)
@@ -174,7 +174,7 @@ func resourceLoadBalancerUpdate(
 	if d.HasChanges("virtual_machine", "virtual_machine_group", "tag") {
 		t, ids := extractLoadBalancerResourceTypeAndIDs(d, m)
 		args.ResourceType = t
-		args.ResourceIDs = ids
+		args.ResourceIDs = &ids
 	}
 
 	_, _, err := c.LoadBalancers.Update(ctx, lb, args)
