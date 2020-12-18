@@ -26,7 +26,9 @@ func testSweepLoadBalancers(_ string) error {
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		pageResult, resp, err := m.Client.LoadBalancers.List(
-			m.Ctx, m.OrganizationID, &katapult.ListOptions{Page: pageNum},
+			m.Ctx,
+			&katapult.Organization{ID: m.OrganizationID},
+			&katapult.ListOptions{Page: pageNum},
 		)
 		if err != nil {
 			return err
@@ -37,7 +39,6 @@ func testSweepLoadBalancers(_ string) error {
 	}
 
 	for _, lb := range loadBalancers {
-		fmt.Printf("lb: %+v\n", lb)
 		if !strings.HasPrefix(lb.Name, testAccResourceNamePrefix) {
 			continue
 		}
@@ -45,7 +46,7 @@ func testSweepLoadBalancers(_ string) error {
 		log.Printf(
 			"[DEBUG]  - Deleting load balancer %s (%s)\n", lb.Name, lb.ID,
 		)
-		_, _, err := m.Client.LoadBalancers.Delete(m.Ctx, lb.ID)
+		_, _, err := m.Client.LoadBalancers.Delete(m.Ctx, lb)
 		if err != nil {
 			return err
 		}
@@ -168,7 +169,7 @@ func testAccKatapultCheckLoadBalancerExists(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		obj, _, err := c.LoadBalancers.Get(tt.Meta.Ctx, rs.Primary.ID)
+		obj, _, err := c.LoadBalancers.GetByID(tt.Meta.Ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}

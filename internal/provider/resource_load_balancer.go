@@ -18,11 +18,6 @@ func resourceLoadBalancer() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
-			"organization_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-			},
 			"data_center_id": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -97,10 +92,7 @@ func resourceLoadBalancerCreate(
 ) diag.Diagnostics {
 	meta := m.(*Meta)
 
-	orgID := d.Get("organization_id").(string)
-	if orgID == "" {
-		orgID = meta.OrganizationID
-	}
+	org := meta.Organization()
 
 	dcID := d.Get("data_center_id").(string)
 	if dcID == "" {
@@ -114,14 +106,14 @@ func resourceLoadBalancerCreate(
 		t = katapult.VirtualMachinesResourceType
 	}
 
-	args := &katapult.LoadBalancerArguments{
+	args := &katapult.LoadBalancerCreateArguments{
 		Name:         name,
 		ResourceType: t,
-		ResourceIDs:  ids,
+		ResourceIDs:  &ids,
 		DataCenter:   &katapult.DataCenter{ID: dcID},
 	}
 
-	lb, _, err := meta.Client.LoadBalancers.Create(ctx, orgID, args)
+	lb, _, err := meta.Client.LoadBalancers.Create(ctx, org, args)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -141,7 +133,7 @@ func resourceLoadBalancerRead(
 
 	id := d.Id()
 
-	lb, resp, err := c.LoadBalancers.Get(ctx, id)
+	lb, resp, err := c.LoadBalancers.GetByID(ctx, id)
 	if err != nil {
 		if resp != nil && resp.StatusCode == 404 {
 			d.SetId("")
@@ -173,18 +165,19 @@ func resourceLoadBalancerUpdate(
 	id := d.Id()
 
 	lb := &katapult.LoadBalancer{ID: id}
+	args := &katapult.LoadBalancerUpdateArguments{}
 
 	if d.HasChange("name") {
-		lb.Name = d.Get("name").(string)
+		args.Name = d.Get("name").(string)
 	}
 
 	if d.HasChanges("virtual_machine", "virtual_machine_group", "tag") {
 		t, ids := extractLoadBalancerResourceTypeAndIDs(d, m)
-		lb.ResourceType = t
-		lb.ResourceIDs = ids
+		args.ResourceType = t
+		args.ResourceIDs = &ids
 	}
 
-	_, _, err := c.LoadBalancers.Update(ctx, lb)
+	_, _, err := c.LoadBalancers.Update(ctx, lb, args)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -199,9 +192,9 @@ func resourceLoadBalancerDelete(
 ) diag.Diagnostics {
 	c := m.(*Meta).Client
 
-	id := d.Id()
+	lb := &katapult.LoadBalancer{ID: d.Id()}
 
-	_, _, err := c.LoadBalancers.Delete(ctx, id)
+	_, _, err := c.LoadBalancers.Delete(ctx, lb)
 	if err != nil {
 		return diag.FromErr(err)
 	}

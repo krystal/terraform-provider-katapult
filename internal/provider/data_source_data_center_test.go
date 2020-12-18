@@ -134,7 +134,7 @@ func testAccKatapultCheckDataCenterExists(
 			id = rs.Primary.ID
 		}
 
-		obj, _, err := c.DataCenters.Get(tt.Meta.Ctx, id)
+		obj, _, err := c.DataCenters.GetByID(tt.Meta.Ctx, id)
 		if err != nil {
 			return err
 		}

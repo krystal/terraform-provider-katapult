@@ -28,3 +28,7 @@ func (m *Meta) UseOrGenerateName(name string) string {
 		return namegenerator.RandomName(m.GeneratedNamePrefix)
 	}
 }
+
+func (m *Meta) Organization() *katapult.Organization {
+	return &katapult.Organization{ID: m.OrganizationID}
+}

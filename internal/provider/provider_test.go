@@ -130,7 +130,7 @@ func (tt *TestTools) ResourceName(name string) string {
 }
 
 func (tt *TestTools) DataCenter() (*katapult.DataCenter, error) {
-	dc, _, err := tt.Meta.Client.DataCenters.Get(
+	dc, _, err := tt.Meta.Client.DataCenters.GetByID(
 		tt.Meta.Ctx, tt.Meta.DataCenterID,
 	)
 
