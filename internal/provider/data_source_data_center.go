@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -81,4 +83,30 @@ func dataSourceDataCenterRead(
 	d.SetId(dc.ID)
 
 	return diags
+}
+
+func defaultNetworkForDataCenter(
+	ctx context.Context,
+	meta *Meta,
+	dc *katapult.DataCenter,
+) (*katapult.Network, error) {
+	networks, _, _, err := meta.Client.Networks.List(ctx, meta.Organization())
+	if err != nil {
+		return nil, err
+	}
+
+	if dc == nil {
+		dc = meta.DataCenter()
+	}
+
+	for _, network := range networks {
+		if network.DataCenter != nil && network.DataCenter.ID == dc.ID &&
+			strings.Contains(strings.ToLower(network.Name), "public") {
+			return network, nil
+		}
+	}
+
+	return nil, fmt.Errorf(
+		"default network for data center %s could not be determined", dc.ID,
+	)
 }

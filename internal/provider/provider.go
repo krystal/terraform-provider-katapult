@@ -52,6 +52,7 @@ func New(c *Config) func() *schema.Provider {
 				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
+				"katapult_ip":            resourceIP(),
 				"katapult_load_balancer": resourceLoadBalancer(),
 			},
 			DataSourcesMap: map[string]*schema.Resource{
