@@ -32,3 +32,7 @@ func (m *Meta) UseOrGenerateName(name string) string {
 func (m *Meta) Organization() *katapult.Organization {
 	return &katapult.Organization{ID: m.OrganizationID}
 }
+
+func (m *Meta) DataCenter() *katapult.DataCenter {
+	return &katapult.DataCenter{ID: m.DataCenterID}
+}
