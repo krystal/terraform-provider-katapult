@@ -59,6 +59,7 @@ func New(c *Config) func() *schema.Provider {
 				"katapult_data_center":    dataSourceDataCenter(),
 				"katapult_disk_template":  dataSourceDiskTemplate(),
 				"katapult_disk_templates": dataSourceDiskTemplates(),
+				"katapult_ip":             dataSourceIP(),
 				"katapult_load_balancer":  dataSourceLoadBalancer(),
 			},
 		}
