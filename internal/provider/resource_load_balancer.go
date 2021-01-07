@@ -135,7 +135,7 @@ func resourceLoadBalancerRead(
 
 	lb, resp, err := c.LoadBalancers.GetByID(ctx, id)
 	if err != nil {
-		if resp != nil && resp.StatusCode == 404 {
+		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
 			d.SetId("")
 
 			return diags
