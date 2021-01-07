@@ -57,11 +57,12 @@ func New(c *Config) func() *schema.Provider {
 				"katapult_virtual_machine": resourceVirtualMachine(),
 			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"katapult_data_center":    dataSourceDataCenter(),
-				"katapult_disk_template":  dataSourceDiskTemplate(),
-				"katapult_disk_templates": dataSourceDiskTemplates(),
-				"katapult_ip":             dataSourceIP(),
-				"katapult_load_balancer":  dataSourceLoadBalancer(),
+				"katapult_data_center":     dataSourceDataCenter(),
+				"katapult_disk_template":   dataSourceDiskTemplate(),
+				"katapult_disk_templates":  dataSourceDiskTemplates(),
+				"katapult_ip":              dataSourceIP(),
+				"katapult_load_balancer":   dataSourceLoadBalancer(),
+				"katapult_virtual_machine": dataSourceVirtualMachine(),
 			},
 		}
 

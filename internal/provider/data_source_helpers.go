@@ -20,6 +20,8 @@ func dataSourceSchemaFromResourceSchema(
 		switch v.Type {
 		case schema.TypeSet:
 			dv.Set = v.Set
+
+			fallthrough
 		case schema.TypeList:
 			if elem, ok := v.Elem.(*schema.Resource); ok {
 				dv.Elem = &schema.Resource{
