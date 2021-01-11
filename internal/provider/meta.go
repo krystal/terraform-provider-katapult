@@ -29,6 +29,17 @@ func (m *Meta) UseOrGenerateName(name string) string {
 	}
 }
 
+func (m *Meta) UseOrGenerateHostname(hostname string) string {
+	switch {
+	case hostname != "":
+		return hostname
+	case m.GeneratedNamePrefix == "":
+		return namegenerator.RandomHostname()
+	default:
+		return m.GeneratedNamePrefix + "-" + namegenerator.RandomHostname()
+	}
+}
+
 func (m *Meta) Organization() *katapult.Organization {
 	return &katapult.Organization{ID: m.OrganizationID}
 }

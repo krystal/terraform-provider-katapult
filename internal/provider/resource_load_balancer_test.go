@@ -44,7 +44,7 @@ func testSweepLoadBalancers(_ string) error {
 		}
 
 		log.Printf(
-			"[DEBUG]  - Deleting load balancer %s (%s)\n", lb.Name, lb.ID,
+			"[DEBUG]  - Deleting Load Balancer %s (%s)\n", lb.ID, lb.Name,
 		)
 		_, _, err := m.Client.LoadBalancers.Delete(m.Ctx, lb)
 		if err != nil {
@@ -105,7 +105,7 @@ func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
 				Config: `resource "katapult_load_balancer" "main" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccKatapultCheckLoadBalancerExists(tt, res),
-					testCheckGeneratedResourceName(res),
+					testCheckGeneratedResourceName(res, "name"),
 					resource.TestCheckResourceAttr(res,
 						"resource_type",
 						string(katapult.VirtualMachinesResourceType),

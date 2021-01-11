@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -54,39 +55,16 @@ func dataSourceDiskTemplateRead(
 	m interface{},
 ) diag.Diagnostics {
 	meta := m.(*Meta)
-	c := meta.Client
 	var diags diag.Diagnostics
 
-	id := d.Get("id").(string)
-	permalink := d.Get("permalink").(string)
-
-	org := meta.Organization()
-
-	var templates []*katapult.DiskTemplate
-	totalPages := 2
-	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := c.DiskTemplates.List(
-			ctx, org, &katapult.DiskTemplateListOptions{
-				IncludeUniversal: true,
-				Page:             pageNum,
-			},
-		)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		totalPages = resp.Pagination.TotalPages
-		templates = append(templates, pageResult...)
+	idOrPermalink := d.Get("id").(string)
+	if idOrPermalink == "" {
+		idOrPermalink = d.Get("permalink").(string)
 	}
 
-	var template *katapult.DiskTemplate
-	for _, t := range templates {
-		if (id != "" && id == t.ID) ||
-			(permalink != "" && permalink == t.Permalink) {
-			template = t
-
-			break
-		}
+	template, err := fetchDiskTemplate(ctx, meta, idOrPermalink)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	if template != nil {
@@ -99,6 +77,46 @@ func dataSourceDiskTemplateRead(
 	}
 
 	return diags
+}
+
+func fetchDiskTemplate(
+	ctx context.Context,
+	meta *Meta,
+	idOrPermalink string,
+) (*katapult.DiskTemplate, error) {
+	var id string
+	var permalink string
+
+	if strings.HasPrefix(idOrPermalink, "dtpl_") {
+		id = idOrPermalink
+	} else {
+		permalink = idOrPermalink
+	}
+
+	org := meta.Organization()
+
+	totalPages := 2
+	for pageNum := 1; pageNum < totalPages; pageNum++ {
+		templates, resp, err := meta.Client.DiskTemplates.List(
+			ctx, org, &katapult.DiskTemplateListOptions{
+				IncludeUniversal: true,
+				Page:             pageNum,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		totalPages = resp.Pagination.TotalPages
+		for _, t := range templates {
+			if (id != "" && id == t.ID) ||
+				(permalink != "" && permalink == t.Permalink) {
+				return t, nil
+			}
+		}
+	}
+
+	return nil, nil
 }
 
 func flattenDiskTemplate(tpl *katapult.DiskTemplate) map[string]interface{} {

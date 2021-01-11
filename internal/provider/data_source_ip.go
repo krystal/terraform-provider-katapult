@@ -45,7 +45,6 @@ func dataSourceIPRead(
 	default:
 		ip, _, err = meta.Client.IPAddresses.GetByAddress(ctx, address)
 	}
-
 	if err != nil {
 		return diag.FromErr(err)
 	}
