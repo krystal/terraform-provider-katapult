@@ -9,7 +9,7 @@ import (
 )
 
 func dataSourceDiskTemplates() *schema.Resource {
-	dts := dataSourceDiskTemplate().Schema
+	dts := dataSourceSchemaFromResourceSchema(dataSourceDiskTemplate().Schema)
 
 	return &schema.Resource{
 		ReadContext: dataSourceDiskTemplatesRead,

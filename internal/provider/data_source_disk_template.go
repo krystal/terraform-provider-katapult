@@ -14,8 +14,10 @@ func dataSourceDiskTemplate() *schema.Resource {
 		ReadContext: dataSourceDiskTemplateRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Computed:     true,
+				Optional:     true,
+				AtLeastOneOf: []string{"id", "permalink"},
 			},
 			"name": {
 				Type:     schema.TypeString,
@@ -27,6 +29,7 @@ func dataSourceDiskTemplate() *schema.Resource {
 			},
 			"permalink": {
 				Type:     schema.TypeString,
+				Computed: true,
 				Optional: true,
 			},
 			"universal": {
