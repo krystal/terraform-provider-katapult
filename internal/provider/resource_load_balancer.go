@@ -18,11 +18,6 @@ func resourceLoadBalancer() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
-			"data_center_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-			},
 			"name": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -93,11 +88,7 @@ func resourceLoadBalancerCreate(
 	meta := m.(*Meta)
 
 	org := meta.Organization()
-
-	dcID := d.Get("data_center_id").(string)
-	if dcID == "" {
-		dcID = meta.DataCenterID
-	}
+	dcID := meta.DataCenterID
 
 	name := meta.UseOrGenerateName(d.Get("name").(string))
 

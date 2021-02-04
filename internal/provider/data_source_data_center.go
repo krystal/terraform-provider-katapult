@@ -16,6 +16,7 @@ func dataSourceDataCenter() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"id": {
 				Type:     schema.TypeString,
+				Computed: true,
 				Optional: true,
 			},
 			"name": {
@@ -24,6 +25,7 @@ func dataSourceDataCenter() *schema.Resource {
 			},
 			"permalink": {
 				Type:     schema.TypeString,
+				Computed: true,
 				Optional: true,
 			},
 			"country_id": {

@@ -69,6 +69,24 @@ func TestAccKatapultDataSourceDiskTemplate_by_permalink(t *testing.T) {
 	})
 }
 
+func TestAccKatapultDataSourceDiskTemplate_blank(t *testing.T) {
+	tt := NewTestTools(t)
+	defer tt.Cleanup()
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `data "katapult_disk_template" "main" {}`,
+				ExpectError: regexp.MustCompile(
+					regexp.QuoteMeta("one of `id,permalink` must be specified"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccKatapultDataSourceDiskTemplate_invalid(t *testing.T) {
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
@@ -88,7 +106,7 @@ func TestAccKatapultDataSourceDiskTemplate_invalid(t *testing.T) {
 					tpl.Name,
 				),
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta("Computed attribute cannot be set"),
+					regexp.QuoteMeta("Computed attributes cannot be set"),
 				),
 			},
 		},

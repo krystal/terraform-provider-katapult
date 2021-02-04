@@ -22,7 +22,7 @@ func init() { //nolint:gochecknoinits
 	})
 }
 
-func testSweepVirtualMachines(_ string) error { //nolint:gocyclo
+func testSweepVirtualMachines(_ string) error {
 	meta := sweepMeta()
 	ctx := meta.Ctx
 
