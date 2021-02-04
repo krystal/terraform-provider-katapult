@@ -41,10 +41,6 @@ func dataSourceDiskTemplate() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organization_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 		},
 	}
 }
