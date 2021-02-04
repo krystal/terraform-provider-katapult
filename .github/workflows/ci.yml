@@ -54,3 +54,20 @@ jobs:
           KATAPULT_API_KEY: ${{ secrets.KATAPULT_API_KEY }}
           KATAPULT_ORGANIZATION_ID: ${{ secrets.KATAPULT_ORGANIZATION_ID }}
           KATAPULT_DATA_CENTER_ID: ${{ secrets.KATAPULT_DATA_CENTER_ID }}
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      - uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Ensure generated documentation is up to date
+        run: mv docs docs-current && make docs && diff -rN docs-current docs

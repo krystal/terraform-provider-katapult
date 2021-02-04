@@ -56,6 +56,7 @@ endef
 $(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports))
 $(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.36))
 $(eval $(call tool,gomod,github.com/Helcaraxan/gomod))
+$(eval $(call tool,tfplugindocs,github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.4))
 
 .PHONY: tools
 tools: $(TOOLS)
@@ -120,6 +121,10 @@ testacc:
 .PHONY: test-update
 test-update-golden:
 	go test $(V) -update-golden -count=1 -race $(TESTARGS) $(TEST)
+
+.PHONY: docs
+docs: tfplugindocs
+	tfplugindocs
 
 .PHONY: test-deps
 test-deps:
