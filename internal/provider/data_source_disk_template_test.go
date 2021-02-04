@@ -88,7 +88,7 @@ func TestAccKatapultDataSourceDiskTemplate_invalid(t *testing.T) {
 					tpl.Name,
 				),
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta("Computed attribute cannot be set"),
+					regexp.QuoteMeta("Computed attributes cannot be set"),
 				),
 			},
 		},
