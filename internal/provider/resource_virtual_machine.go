@@ -26,6 +26,10 @@ func resourceVirtualMachine() *schema.Resource {
 			Delete: schema.DefaultTimeout(time.Minute * 5),
 		},
 		Schema: map[string]*schema.Schema{
+			"id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Optional: true,

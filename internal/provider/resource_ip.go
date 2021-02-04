@@ -20,6 +20,10 @@ func resourceIP() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
+			"id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"network_id": {
 				Type:     schema.TypeString,
 				Optional: true,
