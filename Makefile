@@ -55,6 +55,7 @@ endef
 
 $(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports))
 $(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.36))
+$(eval $(call tool,gomod,github.com/Helcaraxan/gomod))
 
 .PHONY: tools
 tools: $(TOOLS)
@@ -165,6 +166,15 @@ coverage.out: $(SOURCES)
 deps:
 	$(info Downloading dependencies)
 	go mod download
+
+.PHONY: deps-update
+deps-update:
+	$(info Downloading dependencies)
+	go get -u ./...
+
+.PHONY: deps-analyze
+deps-analyze: gomod
+	gomod analyze
 
 .PHONY: tidy
 tidy:
