@@ -30,9 +30,7 @@ func testSweepVirtualMachines(_ string) error {
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		pageResult, resp, err := meta.Client.VirtualMachines.List(
-			ctx,
-			&katapult.Organization{ID: meta.OrganizationID},
-			&katapult.ListOptions{Page: pageNum},
+			ctx, meta.OrganizationRef(), &katapult.ListOptions{Page: pageNum},
 		)
 		if err != nil {
 			return err

@@ -19,7 +19,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/krystal/go-katapult/pkg/katapult"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,8 +34,8 @@ func testAccPreCheck(t *testing.T) {
 	anyMissing := false
 	envVars := []string{
 		"KATAPULT_API_KEY",
-		"KATAPULT_ORGANIZATION_ID",
-		"KATAPULT_DATA_CENTER_ID",
+		"KATAPULT_ORGANIZATION",
+		"KATAPULT_DATA_CENTER",
 	}
 	for _, name := range envVars {
 		if os.Getenv(name) == "" {
@@ -127,14 +126,6 @@ func (tt *TestTools) ResourceName(name string) string {
 	}
 
 	return fmt.Sprintf("%s-%s-%s", testAccResourceNamePrefix, name, tt.RandID)
-}
-
-func (tt *TestTools) DataCenter() (*katapult.DataCenter, error) {
-	dc, _, err := tt.Meta.Client.DataCenters.GetByID(
-		tt.Meta.Ctx, tt.Meta.DataCenterID,
-	)
-
-	return dc, err
 }
 
 func testDataFilePath(t *testing.T, suffix string) string {

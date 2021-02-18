@@ -27,8 +27,7 @@ func testSweepIPs(_ string) error {
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		pageResult, resp, err := m.Client.IPAddresses.List(
-			m.Ctx,
-			&katapult.Organization{ID: m.OrganizationID},
+			m.Ctx, m.OrganizationRef(),
 			&katapult.ListOptions{Page: pageNum},
 		)
 		if err != nil {
@@ -58,9 +57,7 @@ func TestAccKatapultIP_basic(t *testing.T) {
 
 	res := "katapult_ip.web"
 
-	network, err := defaultNetworkForDataCenter(
-		tt.Meta.Ctx, tt.Meta, tt.Meta.DataCenter(),
-	)
+	network, err := defaultNetworkForDataCenter(tt.Meta.Ctx, tt.Meta)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -125,9 +122,7 @@ func TestAccKatapultIP_with_network_id(t *testing.T) {
 
 	res := "katapult_ip.with-net"
 
-	network, err := defaultNetworkForDataCenter(
-		tt.Meta.Ctx, tt.Meta, tt.Meta.DataCenter(),
-	)
+	network, err := defaultNetworkForDataCenter(tt.Meta.Ctx, tt.Meta)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{

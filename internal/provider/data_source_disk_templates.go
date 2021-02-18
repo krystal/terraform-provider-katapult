@@ -34,13 +34,16 @@ func dataSourceDiskTemplatesRead(
 	c := meta.Client
 	var diags diag.Diagnostics
 
-	org := meta.Organization()
+	orgID, err := meta.OrganizationID(ctx)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	var templates []*katapult.DiskTemplate
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		pageResult, resp, err := c.DiskTemplates.List(
-			ctx, org, &katapult.DiskTemplateListOptions{
+			ctx, meta.OrganizationRef(), &katapult.DiskTemplateListOptions{
 				IncludeUniversal: true,
 				Page:             pageNum,
 			},
@@ -58,7 +61,7 @@ func dataSourceDiskTemplatesRead(
 		return diag.FromErr(err)
 	}
 
-	d.SetId(org.ID)
+	d.SetId(orgID)
 
 	return diags
 }

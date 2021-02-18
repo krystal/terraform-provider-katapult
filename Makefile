@@ -122,9 +122,12 @@ testacc:
 test-update-golden:
 	go test $(V) -update-golden -count=1 -race $(TESTARGS) $(TEST)
 
+# Force set provider configuration environment variables, as required vars get
+# listed as "Optional" if the corresponding var is not empty.
 .PHONY: docs
 docs: tfplugindocs
-	tfplugindocs
+	KATAPULT_API_KEY="" KATAPULT_ORGANIZATION="" KATAPULT_DATA_CENTER="" \
+		tfplugindocs
 
 .PHONY: test-deps
 test-deps:

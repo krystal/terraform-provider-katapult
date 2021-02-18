@@ -78,15 +78,12 @@ func resourceIPCreate(
 ) diag.Diagnostics {
 	meta := m.(*Meta)
 
-	org := meta.Organization()
-	dc := meta.DataCenter()
-
 	var network *katapult.Network
 	if rawNet, ok := d.GetOk("network_id"); ok {
 		network = &katapult.Network{ID: rawNet.(string)}
 	} else {
 		var err error
-		network, err = defaultNetworkForDataCenter(ctx, meta, dc)
+		network, err = defaultNetworkForDataCenter(ctx, meta)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -102,7 +99,9 @@ func resourceIPCreate(
 		args.Label = d.Get("label").(string)
 	}
 
-	ip, _, err := meta.Client.IPAddresses.Create(ctx, org, args)
+	ip, _, err := meta.Client.IPAddresses.Create(
+		ctx, meta.OrganizationRef(), args,
+	)
 	if err != nil {
 		return diag.FromErr(err)
 	}
