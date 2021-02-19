@@ -9,6 +9,7 @@ import (
 )
 
 func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
+	t.Skip("not yet feature complete")
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
 

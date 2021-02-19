@@ -135,8 +135,8 @@ sweep:
 shell: docker-dev-build
 	$(eval IMAGE := $(shell $(DOCKER_DEV_BUILD_CMD) -q))
 	docker run --rm -ti \
-		-v "$(CURDIR)/:/app/" \
-		-v "katapult-terraform-provider-bins:/app/bin" \
+		-v "$(CURDIR)/:/terraform-provider-katapult/" \
+		-v "katapult-terraform-provider-bins:/terraform-provider-katapult/bin" \
 		-v "katapult-terraform-provider-gomod-cache:/go/pkg/mod" \
 		"$(IMAGE)" bash
 
