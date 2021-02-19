@@ -13,12 +13,15 @@ import (
 )
 
 func init() { //nolint:gochecknoinits
-	resource.AddTestSweepers("katapult_load_balancer", &resource.Sweeper{
-		Name: "katapult_load_balancer",
-		F:    testSweepLoadBalancers,
-	})
+	// TODO: re-enable katapult_load_balancer sweeper when Load Balancer
+	// resources are enabled again.
+	// resource.AddTestSweepers("katapult_load_balancer", &resource.Sweeper{
+	//		Name: "katapult_load_balancer",
+	//		F:    testSweepLoadBalancers,
+	// })
 }
 
+//nolint:deadcode,unused
 func testSweepLoadBalancers(_ string) error {
 	m := sweepMeta()
 
@@ -54,6 +57,7 @@ func testSweepLoadBalancers(_ string) error {
 }
 
 func TestAccKatapultLoadBalancer_basic(t *testing.T) {
+	t.Skip("not yet feature complete")
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
 
@@ -90,6 +94,7 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 }
 
 func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
+	t.Skip("not yet feature complete")
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
 
@@ -115,6 +120,7 @@ func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
 }
 
 func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
+	t.Skip("not yet feature complete")
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
 
@@ -155,6 +161,7 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 	})
 }
 
+//nolint:unused
 func testAccKatapultCheckLoadBalancerExists(
 	tt *TestTools,
 	res string,

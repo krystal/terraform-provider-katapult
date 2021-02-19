@@ -8,6 +8,7 @@ import (
 	"github.com/krystal/go-katapult/pkg/katapult"
 )
 
+//nolint:unused
 func resourceLoadBalancer() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceLoadBalancerCreate,
@@ -84,6 +85,7 @@ func resourceLoadBalancer() *schema.Resource {
 	}
 }
 
+//nolint:unused
 func resourceLoadBalancerCreate(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -116,6 +118,7 @@ func resourceLoadBalancerCreate(
 	return resourceLoadBalancerRead(ctx, d, m)
 }
 
+//nolint:unused
 func resourceLoadBalancerRead(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -148,6 +151,7 @@ func resourceLoadBalancerRead(
 	return diags
 }
 
+//nolint:unused
 func resourceLoadBalancerUpdate(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -178,6 +182,7 @@ func resourceLoadBalancerUpdate(
 	return resourceLoadBalancerRead(ctx, d, m)
 }
 
+//nolint:unused
 func resourceLoadBalancerDelete(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -195,6 +200,7 @@ func resourceLoadBalancerDelete(
 	return diag.Diagnostics{}
 }
 
+//nolint:unused
 func populateLoadBalancerTargets(
 	d *schema.ResourceData,
 	t katapult.ResourceType,
@@ -215,6 +221,7 @@ func populateLoadBalancerTargets(
 	}
 }
 
+//nolint:unused
 func extractLoadBalancerResourceTypeAndIDs(
 	d *schema.ResourceData,
 	m interface{},
