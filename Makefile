@@ -50,7 +50,7 @@ $(TOOLDIR)/$(1): $(TOOLDIR)/gobin Makefile
 endef
 
 $(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports))
-$(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.36))
+$(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.37))
 $(eval $(call tool,gomod,github.com/Helcaraxan/gomod))
 $(eval $(call tool,tfplugindocs,github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.4))
 
