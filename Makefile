@@ -22,7 +22,7 @@ SHELL ?= /bin/bash
 SHELL := env \
 	GO111MODULE=on \
 	GOBIN=$(CURDIR)/$(TOOLDIR) \
-	CGO_ENABLED=1 \
+	CGO_ENABLED=0 \
 	PATH='$(CURDIR)/$(BINDIR):$(CURDIR)/$(TOOLDIR):$(PATH)' \
 	$(SHELL)
 
@@ -38,7 +38,6 @@ SHELL := env \
 #
 
 TOOLS += $(TOOLDIR)/gobin
-gobin: $(TOOLDIR)/gobin
 $(TOOLDIR)/gobin:
 	GO111MODULE=off go get -u github.com/myitcv/gobin
 
@@ -46,11 +45,8 @@ $(TOOLDIR)/gobin:
 define tool # 1: binary-name, 2: go-import-path
 TOOLS += $(TOOLDIR)/$(1)
 
-.PHONY: $(1)
-$(1): $(TOOLDIR)/$(1)
-
 $(TOOLDIR)/$(1): $(TOOLDIR)/gobin Makefile
-	gobin $(V) "$(2)"
+	$(TOOLDIR)/gobin $(V) "$(2)"
 endef
 
 $(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports))
@@ -80,7 +76,7 @@ endif
 build: $(BINARY)
 
 $(BINARY): $(SOURCES)
-	CGO_ENABLED=0 go build $(V) -a -o "$@" -ldflags "$(LDFLAGS) \
+	go build $(V) -a -o "$@" -ldflags "$(LDFLAGS) \
 		-X main.Version=$(VERSION) \
 		-X main.Commit=$(GIT_SHA) \
 		-X main.Date=$(DATE)"
@@ -112,39 +108,39 @@ clean-cassettes:
 
 .PHONY: test
 test:
-	go test $(V) -count=1 -race $(TESTARGS) $(TEST)
+	CGO_ENABLED=1 go test $(V) -count=1 -race $(TESTARGS) $(TEST)
 
 .PHONY: testacc
 testacc:
 	TF_ACC=1 go test $(V) $(TESTARGS) $(TEST) -timeout=120m
-
-.PHONY: test-update
-test-update-golden:
-	go test $(V) -update-golden -count=1 -race $(TESTARGS) $(TEST)
-
-# Force set provider configuration environment variables, as required vars get
-# listed as "Optional" if the corresponding var is not empty.
-.PHONY: docs
-docs: tfplugindocs
-	KATAPULT_API_KEY="" KATAPULT_ORGANIZATION="" KATAPULT_DATA_CENTER="" \
-		tfplugindocs
 
 .PHONY: test-deps
 test-deps:
 	go test all
 
 .PHONY: lint
-lint: golangci-lint
+lint: $(TOOLDIR)/golangci-lint
 	GOGC=off golangci-lint $(V) run
 
 .PHONY: format
-format: gofumports
+format: $(TOOLDIR)/gofumports
 	gofumports -w .
 
 sweep:
 	$(info WARNING: This will destroy infrastructure. Use only on \
 		development accounts.)
 	go test $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 60m
+
+#
+# Documentation
+#
+
+# Force set provider configuration environment variables, as required vars get
+# listed as "Optional" if the corresponding var is not empty.
+.PHONY: docs
+docs: $(TOOLDIR)/tfplugindocs
+	KATAPULT_API_KEY="" KATAPULT_ORGANIZATION="" KATAPULT_DATA_CENTER="" \
+		tfplugindocs
 
 #
 # Coverage
@@ -181,7 +177,7 @@ deps-update:
 	go get -u ./...
 
 .PHONY: deps-analyze
-deps-analyze: gomod
+deps-analyze: $(TOOLDIR)/gomod
 	gomod analyze
 
 .PHONY: tidy
