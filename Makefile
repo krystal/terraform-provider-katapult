@@ -61,7 +61,7 @@ tools: $(TOOLS)
 # Build
 #
 
-BINARY=terraform-provider-$(NAME)
+BINARY=bin/terraform-provider-$(NAME)
 LDFLAGS := -w -s
 
 VERSION ?= $(shell git describe --tags 2>/dev/null)
@@ -130,6 +130,26 @@ sweep:
 	$(info WARNING: This will destroy infrastructure. Use only on \
 		development accounts.)
 	go test $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 60m
+
+.PHONY: shell
+shell: docker-dev-build
+	$(eval IMAGE := $(shell $(DOCKER_DEV_BUILD_CMD) -q))
+	docker run --rm -ti \
+		-v "$(CURDIR)/:/app/" \
+		-v "katapult-terraform-provider-bins:/app/bin" \
+		-v "katapult-terraform-provider-gomod-cache:/go/pkg/mod" \
+		"$(IMAGE)" bash
+
+.PHONY: shell-clean
+shell-clean:
+	docker volume rm katapult-terraform-provider-bins
+	docker volume rm katapult-terraform-provider-gomod-cache
+
+DOCKER_DEV_BUILD_CMD = docker build -f Dockerfile.dev .
+
+.PHONY: docker-dev-build
+docker-dev-build:
+	$(DOCKER_DEV_BUILD_CMD)
 
 #
 # Documentation

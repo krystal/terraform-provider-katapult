@@ -1,0 +1,20 @@
+FROM golang:1.15-alpine
+
+RUN apk add --no-cache \
+    bash \
+    build-base \
+    curl \
+    git \
+    make \
+    terraform \
+    tree
+
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+RUN set -e && \
+    curl -sfL https://direnv.net/install.sh | bash && \
+    echo 'export PS1="\u@go-alpine:\w\$ "' > /root/.bashrc && \
+    echo 'alias ll="ls -lah"' >> /root/.bashrc && \
+    echo 'alias ma="make"' >> /root/.bashrc && \
+    direnv hook bash >> /root/.bashrc
+
+WORKDIR /app
