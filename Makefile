@@ -162,7 +162,7 @@ cov-func: coverage.out
 	go tool cover -func=coverage.out
 
 coverage.out: $(SOURCES)
-	TF_ACC=1 VCR=replay go test $(V) -timeout=120m \
+	TF_ACC=0 VCR=replay go test $(V) -timeout=120m \
 			-covermode=count -coverprofile=coverage.out \
 			$(TESTARGS) $(TEST)
 
