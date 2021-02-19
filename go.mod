@@ -1,6 +1,6 @@
 module github.com/krystal/terraform-provider-katapult
 
-go 1.15
+go 1.16
 
 require (
 	cloud.google.com/go v0.76.0 // indirect
