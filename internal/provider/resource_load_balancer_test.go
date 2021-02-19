@@ -26,9 +26,7 @@ func testSweepLoadBalancers(_ string) error {
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		pageResult, resp, err := m.Client.LoadBalancers.List(
-			m.Ctx,
-			&katapult.Organization{ID: m.OrganizationID},
-			&katapult.ListOptions{Page: pageNum},
+			m.Ctx, m.OrganizationRef(), &katapult.ListOptions{Page: pageNum},
 		)
 		if err != nil {
 			return err

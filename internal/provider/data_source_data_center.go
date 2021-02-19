@@ -60,17 +60,9 @@ func dataSourceDataCenterRead(
 		dc, _, err = c.DataCenters.GetByID(ctx, id)
 	case permalink != "":
 		dc, _, err = c.DataCenters.GetByPermalink(ctx, permalink)
-	case meta.DataCenterID != "":
-		dc, _, err = c.DataCenters.GetByID(ctx, meta.DataCenterID)
 	default:
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "\"id\" or \"permalink\" argument must be specified.",
-		})
-
-		return diags
+		dc, err = meta.DataCenter(ctx)
 	}
-
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -90,25 +82,27 @@ func dataSourceDataCenterRead(
 func defaultNetworkForDataCenter(
 	ctx context.Context,
 	meta *Meta,
-	dc *katapult.DataCenter,
 ) (*katapult.Network, error) {
-	networks, _, _, err := meta.Client.Networks.List(ctx, meta.Organization())
+	networks, _, _, err := meta.Client.Networks.List(
+		ctx, meta.OrganizationRef(),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	if dc == nil {
-		dc = meta.DataCenter()
+	dcID, err := meta.DataCenterID(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, network := range networks {
-		if network.DataCenter != nil && network.DataCenter.ID == dc.ID &&
+		if network.DataCenter != nil && network.DataCenter.ID == dcID &&
 			strings.Contains(strings.ToLower(network.Name), "public") {
 			return network, nil
 		}
 	}
 
 	return nil, fmt.Errorf(
-		"default network for data center %s could not be determined", dc.ID,
+		"default network for data center %s could not be determined", dcID,
 	)
 }

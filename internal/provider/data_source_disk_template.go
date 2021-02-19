@@ -92,12 +92,10 @@ func fetchDiskTemplate(
 		permalink = idOrPermalink
 	}
 
-	org := meta.Organization()
-
 	totalPages := 2
 	for pageNum := 1; pageNum < totalPages; pageNum++ {
 		templates, resp, err := meta.Client.DiskTemplates.List(
-			ctx, org, &katapult.DiskTemplateListOptions{
+			ctx, meta.OrganizationRef(), &katapult.DiskTemplateListOptions{
 				IncludeUniversal: true,
 				Page:             pageNum,
 			},

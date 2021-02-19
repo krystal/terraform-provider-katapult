@@ -90,10 +90,6 @@ func resourceLoadBalancerCreate(
 	m interface{},
 ) diag.Diagnostics {
 	meta := m.(*Meta)
-
-	org := meta.Organization()
-	dcID := meta.DataCenterID
-
 	name := meta.UseOrGenerateName(d.Get("name").(string))
 
 	t, ids := extractLoadBalancerResourceTypeAndIDs(d, m)
@@ -105,10 +101,12 @@ func resourceLoadBalancerCreate(
 		Name:         name,
 		ResourceType: t,
 		ResourceIDs:  &ids,
-		DataCenter:   &katapult.DataCenter{ID: dcID},
+		DataCenter:   meta.DataCenterRef(),
 	}
 
-	lb, _, err := meta.Client.LoadBalancers.Create(ctx, org, args)
+	lb, _, err := meta.Client.LoadBalancers.Create(
+		ctx, meta.OrganizationRef(), args,
+	)
 	if err != nil {
 		return diag.FromErr(err)
 	}

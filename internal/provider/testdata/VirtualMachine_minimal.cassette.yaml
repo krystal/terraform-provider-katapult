@@ -8,11 +8,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/organizations/_/available_networks?organization%5Bid%5D=org_eodfyqFF3YWb2OFC
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/organizations/_/available_networks?organization%5Bsub_domain%5D=terraform-acc-test
     method: GET
   response:
-    body: '{"networks":[{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"}}],"virtual_networks":[]}'
+    body: '{"networks":[{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"}},{"id":"netw_q0lBvtutvOjujgyO","name":"Public Network - NYC","permalink":"us-nyc-01","data_center":{"id":"dc_TfDSMyVYoS3fJnSt","name":"New York","permalink":"us-nyc-01"}}],"virtual_networks":[]}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -23,13 +23,55 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "206"
+      - "376"
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:15 GMT
+      - Thu, 18 Feb 2021 22:10:01 GMT
       Etag:
-      - W/"83acdeeac637486bc5f2f53681d19f3b"
+      - W/"556a80fd56c052ba0c772f9d204cefad"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "199"
+      X-Request-Id:
+      - 2424059a-8645-48ec-b5a5-0db17bebb4a9
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/data_centers/_?data_center%5Bpermalink%5D=uk-lon-01
+    method: GET
+  response:
+    body: '{"data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom"}}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "150"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 18 Feb 2021 22:10:01 GMT
+      Etag:
+      - W/"472ac8fb76e85c650214cebfe1011d9e"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -39,13 +81,13 @@ interactions:
       X-Ratelimit-Remaining:
       - "198"
       X-Request-Id:
-      - 45113bd0-6c7c-43fc-9b21-2df375f20d1c
+      - 348bef4f-ce58-4d29-a882-f34c026c3794
     status: 200 OK
     code: 200
     duration: ""
 - request:
     body: |
-      {"organization":{"id":"org_eodfyqFF3YWb2OFC"},"network":{"id":"netw_gVRkZdSKczfNg34P"},"version":"ipv4"}
+      {"organization":{"sub_domain":"terraform-acc-test"},"network":{"id":"netw_gVRkZdSKczfNg34P"},"version":"ipv4"}
     form: {}
     headers:
       Accept:
@@ -53,11 +95,11 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
     url: https://api.katapult.io/core/v1/organizations/_/ip_addresses
     method: POST
   response:
-    body: '{"ip_address":{"id":"ip_3qBjx4ooTYHapBbi","address":"185.199.221.80","reverse_dns":"185-199-221-80.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.221.80/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"allocation_id":null,"allocation_type":null}}'
+    body: '{"ip_address":{"id":"ip_Z1WyabOhrawBfZBi","address":"185.53.57.195","reverse_dns":"185-53-57-195.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.195/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -68,13 +110,142 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "548"
+      - "546"
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:15 GMT
+      - Thu, 18 Feb 2021 22:10:01 GMT
       Etag:
-      - W/"a6dae435ee88e7651543d1ff657a3016"
+      - W/"1e6a5e0bd329d67cc5ea41d3fd0e1838"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "197"
+      X-Request-Id:
+      - 0d454f7b-ab86-460f-bb97-92edecabc9bd
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_Z1WyabOhrawBfZBi
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_Z1WyabOhrawBfZBi","address":"185.53.57.195","reverse_dns":"185-53-57-195.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.195/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "564"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 18 Feb 2021 22:10:01 GMT
+      Etag:
+      - W/"ac3fdf98744eaa46f6ce38ee406ae705"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "196"
+      X-Request-Id:
+      - 19e49c25-dd2e-4399-910c-54b6819a48d1
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_Z1WyabOhrawBfZBi
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_Z1WyabOhrawBfZBi","address":"185.53.57.195","reverse_dns":"185-53-57-195.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.195/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "564"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 18 Feb 2021 22:10:01 GMT
+      Etag:
+      - W/"ac3fdf98744eaa46f6ce38ee406ae705"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "195"
+      X-Request-Id:
+      - 182f6745-323f-4750-b799-0d564e91ce92
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: |
+      {"organization":{"sub_domain":"terraform-acc-test"},"xml":"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VirtualMachineSpec><DataCenter by=\"permalink\">uk-lon-01</DataCenter><Resources><Package by=\"permalink\">rock-3</Package></Resources><DiskTemplate><DiskTemplate by=\"permalink\">templates/ubuntu-18-04</DiskTemplate><Option key=\"install_agent\">true</Option></DiskTemplate><NetworkInterfaces><NetworkInterface><Network>netw_gVRkZdSKczfNg34P</Network><IPAddressAllocation type=\"existing\"><IPAddress>ip_Z1WyabOhrawBfZBi</IPAddress></IPAddressAllocation></NetworkInterface></NetworkInterfaces><Hostname><Hostname>tf-acc-test-obedient-sweet-tulip</Hostname></Hostname><AuthorizedKeys><Users all=\"yes\"></Users><SSHKeys all=\"yes\"></SSHKeys></AuthorizedKeys></VirtualMachineSpec>"}
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/organizations/_/virtual_machines/build_from_spec
+    method: POST
+  response:
+    body: '{"task":{"id":"task_EaFTKkJddJyQr2hw","name":"Build virtual machine","status":"pending"},"build":{"id":"vmbuild_xYfb9KcaV0iVpUaM","state":"pending"},"virtual_machine_build":{"id":"vmbuild_xYfb9KcaV0iVpUaM","state":"pending"},"hostname":"tf-acc-test-obedient-sweet-tulip"}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "271"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 18 Feb 2021 22:10:02 GMT
+      Etag:
+      - W/"4fd5b40747337ced1b85d56643dad1d4"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -84,136 +255,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "194"
       X-Request-Id:
-      - 84429c3e-c006-4e34-9f6f-dc2bf0d7c219
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      Accept:
-      - application/json
-      User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_3qBjx4ooTYHapBbi
-    method: GET
-  response:
-    body: '{"ip_address":{"id":"ip_3qBjx4ooTYHapBbi","address":"185.199.221.80","reverse_dns":"185-199-221-80.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.221.80/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
-    headers:
-      Access-Control-Allow-Methods:
-      - '*'
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - "566"
-      Content-Type:
-      - application/json
-      Date:
-      - Sat, 09 Jan 2021 03:26:15 GMT
-      Etag:
-      - W/"d4050e4302c3c6fd065c600fc64084ed"
-      Server:
-      - nginx/1.14.0 (Ubuntu)
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "200"
-      X-Ratelimit-Remaining:
-      - "190"
-      X-Request-Id:
-      - f8057ea2-3391-4b9c-a2bb-98f5ad3a4d0c
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      Accept:
-      - application/json
-      User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_3qBjx4ooTYHapBbi
-    method: GET
-  response:
-    body: '{"ip_address":{"id":"ip_3qBjx4ooTYHapBbi","address":"185.199.221.80","reverse_dns":"185-199-221-80.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.221.80/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
-    headers:
-      Access-Control-Allow-Methods:
-      - '*'
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - "566"
-      Content-Type:
-      - application/json
-      Date:
-      - Sat, 09 Jan 2021 03:26:15 GMT
-      Etag:
-      - W/"d4050e4302c3c6fd065c600fc64084ed"
-      Server:
-      - nginx/1.14.0 (Ubuntu)
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "200"
-      X-Ratelimit-Remaining:
-      - "187"
-      X-Request-Id:
-      - 6c498fb8-77d7-43f3-81de-1e1c93a2f1da
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: |
-      {"organization":{"id":"org_eodfyqFF3YWb2OFC"},"xml":"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VirtualMachineSpec><DataCenter>loc_UUhPmoCbpic6UX0Y</DataCenter><Resources><Package by=\"permalink\">rock-3</Package></Resources><DiskTemplate><DiskTemplate by=\"permalink\">templates/ubuntu-18-04</DiskTemplate><Option key=\"install_agent\">true</Option></DiskTemplate><NetworkInterfaces><NetworkInterface><Network>netw_gVRkZdSKczfNg34P</Network><IPAddressAllocation type=\"existing\"><IPAddress>ip_3qBjx4ooTYHapBbi</IPAddress></IPAddressAllocation></NetworkInterface></NetworkInterfaces><Hostname><Hostname>tf-acc-test-popular-red-lychee</Hostname></Hostname><AuthorizedKeys><Users all=\"yes\"></Users><SSHKeys all=\"yes\"></SSHKeys></AuthorizedKeys></VirtualMachineSpec>"}
-    form: {}
-    headers:
-      Accept:
-      - application/json
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/organizations/_/virtual_machines/build_from_spec
-    method: POST
-  response:
-    body: '{"task":{"id":"task_ebkzC15kkSvpK0dl","name":"Build virtual machine","status":"pending"},"build":{"id":"vmbuild_Vpj86CMB3NREVPvt","state":"pending"},"virtual_machine_build":{"id":"vmbuild_Vpj86CMB3NREVPvt","state":"pending"},"hostname":"tf-acc-test-popular-red-lychee"}'
-    headers:
-      Access-Control-Allow-Methods:
-      - '*'
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - "269"
-      Content-Type:
-      - application/json
-      Date:
-      - Sat, 09 Jan 2021 03:26:15 GMT
-      Etag:
-      - W/"147d9c408b3722512673f1de2e74b393"
-      Server:
-      - nginx/1.14.0 (Ubuntu)
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "200"
-      X-Ratelimit-Remaining:
-      - "184"
-      X-Request-Id:
-      - a4655e63-d122-4e90-b51c-084ca84bd46d
+      - bbefe0aa-2427-49c1-9122-63e128480f56
     status: 201 Created
     code: 201
     duration: ""
@@ -224,11 +266,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/builds/vmbuild_Vpj86CMB3NREVPvt
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/builds/vmbuild_xYfb9KcaV0iVpUaM
     method: GET
   response:
-    body: '{"virtual_machine_build":{"id":"vmbuild_Vpj86CMB3NREVPvt","spec_xml":"\u003c?xml version=\"1.0\"?\u003e\n\u003cVirtualMachineSpec\u003e\n  \u003cDataCenter\u003eloc_UUhPmoCbpic6UX0Y\u003c/DataCenter\u003e\n  \u003cResources\u003e\n    \u003cPackage by=\"permalink\"\u003erock-3\u003c/Package\u003e\n  \u003c/Resources\u003e\n  \u003cDiskTemplate\u003e\n    \u003cDiskTemplate by=\"permalink\"\u003etemplates/ubuntu-18-04\u003c/DiskTemplate\u003e\n    \u003cVersion by=\"number\"\u003e1\u003c/Version\u003e\n    \u003cOption key=\"install_agent\"\u003etrue\u003c/Option\u003e\n  \u003c/DiskTemplate\u003e\n  \u003cNetworkInterfaces\u003e\n    \u003cNetworkInterface\u003e\n      \u003cNetwork\u003enetw_gVRkZdSKczfNg34P\u003c/Network\u003e\n      \u003cIPAddressAllocation type=\"existing\"\u003e\n        \u003cIPAddress by=\"address\"\u003e185.199.221.80\u003c/IPAddress\u003e\n      \u003c/IPAddressAllocation\u003e\n    \u003c/NetworkInterface\u003e\n  \u003c/NetworkInterfaces\u003e\n  \u003cHostname\u003e\n    \u003cHostname\u003etf-acc-test-popular-red-lychee\u003c/Hostname\u003e\n  \u003c/Hostname\u003e\n  \u003cAuthorizedKeys\u003e\n    \u003cUsers all=\"yes\"/\u003e\n    \u003cSSHKeys all=\"yes\"/\u003e\n  \u003c/AuthorizedKeys\u003e\n\u003c/VirtualMachineSpec\u003e\n","state":"building","virtual_machine":null,"created_at":1610162775}}'
+    body: '{"virtual_machine_build":{"id":"vmbuild_xYfb9KcaV0iVpUaM","spec_xml":"\u003c?xml version=\"1.0\"?\u003e\n\u003cVirtualMachineSpec\u003e\n  \u003cDataCenter\u003eloc_UUhPmoCbpic6UX0Y\u003c/DataCenter\u003e\n  \u003cResources\u003e\n    \u003cPackage by=\"permalink\"\u003erock-3\u003c/Package\u003e\n  \u003c/Resources\u003e\n  \u003cDiskTemplate\u003e\n    \u003cDiskTemplate by=\"permalink\"\u003etemplates/ubuntu-18-04\u003c/DiskTemplate\u003e\n    \u003cVersion by=\"number\"\u003e1\u003c/Version\u003e\n    \u003cOption key=\"install_agent\"\u003etrue\u003c/Option\u003e\n  \u003c/DiskTemplate\u003e\n  \u003cNetworkInterfaces\u003e\n    \u003cNetworkInterface\u003e\n      \u003cNetwork\u003enetw_gVRkZdSKczfNg34P\u003c/Network\u003e\n      \u003cIPAddressAllocation type=\"existing\"\u003e\n        \u003cIPAddress by=\"address\"\u003e185.53.57.195\u003c/IPAddress\u003e\n      \u003c/IPAddressAllocation\u003e\n    \u003c/NetworkInterface\u003e\n  \u003c/NetworkInterfaces\u003e\n  \u003cHostname\u003e\n    \u003cHostname\u003etf-acc-test-obedient-sweet-tulip\u003c/Hostname\u003e\n  \u003c/Hostname\u003e\n  \u003cAuthorizedKeys\u003e\n    \u003cUsers all=\"yes\"/\u003e\n    \u003cSSHKeys all=\"yes\"/\u003e\n  \u003c/AuthorizedKeys\u003e\n\u003c/VirtualMachineSpec\u003e\n","state":"building","virtual_machine":{"id":"vm_av3GXGhs8OXbgu5Q","name":"tf-acc-test-obedient-sweet-tulip","hostname":"tf-acc-test-obedient-sweet-tulip","fqdn":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","state":"stopped"},"created_at":1613686201}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -239,13 +281,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "1351"
+      - "1558"
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:17 GMT
+      - Thu, 18 Feb 2021 22:10:04 GMT
       Etag:
-      - W/"22fc4f9fdacf45f3ea57b80ad8bcdb77"
+      - W/"e5af7806055f0ad1b68f7d287aa9c1e7"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -253,9 +295,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "178"
+      - "193"
       X-Request-Id:
-      - b87069ce-6263-4bda-bbb9-8861f7bf954f
+      - 00f93a95-c870-4f49-a7f0-eca95f1f42cf
     status: 200 OK
     code: 200
     duration: ""
@@ -266,11 +308,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/builds/vmbuild_Vpj86CMB3NREVPvt
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/builds/vmbuild_xYfb9KcaV0iVpUaM
     method: GET
   response:
-    body: '{"virtual_machine_build":{"id":"vmbuild_Vpj86CMB3NREVPvt","spec_xml":"\u003c?xml version=\"1.0\"?\u003e\n\u003cVirtualMachineSpec\u003e\n  \u003cDataCenter\u003eloc_UUhPmoCbpic6UX0Y\u003c/DataCenter\u003e\n  \u003cResources\u003e\n    \u003cPackage by=\"permalink\"\u003erock-3\u003c/Package\u003e\n  \u003c/Resources\u003e\n  \u003cDiskTemplate\u003e\n    \u003cDiskTemplate by=\"permalink\"\u003etemplates/ubuntu-18-04\u003c/DiskTemplate\u003e\n    \u003cVersion by=\"number\"\u003e1\u003c/Version\u003e\n    \u003cOption key=\"install_agent\"\u003etrue\u003c/Option\u003e\n  \u003c/DiskTemplate\u003e\n  \u003cNetworkInterfaces\u003e\n    \u003cNetworkInterface\u003e\n      \u003cNetwork\u003enetw_gVRkZdSKczfNg34P\u003c/Network\u003e\n      \u003cIPAddressAllocation type=\"existing\"\u003e\n        \u003cIPAddress by=\"address\"\u003e185.199.221.80\u003c/IPAddress\u003e\n      \u003c/IPAddressAllocation\u003e\n    \u003c/NetworkInterface\u003e\n  \u003c/NetworkInterfaces\u003e\n  \u003cHostname\u003e\n    \u003cHostname\u003etf-acc-test-popular-red-lychee\u003c/Hostname\u003e\n  \u003c/Hostname\u003e\n  \u003cAuthorizedKeys\u003e\n    \u003cUsers all=\"yes\"/\u003e\n    \u003cSSHKeys all=\"yes\"/\u003e\n  \u003c/AuthorizedKeys\u003e\n\u003c/VirtualMachineSpec\u003e\n","state":"building","virtual_machine":{"id":"vm_G9Gu3sUwIDehZNT0","name":"tf-acc-test-popular-red-lychee","hostname":"tf-acc-test-popular-red-lychee","fqdn":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","state":"stopped"},"created_at":1610162775}}'
+    body: '{"virtual_machine_build":{"id":"vmbuild_xYfb9KcaV0iVpUaM","spec_xml":"\u003c?xml version=\"1.0\"?\u003e\n\u003cVirtualMachineSpec\u003e\n  \u003cDataCenter\u003eloc_UUhPmoCbpic6UX0Y\u003c/DataCenter\u003e\n  \u003cResources\u003e\n    \u003cPackage by=\"permalink\"\u003erock-3\u003c/Package\u003e\n  \u003c/Resources\u003e\n  \u003cDiskTemplate\u003e\n    \u003cDiskTemplate by=\"permalink\"\u003etemplates/ubuntu-18-04\u003c/DiskTemplate\u003e\n    \u003cVersion by=\"number\"\u003e1\u003c/Version\u003e\n    \u003cOption key=\"install_agent\"\u003etrue\u003c/Option\u003e\n  \u003c/DiskTemplate\u003e\n  \u003cNetworkInterfaces\u003e\n    \u003cNetworkInterface\u003e\n      \u003cNetwork\u003enetw_gVRkZdSKczfNg34P\u003c/Network\u003e\n      \u003cIPAddressAllocation type=\"existing\"\u003e\n        \u003cIPAddress by=\"address\"\u003e185.53.57.195\u003c/IPAddress\u003e\n      \u003c/IPAddressAllocation\u003e\n    \u003c/NetworkInterface\u003e\n  \u003c/NetworkInterfaces\u003e\n  \u003cHostname\u003e\n    \u003cHostname\u003etf-acc-test-obedient-sweet-tulip\u003c/Hostname\u003e\n  \u003c/Hostname\u003e\n  \u003cAuthorizedKeys\u003e\n    \u003cUsers all=\"yes\"/\u003e\n    \u003cSSHKeys all=\"yes\"/\u003e\n  \u003c/AuthorizedKeys\u003e\n\u003c/VirtualMachineSpec\u003e\n","state":"building","virtual_machine":{"id":"vm_av3GXGhs8OXbgu5Q","name":"tf-acc-test-obedient-sweet-tulip","hostname":"tf-acc-test-obedient-sweet-tulip","fqdn":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","state":"stopped"},"created_at":1613686201}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -281,13 +323,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "1551"
+      - "1558"
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:22 GMT
+      - Thu, 18 Feb 2021 22:10:09 GMT
       Etag:
-      - W/"a3781d9db5dbad9c2805645d9f7be868"
+      - W/"e5af7806055f0ad1b68f7d287aa9c1e7"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -295,9 +337,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "174"
+      - "192"
       X-Request-Id:
-      - 4c359733-f4e8-4d3a-9d7f-751cb368e753
+      - 5d8ef4b0-ba90-472d-b169-64d74355886c
     status: 200 OK
     code: 200
     duration: ""
@@ -308,11 +350,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/builds/vmbuild_Vpj86CMB3NREVPvt
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/builds/vmbuild_xYfb9KcaV0iVpUaM
     method: GET
   response:
-    body: '{"virtual_machine_build":{"id":"vmbuild_Vpj86CMB3NREVPvt","spec_xml":"\u003c?xml version=\"1.0\"?\u003e\n\u003cVirtualMachineSpec\u003e\n  \u003cDataCenter\u003eloc_UUhPmoCbpic6UX0Y\u003c/DataCenter\u003e\n  \u003cResources\u003e\n    \u003cPackage by=\"permalink\"\u003erock-3\u003c/Package\u003e\n  \u003c/Resources\u003e\n  \u003cDiskTemplate\u003e\n    \u003cDiskTemplate by=\"permalink\"\u003etemplates/ubuntu-18-04\u003c/DiskTemplate\u003e\n    \u003cVersion by=\"number\"\u003e1\u003c/Version\u003e\n    \u003cOption key=\"install_agent\"\u003etrue\u003c/Option\u003e\n  \u003c/DiskTemplate\u003e\n  \u003cNetworkInterfaces\u003e\n    \u003cNetworkInterface\u003e\n      \u003cNetwork\u003enetw_gVRkZdSKczfNg34P\u003c/Network\u003e\n      \u003cIPAddressAllocation type=\"existing\"\u003e\n        \u003cIPAddress by=\"address\"\u003e185.199.221.80\u003c/IPAddress\u003e\n      \u003c/IPAddressAllocation\u003e\n    \u003c/NetworkInterface\u003e\n  \u003c/NetworkInterfaces\u003e\n  \u003cHostname\u003e\n    \u003cHostname\u003etf-acc-test-popular-red-lychee\u003c/Hostname\u003e\n  \u003c/Hostname\u003e\n  \u003cAuthorizedKeys\u003e\n    \u003cUsers all=\"yes\"/\u003e\n    \u003cSSHKeys all=\"yes\"/\u003e\n  \u003c/AuthorizedKeys\u003e\n\u003c/VirtualMachineSpec\u003e\n","state":"building","virtual_machine":{"id":"vm_G9Gu3sUwIDehZNT0","name":"tf-acc-test-popular-red-lychee","hostname":"tf-acc-test-popular-red-lychee","fqdn":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","state":"stopped"},"created_at":1610162775}}'
+    body: '{"virtual_machine_build":{"id":"vmbuild_xYfb9KcaV0iVpUaM","spec_xml":"\u003c?xml version=\"1.0\"?\u003e\n\u003cVirtualMachineSpec\u003e\n  \u003cDataCenter\u003eloc_UUhPmoCbpic6UX0Y\u003c/DataCenter\u003e\n  \u003cResources\u003e\n    \u003cPackage by=\"permalink\"\u003erock-3\u003c/Package\u003e\n  \u003c/Resources\u003e\n  \u003cDiskTemplate\u003e\n    \u003cDiskTemplate by=\"permalink\"\u003etemplates/ubuntu-18-04\u003c/DiskTemplate\u003e\n    \u003cVersion by=\"number\"\u003e1\u003c/Version\u003e\n    \u003cOption key=\"install_agent\"\u003etrue\u003c/Option\u003e\n  \u003c/DiskTemplate\u003e\n  \u003cNetworkInterfaces\u003e\n    \u003cNetworkInterface\u003e\n      \u003cNetwork\u003enetw_gVRkZdSKczfNg34P\u003c/Network\u003e\n      \u003cIPAddressAllocation type=\"existing\"\u003e\n        \u003cIPAddress by=\"address\"\u003e185.53.57.195\u003c/IPAddress\u003e\n      \u003c/IPAddressAllocation\u003e\n    \u003c/NetworkInterface\u003e\n  \u003c/NetworkInterfaces\u003e\n  \u003cHostname\u003e\n    \u003cHostname\u003etf-acc-test-obedient-sweet-tulip\u003c/Hostname\u003e\n  \u003c/Hostname\u003e\n  \u003cAuthorizedKeys\u003e\n    \u003cUsers all=\"yes\"/\u003e\n    \u003cSSHKeys all=\"yes\"/\u003e\n  \u003c/AuthorizedKeys\u003e\n\u003c/VirtualMachineSpec\u003e\n","state":"complete","virtual_machine":{"id":"vm_av3GXGhs8OXbgu5Q","name":"tf-acc-test-obedient-sweet-tulip","hostname":"tf-acc-test-obedient-sweet-tulip","fqdn":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","state":"starting"},"created_at":1613686201}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -323,13 +365,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "1551"
+      - "1559"
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:32 GMT
+      - Thu, 18 Feb 2021 22:10:19 GMT
       Etag:
-      - W/"a3781d9db5dbad9c2805645d9f7be868"
+      - W/"8145494a5ded7f2d77db550232a6fcfa"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -337,9 +379,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "170"
+      - "191"
       X-Request-Id:
-      - 9002df9f-a8d2-42b1-9ee6-0fd9147ba77f
+      - be9cfb32-1cb8-46a4-aa0e-082e2e7e0401
     status: 200 OK
     code: 200
     duration: ""
@@ -350,11 +392,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/builds/vmbuild_Vpj86CMB3NREVPvt
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_av3GXGhs8OXbgu5Q
     method: GET
   response:
-    body: '{"virtual_machine_build":{"id":"vmbuild_Vpj86CMB3NREVPvt","spec_xml":"\u003c?xml version=\"1.0\"?\u003e\n\u003cVirtualMachineSpec\u003e\n  \u003cDataCenter\u003eloc_UUhPmoCbpic6UX0Y\u003c/DataCenter\u003e\n  \u003cResources\u003e\n    \u003cPackage by=\"permalink\"\u003erock-3\u003c/Package\u003e\n  \u003c/Resources\u003e\n  \u003cDiskTemplate\u003e\n    \u003cDiskTemplate by=\"permalink\"\u003etemplates/ubuntu-18-04\u003c/DiskTemplate\u003e\n    \u003cVersion by=\"number\"\u003e1\u003c/Version\u003e\n    \u003cOption key=\"install_agent\"\u003etrue\u003c/Option\u003e\n  \u003c/DiskTemplate\u003e\n  \u003cNetworkInterfaces\u003e\n    \u003cNetworkInterface\u003e\n      \u003cNetwork\u003enetw_gVRkZdSKczfNg34P\u003c/Network\u003e\n      \u003cIPAddressAllocation type=\"existing\"\u003e\n        \u003cIPAddress by=\"address\"\u003e185.199.221.80\u003c/IPAddress\u003e\n      \u003c/IPAddressAllocation\u003e\n    \u003c/NetworkInterface\u003e\n  \u003c/NetworkInterfaces\u003e\n  \u003cHostname\u003e\n    \u003cHostname\u003etf-acc-test-popular-red-lychee\u003c/Hostname\u003e\n  \u003c/Hostname\u003e\n  \u003cAuthorizedKeys\u003e\n    \u003cUsers all=\"yes\"/\u003e\n    \u003cSSHKeys all=\"yes\"/\u003e\n  \u003c/AuthorizedKeys\u003e\n\u003c/VirtualMachineSpec\u003e\n","state":"complete","virtual_machine":{"id":"vm_G9Gu3sUwIDehZNT0","name":"tf-acc-test-popular-red-lychee","hostname":"tf-acc-test-popular-red-lychee","fqdn":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","state":"started"},"created_at":1610162775}}'
+    body: '{"virtual_machine":{"id":"vm_av3GXGhs8OXbgu5Q","name":"tf-acc-test-obedient-sweet-tulip","hostname":"tf-acc-test-obedient-sweet-tulip","fqdn":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","description":null,"created_at":1613686202,"initial_root_password":"g99otvAPDmdrMyfm","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_Z1WyabOhrawBfZBi","address":"185.53.57.195","reverse_dns":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.195/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_av3GXGhs8OXbgu5Q","allocation_type":"VirtualMachine"}]}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -365,13 +407,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "1551"
+      - "2131"
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:42 GMT
+      - Thu, 18 Feb 2021 22:10:21 GMT
       Etag:
-      - W/"b0e02791b85b4799a02e822ea0f0488a"
+      - W/"d003fe9898b30b8fa215e33d3789231c"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -379,9 +421,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "166"
+      - "190"
       X-Request-Id:
-      - cd3f4f05-447f-4ab1-9282-a2f8324343a6
+      - d0474825-2b6e-4660-95a0-a56e220de562
     status: 200 OK
     code: 200
     duration: ""
@@ -392,11 +434,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_G9Gu3sUwIDehZNT0
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_av3GXGhs8OXbgu5Q
     method: GET
   response:
-    body: '{"virtual_machine":{"id":"vm_G9Gu3sUwIDehZNT0","name":"tf-acc-test-popular-red-lychee","hostname":"tf-acc-test-popular-red-lychee","fqdn":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","description":null,"created_at":1610162776,"initial_root_password":"6Lq3o3hOikZw4n3v","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_3qBjx4ooTYHapBbi","address":"185.199.221.80","reverse_dns":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.221.80/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"allocation_id":"vm_G9Gu3sUwIDehZNT0","allocation_type":"VirtualMachine"}]}}'
+    body: '{"virtual_machine":{"id":"vm_av3GXGhs8OXbgu5Q","name":"tf-acc-test-obedient-sweet-tulip","hostname":"tf-acc-test-obedient-sweet-tulip","fqdn":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","description":null,"created_at":1613686202,"initial_root_password":"g99otvAPDmdrMyfm","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_Z1WyabOhrawBfZBi","address":"185.53.57.195","reverse_dns":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.195/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_av3GXGhs8OXbgu5Q","allocation_type":"VirtualMachine"}]}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -407,13 +449,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "2121"
+      - "2131"
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:44 GMT
+      - Thu, 18 Feb 2021 22:10:21 GMT
       Etag:
-      - W/"aa8a41de97c1c99bdd6f0ca9e3f72629"
+      - W/"d003fe9898b30b8fa215e33d3789231c"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -421,9 +463,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "160"
+      - "189"
       X-Request-Id:
-      - 7feff40c-1edb-4bb6-9d2d-7eb43fa66f79
+      - caa2364f-e6c6-4eef-9d69-5526cb31c0d8
     status: 200 OK
     code: 200
     duration: ""
@@ -434,11 +476,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_G9Gu3sUwIDehZNT0
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_av3GXGhs8OXbgu5Q
     method: GET
   response:
-    body: '{"virtual_machine":{"id":"vm_G9Gu3sUwIDehZNT0","name":"tf-acc-test-popular-red-lychee","hostname":"tf-acc-test-popular-red-lychee","fqdn":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","description":null,"created_at":1610162776,"initial_root_password":"6Lq3o3hOikZw4n3v","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_3qBjx4ooTYHapBbi","address":"185.199.221.80","reverse_dns":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.221.80/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"allocation_id":"vm_G9Gu3sUwIDehZNT0","allocation_type":"VirtualMachine"}]}}'
+    body: '{"virtual_machine":{"id":"vm_av3GXGhs8OXbgu5Q","name":"tf-acc-test-obedient-sweet-tulip","hostname":"tf-acc-test-obedient-sweet-tulip","fqdn":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","description":null,"created_at":1613686202,"initial_root_password":"g99otvAPDmdrMyfm","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_Z1WyabOhrawBfZBi","address":"185.53.57.195","reverse_dns":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.195/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_av3GXGhs8OXbgu5Q","allocation_type":"VirtualMachine"}]}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -449,13 +491,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "2121"
+      - "2131"
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:44 GMT
+      - Thu, 18 Feb 2021 22:10:21 GMT
       Etag:
-      - W/"aa8a41de97c1c99bdd6f0ca9e3f72629"
+      - W/"d003fe9898b30b8fa215e33d3789231c"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -463,9 +505,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "158"
+      - "188"
       X-Request-Id:
-      - ed271ec1-8626-438b-a2b7-759ae25f87d7
+      - d2fa1c82-799e-47e1-a487-fe909d343f5a
     status: 200 OK
     code: 200
     duration: ""
@@ -476,11 +518,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_G9Gu3sUwIDehZNT0
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_Z1WyabOhrawBfZBi
     method: GET
   response:
-    body: '{"virtual_machine":{"id":"vm_G9Gu3sUwIDehZNT0","name":"tf-acc-test-popular-red-lychee","hostname":"tf-acc-test-popular-red-lychee","fqdn":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","description":null,"created_at":1610162776,"initial_root_password":"6Lq3o3hOikZw4n3v","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_3qBjx4ooTYHapBbi","address":"185.199.221.80","reverse_dns":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.221.80/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"allocation_id":"vm_G9Gu3sUwIDehZNT0","allocation_type":"VirtualMachine"}]}}'
+    body: '{"ip_address":{"id":"ip_Z1WyabOhrawBfZBi","address":"185.53.57.195","reverse_dns":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.195/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_av3GXGhs8OXbgu5Q","allocation_type":"VirtualMachine"},"allocation":{"type":"VirtualMachine","value":{"id":"vm_av3GXGhs8OXbgu5Q","name":"tf-acc-test-obedient-sweet-tulip"}}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -491,13 +533,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "2121"
+      - "726"
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:45 GMT
+      - Thu, 18 Feb 2021 22:10:21 GMT
       Etag:
-      - W/"aa8a41de97c1c99bdd6f0ca9e3f72629"
+      - W/"42647a8fd4b2d3ca42a60192e4efcc72"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -505,9 +547,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "152"
+      - "187"
       X-Request-Id:
-      - f7d54af0-c8a7-4cbe-92a9-2d93acc1296b
+      - e8d15958-9d8d-4158-a18e-9c7dfbad7d42
     status: 200 OK
     code: 200
     duration: ""
@@ -518,11 +560,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_3qBjx4ooTYHapBbi
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_av3GXGhs8OXbgu5Q
     method: GET
   response:
-    body: '{"ip_address":{"id":"ip_3qBjx4ooTYHapBbi","address":"185.199.221.80","reverse_dns":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.221.80/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"allocation_id":"vm_G9Gu3sUwIDehZNT0","allocation_type":"VirtualMachine"},"allocation":{"type":"VirtualMachine","value":{"id":"vm_G9Gu3sUwIDehZNT0","name":"tf-acc-test-popular-red-lychee"}}}'
+    body: '{"virtual_machine":{"id":"vm_av3GXGhs8OXbgu5Q","name":"tf-acc-test-obedient-sweet-tulip","hostname":"tf-acc-test-obedient-sweet-tulip","fqdn":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","description":null,"created_at":1613686202,"initial_root_password":"g99otvAPDmdrMyfm","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_Z1WyabOhrawBfZBi","address":"185.53.57.195","reverse_dns":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.195/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_av3GXGhs8OXbgu5Q","allocation_type":"VirtualMachine"}]}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -533,13 +575,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "723"
+      - "2131"
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:45 GMT
+      - Thu, 18 Feb 2021 22:10:21 GMT
       Etag:
-      - W/"638f89cb36ea38b345b86a98630b35be"
+      - W/"d003fe9898b30b8fa215e33d3789231c"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -547,9 +589,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "149"
+      - "186"
       X-Request-Id:
-      - 0d22faa3-a913-46de-a188-5fd0155f6e79
+      - d8426b87-ee80-4d31-878f-b14362e78319
     status: 200 OK
     code: 200
     duration: ""
@@ -560,11 +602,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_G9Gu3sUwIDehZNT0
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_av3GXGhs8OXbgu5Q
     method: GET
   response:
-    body: '{"virtual_machine":{"id":"vm_G9Gu3sUwIDehZNT0","name":"tf-acc-test-popular-red-lychee","hostname":"tf-acc-test-popular-red-lychee","fqdn":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","description":null,"created_at":1610162776,"initial_root_password":"6Lq3o3hOikZw4n3v","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_3qBjx4ooTYHapBbi","address":"185.199.221.80","reverse_dns":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.221.80/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"allocation_id":"vm_G9Gu3sUwIDehZNT0","allocation_type":"VirtualMachine"}]}}'
+    body: '{"virtual_machine":{"id":"vm_av3GXGhs8OXbgu5Q","name":"tf-acc-test-obedient-sweet-tulip","hostname":"tf-acc-test-obedient-sweet-tulip","fqdn":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","description":null,"created_at":1613686202,"initial_root_password":"g99otvAPDmdrMyfm","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_Z1WyabOhrawBfZBi","address":"185.53.57.195","reverse_dns":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.195/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_av3GXGhs8OXbgu5Q","allocation_type":"VirtualMachine"}]}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -575,13 +617,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "2121"
+      - "2131"
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:45 GMT
+      - Thu, 18 Feb 2021 22:10:22 GMT
       Etag:
-      - W/"aa8a41de97c1c99bdd6f0ca9e3f72629"
+      - W/"d003fe9898b30b8fa215e33d3789231c"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -589,9 +631,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "147"
+      - "185"
       X-Request-Id:
-      - 0831e0e2-4b6f-4603-9a1e-3b9fe1eb8924
+      - 73da858d-79e4-46d6-94bb-2a5141de0e6d
     status: 200 OK
     code: 200
     duration: ""
@@ -602,53 +644,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_G9Gu3sUwIDehZNT0
-    method: GET
-  response:
-    body: '{"virtual_machine":{"id":"vm_G9Gu3sUwIDehZNT0","name":"tf-acc-test-popular-red-lychee","hostname":"tf-acc-test-popular-red-lychee","fqdn":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","description":null,"created_at":1610162776,"initial_root_password":"6Lq3o3hOikZw4n3v","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_3qBjx4ooTYHapBbi","address":"185.199.221.80","reverse_dns":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.221.80/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"allocation_id":"vm_G9Gu3sUwIDehZNT0","allocation_type":"VirtualMachine"}]}}'
-    headers:
-      Access-Control-Allow-Methods:
-      - '*'
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - "2121"
-      Content-Type:
-      - application/json
-      Date:
-      - Sat, 09 Jan 2021 03:26:46 GMT
-      Etag:
-      - W/"aa8a41de97c1c99bdd6f0ca9e3f72629"
-      Server:
-      - nginx/1.14.0 (Ubuntu)
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "200"
-      X-Ratelimit-Remaining:
-      - "141"
-      X-Request-Id:
-      - e0b4746f-8aff-4c87-83d3-f2e20ce97aba
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      Accept:
-      - application/json
-      User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_/stop?virtual_machine%5Bid%5D=vm_G9Gu3sUwIDehZNT0
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_/stop?virtual_machine%5Bid%5D=vm_av3GXGhs8OXbgu5Q
     method: POST
   response:
-    body: '{"task":{"id":"task_uehREXRHYdxUR0OT","name":"Stop virtual machine","status":"pending"}}'
+    body: '{"task":{"id":"task_nisLSIGkOZiev9t1","name":"Stop virtual machine","status":"pending"}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -663,9 +663,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:46 GMT
+      - Thu, 18 Feb 2021 22:10:22 GMT
       Etag:
-      - W/"268b1a19f630979868688fb797039243"
+      - W/"274cb2ac08ab45efb6f155aef3c92612"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -673,9 +673,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "140"
+      - "184"
       X-Request-Id:
-      - 9454717c-6b57-42e8-8b57-1081b9eaf4cc
+      - 413be5f0-6d6c-4cde-8481-e33f6959cde7
     status: 200 OK
     code: 200
     duration: ""
@@ -686,11 +686,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_G9Gu3sUwIDehZNT0
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_av3GXGhs8OXbgu5Q
     method: GET
   response:
-    body: '{"virtual_machine":{"id":"vm_G9Gu3sUwIDehZNT0","name":"tf-acc-test-popular-red-lychee","hostname":"tf-acc-test-popular-red-lychee","fqdn":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","description":null,"created_at":1610162776,"initial_root_password":"6Lq3o3hOikZw4n3v","state":"stopped","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_3qBjx4ooTYHapBbi","address":"185.199.221.80","reverse_dns":"tf-acc-test-popular-red-lychee.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.221.80/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":true}}},"allocation_id":"vm_G9Gu3sUwIDehZNT0","allocation_type":"VirtualMachine"}]}}'
+    body: '{"virtual_machine":{"id":"vm_av3GXGhs8OXbgu5Q","name":"tf-acc-test-obedient-sweet-tulip","hostname":"tf-acc-test-obedient-sweet-tulip","fqdn":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","description":null,"created_at":1613686202,"initial_root_password":"g99otvAPDmdrMyfm","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_Z1WyabOhrawBfZBi","address":"185.53.57.195","reverse_dns":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.195/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_av3GXGhs8OXbgu5Q","allocation_type":"VirtualMachine"}]}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -701,13 +701,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "2121"
+      - "2131"
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:48 GMT
+      - Thu, 18 Feb 2021 22:10:24 GMT
       Etag:
-      - W/"ab2e2168c9b9bb2d1b55e553b53fb234"
+      - W/"d003fe9898b30b8fa215e33d3789231c"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -715,9 +715,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "115"
+      - "183"
       X-Request-Id:
-      - 4a8e7edc-a847-4826-8c9d-59fbc0228cf1
+      - 9191031c-501e-44ec-a38b-cd39eeabd364
     status: 200 OK
     code: 200
     duration: ""
@@ -728,11 +728,95 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_G9Gu3sUwIDehZNT0
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_av3GXGhs8OXbgu5Q
+    method: GET
+  response:
+    body: '{"virtual_machine":{"id":"vm_av3GXGhs8OXbgu5Q","name":"tf-acc-test-obedient-sweet-tulip","hostname":"tf-acc-test-obedient-sweet-tulip","fqdn":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","description":null,"created_at":1613686202,"initial_root_password":"g99otvAPDmdrMyfm","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_Z1WyabOhrawBfZBi","address":"185.53.57.195","reverse_dns":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.195/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_av3GXGhs8OXbgu5Q","allocation_type":"VirtualMachine"}]}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "2131"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 18 Feb 2021 22:10:29 GMT
+      Etag:
+      - W/"d003fe9898b30b8fa215e33d3789231c"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "182"
+      X-Request-Id:
+      - e68e9537-ab86-436b-86f9-9b499ee86aee
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_av3GXGhs8OXbgu5Q
+    method: GET
+  response:
+    body: '{"virtual_machine":{"id":"vm_av3GXGhs8OXbgu5Q","name":"tf-acc-test-obedient-sweet-tulip","hostname":"tf-acc-test-obedient-sweet-tulip","fqdn":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","description":null,"created_at":1613686202,"initial_root_password":"g99otvAPDmdrMyfm","state":"stopped","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_Z1WyabOhrawBfZBi","address":"185.53.57.195","reverse_dns":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.195/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_av3GXGhs8OXbgu5Q","allocation_type":"VirtualMachine"}]}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "2131"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 18 Feb 2021 22:10:39 GMT
+      Etag:
+      - W/"3a988ca4c781eb2e3e8186011dd15eea"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "181"
+      X-Request-Id:
+      - 4d627f1b-c7ef-4490-8402-e831d58f932b
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_av3GXGhs8OXbgu5Q
     method: DELETE
   response:
-    body: '{"trash_object":{"id":"trsh_FjLmOVwWKJCphM3c","keep_until":1610335608,"object_id":"vm_G9Gu3sUwIDehZNT0","object_type":"VirtualMachine"}}'
+    body: '{"trash_object":{"id":"trsh_gcOYglbvgJiO51MS","keep_until":1613859039,"object_id":"vm_av3GXGhs8OXbgu5Q","object_type":"VirtualMachine"},"virtual_machine":{"id":"vm_av3GXGhs8OXbgu5Q","name":"tf-acc-test-obedient-sweet-tulip","hostname":"tf-acc-test-obedient-sweet-tulip","fqdn":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","description":null,"created_at":1613686202,"initial_root_password":"g99otvAPDmdrMyfm","state":"stopped","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","personal":false,"created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"Kemp House","address2":"152 - 160 City Road","address3":"London","address4":null,"postcode":"EC1V 2NX","vat_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"privacy":"public","icon":null},"attached_iso":null,"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_Z1WyabOhrawBfZBi","address":"185.53.57.195","reverse_dns":"tf-acc-test-obedient-sweet-tulip.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.195/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_av3GXGhs8OXbgu5Q","allocation_type":"VirtualMachine"}]}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -743,13 +827,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "136"
+      - "2266"
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:49 GMT
+      - Thu, 18 Feb 2021 22:10:40 GMT
       Etag:
-      - W/"a8f2006bf2147599a2b671ff29a86fb3"
+      - W/"99a2cbeab87299b490dbf35e0f117806"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -757,9 +841,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "114"
+      - "180"
       X-Request-Id:
-      - 866461ea-33f3-41f3-b4db-31bb0894a693
+      - 3e38e789-39bb-4ab4-8fb2-aef11baecbd5
     status: 200 OK
     code: 200
     duration: ""
@@ -770,8 +854,8 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/ip_addresses/_/unallocate?ip_address%5Bid%5D=ip_3qBjx4ooTYHapBbi
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_/unallocate?ip_address%5Bid%5D=ip_Z1WyabOhrawBfZBi
     method: POST
   response:
     body: '{}'
@@ -789,7 +873,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:49 GMT
+      - Thu, 18 Feb 2021 22:10:40 GMT
       Etag:
       - W/"44136fa355b3678a1146ad16f7e8649e"
       Server:
@@ -799,9 +883,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "109"
+      - "179"
       X-Request-Id:
-      - fddb01b8-356c-4876-951e-428b373dada5
+      - 2d8e3177-4d56-4f16-b307-56b85350060d
     status: 200 OK
     code: 200
     duration: ""
@@ -812,11 +896,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/trash_objects/_?trash_object%5Bid%5D=trsh_FjLmOVwWKJCphM3c
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/trash_objects/_?trash_object%5Bid%5D=trsh_gcOYglbvgJiO51MS
     method: DELETE
   response:
-    body: '{"task":{"id":"task_oBHbdkjELUTMT2BY","name":"Purge items from trash","status":"pending","created_at":1610162809,"started_at":null,"finished_at":null,"progress":0}}'
+    body: '{"task":{"id":"task_lpQqqrFJy22B2mzb","name":"Purge items from trash","status":"pending","created_at":1613686240,"started_at":null,"finished_at":null,"progress":0}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -831,9 +915,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:49 GMT
+      - Thu, 18 Feb 2021 22:10:40 GMT
       Etag:
-      - W/"7ba27c0009b752bec7ff7d8b9f16a541"
+      - W/"25f1358121c21643dfc593511b473afd"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -841,9 +925,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "105"
+      - "178"
       X-Request-Id:
-      - fef237a6-1ad7-40df-8e06-41176a9468f1
+      - df3f3375-a5f9-42f9-aa23-4279254b5d54
     status: 200 OK
     code: 200
     duration: ""
@@ -854,11 +938,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/tasks/task_oBHbdkjELUTMT2BY
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/tasks/task_lpQqqrFJy22B2mzb
     method: GET
   response:
-    body: '{"task":{"id":"task_oBHbdkjELUTMT2BY","name":"Purge items from trash","status":"running","created_at":1610162809,"started_at":1610162809,"finished_at":null,"progress":5}}'
+    body: '{"task":{"id":"task_lpQqqrFJy22B2mzb","name":"Purge items from trash","status":"running","created_at":1613686240,"started_at":1613686241,"finished_at":null,"progress":5}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -873,9 +957,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:50 GMT
+      - Thu, 18 Feb 2021 22:10:41 GMT
       Etag:
-      - W/"98420e3b858bfbbe59216acd275ef1df"
+      - W/"a4e62b0b65326b0b1e32000f0b0fe286"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -883,9 +967,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "97"
+      - "177"
       X-Request-Id:
-      - 0b47967b-53a8-45f6-bdca-82fa1bf30ee3
+      - 1c6bb12e-ae4c-4dcf-a827-2421a36b8c9a
     status: 200 OK
     code: 200
     duration: ""
@@ -896,11 +980,11 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/tasks/task_oBHbdkjELUTMT2BY
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/tasks/task_lpQqqrFJy22B2mzb
     method: GET
   response:
-    body: '{"task":{"id":"task_oBHbdkjELUTMT2BY","name":"Purge items from trash","status":"completed","created_at":1610162809,"started_at":1610162809,"finished_at":1610162811,"progress":100}}'
+    body: '{"task":{"id":"task_lpQqqrFJy22B2mzb","name":"Purge items from trash","status":"completed","created_at":1613686240,"started_at":1613686241,"finished_at":1613686242,"progress":100}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -915,9 +999,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:55 GMT
+      - Thu, 18 Feb 2021 22:10:46 GMT
       Etag:
-      - W/"3428371253f7c26f5bd08252c6a1a99f"
+      - W/"aca14a9183f2451def1d326f4d1b8e35"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -925,9 +1009,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "79"
+      - "176"
       X-Request-Id:
-      - 6d0d7b96-c114-4b2b-baa8-4a2bbd405dec
+      - 0ed11f30-1599-44e0-b603-fa528f27ed25
     status: 200 OK
     code: 200
     duration: ""
@@ -938,8 +1022,8 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_3qBjx4ooTYHapBbi
+      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_Z1WyabOhrawBfZBi
     method: DELETE
   response:
     body: '{}'
@@ -957,7 +1041,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 09 Jan 2021 03:26:55 GMT
+      - Thu, 18 Feb 2021 22:10:46 GMT
       Etag:
       - W/"44136fa355b3678a1146ad16f7e8649e"
       Server:
@@ -967,9 +1051,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "78"
+      - "175"
       X-Request-Id:
-      - 678d89de-b2d3-488f-ad2e-e2126dafafd5
+      - f8b600f3-4b30-4210-80ea-76465efa9654
     status: 200 OK
     code: 200
     duration: ""

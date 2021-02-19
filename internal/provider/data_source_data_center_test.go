@@ -15,6 +15,9 @@ func TestAccKatapultDataSourceDataCenter_default(t *testing.T) {
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
 
+	dcID, err := tt.Meta.DataCenterID(tt.Meta.Ctx)
+	require.NoError(t, err)
+
 	res := "data.katapult_data_center.main"
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -25,9 +28,7 @@ func TestAccKatapultDataSourceDataCenter_default(t *testing.T) {
 				Config: `data "katapult_data_center" "main" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccKatapultCheckDataCenterExists(tt, res, ""),
-					resource.TestCheckResourceAttr(
-						res, "id", tt.Meta.DataCenterID,
-					),
+					resource.TestCheckResourceAttr(res, "id", dcID),
 				),
 			},
 		},
@@ -37,6 +38,9 @@ func TestAccKatapultDataSourceDataCenter_default(t *testing.T) {
 func TestAccKatapultDataSourceDataCenter_by_id(t *testing.T) {
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
+
+	dcID, err := tt.Meta.DataCenterID(tt.Meta.Ctx)
+	require.NoError(t, err)
 
 	res := "data.katapult_data_center.main"
 
@@ -49,12 +53,10 @@ func TestAccKatapultDataSourceDataCenter_by_id(t *testing.T) {
 					data "katapult_data_center" "main" {
 					  id = "%s"
 					}`,
-					tt.Meta.DataCenterID,
+					dcID,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckDataCenterExists(
-						tt, res, tt.Meta.DataCenterID,
-					),
+					testAccKatapultCheckDataCenterExists(tt, res, dcID),
 				),
 			},
 		},
@@ -65,7 +67,7 @@ func TestAccKatapultDataSourceDataCenter_by_permalink(t *testing.T) {
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
 
-	dc, err := tt.DataCenter()
+	dc, err := tt.Meta.DataCenter(tt.Meta.Ctx)
 	require.NoError(t, err)
 
 	res := "data.katapult_data_center.main"
@@ -82,9 +84,7 @@ func TestAccKatapultDataSourceDataCenter_by_permalink(t *testing.T) {
 					dc.Permalink,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckDataCenterExists(
-						tt, res, tt.Meta.DataCenterID,
-					),
+					testAccKatapultCheckDataCenterExists(tt, res, dc.ID),
 				),
 			},
 		},
@@ -95,7 +95,7 @@ func TestAccKatapultDataSourceDataCenter_invalid(t *testing.T) {
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
 
-	dc, err := tt.DataCenter()
+	dc, err := tt.Meta.DataCenter(tt.Meta.Ctx)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{

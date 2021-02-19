@@ -129,11 +129,16 @@ func resourceVirtualMachineCreate(
 	meta := m.(*Meta)
 	var diags diag.Diagnostics
 
-	org := meta.Organization()
-	dc := meta.DataCenter()
+	dcSpec := &buildspec.DataCenter{}
+	switch {
+	case meta.DataCenterRef().ID != "":
+		dcSpec.ID = meta.DataCenterRef().ID
+	default:
+		dcSpec.Permalink = meta.DataCenterRef().Permalink
+	}
 
 	spec := &buildspec.VirtualMachineSpec{
-		DataCenter: &buildspec.DataCenter{ID: dc.ID},
+		DataCenter: dcSpec,
 		Hostname:   meta.UseOrGenerateHostname(d.Get("hostname").(string)),
 		AuthorizedKeys: &buildspec.AuthorizedKeys{
 			AllSSHKeys: true,
@@ -220,7 +225,7 @@ func resourceVirtualMachineCreate(
 	}
 
 	initBuild, _, err := meta.Client.VirtualMachineBuilds.CreateFromSpec(
-		ctx, org, spec,
+		ctx, meta.OrganizationRef(), spec,
 	)
 	if err != nil {
 		return diag.FromErr(err)

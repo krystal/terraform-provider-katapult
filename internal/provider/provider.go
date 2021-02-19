@@ -6,6 +6,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -26,29 +27,34 @@ func New(c *Config) func() *schema.Provider {
 	return func() *schema.Provider {
 		p := &schema.Provider{
 			Schema: map[string]*schema.Schema{
-				"api_url": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("KATAPULT_API_URL", nil),
-				},
 				"api_key": {
 					Type:        schema.TypeString,
 					Required:    true,
+					Sensitive:   true,
 					DefaultFunc: schema.EnvDefaultFunc("KATAPULT_API_KEY", nil),
+					Description: "API Key for Katapult Core API. Can be " +
+						"specified with the `KATAPULT_API_KEY` environment " +
+						"variable.",
 				},
-				"organization_id": {
+				"organization": {
 					Type:     schema.TypeString,
 					Required: true,
 					DefaultFunc: schema.EnvDefaultFunc(
-						"KATAPULT_ORGANIZATION_ID", nil,
+						"KATAPULT_ORGANIZATION", nil,
 					),
+					Description: "Organization sub-domain or ID. Can be " +
+						"specified with the `KATAPULT_ORGANIZATION` " +
+						"environment variable.",
 				},
-				"data_center_id": {
+				"data_center": {
 					Type:     schema.TypeString,
 					Required: true,
 					DefaultFunc: schema.EnvDefaultFunc(
-						"KATAPULT_DATA_CENTER_ID", nil,
+						"KATAPULT_DATA_CENTER", nil,
 					),
+					Description: "Data center permalink or ID. Can be " +
+						"specified with the `KATAPULT_DATA_CENTER` " +
+						"environment variable.",
 				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
@@ -82,10 +88,9 @@ func configure(
 	) (interface{}, diag.Diagnostics) {
 		m := &Meta{
 			Ctx:                 ctx,
-			APIURL:              d.Get("api_url").(string),
-			APIKey:              d.Get("api_key").(string),
-			OrganizationID:      d.Get("organization_id").(string),
-			DataCenterID:        d.Get("data_center_id").(string),
+			confAPIKey:          d.Get("api_key").(string),
+			confDataCenter:      d.Get("data_center").(string),
+			confOrganization:    d.Get("organization").(string),
 			GeneratedNamePrefix: conf.GeneratedNamePrefix,
 		}
 
@@ -93,26 +98,13 @@ func configure(
 			m.GeneratedNamePrefix = defaultGeneratedNamePrefix
 		}
 
-		if m.APIKey == "" {
-			return m, diag.Diagnostics{
-				{
-					Severity: diag.Error,
-					Summary:  "No API KEY provided",
-					Detail: "No API KEY provided. Please set \"api_key\" " +
-						"provider argument, or KATAPULT_API_KEY environment " +
-						"variable.",
-				},
-			}
-		}
-
 		c, err := katapult.NewClient(&katapult.Config{
-			APIKey:    m.APIKey,
+			APIKey:    m.confAPIKey,
 			UserAgent: p.UserAgent("terraform-provider-katapult", conf.Version),
 		})
 		if err != nil {
 			return m, diag.FromErr(err)
 		}
-		m.Client = c
 
 		if conf.Transport != nil {
 			err := c.SetTransport(conf.Transport)
@@ -121,8 +113,9 @@ func configure(
 			}
 		}
 
-		if m.APIURL != "" {
-			u, err := url.Parse(m.APIURL)
+		// Debug override of API URL for internal testing purposes.
+		if apiURL := os.Getenv("KATAPULT_TF_DEBUG_API_URL"); apiURL != "" {
+			u, err := url.Parse(apiURL)
 			if err != nil {
 				return m, diag.FromErr(err)
 			}
@@ -132,6 +125,14 @@ func configure(
 				return m, diag.FromErr(err)
 			}
 		}
+
+		m.Client = c
+		m.organizationRef, _ = katapult.NewOrganizationLookup(
+			d.Get("organization").(string),
+		)
+		m.dataCenterRef, _ = katapult.NewDataCenterLookup(
+			d.Get("data_center").(string),
+		)
 
 		return m, nil
 	}
