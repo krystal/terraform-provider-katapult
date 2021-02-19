@@ -21,7 +21,7 @@ TOOLDIR := $(BINDIR)/tools
 SHELL ?= /bin/bash
 SHELL := env \
 	GO111MODULE=on \
-	GOBIN=$(CURDIR)/$(TOOLDIR) \
+	GOBIN=$(CURDIR)/$(BINDIR) \
 	CGO_ENABLED=0 \
 	PATH='$(CURDIR)/$(BINDIR):$(CURDIR)/$(TOOLDIR):$(PATH)' \
 	$(SHELL)
@@ -37,21 +37,17 @@ SHELL := env \
 # Tools
 #
 
-TOOLS += $(TOOLDIR)/gobin
-$(TOOLDIR)/gobin:
-	GO111MODULE=off go get -u github.com/myitcv/gobin
-
 # external tool
 define tool # 1: binary-name, 2: go-import-path
 TOOLS += $(TOOLDIR)/$(1)
 
-$(TOOLDIR)/$(1): $(TOOLDIR)/gobin Makefile
-	$(TOOLDIR)/gobin $(V) "$(2)"
+$(TOOLDIR)/$(1): Makefile
+	GOBIN="$(CURDIR)/$(TOOLDIR)" go install "$(2)"
 endef
 
-$(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports))
+$(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports@latest))
 $(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.37))
-$(eval $(call tool,gomod,github.com/Helcaraxan/gomod))
+$(eval $(call tool,gomod,github.com/Helcaraxan/gomod@latest))
 $(eval $(call tool,tfplugindocs,github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.4))
 
 .PHONY: tools
