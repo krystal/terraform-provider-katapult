@@ -30,8 +30,8 @@ jobs:
           # TODO Remove parallel option when all parallel issues are resolved.
           TESTARGS: "-parallel=1"
           KATAPULT_API_KEY: ${{ secrets.KATAPULT_API_KEY }}
-          KATAPULT_ORGANIZATION_ID: ${{ secrets.KATAPULT_ORGANIZATION_ID }}
-          KATAPULT_DATA_CENTER_ID: ${{ secrets.KATAPULT_DATA_CENTER_ID }}
+          KATAPULT_ORGANIZATION: ${{ secrets.KATAPULT_ORGANIZATION }}
+          KATAPULT_DATA_CENTER: ${{ secrets.KATAPULT_DATA_CENTER }}
 
   sweeper:
     runs-on: ubuntu-latest
@@ -52,5 +52,5 @@ jobs:
         run: make sweep
         env:
           KATAPULT_API_KEY: ${{ secrets.KATAPULT_API_KEY }}
-          KATAPULT_ORGANIZATION_ID: ${{ secrets.KATAPULT_ORGANIZATION_ID }}
-          KATAPULT_DATA_CENTER_ID: ${{ secrets.KATAPULT_DATA_CENTER_ID }}
+          KATAPULT_ORGANIZATION: ${{ secrets.KATAPULT_ORGANIZATION }}
+          KATAPULT_DATA_CENTER: ${{ secrets.KATAPULT_DATA_CENTER }}
