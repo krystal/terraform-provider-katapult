@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/krystal/go-katapult/pkg/katapult"
 	"github.com/krystal/go-katapult/pkg/namegenerator"
 )
@@ -10,6 +11,7 @@ import (
 type Meta struct {
 	Ctx    context.Context
 	Client *katapult.Client
+	Logger hclog.Logger
 
 	GeneratedNamePrefix string
 

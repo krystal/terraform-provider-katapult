@@ -69,5 +69,7 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+      - name: Validate documentation
+        run: make check-docs
       - name: Ensure generated documentation is up to date
         run: mv docs docs-current && make docs && diff -rN docs-current docs

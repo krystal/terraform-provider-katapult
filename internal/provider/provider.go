@@ -7,19 +7,24 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/krystal/go-katapult/pkg/katapult"
 )
 
 const defaultGeneratedNamePrefix = "tf"
 
 type Config struct {
-	Version             string
-	Commit              string
-	Date                string
-	Transport           http.RoundTripper
+	Version    string
+	Commit     string
+	Date       string
+	HTTPClient *http.Client
+
 	GeneratedNamePrefix string
 }
 
@@ -56,6 +61,27 @@ func New(c *Config) func() *schema.Provider {
 						"specified with the `KATAPULT_DATA_CENTER` " +
 						"environment variable.",
 				},
+				"log_level": {
+					Type:     schema.TypeString,
+					Optional: true,
+					DefaultFunc: schema.EnvDefaultFunc(
+						"KATAPULT_LOG_LEVEL", "info",
+					),
+					ValidateFunc: validation.StringInSlice(
+						[]string{
+							"trace",
+							"debug",
+							"info",
+							"warn",
+							"error",
+							"off",
+						}, true,
+					),
+					Description: "Log level used by Katapult Terraform " +
+						"provider. Can be specified with the " +
+						"`KATAPULT_LOG_LEVEL` environment variable. " +
+						"(default: `info`)",
+				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"katapult_ip":              resourceIP(),
@@ -85,7 +111,11 @@ func configure(
 		d *schema.ResourceData,
 	) (interface{}, diag.Diagnostics) {
 		m := &Meta{
-			Ctx:                 ctx,
+			Ctx: ctx,
+			Logger: hclog.New(&hclog.LoggerOptions{
+				Level: hclog.LevelFromString(d.Get("log_level").(string)),
+			}),
+
 			confAPIKey:          d.Get("api_key").(string),
 			confDataCenter:      d.Get("data_center").(string),
 			confOrganization:    d.Get("organization").(string),
@@ -104,11 +134,10 @@ func configure(
 			return m, diag.FromErr(err)
 		}
 
-		if conf.Transport != nil {
-			err := c.SetTransport(conf.Transport)
-			if err != nil {
-				return m, diag.FromErr(err)
-			}
+		rhc := newRetryableHTTPClient(conf, m.Logger)
+		err = c.SetHTTPClient(rhc.StandardClient())
+		if err != nil {
+			return m, diag.FromErr(err)
 		}
 
 		// Debug override of API URL for internal testing purposes.
@@ -134,4 +163,34 @@ func configure(
 
 		return m, nil
 	}
+}
+
+func newRetryableHTTPClient(
+	conf *Config,
+	logger hclog.Logger,
+) *retryablehttp.Client {
+	client := retryablehttp.NewClient()
+	client.Logger = logger
+	client.RetryWaitMin = 1 * time.Second
+	client.RetryWaitMax = 2 * time.Minute
+	client.RetryMax = 4
+	client.CheckRetry = requestRetryPolicy
+
+	if conf.HTTPClient != nil {
+		client.HTTPClient = conf.HTTPClient
+	}
+
+	return client
+}
+
+func requestRetryPolicy(
+	ctx context.Context,
+	resp *http.Response,
+	err error,
+) (bool, error) {
+	if resp == nil || resp.StatusCode == http.StatusTooManyRequests {
+		return true, err
+	}
+
+	return retryablehttp.DefaultRetryPolicy(ctx, resp, err)
 }
