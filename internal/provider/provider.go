@@ -8,8 +8,10 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/krystal/go-katapult/pkg/katapult"
 )
 
@@ -56,6 +58,27 @@ func New(c *Config) func() *schema.Provider {
 						"specified with the `KATAPULT_DATA_CENTER` " +
 						"environment variable.",
 				},
+				"log_level": {
+					Type:     schema.TypeString,
+					Optional: true,
+					DefaultFunc: schema.EnvDefaultFunc(
+						"KATAPULT_LOG_LEVEL", "info",
+					),
+					ValidateFunc: validation.StringInSlice(
+						[]string{
+							"trace",
+							"debug",
+							"info",
+							"warn",
+							"error",
+							"off",
+						}, true,
+					),
+					Description: "Log level used by Katapult Terraform " +
+						"provider. Can be specified with the " +
+						"`KATAPULT_LOG_LEVEL` environment variable. " +
+						"(default: `info`)",
+				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"katapult_ip":              resourceIP(),
@@ -85,7 +108,11 @@ func configure(
 		d *schema.ResourceData,
 	) (interface{}, diag.Diagnostics) {
 		m := &Meta{
-			Ctx:                 ctx,
+			Ctx: ctx,
+			Logger: hclog.New(&hclog.LoggerOptions{
+				Level: hclog.LevelFromString(d.Get("log_level").(string)),
+			}),
+
 			confAPIKey:          d.Get("api_key").(string),
 			confDataCenter:      d.Get("data_center").(string),
 			confOrganization:    d.Get("organization").(string),

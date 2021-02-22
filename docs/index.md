@@ -28,3 +28,7 @@ provider "katapult" {
 - **api_key** (String, Sensitive) API Key for Katapult Core API. Can be specified with the `KATAPULT_API_KEY` environment variable.
 - **data_center** (String) Data center permalink or ID. Can be specified with the `KATAPULT_DATA_CENTER` environment variable.
 - **organization** (String) Organization sub-domain or ID. Can be specified with the `KATAPULT_ORGANIZATION` environment variable.
+
+### Optional
+
+- **log_level** (String) Log level used by Katapult Terraform provider. Can be specified with the `KATAPULT_LOG_LEVEL` environment variable. (default: `info`)
