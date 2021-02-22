@@ -156,7 +156,11 @@ docker-dev-build:
 .PHONY: docs
 docs: $(TOOLDIR)/tfplugindocs
 	KATAPULT_API_KEY="" KATAPULT_ORGANIZATION="" KATAPULT_DATA_CENTER="" \
-		tfplugindocs
+		tfplugindocs generate
+
+.PHONY: check-docs
+check-docs: $(TOOLDIR)/tfplugindocs
+		tfplugindocs validate
 
 #
 # Coverage
