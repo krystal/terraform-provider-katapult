@@ -70,7 +70,7 @@ func providerFactories(
 	}
 
 	if r != nil {
-		conf.Transport = r
+		conf.HTTPClient = &http.Client{Transport: r}
 	}
 
 	return map[string]func() (*schema.Provider, error){

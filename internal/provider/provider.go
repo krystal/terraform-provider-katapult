@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -18,10 +20,11 @@ import (
 const defaultGeneratedNamePrefix = "tf"
 
 type Config struct {
-	Version             string
-	Commit              string
-	Date                string
-	Transport           http.RoundTripper
+	Version    string
+	Commit     string
+	Date       string
+	HTTPClient *http.Client
+
 	GeneratedNamePrefix string
 }
 
@@ -131,11 +134,10 @@ func configure(
 			return m, diag.FromErr(err)
 		}
 
-		if conf.Transport != nil {
-			err := c.SetTransport(conf.Transport)
-			if err != nil {
-				return m, diag.FromErr(err)
-			}
+		rhc := newRetryableHTTPClient(conf, m.Logger)
+		err = c.SetHTTPClient(rhc.StandardClient())
+		if err != nil {
+			return m, diag.FromErr(err)
 		}
 
 		// Debug override of API URL for internal testing purposes.
@@ -161,4 +163,34 @@ func configure(
 
 		return m, nil
 	}
+}
+
+func newRetryableHTTPClient(
+	conf *Config,
+	logger hclog.Logger,
+) *retryablehttp.Client {
+	client := retryablehttp.NewClient()
+	client.Logger = logger
+	client.RetryWaitMin = 1 * time.Second
+	client.RetryWaitMax = 2 * time.Minute
+	client.RetryMax = 4
+	client.CheckRetry = requestRetryPolicy
+
+	if conf.HTTPClient != nil {
+		client.HTTPClient = conf.HTTPClient
+	}
+
+	return client
+}
+
+func requestRetryPolicy(
+	ctx context.Context,
+	resp *http.Response,
+	err error,
+) (bool, error) {
+	if resp == nil || resp.StatusCode == http.StatusTooManyRequests {
+		return true, err
+	}
+
+	return retryablehttp.DefaultRetryPolicy(ctx, resp, err)
 }
