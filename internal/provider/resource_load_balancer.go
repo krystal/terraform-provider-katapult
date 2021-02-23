@@ -89,10 +89,10 @@ func resourceLoadBalancer() *schema.Resource {
 func resourceLoadBalancerCreate(
 	ctx context.Context,
 	d *schema.ResourceData,
-	m interface{},
+	meta interface{},
 ) diag.Diagnostics {
-	meta := m.(*Meta)
-	name := meta.UseOrGenerateName(d.Get("name").(string))
+	m := meta.(*Meta)
+	name := m.UseOrGenerateName(d.Get("name").(string))
 
 	t, ids := extractLoadBalancerResourceTypeAndIDs(d, m)
 	if t == "" {
@@ -103,11 +103,11 @@ func resourceLoadBalancerCreate(
 		Name:         name,
 		ResourceType: t,
 		ResourceIDs:  &ids,
-		DataCenter:   meta.DataCenterRef(),
+		DataCenter:   m.DataCenterRef(),
 	}
 
-	lb, _, err := meta.Client.LoadBalancers.Create(
-		ctx, meta.OrganizationRef(), args,
+	lb, _, err := m.Client.LoadBalancers.Create(
+		ctx, m.OrganizationRef(), args,
 	)
 	if err != nil {
 		return diag.FromErr(err)
@@ -115,21 +115,21 @@ func resourceLoadBalancerCreate(
 
 	d.SetId(lb.ID)
 
-	return resourceLoadBalancerRead(ctx, d, m)
+	return resourceLoadBalancerRead(ctx, d, meta)
 }
 
 //nolint:unused
 func resourceLoadBalancerRead(
 	ctx context.Context,
 	d *schema.ResourceData,
-	m interface{},
+	meta interface{},
 ) diag.Diagnostics {
-	c := m.(*Meta).Client
+	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
 	id := d.Id()
 
-	lb, resp, err := c.LoadBalancers.GetByID(ctx, id)
+	lb, resp, err := m.Client.LoadBalancers.GetByID(ctx, id)
 	if err != nil {
 		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
 			d.SetId("")
@@ -155,9 +155,9 @@ func resourceLoadBalancerRead(
 func resourceLoadBalancerUpdate(
 	ctx context.Context,
 	d *schema.ResourceData,
-	m interface{},
+	meta interface{},
 ) diag.Diagnostics {
-	c := m.(*Meta).Client
+	m := meta.(*Meta)
 
 	id := d.Id()
 
@@ -174,25 +174,25 @@ func resourceLoadBalancerUpdate(
 		args.ResourceIDs = &ids
 	}
 
-	_, _, err := c.LoadBalancers.Update(ctx, lb, args)
+	_, _, err := m.Client.LoadBalancers.Update(ctx, lb, args)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	return resourceLoadBalancerRead(ctx, d, m)
+	return resourceLoadBalancerRead(ctx, d, meta)
 }
 
 //nolint:unused
 func resourceLoadBalancerDelete(
 	ctx context.Context,
 	d *schema.ResourceData,
-	m interface{},
+	meta interface{},
 ) diag.Diagnostics {
-	c := m.(*Meta).Client
+	m := meta.(*Meta)
 
 	lb := &katapult.LoadBalancer{ID: d.Id()}
 
-	_, _, err := c.LoadBalancers.Delete(ctx, lb)
+	_, _, err := m.Client.LoadBalancers.Delete(ctx, lb)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -224,7 +224,7 @@ func populateLoadBalancerTargets(
 //nolint:unused
 func extractLoadBalancerResourceTypeAndIDs(
 	d *schema.ResourceData,
-	m interface{},
+	m *Meta,
 ) (katapult.ResourceType, []string) {
 	var t katapult.ResourceType
 	var list []interface{}

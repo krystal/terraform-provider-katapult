@@ -51,9 +51,9 @@ func dataSourceDiskTemplate() *schema.Resource {
 func dataSourceDiskTemplateRead(
 	ctx context.Context,
 	d *schema.ResourceData,
-	m interface{},
+	meta interface{},
 ) diag.Diagnostics {
-	meta := m.(*Meta)
+	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
 	idOrPermalink := d.Get("id").(string)
@@ -61,15 +61,25 @@ func dataSourceDiskTemplateRead(
 		idOrPermalink = d.Get("permalink").(string)
 	}
 
-	template, err := fetchDiskTemplate(ctx, meta, idOrPermalink)
+	template, err := fetchDiskTemplate(ctx, m, idOrPermalink)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	if template != nil {
 		dt := flattenDiskTemplate(template)
-		for key, value := range dt {
-			_ = d.Set(key, value)
+		_ = d.Set("id", dt["id"])
+		_ = d.Set("name", dt["name"])
+		_ = d.Set("description", dt["description"])
+		_ = d.Set("permalink", dt["permalink"])
+		_ = d.Set("universal", dt["universal"])
+
+		if v, ok := dt["template_version"]; ok {
+			_ = d.Set("template_version", v)
+		}
+
+		if v, ok := dt["os_family"]; ok {
+			_ = d.Set("os_family", v)
 		}
 
 		d.SetId(template.ID)
@@ -80,7 +90,7 @@ func dataSourceDiskTemplateRead(
 
 func fetchDiskTemplate(
 	ctx context.Context,
-	meta *Meta,
+	m *Meta,
 	idOrPermalink string,
 ) (*katapult.DiskTemplate, error) {
 	var id string
@@ -94,8 +104,8 @@ func fetchDiskTemplate(
 
 	totalPages := 2
 	for pageNum := 1; pageNum < totalPages; pageNum++ {
-		templates, resp, err := meta.Client.DiskTemplates.List(
-			ctx, meta.OrganizationRef(), &katapult.DiskTemplateListOptions{
+		templates, resp, err := m.Client.DiskTemplates.List(
+			ctx, m.OrganizationRef(), &katapult.DiskTemplateListOptions{
 				IncludeUniversal: true,
 				Page:             pageNum,
 			},

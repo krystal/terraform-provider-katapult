@@ -15,6 +15,21 @@ jobs:
         env:
           VERBOSE: "true"
 
+  lint-provider:
+    name: Lint Provider
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      - uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+      - name: Run tfproviderlint
+        run: make lint-provider
+
   tidy:
     name: Tidy
     runs-on: ubuntu-latest

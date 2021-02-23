@@ -27,15 +27,14 @@ func dataSourceLoadBalancer() *schema.Resource {
 func dataSourceLoadBalancerRead(
 	ctx context.Context,
 	d *schema.ResourceData,
-	m interface{},
+	meta interface{},
 ) diag.Diagnostics {
-	meta := m.(*Meta)
-	c := meta.Client
+	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
 	id := d.Get("id").(string)
 
-	lb, _, err := c.LoadBalancers.GetByID(ctx, id)
+	lb, _, err := m.Client.LoadBalancers.GetByID(ctx, id)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -44,6 +43,7 @@ func dataSourceLoadBalancerRead(
 	_ = d.Set("resource_type", string(lb.ResourceType))
 	populateLoadBalancerTargets(d, lb.ResourceType, lb.ResourceIDs)
 	_ = d.Set("https_redirect", lb.HTTPSRedirect)
+
 	if lb.IPAddress != nil {
 		_ = d.Set("ip_address", lb.IPAddress.Address)
 	}

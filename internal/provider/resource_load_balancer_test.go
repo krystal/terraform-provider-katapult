@@ -67,6 +67,7 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultLoadBalancerDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -76,7 +77,7 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckLoadBalancerExists(tt, res),
+					testAccCheckKatapultLoadBalancerExists(tt, res),
 					resource.TestCheckResourceAttr(res, "name", name),
 					resource.TestCheckResourceAttr(res,
 						"resource_type",
@@ -103,11 +104,12 @@ func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultLoadBalancerDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "katapult_load_balancer" "main" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckLoadBalancerExists(tt, res),
+					testAccCheckKatapultLoadBalancerExists(tt, res),
 					testCheckGeneratedResourceName(res, "name"),
 					resource.TestCheckResourceAttr(res,
 						"resource_type",
@@ -130,6 +132,7 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultLoadBalancerDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -139,7 +142,7 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckLoadBalancerExists(tt, res),
+					testAccCheckKatapultLoadBalancerExists(tt, res),
 					resource.TestCheckResourceAttr(res, "name", name),
 				),
 			},
@@ -151,7 +154,7 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 					name+"-different",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckLoadBalancerExists(tt, res),
+					testAccCheckKatapultLoadBalancerExists(tt, res),
 					resource.TestCheckResourceAttr(res,
 						"name", name+"-different",
 					),
@@ -162,7 +165,7 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 }
 
 //nolint:unused
-func testAccKatapultCheckLoadBalancerExists(
+func testAccCheckKatapultLoadBalancerExists(
 	tt *TestTools,
 	res string,
 ) resource.TestCheckFunc {
@@ -184,6 +187,31 @@ func testAccKatapultCheckLoadBalancerExists(
 				"expected name to be \"%s\", got \"%s\"",
 				obj.Name, rs.Primary.Attributes["name"],
 			)
+		}
+
+		return nil
+	}
+}
+
+//nolint:unused
+func testAccCheckKatapultLoadBalancerDestroy(
+	tt *TestTools,
+) resource.TestCheckFunc {
+	m := tt.Meta
+
+	return func(s *terraform.State) error {
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "katapult_load_balancer" {
+				continue
+			}
+
+			lb, _, err := m.Client.LoadBalancers.GetByID(m.Ctx, rs.Primary.ID)
+			if err == nil && lb != nil {
+				return fmt.Errorf(
+					"katapult_load_balancer %s (%s) was not destroyed",
+					rs.Primary.ID, lb.Name,
+				)
+			}
 		}
 
 		return nil

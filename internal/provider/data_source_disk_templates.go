@@ -28,13 +28,12 @@ func dataSourceDiskTemplates() *schema.Resource {
 func dataSourceDiskTemplatesRead(
 	ctx context.Context,
 	d *schema.ResourceData,
-	m interface{},
+	meta interface{},
 ) diag.Diagnostics {
-	meta := m.(*Meta)
-	c := meta.Client
+	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
-	orgID, err := meta.OrganizationID(ctx)
+	orgID, err := m.OrganizationID(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -42,8 +41,8 @@ func dataSourceDiskTemplatesRead(
 	var templates []*katapult.DiskTemplate
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := c.DiskTemplates.List(
-			ctx, meta.OrganizationRef(), &katapult.DiskTemplateListOptions{
+		pageResult, resp, err := m.Client.DiskTemplates.List(
+			ctx, m.OrganizationRef(), &katapult.DiskTemplateListOptions{
 				IncludeUniversal: true,
 				Page:             pageNum,
 			},

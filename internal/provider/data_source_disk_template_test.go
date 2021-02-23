@@ -34,7 +34,7 @@ func TestAccKatapultDataSourceDiskTemplate_by_id(t *testing.T) {
 					tpl.ID,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckDiskTemplate(tt, res, "", tpl),
+					testAccCheckKatapultDiskTemplate(tt, res, "", tpl),
 				),
 			},
 		},
@@ -62,7 +62,7 @@ func TestAccKatapultDataSourceDiskTemplate_by_permalink(t *testing.T) {
 					tpl.Permalink,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckDiskTemplate(tt, res, "", tpl),
+					testAccCheckKatapultDiskTemplate(tt, res, "", tpl),
 				),
 			},
 		},
@@ -124,7 +124,7 @@ func testFetchRandomDiskTemplate(
 	return templates[acctest.RandIntRange(0, len(templates))], nil
 }
 
-func testAccKatapultCheckDiskTemplate(
+func testAccCheckKatapultDiskTemplate(
 	tt *TestTools,
 	res string,
 	prefix string,

@@ -40,7 +40,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 					name, name+"-host",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckVirtualMachineExists(
+					testAccCheckKatapultVirtualMachineExists(
 						tt, "data.katapult_virtual_machine.src",
 					),
 					resource.TestCheckResourceAttr(
@@ -123,7 +123,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 					name, name+"-host",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckVirtualMachineExists(
+					testAccCheckKatapultVirtualMachineExists(
 						tt, "data.katapult_virtual_machine.src",
 					),
 					resource.TestCheckResourceAttr(

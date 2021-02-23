@@ -28,9 +28,9 @@ func dataSourceVirtualMachine() *schema.Resource {
 func dataSourceVirtualMachineRead(
 	ctx context.Context,
 	d *schema.ResourceData,
-	m interface{},
+	meta interface{},
 ) diag.Diagnostics {
-	meta := m.(*Meta)
+	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
 	id := d.Get("id").(string)
@@ -41,9 +41,9 @@ func dataSourceVirtualMachineRead(
 
 	switch {
 	case id != "":
-		vm, _, err = meta.Client.VirtualMachines.GetByID(ctx, id)
+		vm, _, err = m.Client.VirtualMachines.GetByID(ctx, id)
 	case fqdn != "":
-		vm, _, err = meta.Client.VirtualMachines.GetByFQDN(ctx, fqdn)
+		vm, _, err = m.Client.VirtualMachines.GetByFQDN(ctx, fqdn)
 	}
 	if err != nil {
 		return diag.FromErr(err)

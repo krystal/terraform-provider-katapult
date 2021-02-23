@@ -28,9 +28,9 @@ func dataSourceIP() *schema.Resource {
 func dataSourceIPRead(
 	ctx context.Context,
 	d *schema.ResourceData,
-	m interface{},
+	meta interface{},
 ) diag.Diagnostics {
-	meta := m.(*Meta)
+	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
 	id := d.Get("id").(string)
@@ -41,9 +41,9 @@ func dataSourceIPRead(
 
 	switch {
 	case id != "":
-		ip, _, err = meta.Client.IPAddresses.GetByID(ctx, id)
+		ip, _, err = m.Client.IPAddresses.GetByID(ctx, id)
 	default:
-		ip, _, err = meta.Client.IPAddresses.GetByAddress(ctx, address)
+		ip, _, err = m.Client.IPAddresses.GetByAddress(ctx, address)
 	}
 	if err != nil {
 		return diag.FromErr(err)

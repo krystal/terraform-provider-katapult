@@ -19,6 +19,7 @@ func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultLoadBalancerDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -32,7 +33,7 @@ func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckLoadBalancerExists(tt, res),
+					testAccCheckKatapultLoadBalancerExists(tt, res),
 					resource.TestCheckResourceAttr(res, "name", name),
 					resource.TestCheckResourceAttr(res,
 						"resource_type",

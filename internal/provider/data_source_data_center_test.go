@@ -27,7 +27,7 @@ func TestAccKatapultDataSourceDataCenter_default(t *testing.T) {
 			{
 				Config: `data "katapult_data_center" "main" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckDataCenterExists(tt, res, ""),
+					testAccCheckKatapultDataCenterExists(tt, res, ""),
 					resource.TestCheckResourceAttr(res, "id", dcID),
 				),
 			},
@@ -56,7 +56,7 @@ func TestAccKatapultDataSourceDataCenter_by_id(t *testing.T) {
 					dcID,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckDataCenterExists(tt, res, dcID),
+					testAccCheckKatapultDataCenterExists(tt, res, dcID),
 				),
 			},
 		},
@@ -84,7 +84,7 @@ func TestAccKatapultDataSourceDataCenter_by_permalink(t *testing.T) {
 					dc.Permalink,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckDataCenterExists(tt, res, dc.ID),
+					testAccCheckKatapultDataCenterExists(tt, res, dc.ID),
 				),
 			},
 		},
@@ -117,7 +117,7 @@ func TestAccKatapultDataSourceDataCenter_invalid(t *testing.T) {
 	})
 }
 
-func testAccKatapultCheckDataCenterExists(
+func testAccCheckKatapultDataCenterExists(
 	tt *TestTools,
 	res string,
 	id string,

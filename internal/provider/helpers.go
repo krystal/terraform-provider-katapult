@@ -26,22 +26,22 @@ func newSchemaStringSet(strs []string) *schema.Set {
 
 func purgeTrashObjectByObjectID(
 	ctx context.Context,
-	meta *Meta,
+	m *Meta,
 	timeout time.Duration,
 	objectID string,
 ) error {
 	return purgeTrashObject(
-		ctx, meta, timeout, &katapult.TrashObject{ObjectID: objectID},
+		ctx, m, timeout, &katapult.TrashObject{ObjectID: objectID},
 	)
 }
 
 func purgeTrashObject(
 	ctx context.Context,
-	meta *Meta,
+	m *Meta,
 	timeout time.Duration,
 	trash *katapult.TrashObject,
 ) error {
-	task, resp, err := meta.Client.TrashObjects.Purge(ctx, trash)
+	task, resp, err := m.Client.TrashObjects.Purge(ctx, trash)
 	if err != nil {
 		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
 			return nil
@@ -59,7 +59,7 @@ func purgeTrashObject(
 			string(katapult.TaskCompleted),
 		},
 		Refresh: func() (interface{}, string, error) {
-			t, _, e := meta.Client.Tasks.Get(ctx, task.ID)
+			t, _, e := m.Client.Tasks.Get(ctx, task.ID)
 			if e != nil {
 				return 0, "", e
 			}

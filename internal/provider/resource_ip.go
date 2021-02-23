@@ -74,16 +74,16 @@ func resourceIP() *schema.Resource {
 func resourceIPCreate(
 	ctx context.Context,
 	d *schema.ResourceData,
-	m interface{},
+	meta interface{},
 ) diag.Diagnostics {
-	meta := m.(*Meta)
+	m := meta.(*Meta)
 
 	var network *katapult.Network
 	if rawNet, ok := d.GetOk("network_id"); ok {
 		network = &katapult.Network{ID: rawNet.(string)}
 	} else {
 		var err error
-		network, err = defaultNetworkForDataCenter(ctx, meta)
+		network, err = defaultNetworkForDataCenter(ctx, m)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -99,8 +99,8 @@ func resourceIPCreate(
 		args.Label = d.Get("label").(string)
 	}
 
-	ip, _, err := meta.Client.IPAddresses.Create(
-		ctx, meta.OrganizationRef(), args,
+	ip, _, err := m.Client.IPAddresses.Create(
+		ctx, m.OrganizationRef(), args,
 	)
 	if err != nil {
 		return diag.FromErr(err)
@@ -108,18 +108,18 @@ func resourceIPCreate(
 
 	d.SetId(ip.ID)
 
-	return resourceIPRead(ctx, d, m)
+	return resourceIPRead(ctx, d, meta)
 }
 
 func resourceIPRead(
 	ctx context.Context,
 	d *schema.ResourceData,
-	m interface{},
+	meta interface{},
 ) diag.Diagnostics {
-	meta := m.(*Meta)
+	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
-	ip, resp, err := meta.Client.IPAddresses.GetByID(ctx, d.Id())
+	ip, resp, err := m.Client.IPAddresses.GetByID(ctx, d.Id())
 	if err != nil {
 		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
 			d.SetId("")
@@ -148,9 +148,9 @@ func resourceIPRead(
 func resourceIPUpdate(
 	ctx context.Context,
 	d *schema.ResourceData,
-	m interface{},
+	meta interface{},
 ) diag.Diagnostics {
-	meta := m.(*Meta)
+	m := meta.(*Meta)
 
 	ip := &katapult.IPAddress{ID: d.Id()}
 	args := &katapult.IPAddressUpdateArguments{}
@@ -164,24 +164,24 @@ func resourceIPUpdate(
 		args.Label = d.Get("label").(string)
 	}
 
-	_, _, err := meta.Client.IPAddresses.Update(ctx, ip, args)
+	_, _, err := m.Client.IPAddresses.Update(ctx, ip, args)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	return resourceIPRead(ctx, d, m)
+	return resourceIPRead(ctx, d, meta)
 }
 
 func resourceIPDelete(
 	ctx context.Context,
 	d *schema.ResourceData,
-	m interface{},
+	meta interface{},
 ) diag.Diagnostics {
-	meta := m.(*Meta)
+	m := meta.(*Meta)
 
 	ip := &katapult.IPAddress{ID: d.Id()}
 
-	_, err := meta.Client.IPAddresses.Delete(ctx, ip)
+	_, err := m.Client.IPAddresses.Delete(ctx, ip)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -158,6 +158,10 @@ func TestAccKatapultVirtualMachine_minimal(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
@@ -173,7 +177,7 @@ func TestAccKatapultVirtualMachine_minimal(t *testing.T) {
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckVirtualMachineExists(
+					testAccCheckKatapultVirtualMachineExists(
 						tt, "katapult_virtual_machine.base",
 					),
 					testCheckGeneratedResourceName(
@@ -226,6 +230,10 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -246,7 +254,7 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 					name, name+"-host",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckVirtualMachineExists(
+					testAccCheckKatapultVirtualMachineExists(
 						tt, "katapult_virtual_machine.base",
 					),
 					resource.TestCheckResourceAttr(
@@ -323,6 +331,10 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -343,7 +355,7 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 					name, name+"-host",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckVirtualMachineExists(
+					testAccCheckKatapultVirtualMachineExists(
 						tt, "katapult_virtual_machine.base",
 					),
 					resource.TestCheckResourceAttr(
@@ -396,7 +408,7 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 					name+"-diff", name+"-host-diff",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckVirtualMachineExists(
+					testAccCheckKatapultVirtualMachineExists(
 						tt, "katapult_virtual_machine.base",
 					),
 					resource.TestCheckResourceAttr(
@@ -445,6 +457,10 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
@@ -462,7 +478,7 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckVirtualMachineExists(
+					testAccCheckKatapultVirtualMachineExists(
 						tt, "katapult_virtual_machine.base",
 					),
 					resource.TestCheckResourceAttr(
@@ -501,7 +517,7 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckVirtualMachineExists(
+					testAccCheckKatapultVirtualMachineExists(
 						tt, "katapult_virtual_machine.base",
 					),
 					resource.TestCheckResourceAttr(
@@ -548,7 +564,7 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckVirtualMachineExists(
+					testAccCheckKatapultVirtualMachineExists(
 						tt, "katapult_virtual_machine.base",
 					),
 					resource.TestCheckResourceAttr(
@@ -577,7 +593,7 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 // Helpers
 //
 
-func testAccKatapultCheckVirtualMachineExists(
+func testAccCheckKatapultVirtualMachineExists(
 	tt *TestTools,
 	res string,
 ) resource.TestCheckFunc {
@@ -592,6 +608,30 @@ func testAccKatapultCheckVirtualMachineExists(
 		_, _, err := c.VirtualMachines.GetByID(tt.Meta.Ctx, rs.Primary.ID)
 		if err != nil {
 			return err
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckKatapultVirtualMachineDestroy(
+	tt *TestTools,
+) resource.TestCheckFunc {
+	m := tt.Meta
+
+	return func(s *terraform.State) error {
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "katapult_virtual_machine" {
+				continue
+			}
+
+			vm, _, err := m.Client.VirtualMachines.GetByID(m.Ctx, rs.Primary.ID)
+			if err == nil && vm != nil {
+				return fmt.Errorf(
+					"katapult_virtual_machine %s (%s) was not destroyed",
+					rs.Primary.ID, vm.Name,
+				)
+			}
 		}
 
 		return nil
