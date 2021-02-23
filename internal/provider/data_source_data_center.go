@@ -43,10 +43,9 @@ func dataSourceDataCenter() *schema.Resource {
 func dataSourceDataCenterRead(
 	ctx context.Context,
 	d *schema.ResourceData,
-	m interface{},
+	meta interface{},
 ) diag.Diagnostics {
-	meta := m.(*Meta)
-	c := meta.Client
+	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
 	id := d.Get("id").(string)
@@ -57,11 +56,11 @@ func dataSourceDataCenterRead(
 
 	switch {
 	case id != "":
-		dc, _, err = c.DataCenters.GetByID(ctx, id)
+		dc, _, err = m.Client.DataCenters.GetByID(ctx, id)
 	case permalink != "":
-		dc, _, err = c.DataCenters.GetByPermalink(ctx, permalink)
+		dc, _, err = m.Client.DataCenters.GetByPermalink(ctx, permalink)
 	default:
-		dc, err = meta.DataCenter(ctx)
+		dc, err = m.DataCenter(ctx)
 	}
 	if err != nil {
 		return diag.FromErr(err)
@@ -81,16 +80,16 @@ func dataSourceDataCenterRead(
 
 func defaultNetworkForDataCenter(
 	ctx context.Context,
-	meta *Meta,
+	m *Meta,
 ) (*katapult.Network, error) {
-	networks, _, _, err := meta.Client.Networks.List(
-		ctx, meta.OrganizationRef(),
+	networks, _, _, err := m.Client.Networks.List(
+		ctx, m.OrganizationRef(),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	dcID, err := meta.DataCenterID(ctx)
+	dcID, err := m.DataCenterID(ctx)
 	if err != nil {
 		return nil, err
 	}

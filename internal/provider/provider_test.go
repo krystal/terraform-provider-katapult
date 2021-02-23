@@ -109,12 +109,12 @@ func NewTestTools(t *testing.T) *TestTools {
 	if d.HasError() {
 		t.Fatalf("failed to configure client: %+v", d)
 	}
-	meta := p.Meta().(*Meta)
+	m := p.Meta().(*Meta)
 
 	return &TestTools{
 		T:                 t,
 		Recorder:          r,
-		Meta:              meta,
+		Meta:              m,
 		ProviderFactories: factories,
 		Cleanup:           stop,
 	}
@@ -179,7 +179,7 @@ func testVCRRecorderRandID(
 	r *recorder.Recorder,
 ) string {
 	randIDFile := testDataFilePath(t, ".cassette.rand_id")
-	rand := acctest.RandStringFromCharSet(12, acctest.CharSetAlphaNum)
+	rand := acctest.RandString(12)
 
 	if r.Mode() == recorder.ModeReplaying {
 		data, err := ioutil.ReadFile(randIDFile)
