@@ -194,7 +194,7 @@ deps:
 .PHONY: deps-update
 deps-update:
 	$(info Downloading dependencies)
-	go get -u ./...
+	go get -u -t ./...
 
 .PHONY: deps-analyze
 deps-analyze: $(TOOLDIR)/gomod
