@@ -63,7 +63,6 @@ LDFLAGS := -w -s
 
 VERSION ?= $(shell git describe --tags 2>/dev/null)
 GIT_SHA ?= $(shell git rev-parse --short HEAD 2>/dev/null)
-DATE ?= $(shell date +%s)
 
 ifeq ($(trim $(VERSION)),)
 	VERSION = 0.0.1
@@ -74,9 +73,8 @@ build: $(BINARY)
 
 $(BINARY): $(SOURCES)
 	go build $(V) -a -o "$@" -ldflags "$(LDFLAGS) \
-		-X main.Version=$(VERSION) \
-		-X main.Commit=$(GIT_SHA) \
-		-X main.Date=$(DATE)"
+		-X main.version=$(VERSION) \
+		-X main.commit=$(GIT_SHA)"
 
 TF_PLUGINS ?= $(HOME)/.terraform.d/plugins
 INSTALL_DIR = $(TF_PLUGINS)/$(HOSTNAME)/$(NAMESPACE)/$(NAME)/$(VERSION)

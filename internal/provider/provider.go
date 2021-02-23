@@ -22,7 +22,6 @@ const defaultGeneratedNamePrefix = "tf"
 type Config struct {
 	Version    string
 	Commit     string
-	Date       string
 	HTTPClient *http.Client
 
 	GeneratedNamePrefix string

@@ -6,17 +6,15 @@ import (
 )
 
 var (
-	Version string = "dev"
-	Commit  string = ""
-	Date    string = ""
+	version string = "dev"
+	commit  string = ""
 )
 
 func main() {
 	plugin.Serve(&plugin.ServeOpts{
 		ProviderFunc: provider.New(&provider.Config{
-			Version: Version,
-			Commit:  Commit,
-			Date:    Date,
+			Version: version,
+			Commit:  commit,
 		}),
 	})
 }
