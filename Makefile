@@ -49,6 +49,7 @@ $(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports@latest))
 $(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.37))
 $(eval $(call tool,gomod,github.com/Helcaraxan/gomod@latest))
 $(eval $(call tool,tfplugindocs,github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.4))
+$(eval $(call tool,tfproviderlint,github.com/bflad/tfproviderlint/cmd/tfproviderlint@latest))
 
 .PHONY: tools
 tools: $(TOOLS)
@@ -116,7 +117,11 @@ test-deps:
 
 .PHONY: lint
 lint: $(TOOLDIR)/golangci-lint
-	GOGC=off golangci-lint $(V) run
+	golangci-lint $(V) run
+
+.PHONY: lint-provider
+lint-provider: $(TOOLDIR)/tfproviderlint
+	tfproviderlint ./...
 
 .PHONY: format
 format: $(TOOLDIR)/gofumports
