@@ -1,8 +1,7 @@
 terraform {
   required_providers {
     katapult = {
-      version = "0.0.1"
-      source  = "katapult.io/katapult/katapult"
+      source = "katapult.io/katapult/katapult"
     }
   }
 }
