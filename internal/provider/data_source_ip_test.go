@@ -17,6 +17,7 @@ func TestAccKatapultDataSourceIP_by_id(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
@@ -27,7 +28,7 @@ func TestAccKatapultDataSourceIP_by_id(t *testing.T) {
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckIPAddressExists(tt, res),
+					testAccCheckKatapultIPExists(tt, res),
 					resource.TestMatchResourceAttr(
 						res, "address", regexp.MustCompile(
 							`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`,
@@ -48,6 +49,7 @@ func TestAccKatapultDataSourceIP_by_address(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
@@ -58,7 +60,7 @@ func TestAccKatapultDataSourceIP_by_address(t *testing.T) {
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckIPAddressExists(tt, res),
+					testAccCheckKatapultIPExists(tt, res),
 					resource.TestMatchResourceAttr(
 						res, "address", regexp.MustCompile(
 							`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`,

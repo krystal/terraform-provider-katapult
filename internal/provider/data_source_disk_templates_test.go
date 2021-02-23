@@ -27,7 +27,7 @@ func TestAccKatapultDataSourceDiskTemplates_default(t *testing.T) {
 			{
 				Config: `data "katapult_disk_templates" "main" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckDiskTemplates(tt, res, tpls),
+					testAccCheckKatapultDiskTemplates(tt, res, tpls),
 				),
 			},
 		},
@@ -62,7 +62,7 @@ func testFetchAllDiskTemplates(
 	return templates, nil
 }
 
-func testAccKatapultCheckDiskTemplates(
+func testAccCheckKatapultDiskTemplates(
 	tt *TestTools,
 	res string,
 	tpls []*katapult.DiskTemplate,
@@ -70,7 +70,7 @@ func testAccKatapultCheckDiskTemplates(
 	return func(s *terraform.State) error {
 		for i, tpl := range tpls {
 			prefix := fmt.Sprintf("templates.%d.", i)
-			err := testAccKatapultCheckDiskTemplate(tt, res, prefix, tpl)(s)
+			err := testAccCheckKatapultDiskTemplate(tt, res, prefix, tpl)(s)
 			if err != nil {
 				return err
 			}

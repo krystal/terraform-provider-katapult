@@ -63,11 +63,12 @@ func TestAccKatapultIP_basic(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "katapult_ip" "web" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckIPAddressExists(tt, res),
+					testAccCheckKatapultIPExists(tt, res),
 					resource.TestCheckResourceAttr(
 						res, "network_id", network.ID,
 					),
@@ -92,6 +93,7 @@ func TestAccKatapultIP_vip(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -102,7 +104,7 @@ func TestAccKatapultIP_vip(t *testing.T) {
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckIPAddressExists(tt, res),
+					testAccCheckKatapultIPExists(tt, res),
 					resource.TestCheckResourceAttr(res, "vip", "true"),
 					resource.TestCheckResourceAttr(res, "label", name),
 				),
@@ -128,6 +130,7 @@ func TestAccKatapultIP_with_network_id(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -137,7 +140,7 @@ func TestAccKatapultIP_with_network_id(t *testing.T) {
 					network.ID,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccKatapultCheckIPAddressExists(tt, res),
+					testAccCheckKatapultIPExists(tt, res),
 					resource.TestCheckResourceAttr(
 						res, "network_id", network.ID,
 					),
@@ -156,19 +159,19 @@ func TestAccKatapultIP_with_network_id(t *testing.T) {
 // Helpers
 //
 
-func testAccKatapultCheckIPAddressExists(
+func testAccCheckKatapultIPExists(
 	tt *TestTools,
 	res string,
 ) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		c := tt.Meta.Client
+	m := tt.Meta
 
+	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[res]
 		if !ok {
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		obj, _, err := c.IPAddresses.GetByID(tt.Meta.Ctx, rs.Primary.ID)
+		obj, _, err := m.Client.IPAddresses.GetByID(m.Ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -233,6 +236,29 @@ func testAccKatapultCheckIPAddressExists(
 				"expected allocation_id to be \"%s\", got \"%s\"",
 				obj.AllocationID, rs.Primary.Attributes["allocation_id"],
 			)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckKatapultIPDestroy(
+	tt *TestTools,
+) resource.TestCheckFunc {
+	m := tt.Meta
+
+	return func(s *terraform.State) error {
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "katapult_ip" {
+				continue
+			}
+
+			ip, _, err := m.Client.IPAddresses.GetByID(m.Ctx, rs.Primary.ID)
+			if err == nil && ip != nil {
+				return fmt.Errorf(
+					"katapult_ip %s (%s) was not destroyed",
+					rs.Primary.ID, ip.Address)
+			}
 		}
 
 		return nil
