@@ -142,18 +142,20 @@ func testDataFilePath(t *testing.T, suffix string) string {
 func newVCRRecorder(t *testing.T) (*recorder.Recorder, func()) {
 	cassettePath := testDataFilePath(t, ".cassette")
 
-	mode := recorder.ModeReplaying
+	var mode recorder.Mode
 	var transport http.RoundTripper
 
 	vcrMode := strings.ToLower(os.Getenv("VCR"))
 	switch vcrMode {
-	case "replay", "play":
-		// Prevent real requests when explicitly set to replay mode
-		transport = &stopRequests{}
 	case "record", "rec":
 		mode = recorder.ModeRecording
 	case "disabled", "off", "no", "0":
 		mode = recorder.ModeDisabled
+	default:
+		// Prevent real requests unless VCR is explicitly set to record mode or
+		// disabled.
+		transport = &stopRequests{}
+		mode = recorder.ModeReplaying
 	}
 
 	r, err := recorder.NewAsMode(cassettePath, mode, transport)
