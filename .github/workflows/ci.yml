@@ -115,8 +115,3 @@ jobs:
         env:
           GPG_FINGERPRINT: "${{ steps.import_gpg.outputs.fingerprint }}"
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-      - name: test signing
-        run: >-
-          gpg --verify
-          dist/terraform-provider-katapult_v0.0.0-next_SHA256SUMS.sig
-          dist/terraform-provider-katapult_v0.0.0-next_SHA256SUMS
