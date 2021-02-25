@@ -38,7 +38,7 @@ data "katapult_virtual_machine" "web-1" {
 - **disk_template** (String) Permalink or ID of a Disk Template.
 - **disk_template_options** (Map of String)
 - **hostname** (String)
-- **ip_address_ids** (Set of String) One or more `katapult_ip` resource `id` values.
+- **ip_address_ids** (Set of String) One or more IP IDs.
 - **ip_addresses** (Set of String)
 - **name** (String)
 - **package** (String) Permalink or ID of a Virtual Machine Package.

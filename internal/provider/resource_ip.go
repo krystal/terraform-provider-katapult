@@ -32,7 +32,7 @@ func resourceIP() *schema.Resource {
 			},
 			"version": {
 				Type:         schema.TypeInt,
-				Description:  "IPv4 or IPv6",
+				Description:  "IPv4 or IPv6.",
 				Optional:     true,
 				ForceNew:     true,
 				Default:      4,
@@ -57,7 +57,7 @@ func resourceIP() *schema.Resource {
 			},
 			"label": {
 				Type:         schema.TypeString,
-				Description:  "Required when `wip` is `true`.",
+				Description:  "Required when **vip** is `true`.",
 				Optional:     true,
 				RequiredWith: []string{"vip"},
 			},
