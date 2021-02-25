@@ -1,5 +1,6 @@
 # Katapult Terraform Provider
 
+- [Provider Documentation](https://registry.terraform.io/providers/krystal/katapult/latest/docs)
 - Katapult website: [https://katapult.io](https://katapult.io)
 - Terraform website: [https://www.terraform.io](https://www.terraform.io)
 
@@ -44,8 +45,8 @@ acceptance tests.
 
 - `make build` — Build provider binary into `bin/terraform-provider-katapult`
 - `make install` — Build provider binary, and install it to
-  `~/.terraform.d/plugins/katapult.io/katapult/katapult/{VERSION}/`, allowing
-  Terraform to use custom builds.
+  `~/.terraform.d/plugins/registry.terraform.io/krystal/katapult/{VERSION}/`,
+  allowing Terraform to use the custom builds.
 - `make test` — Run unit tests.
 - `make testacc` — Run acceptance tests. By default it prevent requests to
   Katapult's API to create real resources, and instead playback previously
