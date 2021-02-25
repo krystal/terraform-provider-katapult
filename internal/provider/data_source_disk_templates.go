@@ -14,6 +14,12 @@ func dataSourceDiskTemplates() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceDiskTemplatesRead,
 		Schema: map[string]*schema.Schema{
+			"include_universal": {
+				Type:        schema.TypeBool,
+				Description: "Include universal disk templates.",
+				Optional:    true,
+				Default:     true,
+			},
 			"templates": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -38,12 +44,14 @@ func dataSourceDiskTemplatesRead(
 		return diag.FromErr(err)
 	}
 
+	universal := d.Get("include_universal").(bool)
+
 	var templates []*katapult.DiskTemplate
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		pageResult, resp, err := m.Client.DiskTemplates.List(
 			ctx, m.OrganizationRef(), &katapult.DiskTemplateListOptions{
-				IncludeUniversal: true,
+				IncludeUniversal: universal,
 				Page:             pageNum,
 			},
 		)
