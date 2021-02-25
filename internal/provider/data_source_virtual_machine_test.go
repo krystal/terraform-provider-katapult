@@ -16,6 +16,10 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -99,6 +103,10 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
