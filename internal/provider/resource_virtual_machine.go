@@ -22,8 +22,8 @@ func resourceVirtualMachine() *schema.Resource {
 		DeleteContext: resourceVirtualMachineDelete,
 		CustomizeDiff: resourceVirtualMachineCustomizeDiff,
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(time.Minute * 10),
-			Delete: schema.DefaultTimeout(time.Minute * 5),
+			Create: schema.DefaultTimeout(10 * time.Minute),
+			Delete: schema.DefaultTimeout(5 * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -488,26 +488,14 @@ func resourceVirtualMachineDelete( //nolint:funlen
 
 	switch vm.State {
 	case katapult.VirtualMachineStarted:
-		_, _, err2 := m.Client.VirtualMachines.Stop(ctx, vm)
+		err2 := stopVirtualMachine(ctx, m, d.Timeout(schema.TimeoutDelete), vm)
 		if err2 != nil {
 			return append(diags, diag.FromErr(
 				fmt.Errorf("failed to stop virtual machine: %w", err2),
 			)...)
 		}
-	case katapult.VirtualMachineStopped,
-		katapult.VirtualMachineStopping,
+	case katapult.VirtualMachineStopping,
 		katapult.VirtualMachineShuttingDown:
-		// no action needed
-	default:
-		return append(diags, diag.FromErr(
-			fmt.Errorf(
-				"cannot delete virtual machine in state: %s",
-				string(vm.State),
-			),
-		)...)
-	}
-
-	if vm.State != katapult.VirtualMachineStopped {
 		vmWaiter := &resource.StateChangeConf{
 			Pending: []string{
 				string(katapult.VirtualMachineStarted),
@@ -537,6 +525,15 @@ func resourceVirtualMachineDelete( //nolint:funlen
 				fmt.Errorf("failed to stop virtual machine: %w", err),
 			)...)
 		}
+	case katapult.VirtualMachineStopped:
+		// no action needed
+	default:
+		return append(diags, diag.FromErr(
+			fmt.Errorf(
+				"cannot delete virtual machine in state: %s",
+				string(vm.State),
+			),
+		)...)
 	}
 
 	trash, _, err := m.Client.VirtualMachines.Delete(ctx, vm)
@@ -559,6 +556,26 @@ func resourceVirtualMachineDelete( //nolint:funlen
 	}
 
 	return diags
+}
+
+func stopVirtualMachine(
+	ctx context.Context,
+	m *Meta,
+	timeout time.Duration,
+	vm *katapult.VirtualMachine,
+) error {
+	task, resp, err := m.Client.VirtualMachines.Stop(ctx, vm)
+	if err != nil {
+		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
+			return nil
+		}
+
+		return err
+	}
+
+	_, err = waitForTaskCompletion(ctx, m, timeout, task)
+
+	return err
 }
 
 func normalizeVirtualMachinePackage(

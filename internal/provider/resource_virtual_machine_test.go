@@ -56,22 +56,12 @@ func testSweepVirtualMachines(_ string) error {
 
 		switch vm.State {
 		case katapult.VirtualMachineStarted:
-			_, _, err2 := meta.Client.VirtualMachines.Stop(ctx, vm)
+			err2 := stopVirtualMachine(ctx, meta, 5*time.Minute, vm)
 			if err2 != nil {
 				return err2
 			}
-		case katapult.VirtualMachineStopped,
-			katapult.VirtualMachineStopping,
+		case katapult.VirtualMachineStopping,
 			katapult.VirtualMachineShuttingDown:
-		// no action needed
-		default:
-			return fmt.Errorf(
-				"cannot stop virtual machine in state: %s",
-				string(vm.State),
-			)
-		}
-
-		if vm.State != katapult.VirtualMachineStopped {
 			vmWaiter := &resource.StateChangeConf{
 				Pending: []string{
 					string(katapult.VirtualMachineStarted),
@@ -104,6 +94,13 @@ func testSweepVirtualMachines(_ string) error {
 					"failed to shutdown virtual machine: %w", err2,
 				)
 			}
+		case katapult.VirtualMachineStopped:
+			// no action needed
+		default:
+			return fmt.Errorf(
+				"cannot stop virtual machine in state: %s",
+				string(vm.State),
+			)
 		}
 
 		trash, _, err := meta.Client.VirtualMachines.Delete(ctx, vm)
