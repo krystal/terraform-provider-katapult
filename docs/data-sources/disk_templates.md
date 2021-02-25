@@ -23,6 +23,7 @@ data "katapult_disk_templates" "all-templates" {}
 ### Optional
 
 - **id** (String) The ID of this resource.
+- **include_universal** (Boolean) Include universal disk templates. Defaults to `true`.
 
 ### Read-Only
 
