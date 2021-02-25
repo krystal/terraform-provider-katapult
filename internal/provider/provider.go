@@ -4,9 +4,12 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/hashicorp/go-hclog"
@@ -19,6 +22,8 @@ import (
 
 const defaultGeneratedNamePrefix = "tf"
 
+var once sync.Once
+
 type Config struct {
 	Version    string
 	Commit     string
@@ -28,6 +33,23 @@ type Config struct {
 }
 
 func New(c *Config) func() *schema.Provider {
+	once.Do(func() {
+		// Set descriptions to support markdown syntax, this will be used in
+		// document generation and the language server.
+		schema.DescriptionKind = schema.StringMarkdown
+
+		// Customize the content of descriptions when output. For example you
+		// can add defaults on to the exported descriptions if present.
+		schema.SchemaDescriptionBuilder = func(s *schema.Schema) string {
+			desc := s.Description
+			if s.Default != nil {
+				desc += fmt.Sprintf(" Defaults to `%v`.", s.Default)
+			}
+
+			return strings.TrimSpace(desc)
+		}
+	})
+
 	return func() *schema.Provider {
 		p := &schema.Provider{
 			Schema: map[string]*schema.Schema{
@@ -79,7 +101,7 @@ func New(c *Config) func() *schema.Provider {
 					Description: "Log level used by Katapult Terraform " +
 						"provider. Can be specified with the " +
 						"`KATAPULT_LOG_LEVEL` environment variable. " +
-						"(default: `info`)",
+						"Defaults to `info`.",
 				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
