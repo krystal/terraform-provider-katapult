@@ -33,10 +33,10 @@ resource "katapult_ip" "primary-db" {
 
 ### Optional
 
-- **label** (String)
+- **label** (String) Required when `wip` is `true`.
 - **network_id** (String)
-- **version** (Number)
-- **vip** (Boolean)
+- **version** (Number) IPv4 or IPv6 Defaults to `4`.
+- **vip** (Boolean) Defaults to `false`.
 
 ### Read-Only
 

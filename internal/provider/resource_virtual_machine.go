@@ -54,12 +54,14 @@ func resourceVirtualMachine() *schema.Resource {
 			},
 			"package": {
 				Type:         schema.TypeString,
+				Description:  "Permalink or ID of a Virtual Machine Package.",
 				Required:     true,
 				ForceNew:     true, // TODO: Add support for changing package
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			"disk_template": {
 				Type:         schema.TypeString,
+				Description:  "Permalink or ID of a Disk Template.",
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringIsNotEmpty,
@@ -73,9 +75,10 @@ func resourceVirtualMachine() *schema.Resource {
 				},
 			},
 			"ip_address_ids": {
-				Type:     schema.TypeSet,
-				Required: true,
-				MinItems: 1,
+				Type:        schema.TypeSet,
+				Description: "One or more `katapult_ip` resource `id` values.",
+				Required:    true,
+				MinItems:    1,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},

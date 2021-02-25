@@ -37,10 +37,10 @@ data "katapult_ip" "web-2" {
 - **address_with_mask** (String)
 - **allocation_id** (String)
 - **allocation_type** (String)
-- **label** (String)
+- **label** (String) Required when `wip` is `true`.
 - **network_id** (String)
 - **reverse_dns** (String)
-- **version** (Number)
+- **version** (Number) IPv4 or IPv6
 - **vip** (Boolean)
 
 
