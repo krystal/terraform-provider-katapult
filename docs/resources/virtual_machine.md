@@ -31,7 +31,7 @@ resource "katapult_virtual_machine" "web-1" {
 ### Required
 
 - **disk_template** (String) Permalink or ID of a Disk Template.
-- **ip_address_ids** (Set of String) One or more `katapult_ip` resource `id` values.
+- **ip_address_ids** (Set of String) One or more IP IDs.
 - **package** (String) Permalink or ID of a Virtual Machine Package.
 
 ### Optional

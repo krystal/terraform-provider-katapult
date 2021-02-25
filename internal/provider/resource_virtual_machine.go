@@ -76,7 +76,7 @@ func resourceVirtualMachine() *schema.Resource {
 			},
 			"ip_address_ids": {
 				Type:        schema.TypeSet,
-				Description: "One or more `katapult_ip` resource `id` values.",
+				Description: "One or more IP IDs.",
 				Required:    true,
 				MinItems:    1,
 				Elem: &schema.Schema{
