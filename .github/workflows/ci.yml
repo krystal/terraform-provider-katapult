@@ -50,6 +50,12 @@ jobs:
   test:
     name: Acceptance Test (VCR Replay)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        terraform_version:
+          - "0.14.7"
+          - "0.15.0-beta1"
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -69,6 +75,7 @@ jobs:
           KATAPULT_API_KEY: ${{ secrets.KATAPULT_API_KEY }}
           KATAPULT_ORGANIZATION: ${{ secrets.KATAPULT_ORGANIZATION }}
           KATAPULT_DATA_CENTER: ${{ secrets.KATAPULT_DATA_CENTER }}
+          TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform_version }}
 
   docs:
     name: Documentation
