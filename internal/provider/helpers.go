@@ -50,6 +50,17 @@ func purgeTrashObject(
 		return err
 	}
 
+	_, err = waitForTaskCompletion(ctx, m, timeout, task)
+
+	return err
+}
+
+func waitForTaskCompletion(
+	ctx context.Context,
+	m *Meta,
+	timeout time.Duration,
+	task *katapult.Task,
+) (*katapult.Task, error) {
 	taskWaiter := &resource.StateChangeConf{
 		Pending: []string{
 			string(katapult.TaskPending),
@@ -74,9 +85,13 @@ func purgeTrashObject(
 		MinTimeout:                5 * time.Second,
 		ContinuousTargetOccurence: 1,
 	}
-	_, err = taskWaiter.WaitForStateContext(ctx)
 
-	return err
+	t, err := taskWaiter.WaitForStateContext(ctx)
+	if tsk, ok := t.(*katapult.Task); ok {
+		return tsk, err
+	}
+
+	return nil, err
 }
 
 func stringsDiff(a, b []string) []string {
