@@ -1,5 +1,5 @@
-HOSTNAME=katapult.io
-NAMESPACE=katapult
+HOSTNAME=registry.terraform.io
+NAMESPACE=krystal
 NAME=katapult
 
 SOURCES := $(shell find . -name "*.go" -or -name "go.mod" -or -name "go.sum" \

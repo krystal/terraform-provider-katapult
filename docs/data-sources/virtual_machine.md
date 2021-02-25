@@ -13,9 +13,14 @@ description: |-
 ## Example Usage
 
 ```terraform
+# Get virtual machine by ID
+data "katapult_virtual_machine" "web-1" {
+  id = "vm_Ek42KaL1OrE7tkav"
+}
+
 # Get virtual machine by FQDN
 data "katapult_virtual_machine" "web-1" {
-
+  fqdn = "web-1.acme-labs.katapult.cloud"
 }
 ```
 
@@ -30,13 +35,13 @@ data "katapult_virtual_machine" "web-1" {
 ### Read-Only
 
 - **description** (String)
-- **disk_template** (String)
+- **disk_template** (String) Permalink or ID of a Disk Template.
 - **disk_template_options** (Map of String)
 - **hostname** (String)
-- **ip_address_ids** (Set of String)
+- **ip_address_ids** (Set of String) One or more `katapult_ip` resource `id` values.
 - **ip_addresses** (Set of String)
 - **name** (String)
-- **package** (String)
+- **package** (String) Permalink or ID of a Virtual Machine Package.
 - **state** (String)
 - **tags** (Set of String)
 
