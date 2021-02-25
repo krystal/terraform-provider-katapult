@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.1-rc.2](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.1-rc.1...v0.0.1-rc.2) (2021-02-25)
+
+
+### Documentation
+
+* **provider:** fix formatting issues ([165772f](https://github.com/krystal/terraform-provider-katapult/commit/165772fbb804c6c304484c09b844b629a0cc094f))
+
 ### [0.0.1-rc.1](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.1-rc.0...v0.0.1-rc.1) (2021-02-25)
 
 
