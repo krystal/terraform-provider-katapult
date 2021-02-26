@@ -9,10 +9,7 @@ import (
 )
 
 func TestAccKatapultDataSourceIP_by_id(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
-
-	res := "data.katapult_ip.src"
+	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -28,11 +25,43 @@ func TestAccKatapultDataSourceIP_by_id(t *testing.T) {
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPExists(tt, res),
+					testAccCheckKatapultIPExists(tt, "data.katapult_ip.src"),
 					resource.TestMatchResourceAttr(
-						res, "address", regexp.MustCompile(
+						"data.katapult_ip.src", "address", regexp.MustCompile(
 							`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`,
 						),
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "id",
+						"data.katapult_ip.src", "id",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "address",
+						"data.katapult_ip.src", "address",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "address_with_mask",
+						"data.katapult_ip.src", "address_with_mask",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "reverse_dns",
+						"data.katapult_ip.src", "reverse_dns",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "version",
+						"data.katapult_ip.src", "version",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "vip",
+						"data.katapult_ip.src", "vip",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "allocation_type",
+						"data.katapult_ip.src", "allocation_type",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "allocation_id",
+						"data.katapult_ip.src", "allocation_id",
 					),
 				),
 			},
@@ -41,10 +70,7 @@ func TestAccKatapultDataSourceIP_by_id(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceIP_by_address(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
-
-	res := "data.katapult_ip.src"
+	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -60,11 +86,43 @@ func TestAccKatapultDataSourceIP_by_address(t *testing.T) {
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPExists(tt, res),
+					testAccCheckKatapultIPExists(tt, "data.katapult_ip.src"),
 					resource.TestMatchResourceAttr(
-						res, "address", regexp.MustCompile(
+						"data.katapult_ip.src", "address", regexp.MustCompile(
 							`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`,
 						),
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "id",
+						"data.katapult_ip.src", "id",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "address",
+						"data.katapult_ip.src", "address",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "address_with_mask",
+						"data.katapult_ip.src", "address_with_mask",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "reverse_dns",
+						"data.katapult_ip.src", "reverse_dns",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "version",
+						"data.katapult_ip.src", "version",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "vip",
+						"data.katapult_ip.src", "vip",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "allocation_type",
+						"data.katapult_ip.src", "allocation_type",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_ip.main", "allocation_id",
+						"data.katapult_ip.src", "allocation_id",
 					),
 				),
 			},
@@ -73,8 +131,7 @@ func TestAccKatapultDataSourceIP_by_address(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceIP_invalid(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -89,3 +146,7 @@ func TestAccKatapultDataSourceIP_invalid(t *testing.T) {
 		},
 	})
 }
+
+//
+// Helpers
+//

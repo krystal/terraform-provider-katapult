@@ -6,17 +6,15 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/pkg/katapult"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAccKatapultDataSourceDiskTemplates_default(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
-	tpls, err := testFetchAllDiskTemplates(tt)
+	tpls, err := testHelperFetchAllDiskTemplates(tt)
 	require.NoError(t, err)
 
 	res := "data.katapult_disk_templates.main"
@@ -36,10 +34,9 @@ func TestAccKatapultDataSourceDiskTemplates_default(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceDiskTemplates_include_universal(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
-	tpls, err := testFetchAllDiskTemplates(tt)
+	tpls, err := testHelperFetchAllDiskTemplates(tt)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -63,10 +60,9 @@ func TestAccKatapultDataSourceDiskTemplates_include_universal(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceDiskTemplates_exclude_universal(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
-	allTpls, err := testFetchAllDiskTemplates(tt)
+	allTpls, err := testHelperFetchAllDiskTemplates(tt)
 	require.NoError(t, err)
 
 	tpls := []*katapult.DiskTemplate{}
@@ -96,14 +92,18 @@ func TestAccKatapultDataSourceDiskTemplates_exclude_universal(t *testing.T) {
 	})
 }
 
-func testFetchAllDiskTemplates(
-	tt *TestTools,
+//
+// Helpers
+//
+
+func testHelperFetchAllDiskTemplates(
+	tt *testTools,
 ) ([]*katapult.DiskTemplate, error) {
 	var templates []*katapult.DiskTemplate
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		pageResult, resp, err := tt.Meta.Client.DiskTemplates.List(
-			tt.Meta.Ctx, tt.Meta.OrganizationRef(),
+			tt.Ctx, tt.Meta.OrganizationRef(),
 			&katapult.DiskTemplateListOptions{
 				IncludeUniversal: true,
 				Page:             pageNum,
@@ -125,19 +125,18 @@ func testFetchAllDiskTemplates(
 }
 
 func testAccCheckKatapultDiskTemplates(
-	tt *TestTools,
+	tt *testTools,
 	res string,
 	tpls []*katapult.DiskTemplate,
 ) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		for i, tpl := range tpls {
-			prefix := fmt.Sprintf("templates.%d.", i)
-			err := testAccCheckKatapultDiskTemplate(tt, res, prefix, tpl)(s)
-			if err != nil {
-				return err
-			}
-		}
+	tfs := []resource.TestCheckFunc{}
 
-		return nil
+	for i, tpl := range tpls {
+		prefix := fmt.Sprintf("templates.%d.", i)
+		tfs = append(tfs, testAccCheckKatapultDiskTemplateAttrs(
+			tt, res, prefix, tpl,
+		))
 	}
+
+	return resource.ComposeAggregateTestCheckFunc(tfs...)
 }

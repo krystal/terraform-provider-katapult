@@ -22,11 +22,11 @@ data "katapult_disk_templates" "all-templates" {}
 
 ### Optional
 
-- **id** (String) The ID of this resource.
 - **include_universal** (Boolean) Include universal disk templates. Defaults to `true`.
 
 ### Read-Only
 
+- **id** (String) Always set to provider organization value.
 - **templates** (List of Object) (see [below for nested schema](#nestedatt--templates))
 
 <a id="nestedatt--templates"></a>

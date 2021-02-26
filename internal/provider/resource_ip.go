@@ -57,7 +57,7 @@ func resourceIP() *schema.Resource {
 			},
 			"label": {
 				Type:         schema.TypeString,
-				Description:  "Required when **vip** is `true`.",
+				Description:  "VIP label. Required when **vip** is `true`.",
 				Optional:     true,
 				RequiredWith: []string{"vip"},
 			},

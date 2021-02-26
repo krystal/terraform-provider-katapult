@@ -18,6 +18,7 @@ func dataSourceIP() *schema.Resource {
 	}
 
 	ds["address"].Optional = true
+	ds["label"].Description = "VIP label."
 
 	return &schema.Resource{
 		ReadContext: dataSourceIPRead,

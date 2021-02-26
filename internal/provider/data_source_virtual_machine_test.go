@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -8,8 +9,7 @@ import (
 )
 
 func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	name := tt.ResourceName("data-source-by-id")
 
@@ -95,8 +95,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	name := tt.ResourceName("data-source-by-fqdn")
 
@@ -175,6 +174,23 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 						"data.katapult_virtual_machine.src",
 						"disk_template_options.%",
 					),
+				),
+			},
+		},
+	})
+}
+
+func TestAccKatapultDataSourceVirtualMachine_blank(t *testing.T) {
+	tt := newTestTools(t)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `data "katapult_virtual_machine" "src" {}`,
+				ExpectError: regexp.MustCompile(
+					regexp.QuoteMeta("one of `fqdn,id` must be specified"),
 				),
 			},
 		},

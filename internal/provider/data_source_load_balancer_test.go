@@ -10,8 +10,7 @@ import (
 
 func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
 	t.Skip("not yet feature complete")
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	name := tt.ResourceName("basic")
 	res := "data.katapult_load_balancer.src"

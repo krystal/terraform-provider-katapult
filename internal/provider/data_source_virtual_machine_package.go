@@ -65,12 +65,16 @@ func dataSourceVirtualMachinePackageRead(
 	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
+	id := d.Get("id").(string)
+	permalink := d.Get("permalink").(string)
+
 	var pkg *katapult.VirtualMachinePackage
 	var err error
 
-	if id := d.Get("id").(string); id != "" {
+	switch {
+	case id != "":
 		pkg, _, err = m.Client.VirtualMachinePackages.GetByID(ctx, id)
-	} else if permalink := d.Get("permalink").(string); permalink != "" {
+	case permalink != "":
 		pkg, _, err = m.Client.VirtualMachinePackages.GetByPermalink(
 			ctx, permalink,
 		)

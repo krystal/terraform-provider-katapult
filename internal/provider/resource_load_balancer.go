@@ -206,10 +206,7 @@ func populateLoadBalancerTargets(
 	t katapult.ResourceType,
 	ids []string,
 ) {
-	list := []map[string]string{}
-	for _, id := range ids {
-		list = append(list, map[string]string{"id": id})
-	}
+	list := flattenLoadBalancerResourceIDs(ids)
 
 	switch t {
 	case katapult.VirtualMachinesResourceType:
@@ -219,6 +216,16 @@ func populateLoadBalancerTargets(
 	case katapult.TagsResourceType:
 		_ = d.Set("tag", list)
 	}
+}
+
+//nolint:unused
+func flattenLoadBalancerResourceIDs(ids []string) []map[string]string {
+	list := []map[string]string{}
+	for _, id := range ids {
+		list = append(list, map[string]string{"id": id})
+	}
+
+	return list
 }
 
 //nolint:unused
