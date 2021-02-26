@@ -14,6 +14,11 @@ func dataSourceDiskTemplates() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceDiskTemplatesRead,
 		Schema: map[string]*schema.Schema{
+			"id": {
+				Description: "Always set to provider organization value.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"include_universal": {
 				Type:        schema.TypeBool,
 				Description: "Include universal disk templates.",
