@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/jimeh/undent"
+	"github.com/krystal/go-katapult/pkg/katapult"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,10 +16,8 @@ func TestAccKatapultDataSourceDataCenter_default(t *testing.T) {
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
 
-	dcID, err := tt.Meta.DataCenterID(tt.Meta.Ctx)
+	dc, err := tt.Meta.DataCenter(tt.Meta.Ctx)
 	require.NoError(t, err)
-
-	res := "data.katapult_data_center.main"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -27,8 +26,12 @@ func TestAccKatapultDataSourceDataCenter_default(t *testing.T) {
 			{
 				Config: `data "katapult_data_center" "main" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultDataCenterExists(tt, res, ""),
-					resource.TestCheckResourceAttr(res, "id", dcID),
+					testAccCheckKatapultDataCenterExists(
+						tt, "data.katapult_data_center.main",
+					),
+					testAccCheckKatapultDataCenterAttrs(
+						tt, "data.katapult_data_center.main", dc, "",
+					),
 				),
 			},
 		},
@@ -39,10 +42,8 @@ func TestAccKatapultDataSourceDataCenter_by_id(t *testing.T) {
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
 
-	dcID, err := tt.Meta.DataCenterID(tt.Meta.Ctx)
+	dc, err := tt.Meta.DataCenter(tt.Meta.Ctx)
 	require.NoError(t, err)
-
-	res := "data.katapult_data_center.main"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -53,10 +54,15 @@ func TestAccKatapultDataSourceDataCenter_by_id(t *testing.T) {
 					data "katapult_data_center" "main" {
 					  id = "%s"
 					}`,
-					dcID,
+					dc.ID,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultDataCenterExists(tt, res, dcID),
+					testAccCheckKatapultDataCenterExists(
+						tt, "data.katapult_data_center.main",
+					),
+					testAccCheckKatapultDataCenterAttrs(
+						tt, "data.katapult_data_center.main", dc, "",
+					),
 				),
 			},
 		},
@@ -70,8 +76,6 @@ func TestAccKatapultDataSourceDataCenter_by_permalink(t *testing.T) {
 	dc, err := tt.Meta.DataCenter(tt.Meta.Ctx)
 	require.NoError(t, err)
 
-	res := "data.katapult_data_center.main"
-
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
@@ -84,7 +88,12 @@ func TestAccKatapultDataSourceDataCenter_by_permalink(t *testing.T) {
 					dc.Permalink,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultDataCenterExists(tt, res, dc.ID),
+					testAccCheckKatapultDataCenterExists(
+						tt, "data.katapult_data_center.main",
+					),
+					testAccCheckKatapultDataCenterAttrs(
+						tt, "data.katapult_data_center.main", dc, "",
+					),
 				),
 			},
 		},
@@ -120,7 +129,6 @@ func TestAccKatapultDataSourceDataCenter_invalid(t *testing.T) {
 func testAccCheckKatapultDataCenterExists(
 	tt *TestTools,
 	res string,
-	id string,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c := tt.Meta.Client
@@ -130,52 +138,34 @@ func testAccCheckKatapultDataCenterExists(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		if id == "" {
-			id = rs.Primary.ID
-		}
+		_, _, err := c.DataCenters.GetByID(tt.Meta.Ctx, rs.Primary.ID)
 
-		obj, _, err := c.DataCenters.GetByID(tt.Meta.Ctx, id)
-		if err != nil {
-			return err
-		}
-
-		if rs.Primary.Attributes["id"] != obj.ID {
-			return fmt.Errorf(
-				"expected id to be \"%s\", got \"%s\"",
-				obj.ID, rs.Primary.Attributes["id"],
-			)
-		}
-
-		if rs.Primary.Attributes["name"] != obj.Name {
-			return fmt.Errorf(
-				"expected name to be \"%s\", got \"%s\"",
-				obj.Name, rs.Primary.Attributes["name"],
-			)
-		}
-
-		if rs.Primary.Attributes["permalink"] != obj.Permalink {
-			return fmt.Errorf(
-				"expected permalink attribute to be \"%s\", got \"%s\"",
-				obj.Permalink, rs.Primary.Attributes["permalink"],
-			)
-		}
-
-		if obj.Country != nil {
-			if rs.Primary.Attributes["country_id"] != obj.Country.ID {
-				return fmt.Errorf(
-					"expected country_id attribute to be \"%s\", got \"%s\"",
-					obj.Country.ID, rs.Primary.Attributes["country_id"],
-				)
-			}
-
-			if rs.Primary.Attributes["country_name"] != obj.Country.Name {
-				return fmt.Errorf(
-					"expected country_name attribute to be \"%s\", got \"%s\"",
-					obj.Country.Name, rs.Primary.Attributes["country_name"],
-				)
-			}
-		}
-
-		return nil
+		return err
 	}
+}
+
+func testAccCheckKatapultDataCenterAttrs(
+	tt *TestTools,
+	res string,
+	dc *katapult.DataCenter,
+	prefix string,
+) resource.TestCheckFunc {
+	tfs := []resource.TestCheckFunc{
+		resource.TestCheckResourceAttr(res, prefix+"id", dc.ID),
+		resource.TestCheckResourceAttr(res, prefix+"name", dc.Name),
+		resource.TestCheckResourceAttr(res, prefix+"permalink", dc.Permalink),
+	}
+
+	if dc.Country != nil {
+		tfs = append(tfs,
+			resource.TestCheckResourceAttr(
+				res, prefix+"country_id", dc.Country.ID,
+			),
+			resource.TestCheckResourceAttr(
+				res, prefix+"country_name", dc.Country.Name,
+			),
+		)
+	}
+
+	return resource.ComposeAggregateTestCheckFunc(tfs...)
 }

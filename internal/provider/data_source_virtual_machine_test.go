@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -175,6 +176,24 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 						"data.katapult_virtual_machine.src",
 						"disk_template_options.%",
 					),
+				),
+			},
+		},
+	})
+}
+
+func TestAccKatapultDataSourceVirtualMachine_blank(t *testing.T) {
+	tt := NewTestTools(t)
+	defer tt.Cleanup()
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `data "katapult_virtual_machine" "src" {}`,
+				ExpectError: regexp.MustCompile(
+					regexp.QuoteMeta("one of `fqdn,id` must be specified"),
 				),
 			},
 		},

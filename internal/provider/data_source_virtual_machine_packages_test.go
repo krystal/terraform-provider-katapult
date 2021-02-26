@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/krystal/go-katapult/pkg/katapult"
 	"github.com/stretchr/testify/require"
 )
@@ -67,17 +66,14 @@ func testAccCheckKatapultVirtualMachinePackages(
 	res string,
 	pkgs []*katapult.VirtualMachinePackage,
 ) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		for i, pkg := range pkgs {
-			prefix := fmt.Sprintf("packages.%d.", i)
-			err := testAccCheckKatapultVirtualMachinePackageAttrs(
-				tt, res, pkg, prefix,
-			)(s)
-			if err != nil {
-				return err
-			}
-		}
+	tfs := []resource.TestCheckFunc{}
 
-		return nil
+	for i, pkg := range pkgs {
+		prefix := fmt.Sprintf("packages.%d.", i)
+		tfs = append(tfs, testAccCheckKatapultVirtualMachinePackageAttrs(
+			tt, res, pkg, prefix,
+		))
 	}
+
+	return resource.ComposeAggregateTestCheckFunc(tfs...)
 }

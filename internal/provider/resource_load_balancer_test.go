@@ -164,32 +164,31 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 	})
 }
 
+//
+// Helpers
+//
+
 //nolint:unused
 func testAccCheckKatapultLoadBalancerExists(
 	tt *TestTools,
 	res string,
 ) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		c := tt.Meta.Client
+	m := tt.Meta
 
+	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[res]
 		if !ok {
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		obj, _, err := c.LoadBalancers.GetByID(tt.Meta.Ctx, rs.Primary.ID)
+		lb, _, err := m.Client.LoadBalancers.GetByID(
+			tt.Meta.Ctx, rs.Primary.ID,
+		)
 		if err != nil {
 			return err
 		}
 
-		if rs.Primary.Attributes["name"] != obj.Name {
-			return fmt.Errorf(
-				"expected name to be \"%s\", got \"%s\"",
-				obj.Name, rs.Primary.Attributes["name"],
-			)
-		}
-
-		return nil
+		return resource.TestCheckResourceAttr(res, "name", lb.Name)(s)
 	}
 }
 

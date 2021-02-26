@@ -81,7 +81,7 @@ func TestAccKatapultDataSourceVirtualMachinePackage_by_permalink(t *testing.T) {
 	})
 }
 
-func TestAccKatapultDataSourceVirtualMachinePackage_invalid(t *testing.T) {
+func TestAccKatapultDataSourceVirtualMachinePackage_blank(t *testing.T) {
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
 

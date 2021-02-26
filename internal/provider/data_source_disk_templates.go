@@ -44,11 +44,6 @@ func dataSourceDiskTemplatesRead(
 	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
-	orgID, err := m.OrganizationID(ctx)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	universal := d.Get("include_universal").(bool)
 
 	var templates []*katapult.DiskTemplate
@@ -73,7 +68,7 @@ func dataSourceDiskTemplatesRead(
 		return diag.FromErr(err)
 	}
 
-	d.SetId(orgID)
+	d.SetId(m.confOrganization)
 
 	return diags
 }
@@ -81,10 +76,11 @@ func dataSourceDiskTemplatesRead(
 func flattenDiskTemplates(
 	tpls []*katapult.DiskTemplate,
 ) []map[string]interface{} {
-	dts := make([]map[string]interface{}, 0)
+	r := make([]map[string]interface{}, 0, len(tpls))
+
 	for _, tpl := range tpls {
-		dts = append(dts, flattenDiskTemplate(tpl))
+		r = append(r, flattenDiskTemplate(tpl))
 	}
 
-	return dts
+	return r
 }

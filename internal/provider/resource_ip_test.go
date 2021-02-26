@@ -55,8 +55,6 @@ func TestAccKatapultIP_basic(t *testing.T) {
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
 
-	res := "katapult_ip.web"
-
 	network, err := defaultNetworkForDataCenter(tt.Meta.Ctx, tt.Meta)
 	require.NoError(t, err)
 
@@ -68,14 +66,14 @@ func TestAccKatapultIP_basic(t *testing.T) {
 			{
 				Config: `resource "katapult_ip" "web" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPExists(tt, res),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web", nil),
 					resource.TestCheckResourceAttr(
-						res, "network_id", network.ID,
+						"katapult_ip.web", "network_id", network.ID,
 					),
 				),
 			},
 			{
-				ResourceName:      res,
+				ResourceName:      "katapult_ip.web",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -88,7 +86,6 @@ func TestAccKatapultIP_vip(t *testing.T) {
 	defer tt.Cleanup()
 
 	name := tt.ResourceName("web-vip")
-	res := "katapult_ip.vip"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -104,13 +101,17 @@ func TestAccKatapultIP_vip(t *testing.T) {
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPExists(tt, res),
-					resource.TestCheckResourceAttr(res, "vip", "true"),
-					resource.TestCheckResourceAttr(res, "label", name),
+					testAccCheckKatapultIPExists(tt, "katapult_ip.vip"),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.vip", "vip", "true",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.vip", "label", name,
+					),
 				),
 			},
 			{
-				ResourceName:      res,
+				ResourceName:      "katapult_ip.vip",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -121,8 +122,6 @@ func TestAccKatapultIP_vip(t *testing.T) {
 func TestAccKatapultIP_with_network_id(t *testing.T) {
 	tt := NewTestTools(t)
 	defer tt.Cleanup()
-
-	res := "katapult_ip.with-net"
 
 	network, err := defaultNetworkForDataCenter(tt.Meta.Ctx, tt.Meta)
 	require.NoError(t, err)
@@ -140,14 +139,14 @@ func TestAccKatapultIP_with_network_id(t *testing.T) {
 					network.ID,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPExists(tt, res),
+					testAccCheckKatapultIPExists(tt, "katapult_ip.with-net"),
 					resource.TestCheckResourceAttr(
-						res, "network_id", network.ID,
+						"katapult_ip.with-net", "network_id", network.ID,
 					),
 				),
 			},
 			{
-				ResourceName:      res,
+				ResourceName:      "katapult_ip.with-net",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -171,74 +170,64 @@ func testAccCheckKatapultIPExists(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		obj, _, err := m.Client.IPAddresses.GetByID(m.Ctx, rs.Primary.ID)
+		ip, _, err := m.Client.IPAddresses.GetByID(m.Ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}
 
-		if obj.Network != nil {
-			if rs.Primary.Attributes["network_id"] != obj.Network.ID {
-				return fmt.Errorf(
-					"expected network_id to be \"%s\", got \"%s\"",
-					obj.Network.ID, rs.Primary.Attributes["network_id"],
-				)
+		return resource.TestCheckResourceAttr(res, "id", ip.ID)(s)
+	}
+}
+
+func testAccCheckKatapultIPAttrs(
+	tt *TestTools,
+	res string,
+	ip *katapult.IPAddress,
+) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if ip == nil {
+			rs, ok := s.RootModule().Resources[res]
+			if !ok {
+				return fmt.Errorf("resource not found: %s", res)
+			}
+
+			var err error
+			ip, _, err = tt.Meta.Client.IPAddresses.GetByID(
+				tt.Meta.Ctx, rs.Primary.ID,
+			)
+			if err != nil {
+				return err
 			}
 		}
 
-		if rs.Primary.Attributes["address"] != obj.Address {
-			return fmt.Errorf(
-				"expected address to be \"%s\", got \"%s\"",
-				obj.Address, rs.Primary.Attributes["address"],
-			)
+		tfs := []resource.TestCheckFunc{
+			resource.TestCheckResourceAttr(res, "id", ip.ID),
+			resource.TestCheckResourceAttr(res, "address", ip.Address),
+			resource.TestCheckResourceAttr(
+				res, "address_with_mask", ip.AddressWithMask,
+			),
+			resource.TestCheckResourceAttr(res, "reverse_dns", ip.ReverseDNS),
+			resource.TestCheckResourceAttr(
+				res, "version", strconv.Itoa(flattenIPVersion(ip.Address)),
+			),
+			resource.TestCheckResourceAttr(
+				res, "vip", fmt.Sprintf("%t", ip.VIP),
+			),
+			resource.TestCheckResourceAttr(
+				res, "allocation_type", ip.AllocationType,
+			),
+			resource.TestCheckResourceAttr(
+				res, "allocation_id", ip.AllocationID,
+			),
 		}
 
-		if rs.Primary.Attributes["address_with_mask"] != obj.AddressWithMask {
-			return fmt.Errorf(
-				"expected address_with_mask to be \"%s\", got \"%s\"",
-				obj.AddressWithMask, rs.Primary.Attributes["address_with_mask"],
-			)
+		if ip.Network != nil {
+			tfs = append(tfs, resource.TestCheckResourceAttr(
+				res, "network_id", ip.Network.ID,
+			))
 		}
 
-		if rs.Primary.Attributes["reverse_dns"] != obj.ReverseDNS {
-			return fmt.Errorf(
-				"expected reverse_dns to be \"%s\", got \"%s\"",
-				obj.ReverseDNS, rs.Primary.Attributes["reverse_dns"],
-			)
-		}
-
-		if rs.Primary.Attributes["version"] != strconv.Itoa(
-			flattenIPVersion(obj.Address),
-		) {
-			return fmt.Errorf(
-				"expected version to be \"%s\", got \"%s\"",
-				strconv.Itoa(flattenIPVersion(obj.Address)),
-				rs.Primary.Attributes["version"],
-			)
-		}
-
-		if rs.Primary.Attributes["vip"] != fmt.Sprintf("%t", obj.VIP) {
-			return fmt.Errorf(
-				"expected vip to be \"%s\", got \"%s\"",
-				fmt.Sprintf("%t", obj.VIP),
-				rs.Primary.Attributes["vip"],
-			)
-		}
-
-		if rs.Primary.Attributes["allocation_type"] != obj.AllocationType {
-			return fmt.Errorf(
-				"expected allocation_type to be \"%s\", got \"%s\"",
-				obj.AllocationType, rs.Primary.Attributes["allocation_type"],
-			)
-		}
-
-		if rs.Primary.Attributes["allocation_id"] != obj.AllocationID {
-			return fmt.Errorf(
-				"expected allocation_id to be \"%s\", got \"%s\"",
-				obj.AllocationID, rs.Primary.Attributes["allocation_id"],
-			)
-		}
-
-		return nil
+		return resource.ComposeAggregateTestCheckFunc(tfs...)(s)
 	}
 }
 
