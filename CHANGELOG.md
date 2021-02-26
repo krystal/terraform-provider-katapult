@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.1-rc.3](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.1-rc.2...v0.0.1-rc.3) (2021-02-26)
+
+
+### Features
+
+* **virtual_machine_package:** add katapult_virtual_machine_package data source ([3304d1e](https://github.com/krystal/terraform-provider-katapult/commit/3304d1e6983872a276b8e688096498e3315f7568))
+* **virtual_machine_packages:** add katapult_virtual_machine_packages data source ([c43d4bc](https://github.com/krystal/terraform-provider-katapult/commit/c43d4bcaf88167affac1bd5e10119ed2075731fa))
+
+
+### Documentation
+
+* update field descriptions for katapult_disk_templates and katapult_ip ([18df3ea](https://github.com/krystal/terraform-provider-katapult/commit/18df3eab945c9e4520410f726422bfbe73652602))
+
 ### [0.0.1-rc.2](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.1-rc.1...v0.0.1-rc.2) (2021-02-25)
 
 
