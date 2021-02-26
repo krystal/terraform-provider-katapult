@@ -14,11 +14,10 @@ import (
 )
 
 func TestAccKatapultDataSourceVirtualMachinePackage_by_id(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	pkg, _, err := tt.Meta.Client.VirtualMachinePackages.GetByPermalink(
-		tt.Meta.Ctx, "rock-6",
+		tt.Ctx, "rock-6",
 	)
 	require.NoError(t, err)
 
@@ -48,11 +47,10 @@ func TestAccKatapultDataSourceVirtualMachinePackage_by_id(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceVirtualMachinePackage_by_permalink(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	pkg, _, err := tt.Meta.Client.VirtualMachinePackages.GetByPermalink(
-		tt.Meta.Ctx, "rock-3",
+		tt.Ctx, "rock-3",
 	)
 	require.NoError(t, err)
 
@@ -82,8 +80,7 @@ func TestAccKatapultDataSourceVirtualMachinePackage_by_permalink(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceVirtualMachinePackage_blank(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -104,7 +101,7 @@ func TestAccKatapultDataSourceVirtualMachinePackage_blank(t *testing.T) {
 //
 
 func testAccCheckKatapultVirtualMachinePackageExists(
-	tt *TestTools,
+	tt *testTools,
 	res string,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -116,7 +113,7 @@ func testAccCheckKatapultVirtualMachinePackageExists(
 		}
 
 		_, _, err := c.VirtualMachinePackages.GetByID(
-			tt.Meta.Ctx, rs.Primary.ID,
+			tt.Ctx, rs.Primary.ID,
 		)
 		if err != nil {
 			return err
@@ -127,7 +124,7 @@ func testAccCheckKatapultVirtualMachinePackageExists(
 }
 
 func testAccCheckKatapultVirtualMachinePackageAttrs(
-	tt *TestTools,
+	tt *testTools,
 	res string,
 	pkg *katapult.VirtualMachinePackage,
 	prefix string,

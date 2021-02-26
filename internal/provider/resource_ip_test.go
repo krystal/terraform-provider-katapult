@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strconv"
@@ -22,12 +23,13 @@ func init() { //nolint:gochecknoinits
 
 func testSweepIPs(_ string) error {
 	m := sweepMeta()
+	ctx := context.TODO()
 
 	var ips []*katapult.IPAddress
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		pageResult, resp, err := m.Client.IPAddresses.List(
-			m.Ctx, m.OrganizationRef(),
+			ctx, m.OrganizationRef(),
 			&katapult.ListOptions{Page: pageNum},
 		)
 		if err != nil {
@@ -42,7 +44,7 @@ func testSweepIPs(_ string) error {
 		log.Printf(
 			"[DEBUG]  - Deleting IP Address %s (%s)\n", ip.ID, ip.Address,
 		)
-		_, err := m.Client.IPAddresses.Delete(m.Ctx, ip)
+		_, err := m.Client.IPAddresses.Delete(ctx, ip)
 		if err != nil {
 			return err
 		}
@@ -52,10 +54,9 @@ func testSweepIPs(_ string) error {
 }
 
 func TestAccKatapultIP_basic(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
-	network, err := defaultNetworkForDataCenter(tt.Meta.Ctx, tt.Meta)
+	network, err := defaultNetworkForDataCenter(tt.Ctx, tt.Meta)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -82,8 +83,7 @@ func TestAccKatapultIP_basic(t *testing.T) {
 }
 
 func TestAccKatapultIP_vip(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	name := tt.ResourceName("web-vip")
 
@@ -120,10 +120,9 @@ func TestAccKatapultIP_vip(t *testing.T) {
 }
 
 func TestAccKatapultIP_with_network_id(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
-	network, err := defaultNetworkForDataCenter(tt.Meta.Ctx, tt.Meta)
+	network, err := defaultNetworkForDataCenter(tt.Ctx, tt.Meta)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -159,7 +158,7 @@ func TestAccKatapultIP_with_network_id(t *testing.T) {
 //
 
 func testAccCheckKatapultIPExists(
-	tt *TestTools,
+	tt *testTools,
 	res string,
 ) resource.TestCheckFunc {
 	m := tt.Meta
@@ -170,7 +169,7 @@ func testAccCheckKatapultIPExists(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		ip, _, err := m.Client.IPAddresses.GetByID(m.Ctx, rs.Primary.ID)
+		ip, _, err := m.Client.IPAddresses.GetByID(tt.Ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -180,7 +179,7 @@ func testAccCheckKatapultIPExists(
 }
 
 func testAccCheckKatapultIPAttrs(
-	tt *TestTools,
+	tt *testTools,
 	res string,
 	ip *katapult.IPAddress,
 ) resource.TestCheckFunc {
@@ -193,7 +192,7 @@ func testAccCheckKatapultIPAttrs(
 
 			var err error
 			ip, _, err = tt.Meta.Client.IPAddresses.GetByID(
-				tt.Meta.Ctx, rs.Primary.ID,
+				tt.Ctx, rs.Primary.ID,
 			)
 			if err != nil {
 				return err
@@ -232,7 +231,7 @@ func testAccCheckKatapultIPAttrs(
 }
 
 func testAccCheckKatapultIPDestroy(
-	tt *TestTools,
+	tt *testTools,
 ) resource.TestCheckFunc {
 	m := tt.Meta
 
@@ -242,7 +241,7 @@ func testAccCheckKatapultIPDestroy(
 				continue
 			}
 
-			ip, _, err := m.Client.IPAddresses.GetByID(m.Ctx, rs.Primary.ID)
+			ip, _, err := m.Client.IPAddresses.GetByID(tt.Ctx, rs.Primary.ID)
 			if err == nil && ip != nil {
 				return fmt.Errorf(
 					"katapult_ip %s (%s) was not destroyed",

@@ -9,7 +9,6 @@ import (
 )
 
 type Meta struct {
-	Ctx    context.Context
 	Client *katapult.Client
 	Logger hclog.Logger
 

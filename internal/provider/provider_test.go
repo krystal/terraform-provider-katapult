@@ -90,8 +90,9 @@ func (s *stopRequests) RoundTrip(_ *http.Request) (*http.Response, error) {
 	}, errors.New("real HTTP(S) requests are disabled")
 }
 
-type TestTools struct {
+type testTools struct {
 	T                 *testing.T
+	Ctx               context.Context
 	Recorder          *recorder.Recorder
 	Meta              *Meta
 	ProviderFactories map[string]func() (*schema.Provider, error)
@@ -99,20 +100,24 @@ type TestTools struct {
 	RandID            string
 }
 
-func NewTestTools(t *testing.T) *TestTools {
+func newTestTools(t *testing.T) *testTools {
 	r, stop := newVCRRecorder(t)
+	t.Cleanup(stop)
+
 	factories := providerFactories(r)
+	ctx := context.TODO()
 
 	p, err := factories["katapult"]()
 	require.NoError(t, err)
-	d := p.Configure(context.TODO(), terraform.NewResourceConfigRaw(nil))
+	d := p.Configure(ctx, terraform.NewResourceConfigRaw(nil))
 	if d.HasError() {
 		t.Fatalf("failed to configure client: %+v", d)
 	}
 	m := p.Meta().(*Meta)
 
-	return &TestTools{
+	return &testTools{
 		T:                 t,
+		Ctx:               ctx,
 		Recorder:          r,
 		Meta:              m,
 		ProviderFactories: factories,
@@ -120,7 +125,7 @@ func NewTestTools(t *testing.T) *TestTools {
 	}
 }
 
-func (tt *TestTools) ResourceName(name string) string {
+func (tt *testTools) ResourceName(name string) string {
 	if tt.RandID == "" {
 		tt.RandID = testVCRRecorderRandID(tt.T, tt.Recorder)
 	}

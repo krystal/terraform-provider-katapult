@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -24,7 +25,7 @@ func init() { //nolint:gochecknoinits
 
 func testSweepVirtualMachines(_ string) error {
 	m := sweepMeta()
-	ctx := m.Ctx
+	ctx := context.TODO()
 
 	var vms []*katapult.VirtualMachine
 	totalPages := 2
@@ -149,8 +150,7 @@ func testSweepVirtualMachines(_ string) error {
 }
 
 func TestAccKatapultVirtualMachine_minimal(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -219,8 +219,7 @@ func TestAccKatapultVirtualMachine_minimal(t *testing.T) {
 }
 
 func TestAccKatapultVirtualMachine_basic(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	name := tt.ResourceName("basic")
 
@@ -320,8 +319,7 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 }
 
 func TestAccKatapultVirtualMachine_update(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	name := tt.ResourceName("update")
 
@@ -448,8 +446,7 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 }
 
 func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -591,7 +588,7 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 //
 
 func testAccCheckKatapultVirtualMachineExists(
-	tt *TestTools,
+	tt *testTools,
 	res string,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -602,7 +599,7 @@ func testAccCheckKatapultVirtualMachineExists(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		_, _, err := c.VirtualMachines.GetByID(tt.Meta.Ctx, rs.Primary.ID)
+		_, _, err := c.VirtualMachines.GetByID(tt.Ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -612,7 +609,7 @@ func testAccCheckKatapultVirtualMachineExists(
 }
 
 func testAccCheckKatapultVirtualMachineDestroy(
-	tt *TestTools,
+	tt *testTools,
 ) resource.TestCheckFunc {
 	m := tt.Meta
 
@@ -622,7 +619,9 @@ func testAccCheckKatapultVirtualMachineDestroy(
 				continue
 			}
 
-			vm, _, err := m.Client.VirtualMachines.GetByID(m.Ctx, rs.Primary.ID)
+			vm, _, err := m.Client.VirtualMachines.GetByID(
+				tt.Ctx, rs.Primary.ID,
+			)
 			if err == nil && vm != nil {
 				return fmt.Errorf(
 					"katapult_virtual_machine %s (%s) was not destroyed",

@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -24,12 +25,13 @@ func init() { //nolint:gochecknoinits
 //nolint:deadcode,unused
 func testSweepLoadBalancers(_ string) error {
 	m := sweepMeta()
+	ctx := context.TODO()
 
 	var loadBalancers []*katapult.LoadBalancer
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		pageResult, resp, err := m.Client.LoadBalancers.List(
-			m.Ctx, m.OrganizationRef(), &katapult.ListOptions{Page: pageNum},
+			ctx, m.OrganizationRef(), &katapult.ListOptions{Page: pageNum},
 		)
 		if err != nil {
 			return err
@@ -47,7 +49,7 @@ func testSweepLoadBalancers(_ string) error {
 		log.Printf(
 			"[DEBUG]  - Deleting Load Balancer %s (%s)\n", lb.ID, lb.Name,
 		)
-		_, _, err := m.Client.LoadBalancers.Delete(m.Ctx, lb)
+		_, _, err := m.Client.LoadBalancers.Delete(ctx, lb)
 		if err != nil {
 			return err
 		}
@@ -58,8 +60,7 @@ func testSweepLoadBalancers(_ string) error {
 
 func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 	t.Skip("not yet feature complete")
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	name := tt.ResourceName("basic")
 	res := "katapult_load_balancer.main"
@@ -96,8 +97,7 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 
 func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
 	t.Skip("not yet feature complete")
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	res := "katapult_load_balancer.main"
 
@@ -123,8 +123,7 @@ func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
 
 func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 	t.Skip("not yet feature complete")
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	name := tt.ResourceName("update_name")
 	res := "katapult_load_balancer.main"
@@ -170,7 +169,7 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 
 //nolint:unused
 func testAccCheckKatapultLoadBalancerExists(
-	tt *TestTools,
+	tt *testTools,
 	res string,
 ) resource.TestCheckFunc {
 	m := tt.Meta
@@ -182,7 +181,7 @@ func testAccCheckKatapultLoadBalancerExists(
 		}
 
 		lb, _, err := m.Client.LoadBalancers.GetByID(
-			tt.Meta.Ctx, rs.Primary.ID,
+			tt.Ctx, rs.Primary.ID,
 		)
 		if err != nil {
 			return err
@@ -194,7 +193,7 @@ func testAccCheckKatapultLoadBalancerExists(
 
 //nolint:unused
 func testAccCheckKatapultLoadBalancerDestroy(
-	tt *TestTools,
+	tt *testTools,
 ) resource.TestCheckFunc {
 	m := tt.Meta
 
@@ -204,7 +203,7 @@ func testAccCheckKatapultLoadBalancerDestroy(
 				continue
 			}
 
-			lb, _, err := m.Client.LoadBalancers.GetByID(m.Ctx, rs.Primary.ID)
+			lb, _, err := m.Client.LoadBalancers.GetByID(tt.Ctx, rs.Primary.ID)
 			if err == nil && lb != nil {
 				return fmt.Errorf(
 					"katapult_load_balancer %s (%s) was not destroyed",

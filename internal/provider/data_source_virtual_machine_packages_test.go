@@ -11,8 +11,7 @@ import (
 )
 
 func TestAccKatapultDataSourceVirtualMachinePackages_all(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	pkgs, err := testHelperFetchAllVirtualMachinePackages(tt)
 	require.NoError(t, err)
@@ -38,13 +37,13 @@ func TestAccKatapultDataSourceVirtualMachinePackages_all(t *testing.T) {
 //
 
 func testHelperFetchAllVirtualMachinePackages(
-	tt *TestTools,
+	tt *testTools,
 ) ([]*katapult.VirtualMachinePackage, error) {
 	var pkgs []*katapult.VirtualMachinePackage
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		pageResult, resp, err := tt.Meta.Client.VirtualMachinePackages.List(
-			tt.Meta.Ctx, &katapult.ListOptions{Page: pageNum},
+			tt.Ctx, &katapult.ListOptions{Page: pageNum},
 		)
 		if err != nil {
 			return nil, err
@@ -62,7 +61,7 @@ func testHelperFetchAllVirtualMachinePackages(
 }
 
 func testAccCheckKatapultVirtualMachinePackages(
-	tt *TestTools,
+	tt *testTools,
 	res string,
 	pkgs []*katapult.VirtualMachinePackage,
 ) resource.TestCheckFunc {

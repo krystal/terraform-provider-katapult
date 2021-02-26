@@ -9,8 +9,7 @@ import (
 )
 
 func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	name := tt.ResourceName("data-source-by-id")
 
@@ -96,8 +95,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	name := tt.ResourceName("data-source-by-fqdn")
 
@@ -183,8 +181,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceVirtualMachine_blank(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

@@ -135,11 +135,9 @@ func configure(
 		d *schema.ResourceData,
 	) (interface{}, diag.Diagnostics) {
 		m := &Meta{
-			Ctx: ctx,
 			Logger: hclog.New(&hclog.LoggerOptions{
 				Level: hclog.LevelFromString(d.Get("log_level").(string)),
 			}),
-
 			confAPIKey:          d.Get("api_key").(string),
 			confDataCenter:      d.Get("data_center").(string),
 			confOrganization:    d.Get("organization").(string),

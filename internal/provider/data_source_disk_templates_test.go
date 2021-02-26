@@ -12,8 +12,7 @@ import (
 )
 
 func TestAccKatapultDataSourceDiskTemplates_default(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	tpls, err := testHelperFetchAllDiskTemplates(tt)
 	require.NoError(t, err)
@@ -35,8 +34,7 @@ func TestAccKatapultDataSourceDiskTemplates_default(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceDiskTemplates_include_universal(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	tpls, err := testHelperFetchAllDiskTemplates(tt)
 	require.NoError(t, err)
@@ -62,8 +60,7 @@ func TestAccKatapultDataSourceDiskTemplates_include_universal(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceDiskTemplates_exclude_universal(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	allTpls, err := testHelperFetchAllDiskTemplates(tt)
 	require.NoError(t, err)
@@ -100,13 +97,13 @@ func TestAccKatapultDataSourceDiskTemplates_exclude_universal(t *testing.T) {
 //
 
 func testHelperFetchAllDiskTemplates(
-	tt *TestTools,
+	tt *testTools,
 ) ([]*katapult.DiskTemplate, error) {
 	var templates []*katapult.DiskTemplate
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		pageResult, resp, err := tt.Meta.Client.DiskTemplates.List(
-			tt.Meta.Ctx, tt.Meta.OrganizationRef(),
+			tt.Ctx, tt.Meta.OrganizationRef(),
 			&katapult.DiskTemplateListOptions{
 				IncludeUniversal: true,
 				Page:             pageNum,
@@ -128,7 +125,7 @@ func testHelperFetchAllDiskTemplates(
 }
 
 func testAccCheckKatapultDiskTemplates(
-	tt *TestTools,
+	tt *testTools,
 	res string,
 	tpls []*katapult.DiskTemplate,
 ) resource.TestCheckFunc {

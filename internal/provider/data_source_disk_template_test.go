@@ -13,8 +13,7 @@ import (
 )
 
 func TestAccKatapultDataSourceDiskTemplate_by_id(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	tpl, err := testHelperFetchRandomDiskTemplate(tt)
 	require.NoError(t, err)
@@ -41,8 +40,7 @@ func TestAccKatapultDataSourceDiskTemplate_by_id(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceDiskTemplate_by_permalink(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	tpl, err := testHelperFetchRandomDiskTemplate(tt)
 	require.NoError(t, err)
@@ -69,8 +67,7 @@ func TestAccKatapultDataSourceDiskTemplate_by_permalink(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceDiskTemplate_blank(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -87,8 +84,7 @@ func TestAccKatapultDataSourceDiskTemplate_blank(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceDiskTemplate_invalid(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	tpl, err := testHelperFetchRandomDiskTemplate(tt)
 	require.NoError(t, err)
@@ -117,7 +113,7 @@ func TestAccKatapultDataSourceDiskTemplate_invalid(t *testing.T) {
 //
 
 func testHelperFetchRandomDiskTemplate(
-	tt *TestTools,
+	tt *testTools,
 ) (*katapult.DiskTemplate, error) {
 	templates, err := testHelperFetchAllDiskTemplates(tt)
 	if err != nil {
@@ -128,7 +124,7 @@ func testHelperFetchRandomDiskTemplate(
 }
 
 func testAccCheckKatapultDiskTemplateAttrs(
-	tt *TestTools,
+	tt *testTools,
 	res string,
 	prefix string,
 	tpl *katapult.DiskTemplate,

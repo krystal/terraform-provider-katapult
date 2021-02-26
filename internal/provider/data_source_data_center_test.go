@@ -13,10 +13,9 @@ import (
 )
 
 func TestAccKatapultDataSourceDataCenter_default(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
-	dc, err := tt.Meta.DataCenter(tt.Meta.Ctx)
+	dc, err := tt.Meta.DataCenter(tt.Ctx)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -39,10 +38,9 @@ func TestAccKatapultDataSourceDataCenter_default(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceDataCenter_by_id(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
-	dc, err := tt.Meta.DataCenter(tt.Meta.Ctx)
+	dc, err := tt.Meta.DataCenter(tt.Ctx)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -70,10 +68,9 @@ func TestAccKatapultDataSourceDataCenter_by_id(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceDataCenter_by_permalink(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
-	dc, err := tt.Meta.DataCenter(tt.Meta.Ctx)
+	dc, err := tt.Meta.DataCenter(tt.Ctx)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -101,10 +98,9 @@ func TestAccKatapultDataSourceDataCenter_by_permalink(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceDataCenter_invalid(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
-	dc, err := tt.Meta.DataCenter(tt.Meta.Ctx)
+	dc, err := tt.Meta.DataCenter(tt.Ctx)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -127,7 +123,7 @@ func TestAccKatapultDataSourceDataCenter_invalid(t *testing.T) {
 }
 
 func testAccCheckKatapultDataCenterExists(
-	tt *TestTools,
+	tt *testTools,
 	res string,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -138,14 +134,14 @@ func testAccCheckKatapultDataCenterExists(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		_, _, err := c.DataCenters.GetByID(tt.Meta.Ctx, rs.Primary.ID)
+		_, _, err := c.DataCenters.GetByID(tt.Ctx, rs.Primary.ID)
 
 		return err
 	}
 }
 
 func testAccCheckKatapultDataCenterAttrs(
-	tt *TestTools,
+	tt *testTools,
 	res string,
 	dc *katapult.DataCenter,
 	prefix string,

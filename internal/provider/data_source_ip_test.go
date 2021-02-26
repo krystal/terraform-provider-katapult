@@ -9,8 +9,7 @@ import (
 )
 
 func TestAccKatapultDataSourceIP_by_id(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -71,8 +70,7 @@ func TestAccKatapultDataSourceIP_by_id(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceIP_by_address(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -133,8 +131,7 @@ func TestAccKatapultDataSourceIP_by_address(t *testing.T) {
 }
 
 func TestAccKatapultDataSourceIP_invalid(t *testing.T) {
-	tt := NewTestTools(t)
-	defer tt.Cleanup()
+	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
