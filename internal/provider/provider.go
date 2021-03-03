@@ -107,6 +107,7 @@ func New(c *Config) func() *schema.Provider {
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"katapult_ip":                    resourceIP(),
+				"katapult_load_balancer":         resourceLoadBalancer(),
 				"katapult_virtual_machine":       resourceVirtualMachine(),
 				"katapult_virtual_machine_group": resourceVirtualMachineGroup(),
 			},
@@ -116,6 +117,7 @@ func New(c *Config) func() *schema.Provider {
 				"katapult_disk_template":            dataSourceDiskTemplate(),
 				"katapult_disk_templates":           dataSourceDiskTemplates(),
 				"katapult_ip":                       dataSourceIP(),
+				"katapult_load_balancer":            dataSourceLoadBalancer(),
 				"katapult_network_speed_profile":    dataSourceNetworkSpeedProfile(),
 				"katapult_network_speed_profiles":   dataSourceNetworkSpeedProfiles(),
 				"katapult_virtual_machine":          dataSourceVirtualMachine(),

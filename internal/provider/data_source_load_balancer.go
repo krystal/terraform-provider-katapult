@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-//nolint:deadcode,unused
 func dataSourceLoadBalancer() *schema.Resource {
 	ds := dataSourceSchemaFromResourceSchema(resourceLoadBalancer().Schema)
 
@@ -23,7 +22,6 @@ func dataSourceLoadBalancer() *schema.Resource {
 	}
 }
 
-//nolint:unused
 func dataSourceLoadBalancerRead(
 	ctx context.Context,
 	d *schema.ResourceData,

@@ -8,7 +8,6 @@ import (
 	"github.com/krystal/go-katapult/core"
 )
 
-//nolint:unused
 func resourceLoadBalancer() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceLoadBalancerCreate,
@@ -85,7 +84,6 @@ func resourceLoadBalancer() *schema.Resource {
 	}
 }
 
-//nolint:unused
 func resourceLoadBalancerCreate(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -118,7 +116,6 @@ func resourceLoadBalancerCreate(
 	return resourceLoadBalancerRead(ctx, d, meta)
 }
 
-//nolint:unused
 func resourceLoadBalancerRead(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -151,7 +148,6 @@ func resourceLoadBalancerRead(
 	return diags
 }
 
-//nolint:unused
 func resourceLoadBalancerUpdate(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -182,7 +178,6 @@ func resourceLoadBalancerUpdate(
 	return resourceLoadBalancerRead(ctx, d, meta)
 }
 
-//nolint:unused
 func resourceLoadBalancerDelete(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -200,7 +195,6 @@ func resourceLoadBalancerDelete(
 	return diag.Diagnostics{}
 }
 
-//nolint:unused
 func populateLoadBalancerTargets(
 	d *schema.ResourceData,
 	t core.ResourceType,
@@ -218,7 +212,6 @@ func populateLoadBalancerTargets(
 	}
 }
 
-//nolint:unused
 func flattenLoadBalancerResourceIDs(ids []string) []map[string]string {
 	list := []map[string]string{}
 	for _, id := range ids {
@@ -228,7 +221,6 @@ func flattenLoadBalancerResourceIDs(ids []string) []map[string]string {
 	return list
 }
 
-//nolint:unused
 func extractLoadBalancerResourceTypeAndIDs(
 	d *schema.ResourceData,
 	m *Meta,
