@@ -61,11 +61,11 @@ tools: $(TOOLS)
 BINARY=bin/terraform-provider-$(NAME)
 LDFLAGS := -w -s
 
-VERSION ?= $(shell git describe --tags 2>/dev/null)
+VERSION ?= $(shell git describe --tags --exact 2>/dev/null)
 GIT_SHA ?= $(shell git rev-parse --short HEAD 2>/dev/null)
 
-ifeq ($(trim $(VERSION)),)
-	VERSION = 0.0.1
+ifeq ($(VERSION),)
+	VERSION = 0.0.1-dev
 endif
 
 .PHONY: build
