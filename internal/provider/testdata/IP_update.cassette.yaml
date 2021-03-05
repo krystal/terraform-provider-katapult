@@ -1,0 +1,1023 @@
+---
+version: 1
+interactions:
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/organizations/_/available_networks?organization%5Bsub_domain%5D=terraform-acc-test
+    method: GET
+  response:
+    body: '{"networks":[{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"}},{"id":"netw_q0lBvtutvOjujgyO","name":"Public
+      Network - NYC","permalink":"us-nyc-01","data_center":{"id":"dc_TfDSMyVYoS3fJnSt","name":"New
+      York","permalink":"us-nyc-01"}}],"virtual_networks":[]}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "376"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:25:54 GMT
+      Etag:
+      - W/"556a80fd56c052ba0c772f9d204cefad"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "193"
+      X-Request-Id:
+      - 653b7e54-f596-4a1b-a8ed-b5a89fa8efeb
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/data_centers/_?data_center%5Bpermalink%5D=uk-lon-01
+    method: GET
+  response:
+    body: '{"data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom"}}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "150"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:25:54 GMT
+      Etag:
+      - W/"472ac8fb76e85c650214cebfe1011d9e"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "192"
+      X-Request-Id:
+      - 9ea06383-7ac0-42a3-b96f-6e1fcd193a25
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: |
+      {"organization":{"sub_domain":"terraform-acc-test"},"network":{"id":"netw_gVRkZdSKczfNg34P"},"version":"ipv4"}
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/organizations/_/ip_addresses
+    method: POST
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "543"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:25:55 GMT
+      Etag:
+      - W/"5e9aa11f77ac76d39ad00ec217980a18"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "191"
+      X-Request-Id:
+      - c8aebc5c-ef90-44b9-9d3b-c299efdd53fb
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "561"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:25:55 GMT
+      Etag:
+      - W/"ee4c093702bc04428178ce0f455a4354"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "190"
+      X-Request-Id:
+      - d2e755f9-a9b0-45c2-9b1e-c83c1b6d64a6
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "561"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:25:55 GMT
+      Etag:
+      - W/"ee4c093702bc04428178ce0f455a4354"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "189"
+      X-Request-Id:
+      - 72cdc543-85b1-4c82-a327-02e2d9e0bf87
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "561"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:25:56 GMT
+      Etag:
+      - W/"ee4c093702bc04428178ce0f455a4354"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "188"
+      X-Request-Id:
+      - 781ceeb1-e608-4984-a7f7-f37a1601d286
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "561"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:25:57 GMT
+      Etag:
+      - W/"ee4c093702bc04428178ce0f455a4354"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "187"
+      X-Request-Id:
+      - 1fd252b8-3e87-4aa2-a6ac-63d54440fa06
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: |
+      {"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za"},"vip":true,"label":"vip-yes"}
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_
+    method: PATCH
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":true,"label":"vip-yes","address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "547"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:25:57 GMT
+      Etag:
+      - W/"743f2b7f5f0528528e2c3cbffb5cc75f"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "186"
+      X-Request-Id:
+      - c0cdae6c-b96e-474e-a86c-dbb7159f17f5
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":true,"label":"vip-yes","address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "565"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:25:57 GMT
+      Etag:
+      - W/"557b9054182070b32ff1f0a14d8f1742"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "185"
+      X-Request-Id:
+      - 0c4e76db-f14b-4bd3-8629-dd2c26b22b83
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":true,"label":"vip-yes","address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "565"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:25:57 GMT
+      Etag:
+      - W/"557b9054182070b32ff1f0a14d8f1742"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "184"
+      X-Request-Id:
+      - 010b6bf0-21b8-43a7-9ec3-234a399c8361
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":true,"label":"vip-yes","address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "565"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:25:58 GMT
+      Etag:
+      - W/"557b9054182070b32ff1f0a14d8f1742"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "183"
+      X-Request-Id:
+      - a21e9d16-3ccb-498f-ab04-1e307a71d8e0
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":true,"label":"vip-yes","address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "565"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:25:59 GMT
+      Etag:
+      - W/"557b9054182070b32ff1f0a14d8f1742"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "182"
+      X-Request-Id:
+      - 181b554e-f226-4a97-8a01-e5c278b22bdf
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: |
+      {"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za"},"label":"vip-oh-yes"}
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_
+    method: PATCH
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":true,"label":"vip-oh-yes","address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "550"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:26:00 GMT
+      Etag:
+      - W/"094f1d82c35e04189ca8ea01ede5266e"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "199"
+      X-Request-Id:
+      - 6896902d-798a-40c5-9e7b-8022a240f20f
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":true,"label":"vip-oh-yes","address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "568"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:26:00 GMT
+      Etag:
+      - W/"5477cc69da04867d1a0917318ae7808d"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "198"
+      X-Request-Id:
+      - cc82b657-cb7f-4b00-9fd0-116afd072667
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":true,"label":"vip-oh-yes","address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "568"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:26:00 GMT
+      Etag:
+      - W/"5477cc69da04867d1a0917318ae7808d"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "197"
+      X-Request-Id:
+      - 8a9cff26-e9c2-47a0-9a83-44d9689dd11f
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":true,"label":"vip-oh-yes","address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "568"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:26:00 GMT
+      Etag:
+      - W/"5477cc69da04867d1a0917318ae7808d"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "196"
+      X-Request-Id:
+      - f0392a65-75a8-4467-97a5-4352c2cc2e1c
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":true,"label":"vip-oh-yes","address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "568"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:26:01 GMT
+      Etag:
+      - W/"5477cc69da04867d1a0917318ae7808d"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "195"
+      X-Request-Id:
+      - d7fddc49-5949-4af8-9f89-d488b4753664
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: |
+      {"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za"},"vip":false}
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_
+    method: PATCH
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "543"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:26:02 GMT
+      Etag:
+      - W/"5e9aa11f77ac76d39ad00ec217980a18"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "194"
+      X-Request-Id:
+      - 6d920c48-c598-4a86-a5df-3ebd6c0c910e
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "561"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:26:02 GMT
+      Etag:
+      - W/"ee4c093702bc04428178ce0f455a4354"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "193"
+      X-Request-Id:
+      - bcdd667e-0801-4ef6-bb5d-fb4fb76a68b9
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "561"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:26:02 GMT
+      Etag:
+      - W/"ee4c093702bc04428178ce0f455a4354"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "192"
+      X-Request-Id:
+      - ff2e62e0-5253-4540-97d4-051360e51fec
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_6YMFJeN4hZQrd8Za","address":"185.53.57.99","reverse_dns":"185-53-57-99.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.53.57.99/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "561"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:26:03 GMT
+      Etag:
+      - W/"ee4c093702bc04428178ce0f455a4354"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "191"
+      X-Request-Id:
+      - 50c65f76-cd97-4993-8048-5b3036abc83d
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: DELETE
+  response:
+    body: '{}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "2"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:26:04 GMT
+      Etag:
+      - W/"44136fa355b3678a1146ad16f7e8649e"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "190"
+      X-Request-Id:
+      - 77b78523-0da3-4db5-8102-fb43153ff47e
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_6YMFJeN4hZQrd8Za
+    method: GET
+  response:
+    body: '{"error":{"code":"ip_address_not_found","description":"No IP addresses
+      were found matching any of the criteria provided in the arguments","detail":{}}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "151"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 05 Mar 2021 16:26:04 GMT
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Api-Schema:
+      - json-error
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "189"
+      X-Request-Id:
+      - 32322e5c-b3ee-45e6-8c57-643797aff2c7
+    status: 404 Not Found
+    code: 404
+    duration: ""
