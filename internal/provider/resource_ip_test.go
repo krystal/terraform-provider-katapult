@@ -17,8 +17,9 @@ import (
 
 func init() { //nolint:gochecknoinits
 	resource.AddTestSweepers("katapult_ip", &resource.Sweeper{
-		Name: "katapult_ip",
-		F:    testSweepIPs,
+		Name:         "katapult_ip",
+		F:            testSweepIPs,
+		Dependencies: []string{"katapult_virtual_machine"},
 	})
 }
 
@@ -42,6 +43,16 @@ func testSweepIPs(_ string) error {
 	}
 
 	for _, ip := range ips {
+		if ip.AllocationID != "" {
+			log.Printf(
+				"[DEBUG]  - Skipping IP Address %s (%s), "+
+					"allocated to %s (%s)\n",
+				ip.ID, ip.Address, ip.AllocationID, ip.AllocationType,
+			)
+
+			continue
+		}
+
 		log.Printf(
 			"[DEBUG]  - Deleting IP Address %s (%s)\n", ip.ID, ip.Address,
 		)
