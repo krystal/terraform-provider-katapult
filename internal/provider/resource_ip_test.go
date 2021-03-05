@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
 	"testing"
 
@@ -16,8 +17,9 @@ import (
 
 func init() { //nolint:gochecknoinits
 	resource.AddTestSweepers("katapult_ip", &resource.Sweeper{
-		Name: "katapult_ip",
-		F:    testSweepIPs,
+		Name:         "katapult_ip",
+		F:            testSweepIPs,
+		Dependencies: []string{"katapult_virtual_machine"},
 	})
 }
 
@@ -41,6 +43,16 @@ func testSweepIPs(_ string) error {
 	}
 
 	for _, ip := range ips {
+		if ip.AllocationID != "" {
+			log.Printf(
+				"[DEBUG]  - Skipping IP Address %s (%s), "+
+					"allocated to %s (%s)\n",
+				ip.ID, ip.Address, ip.AllocationID, ip.AllocationType,
+			)
+
+			continue
+		}
+
 		log.Printf(
 			"[DEBUG]  - Deleting IP Address %s (%s)\n", ip.ID, ip.Address,
 		)
@@ -53,7 +65,7 @@ func testSweepIPs(_ string) error {
 	return nil
 }
 
-func TestAccKatapultIP_basic(t *testing.T) {
+func TestAccKatapultIP_minimal(t *testing.T) {
 	tt := newTestTools(t)
 
 	network, err := defaultNetworkForDataCenter(tt.Ctx, tt.Meta)
@@ -71,12 +83,145 @@ func TestAccKatapultIP_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"katapult_ip.web", "network_id", network.ID,
 					),
+					resource.TestMatchResourceAttr(
+						"katapult_ip.web",
+						"address", regexp.MustCompile(
+							`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`,
+						),
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.web", "version", "4",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.web", "vip", "false",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.web", "label", "",
+					),
 				),
 			},
 			{
 				ResourceName:      "katapult_ip.web",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccKatapultIP_ipv4(t *testing.T) {
+	tt := newTestTools(t)
+
+	network, err := defaultNetworkForDataCenter(tt.Ctx, tt.Meta)
+	require.NoError(t, err)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.String(`
+					resource "katapult_ip" "web" {
+						version = 4
+					}`,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web", nil),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.web", "network_id", network.ID,
+					),
+					resource.TestMatchResourceAttr(
+						"katapult_ip.web",
+						"address", regexp.MustCompile(
+							`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`,
+						),
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.web", "version", "4",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.web", "vip", "false",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.web", "label", "",
+					),
+				),
+			},
+			{
+				ResourceName:      "katapult_ip.web",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccKatapultIP_ipv6(t *testing.T) {
+	tt := newTestTools(t)
+
+	network, err := defaultNetworkForDataCenter(tt.Ctx, tt.Meta)
+	require.NoError(t, err)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.String(`
+					resource "katapult_ip" "web" {
+						version = 6
+					}`,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web", nil),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.web", "network_id", network.ID,
+					),
+					resource.TestMatchResourceAttr(
+						"katapult_ip.web",
+						"address", regexp.MustCompile(`:.*:`),
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.web", "version", "6",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.web", "vip", "false",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.web", "label", "",
+					),
+				),
+			},
+			{
+				ResourceName:      "katapult_ip.web",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccKatapultIP_ipv5(t *testing.T) {
+	tt := newTestTools(t)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.String(`
+					resource "katapult_ip" "web" {
+						version = 5
+					}`,
+				),
+				ExpectError: regexp.MustCompile(
+					regexp.QuoteMeta(
+						"expected version to be one of [4 6], got 5",
+					),
+				),
 			},
 		},
 	})
@@ -101,7 +246,7 @@ func TestAccKatapultIP_vip(t *testing.T) {
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPExists(tt, "katapult_ip.vip"),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.vip", nil),
 					resource.TestCheckResourceAttr(
 						"katapult_ip.vip", "vip", "true",
 					),
@@ -114,6 +259,75 @@ func TestAccKatapultIP_vip(t *testing.T) {
 				ResourceName:      "katapult_ip.vip",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccKatapultIP_vip_empty_label(t *testing.T) {
+	tt := newTestTools(t)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.String(`
+					resource "katapult_ip" "vip" {
+					  vip = true
+					  label = ""
+					}`,
+				),
+				ExpectError: regexp.MustCompile(
+					regexp.QuoteMeta(
+						`expected "label" to not be an empty string, got`,
+					),
+				),
+			},
+		},
+	})
+}
+
+func TestAccKatapultIP_vip_without_label(t *testing.T) {
+	tt := newTestTools(t)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.String(`
+					resource "katapult_ip" "vip" {
+					  vip = true
+					}`,
+				),
+				ExpectError: regexp.MustCompile(
+					`(?s).*validation_error.+Label can't be blank.*`,
+				),
+			},
+		},
+	})
+}
+
+func TestAccKatapultIP_label_without_vip(t *testing.T) {
+	tt := newTestTools(t)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.String(`
+					resource "katapult_ip" "vip" {
+					  label = "hello"
+					}`,
+				),
+				ExpectError: regexp.MustCompile(
+					regexp.QuoteMeta("all of `label,vip` must be specified"),
+				),
 			},
 		},
 	})
@@ -132,22 +346,96 @@ func TestAccKatapultIP_with_network_id(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "with-net" {
+					resource "katapult_ip" "net" {
 					  network_id = "%s"
 					}`,
 					network.ID,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPExists(tt, "katapult_ip.with-net"),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.net", nil),
 					resource.TestCheckResourceAttr(
-						"katapult_ip.with-net", "network_id", network.ID,
+						"katapult_ip.net", "network_id", network.ID,
 					),
 				),
 			},
 			{
-				ResourceName:      "katapult_ip.with-net",
+				ResourceName:      "katapult_ip.net",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccKatapultIP_update(t *testing.T) {
+	tt := newTestTools(t)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "katapult_ip" "update" {}`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update", nil),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.update", "vip", "false",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.update", "label", "",
+					),
+				),
+			},
+			{
+				Config: undent.String(`
+					resource "katapult_ip" "update" {
+						vip = true
+						label = "vip-yes"
+					}`,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update", nil),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.update", "vip", "true",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.update", "label", "vip-yes",
+					),
+				),
+			},
+			{
+				Config: undent.String(`
+					resource "katapult_ip" "update" {
+						vip = true
+						label = "vip-oh-yes"
+					}`,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update", nil),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.update", "vip", "true",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.update", "label", "vip-oh-yes",
+					),
+				),
+			},
+			{
+				Config: undent.String(`
+					resource "katapult_ip" "update" {
+						vip = false
+					}`,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update", nil),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.update", "vip", "false",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_ip.update", "label", "",
+					),
+				),
 			},
 		},
 	})

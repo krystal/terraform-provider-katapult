@@ -60,6 +60,7 @@ func resourceIP() *schema.Resource {
 				Description:  "VIP label. Required when **vip** is `true`.",
 				Optional:     true,
 				RequiredWith: []string{"vip"},
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			"allocation_type": {
 				Type:     schema.TypeString,
