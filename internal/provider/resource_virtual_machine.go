@@ -97,6 +97,10 @@ func resourceVirtualMachine() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"group_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -221,6 +225,10 @@ func resourceVirtualMachineCreate(
 		}
 
 		spec.NetworkInterfaces = append(spec.NetworkInterfaces, iface)
+	}
+
+	if groupID, ok := d.GetOk("group_id"); ok {
+		spec.Group = &buildspec.Group{ID: groupID.(string)}
 	}
 
 	if diags.HasError() {
@@ -359,6 +367,10 @@ func resourceVirtualMachineRead(
 	_ = d.Set("fqdn", vm.FQDN)
 	_ = d.Set("state", vm.State)
 
+	if vm.Group != nil {
+		_ = d.Set("group_id", vm.Group.ID)
+	}
+
 	if pkg := normalizeVirtualMachinePackage(vm.Package); pkg != "" {
 		_ = d.Set("package", pkg)
 	}
@@ -445,6 +457,15 @@ func resourceVirtualMachineUpdate(
 			tags = append(tags, tag.(string))
 		}
 		args.TagNames = &tags
+	}
+	if d.HasChange("group_id") {
+		groupID := d.Get("group_id").(string)
+
+		if groupID == "" {
+			args.Group = katapult.NullVirtualMachineGroup
+		} else {
+			args.Group = &katapult.VirtualMachineGroup{ID: groupID}
+		}
 	}
 
 	_, _, err := m.Client.VirtualMachines.Update(ctx, vm, args)

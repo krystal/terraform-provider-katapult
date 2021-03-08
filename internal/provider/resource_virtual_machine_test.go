@@ -235,6 +235,10 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_ip" "web" {}
 
+					resource "katapult_virtual_machine_group" "web" {
+						name = "%s"
+					}
+
 					resource "katapult_virtual_machine" "base" {
 						name          = "%s"
 						hostname      = "%s"
@@ -244,10 +248,11 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
+						group_id       = katapult_virtual_machine_group.web.id
 						ip_address_ids = [katapult_ip.web.id]
 						tags = ["web", "public"]
 					}`,
-					name, name+"-host",
+					name+"-group", name, name+"-host",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultVirtualMachineExists(
@@ -285,6 +290,10 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
 						"disk_template_options.install_agent", "true",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_virtual_machine.base", "group_id",
+						"katapult_virtual_machine_group.web", "id",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
@@ -576,6 +585,107 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_addresses.*",
 						"katapult_ip.web", "address",
+					),
+				),
+			},
+		},
+	})
+}
+
+func TestAccKatapultVirtualMachine_update_group(t *testing.T) {
+	tt := newTestTools(t)
+
+	name := tt.ResourceName("update_group")
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+					resource "katapult_ip" "web" {}
+
+					resource "katapult_virtual_machine_group" "web" {
+						name = "%s"
+					}
+
+					resource "katapult_virtual_machine" "base" {
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [
+							katapult_ip.web.id,
+						]
+					}`, name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultVirtualMachineExists(
+						tt, "katapult_virtual_machine.base",
+					),
+					resource.TestCheckNoResourceAttr(
+						"katapult_virtual_machine.base",
+						"group_id",
+					),
+				),
+			},
+			{
+				Config: undent.Stringf(`
+					resource "katapult_ip" "web" {}
+
+					resource "katapult_virtual_machine_group" "web" {
+						name = "%s"
+					}
+
+					resource "katapult_virtual_machine" "base" {
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [
+							katapult_ip.web.id,
+						]
+						group_id = katapult_virtual_machine_group.web.id
+					}`, name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultVirtualMachineExists(
+						tt, "katapult_virtual_machine.base",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_virtual_machine.base", "group_id",
+						"katapult_virtual_machine_group.web", "id",
+					),
+				),
+			},
+			{
+				Config: undent.String(`
+					resource "katapult_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [
+							katapult_ip.web.id,
+						]
+					}`,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultVirtualMachineExists(
+						tt, "katapult_virtual_machine.base",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"group_id", "",
 					),
 				),
 			},
