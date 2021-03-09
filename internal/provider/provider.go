@@ -116,6 +116,8 @@ func New(c *Config) func() *schema.Provider {
 				"katapult_disk_templates":           dataSourceDiskTemplates(),
 				"katapult_ip":                       dataSourceIP(),
 				"katapult_virtual_machine":          dataSourceVirtualMachine(),
+				"katapult_virtual_machine_group":    dataSourceVirtualMachineGroup(),
+				"katapult_virtual_machine_groups":   dataSourceVirtualMachineGroups(),
 				"katapult_virtual_machine_package":  dataSourceVirtualMachinePackage(),
 				"katapult_virtual_machine_packages": dataSourceVirtualMachinePackages(),
 			},
