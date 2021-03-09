@@ -38,6 +38,7 @@ resource "katapult_virtual_machine" "web-1" {
 
 - **description** (String)
 - **disk_template_options** (Map of String)
+- **group_id** (String)
 - **hostname** (String)
 - **name** (String)
 - **tags** (Set of String)
