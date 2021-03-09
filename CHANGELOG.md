@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.2](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.1...v0.0.2) (2021-03-09)
+
+
+### Features
+
+* **virtual_machine:** add group_id to virtual machine data source ([#60](https://github.com/krystal/terraform-provider-katapult/issues/60)) ([e3541a2](https://github.com/krystal/terraform-provider-katapult/commit/e3541a29da89eaa3139085a3baa230038ec86cc8))
+* **virtual_machine:** add support for managing group assignment ([7d5a098](https://github.com/krystal/terraform-provider-katapult/commit/7d5a0983c1aa7074e56324057a3af0bcb87df6ae))
+* **virtual_machine_group:** add katapult_virtual_machine_group(s) data sources ([#59](https://github.com/krystal/terraform-provider-katapult/issues/59)) ([98b4ced](https://github.com/krystal/terraform-provider-katapult/commit/98b4ced57989dd7c52694075372d90576ba3dd9e))
+* **virtual_machine_groups:** add resource ([#54](https://github.com/krystal/terraform-provider-katapult/issues/54)) ([eccc702](https://github.com/krystal/terraform-provider-katapult/commit/eccc7029d2c079f09dd1f6a76ebdd52faaa7bb2a))
+
+
+### Documentation
+
+* **readme:** add details about how to create a new release ([899f783](https://github.com/krystal/terraform-provider-katapult/commit/899f7830f10c8eaf2e8016fe285357cc285b5c5d))
+
 ### [0.0.1](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.1-rc.4...v0.0.1) (2021-02-26)
 
 
