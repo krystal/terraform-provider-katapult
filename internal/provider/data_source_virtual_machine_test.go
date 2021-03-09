@@ -25,6 +25,10 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_ip" "web" {}
 
+					resource "katapult_virtual_machine_group" "web" {
+						name = "%s"
+					}
+
 					resource "katapult_virtual_machine" "base" {
 						name          = "%s"
 						hostname      = "%s"
@@ -35,13 +39,14 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 							install_agent = true
 						}
 						ip_address_ids = [katapult_ip.web.id]
+						group_id      = katapult_virtual_machine_group.web.id
 						tags = ["web", "public"]
 					}
 
 					data "katapult_virtual_machine" "src" {
 						id = katapult_virtual_machine.base.id
 					}`,
-					name, name+"-host",
+					name+"-group", name, name+"-host",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultVirtualMachineExists(
@@ -77,6 +82,10 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_virtual_machine.src", "ip_addresses.*",
 						"katapult_ip.web", "address",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"data.katapult_virtual_machine.src", "group_id",
+						"katapult_virtual_machine_group.web", "id",
 					),
 					// TODO: populate and check disk_template and options when
 					// supported by the API.
@@ -111,6 +120,10 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_ip" "web" {}
 
+					resource "katapult_virtual_machine_group" "web" {
+						name = "%s"
+					}
+
 					resource "katapult_virtual_machine" "base" {
 						name          = "%s"
 						hostname      = "%s"
@@ -121,13 +134,14 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 							install_agent = true
 						}
 						ip_address_ids = [katapult_ip.web.id]
+						group_id      = katapult_virtual_machine_group.web.id
 						tags = ["web", "public"]
 					}
 
 					data "katapult_virtual_machine" "src" {
 						fqdn = katapult_virtual_machine.base.fqdn
 					}`,
-					name, name+"-host",
+					name+"-group", name, name+"-host",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultVirtualMachineExists(
@@ -163,6 +177,10 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_virtual_machine.src", "ip_addresses.*",
 						"katapult_ip.web", "address",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"data.katapult_virtual_machine.src", "group_id",
+						"katapult_virtual_machine_group.web", "id",
 					),
 					// TODO: populate and check disk_template and options when
 					// supported by the API.

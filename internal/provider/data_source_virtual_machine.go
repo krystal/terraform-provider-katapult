@@ -55,6 +55,10 @@ func dataSourceVirtualMachineRead(
 	_ = d.Set("fqdn", vm.FQDN)
 	_ = d.Set("state", vm.State)
 
+	if grp := vm.Group; grp != nil {
+		_ = d.Set("group_id", grp.ID)
+	}
+
 	if pkg := normalizeVirtualMachinePackage(vm.Package); pkg != "" {
 		_ = d.Set("package", pkg)
 	}
