@@ -101,7 +101,10 @@ func TestAccKatapultDataSourceVMGroup_blank(t *testing.T) {
 			{
 				Config: `data "katapult_virtual_machine_group" "src" {}`,
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta("The argument \"id\" is required, but no definition was found."),
+					regexp.QuoteMeta(
+						"The argument \"id\" is required, but no definition " +
+							"was found.",
+					),
 				),
 			},
 		},

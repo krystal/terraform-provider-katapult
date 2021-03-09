@@ -5,10 +5,13 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/krystal/go-katapult/pkg/katapult"
 )
 
 func dataSourceVirtualMachineGroup() *schema.Resource {
-	ds := dataSourceSchemaFromResourceSchema(resourceVirtualMachineGroup().Schema)
+	ds := dataSourceSchemaFromResourceSchema(
+		resourceVirtualMachineGroup().Schema,
+	)
 
 	ds["id"] = &schema.Schema{
 		Type:     schema.TypeString,
@@ -32,15 +35,28 @@ func dataSourceVirtualMachineGroupRead(
 	id := d.Get("id").(string)
 
 	vmg, _, err := m.Client.VirtualMachineGroups.GetByID(ctx, id)
-
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	_ = d.Set("name", vmg.Name)
-	_ = d.Set("segregate", vmg.Segregate)
+	f := flattenVirtualMachineGroup(vmg)
+
+	_ = d.Set("name", f["name"])
+	_ = d.Set("segregate", f["segregate"])
 
 	d.SetId(vmg.ID)
 
 	return diags
+}
+
+func flattenVirtualMachineGroup(
+	pkg *katapult.VirtualMachineGroup,
+) map[string]interface{} {
+	r := make(map[string]interface{})
+
+	r["id"] = pkg.ID
+	r["name"] = pkg.Name
+	r["segregate"] = pkg.Segregate
+
+	return r
 }

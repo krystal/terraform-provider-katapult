@@ -13,7 +13,8 @@ func dataSourceLoadBalancer() *schema.Resource {
 
 	ds["id"] = &schema.Schema{
 		Type:     schema.TypeString,
-		Required: true,
+		Computed: true,
+		Optional: true,
 	}
 
 	return &schema.Resource{
