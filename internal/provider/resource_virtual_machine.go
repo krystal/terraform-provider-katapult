@@ -235,6 +235,13 @@ func resourceVirtualMachineCreate(
 		return diags
 	}
 
+	if m.Logger.IsDebug() {
+		xmlSpec, err := spec.XMLIndent("", "  ")
+		if err == nil {
+			m.Logger.Debug("Create buildspec:\n" + string(xmlSpec))
+		}
+	}
+
 	initBuild, _, err := m.Client.VirtualMachineBuilds.CreateFromSpec(
 		ctx, m.OrganizationRef(), spec,
 	)
