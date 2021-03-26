@@ -17,8 +17,6 @@ func TestAccKatapultDataSourceDiskTemplates_default(t *testing.T) {
 	tpls, err := testHelperFetchAllDiskTemplates(tt)
 	require.NoError(t, err)
 
-	res := "data.katapult_disk_templates.main"
-
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
@@ -26,7 +24,9 @@ func TestAccKatapultDataSourceDiskTemplates_default(t *testing.T) {
 			{
 				Config: `data "katapult_disk_templates" "main" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultDiskTemplates(tt, res, tpls),
+					testAccCheckKatapultDiskTemplates(
+						tt, "data.katapult_disk_templates.main", tpls,
+					),
 				),
 			},
 		},

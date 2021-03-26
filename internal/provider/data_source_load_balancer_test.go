@@ -13,7 +13,6 @@ func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
 	tt := newTestTools(t)
 
 	name := tt.ResourceName("basic")
-	res := "data.katapult_load_balancer.src"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -32,10 +31,14 @@ func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultLoadBalancerExists(tt, res),
-					resource.TestCheckResourceAttr(res, "name", name),
-					resource.TestCheckResourceAttr(res,
-						"resource_type",
+					testAccCheckKatapultLoadBalancerExists(
+						tt, "data.katapult_load_balancer.src",
+					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_load_balancer.src", "name", name,
+					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_load_balancer.src", "resource_type",
 						string(katapult.VirtualMachinesResourceType),
 					),
 				),

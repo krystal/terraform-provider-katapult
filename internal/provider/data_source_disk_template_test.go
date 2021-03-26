@@ -18,8 +18,6 @@ func TestAccKatapultDataSourceDiskTemplate_by_id(t *testing.T) {
 	tpl, err := testHelperFetchRandomDiskTemplate(tt)
 	require.NoError(t, err)
 
-	res := "data.katapult_disk_template.main"
-
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
@@ -32,7 +30,9 @@ func TestAccKatapultDataSourceDiskTemplate_by_id(t *testing.T) {
 					tpl.ID,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultDiskTemplateAttrs(tt, res, "", tpl),
+					testAccCheckKatapultDiskTemplateAttrs(
+						tt, "data.katapult_disk_template.main", "", tpl,
+					),
 				),
 			},
 		},
@@ -44,8 +44,6 @@ func TestAccKatapultDataSourceDiskTemplate_by_permalink(t *testing.T) {
 
 	tpl, err := testHelperFetchRandomDiskTemplate(tt)
 	require.NoError(t, err)
-
-	res := "data.katapult_disk_template.main"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -59,7 +57,9 @@ func TestAccKatapultDataSourceDiskTemplate_by_permalink(t *testing.T) {
 					tpl.Permalink,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultDiskTemplateAttrs(tt, res, "", tpl),
+					testAccCheckKatapultDiskTemplateAttrs(
+						tt, "data.katapult_disk_template.main", "", tpl,
+					),
 				),
 			},
 		},
