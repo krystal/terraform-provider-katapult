@@ -42,6 +42,7 @@ data "katapult_virtual_machine" "web-1" {
 - **ip_address_ids** (Set of String) One or more IP IDs.
 - **ip_addresses** (Set of String)
 - **name** (String)
+- **network_speed_profile** (String) Permalink of a Network Speed Profile.
 - **package** (String) Permalink or ID of a Virtual Machine Package.
 - **state** (String)
 - **tags** (Set of String)

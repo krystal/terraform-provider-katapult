@@ -22,8 +22,9 @@ func resourceVirtualMachine() *schema.Resource {
 		DeleteContext: resourceVirtualMachineDelete,
 		CustomizeDiff: resourceVirtualMachineCustomizeDiff,
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(5 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Update: schema.DefaultTimeout(10 * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -89,6 +90,12 @@ func resourceVirtualMachine() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+			"network_speed_profile": {
+				Type:        schema.TypeString,
+				Description: "Permalink of a Network Speed Profile.",
+				Computed:    true,
+				Optional:    true,
 			},
 			"tags": {
 				Type:     schema.TypeSet,
@@ -209,9 +216,18 @@ func resourceVirtualMachineCreate(
 		ipGroups[netID] = append(ipGroups[netID], ip)
 	}
 
+	var nsp *buildspec.NetworkSpeedProfile
+	if permalink := d.Get("network_speed_profile").(string); permalink != "" {
+		nsp = &buildspec.NetworkSpeedProfile{Permalink: permalink}
+	}
+
 	for netID, ips := range ipGroups {
 		iface := &buildspec.NetworkInterface{
 			Network: &buildspec.Network{ID: netID},
+		}
+
+		if nsp != nil {
+			iface.SpeedProfile = nsp
 		}
 
 		for _, ip := range ips {
@@ -398,6 +414,24 @@ func resourceVirtualMachineRead(
 		diags = append(diags, diag.FromErr(err)...)
 	}
 
+	// As we set the speed profile for all interfaces on a VM, we only care
+	// about fetching details about any single interface.
+	vmnets, _, err := m.Client.VirtualMachineNetworkInterfaces.List(
+		ctx, vm, &katapult.ListOptions{Page: 1, PerPage: 1},
+	)
+	if err != nil {
+		diags = append(diags, diag.FromErr(err)...)
+	} else if len(vmnets) > 0 {
+		vmnet, _, err2 := m.Client.VirtualMachineNetworkInterfaces.Get(
+			ctx, vmnets[0].ID,
+		)
+		if err2 != nil {
+			diags = append(diags, diag.FromErr(err2)...)
+		} else if vmnet.SpeedProfile != nil {
+			_ = d.Set("network_speed_profile", vmnet.SpeedProfile.Permalink)
+		}
+	}
+
 	err = d.Set("tags", flattenTagNames(vm.TagNames))
 	if err != nil {
 		diags = append(diags, diag.FromErr(err)...)
@@ -442,11 +476,9 @@ func resourceVirtualMachineUpdate(
 		addIDs := stringsDiff(targetIDs, vmIDs)
 		removeIDs := stringsDiff(vmIDs, targetIDs)
 
-		for _, id := range addIDs {
-			err := allocateIPToVirtualMachine(ctx, m, vm, id)
-			if err != nil {
-				return diag.FromErr(err)
-			}
+		err = allocateIPsToVirtualMachine(ctx, m, vm, addIDs)
+		if err != nil {
+			return diag.FromErr(err)
 		}
 
 		for _, id := range removeIDs {
@@ -456,6 +488,14 @@ func resourceVirtualMachineUpdate(
 			if err != nil {
 				return diag.FromErr(err)
 			}
+		}
+	}
+	if d.HasChange("network_speed_profile") {
+		err := updateVMNetworkSpeedProfile(
+			ctx, d, m, vm, d.Get("network_speed_profile").(string),
+		)
+		if err != nil {
+			return diag.FromErr(err)
 		}
 	}
 	if d.HasChange("tags") {
@@ -670,38 +710,64 @@ func unallocateAllVirtualMachineIPs(
 	return nil
 }
 
-func allocateIPToVirtualMachine(
+func allocateIPsToVirtualMachine(
 	ctx context.Context,
 	m *Meta,
 	vm *katapult.VirtualMachine,
-	ipID string,
+	ipIDs []string,
 ) error {
-	ip, _, err := m.Client.IPAddresses.GetByID(ctx, ipID)
+	if len(ipIDs) == 0 {
+		return nil
+	}
+
+	vmnets, err := fetchAllVMNetworkInterfaces(ctx, m, vm)
 	if err != nil {
 		return err
 	}
 
-	vmnet, err := fetchVMNetworkInterface(ctx, m, vm, ip.Network)
-	if err != nil {
-		return err
-	}
+	for _, ipID := range ipIDs {
+		ip, _, err2 := m.Client.IPAddresses.GetByID(ctx, ipID)
+		if err2 != nil {
+			return err2
+		}
 
-	_, _, err = m.Client.VirtualMachineNetworkInterfaces.AllocateIP(
-		ctx, vmnet, ip,
-	)
+		if ip.Network == nil {
+			return fmt.Errorf("could not determine network of IP ID: %s", ipID)
+		}
+
+		var vmnet *katapult.VirtualMachineNetworkInterface
+		for _, ni := range vmnets {
+			if ni.Network != nil && ni.Network.ID == ip.Network.ID {
+				vmnet = ni
+			}
+		}
+
+		if vmnet == nil {
+			return fmt.Errorf(
+				"no usable network interface found for IP ID: %s", ipID,
+			)
+		}
+
+		_, _, err2 = m.Client.VirtualMachineNetworkInterfaces.AllocateIP(
+			ctx, vmnet, ip,
+		)
+		if err2 != nil {
+			return err2
+		}
+	}
 
 	return err
 }
 
-func fetchVMNetworkInterface(
+func fetchAllVMNetworkInterfaces(
 	ctx context.Context,
 	m *Meta,
 	vm *katapult.VirtualMachine,
-	net *katapult.Network,
-) (*katapult.VirtualMachineNetworkInterface, error) {
+) ([]*katapult.VirtualMachineNetworkInterface, error) {
+	var vmnets []*katapult.VirtualMachineNetworkInterface
 	totalPages := 2
 	for pageNum := 1; pageNum < totalPages; pageNum++ {
-		nis, r, err := m.Client.VirtualMachineNetworkInterfaces.List(
+		pageResult, r, err := m.Client.VirtualMachineNetworkInterfaces.List(
 			ctx, vm, &katapult.ListOptions{
 				Page: pageNum,
 			},
@@ -711,18 +777,51 @@ func fetchVMNetworkInterface(
 		}
 
 		totalPages = r.Pagination.TotalPages
+		vmnets = append(vmnets, pageResult...)
+	}
 
-		for _, n := range nis {
-			if n.Network == nil {
+	return vmnets, nil
+}
+
+func updateVMNetworkSpeedProfile(
+	ctx context.Context,
+	d *schema.ResourceData,
+	m *Meta,
+	vm *katapult.VirtualMachine,
+	speedProfilePermalink string,
+) error {
+	if speedProfilePermalink == "" {
+		return nil
+	}
+
+	vmnets, err := fetchAllVMNetworkInterfaces(ctx, m, vm)
+	if err != nil {
+		return err
+	}
+
+	for _, vmnet := range vmnets {
+		task, resp, err := m.Client.VirtualMachineNetworkInterfaces.
+			UpdateSpeedProfile(
+				ctx, vmnet, &katapult.NetworkSpeedProfile{
+					Permalink: speedProfilePermalink,
+				},
+			)
+		if err != nil {
+			if resp != nil && resp.Error != nil &&
+				resp.Error.Code == "speed_profile_already_assigned" {
 				continue
 			}
 
-			if (net.ID != "" && n.Network.ID == net.ID) ||
-				(net.Permalink != "" && n.Network.Permalink == net.Permalink) {
-				return n, nil
-			}
+			return err
+		}
+
+		_, err = waitForTaskCompletion(
+			ctx, m, d.Timeout(schema.TimeoutUpdate), task,
+		)
+		if err != nil {
+			return err
 		}
 	}
 
-	return nil, fmt.Errorf("no network interface found")
+	return nil
 }
