@@ -25,7 +25,7 @@ require (
 	github.com/jimeh/undent v1.1.0
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
 	github.com/klauspost/compress v1.11.7 // indirect
-	github.com/krystal/go-katapult v0.0.0-20210325153136-7ef649c70dea
+	github.com/krystal/go-katapult v0.0.0-20210329112313-a308b56f34b6
 	github.com/mitchellh/copystructure v1.1.1 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
