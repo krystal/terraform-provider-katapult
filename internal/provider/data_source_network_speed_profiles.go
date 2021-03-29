@@ -9,6 +9,10 @@ import (
 )
 
 func dataSourceNetworkSpeedProfiles() *schema.Resource {
+	nsps := dataSourceSchemaFromResourceSchema(
+		dataSourceNetworkSpeedProfile().Schema,
+	)
+
 	return &schema.Resource{
 		ReadContext: dataSourceNetworkSpeedProfilesRead,
 		Schema: map[string]*schema.Schema{
@@ -21,33 +25,7 @@ func dataSourceNetworkSpeedProfiles() *schema.Resource {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"permalink": {
-							Type:     schema.TypeString,
-							Computed: true,
-							Optional: true,
-						},
-						"upload_speed": {
-							Type:     schema.TypeInt,
-							Computed: true,
-							Description: "Upload speed in Mbit. A value of " +
-								"`0` means unrestricted.",
-						},
-						"download_speed": {
-							Type:     schema.TypeInt,
-							Computed: true,
-							Description: "Download speed in Mbit.A  value of " +
-								"`0` means unrestricted.",
-						},
-					},
+					Schema: nsps,
 				},
 			},
 		},
@@ -94,20 +72,6 @@ func flattenNetworkSpeedProfiles(
 	for _, profile := range profiles {
 		f = append(f, flattenNetworkSpeedProfile(profile))
 	}
-
-	return f
-}
-
-func flattenNetworkSpeedProfile(
-	profile *katapult.NetworkSpeedProfile,
-) map[string]interface{} {
-	f := make(map[string]interface{})
-
-	f["id"] = profile.ID
-	f["name"] = profile.Name
-	f["permalink"] = profile.Permalink
-	f["upload_speed"] = profile.UploadSpeedInMbit
-	f["download_speed"] = profile.DownloadSpeedInMbit
 
 	return f
 }
