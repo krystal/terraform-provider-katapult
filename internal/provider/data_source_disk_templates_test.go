@@ -134,7 +134,7 @@ func testAccCheckKatapultDiskTemplates(
 	for i, tpl := range tpls {
 		prefix := fmt.Sprintf("templates.%d.", i)
 		tfs = append(tfs, testAccCheckKatapultDiskTemplateAttrs(
-			tt, res, prefix, tpl,
+			tt, res, tpl, prefix,
 		))
 	}
 
