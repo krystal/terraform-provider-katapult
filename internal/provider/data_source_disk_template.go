@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -56,12 +55,18 @@ func dataSourceDiskTemplateRead(
 	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
-	idOrPermalink := d.Get("id").(string)
-	if idOrPermalink == "" {
-		idOrPermalink = d.Get("permalink").(string)
-	}
+	id := d.Get("id").(string)
+	permalink := d.Get("permalink").(string)
 
-	template, err := fetchDiskTemplate(ctx, m, idOrPermalink)
+	var template *katapult.DiskTemplate
+	var err error
+
+	switch {
+	case id != "":
+		template, _, err = m.Client.DiskTemplates.GetByID(ctx, id)
+	case permalink != "":
+		template, _, err = m.Client.DiskTemplates.GetByPermalink(ctx, permalink)
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -86,44 +91,6 @@ func dataSourceDiskTemplateRead(
 	}
 
 	return diags
-}
-
-func fetchDiskTemplate(
-	ctx context.Context,
-	m *Meta,
-	idOrPermalink string,
-) (*katapult.DiskTemplate, error) {
-	var id string
-	var permalink string
-
-	if strings.HasPrefix(idOrPermalink, "dtpl_") {
-		id = idOrPermalink
-	} else {
-		permalink = idOrPermalink
-	}
-
-	totalPages := 2
-	for pageNum := 1; pageNum < totalPages; pageNum++ {
-		templates, resp, err := m.Client.DiskTemplates.List(
-			ctx, m.OrganizationRef(), &katapult.DiskTemplateListOptions{
-				IncludeUniversal: true,
-				Page:             pageNum,
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		totalPages = resp.Pagination.TotalPages
-		for _, t := range templates {
-			if (id != "" && id == t.ID) ||
-				(permalink != "" && permalink == t.Permalink) {
-				return t, nil
-			}
-		}
-	}
-
-	return nil, nil
 }
 
 func flattenDiskTemplate(tpl *katapult.DiskTemplate) map[string]interface{} {

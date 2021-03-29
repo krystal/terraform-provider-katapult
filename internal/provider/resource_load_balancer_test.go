@@ -63,7 +63,6 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 	tt := newTestTools(t)
 
 	name := tt.ResourceName("basic")
-	res := "katapult_load_balancer.main"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -78,16 +77,21 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultLoadBalancerExists(tt, res),
-					resource.TestCheckResourceAttr(res, "name", name),
-					resource.TestCheckResourceAttr(res,
+					testAccCheckKatapultLoadBalancerExists(
+						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main", "name", name,
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
 						"resource_type",
 						string(katapult.VirtualMachinesResourceType),
 					),
 				),
 			},
 			{
-				ResourceName:      res,
+				ResourceName:      "katapult_load_balancer.main",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -99,8 +103,6 @@ func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
 	t.Skip("not yet feature complete")
 	tt := newTestTools(t)
 
-	res := "katapult_load_balancer.main"
-
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
@@ -109,9 +111,14 @@ func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
 			{
 				Config: `resource "katapult_load_balancer" "main" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultLoadBalancerExists(tt, res),
-					testCheckGeneratedResourceName(res, "name"),
-					resource.TestCheckResourceAttr(res,
+					testAccCheckKatapultLoadBalancerExists(
+						tt, "katapult_load_balancer.main",
+					),
+					testCheckGeneratedResourceName(
+						"katapult_load_balancer.main", "name",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
 						"resource_type",
 						string(katapult.VirtualMachinesResourceType),
 					),
@@ -126,7 +133,6 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 	tt := newTestTools(t)
 
 	name := tt.ResourceName("update_name")
-	res := "katapult_load_balancer.main"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -141,8 +147,12 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultLoadBalancerExists(tt, res),
-					resource.TestCheckResourceAttr(res, "name", name),
+					testAccCheckKatapultLoadBalancerExists(
+						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main", "name", name,
+					),
 				),
 			},
 			{
@@ -153,9 +163,12 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 					name+"-different",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultLoadBalancerExists(tt, res),
-					resource.TestCheckResourceAttr(res,
-						"name", name+"-different",
+					testAccCheckKatapultLoadBalancerExists(
+						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main", "name",
+						name+"-different",
 					),
 				),
 			},

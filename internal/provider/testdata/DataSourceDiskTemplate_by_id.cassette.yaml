@@ -8,11 +8,12 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/organizations/_/disk_templates?include_universal=true&organization%5Bsub_domain%5D=terraform-acc-test&page=1
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/disk_templates/_?disk_template%5Bpermalink%5D=templates%2Fubuntu-20-04
     method: GET
   response:
-    body: '{"pagination":{"current_page":1,"total_pages":1,"total":8,"per_page":30,"large_set":false},"disk_templates":[{"id":"dtpl_zHhabpLGa0Bpjhsm","name":"CentOS 7.7","description":"A clean installation of Centos 7.7","permalink":"templates/centos-7-7","universal":true,"latest_version":{"id":"dtv_kHAtizr7ca7UgNWY","number":3},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_MIIP8b9OFiJWdEqP","name":"CentOS 7.9","description":"A clean installation of Centos 7.9","permalink":"templates/centos-7","universal":true,"latest_version":{"id":"dtv_WlHueKRDxLH8KOKS","number":1},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_IW7fNEmvhYJWvesy","name":"CentOS 8.0","description":"A clean installation of CentOs 8.0","permalink":"templates/centos-8","universal":true,"latest_version":{"id":"dtv_wuv7GK0CLJ2rQYNw","number":1},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_f7qNWTADx49mTYOC","name":"Debian 10.2","description":"A clean installation of Debian 10.2","permalink":"templates/debian-10","universal":true,"latest_version":{"id":"dtv_P1Va2OWoalchXWkE","number":1},"operating_system":{"id":"os_AXz5v4EtnIyPSZqO","name":"Debian"}},{"id":"dtpl_caWRMZXYAvJMFEsL","name":"Debian 9.11","description":"A clean installation of Debian 9.11","permalink":"templates/debian-9","universal":true,"latest_version":{"id":"dtv_FtRZTvVHIca8oe33","number":1},"operating_system":{"id":"os_AXz5v4EtnIyPSZqO","name":"Debian"}},{"id":"dtpl_zw6PNZVrZaVdqU5A","name":"Fedora 32","description":"A clean installation of Fedora 32","permalink":"templates/fedora-32","universal":true,"latest_version":{"id":"dtv_z3MWXtWkwcTfvBGu","number":3},"operating_system":{"id":"os_5pR39NVxAJ6ccp1D","name":"Fedora"}},{"id":"dtpl_dHTYevsvwvsL0Hea","name":"Ubuntu 18.04","description":"A clean installation of Ubuntu 18.04 server","permalink":"templates/ubuntu-18-04","universal":true,"latest_version":{"id":"dtv_MRXiRcTWrhXVqhBu","number":1},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu"}},{"id":"dtpl_GS03NCmS1Z17rXHq","name":"Ubuntu 20.04","description":"A clean installation of Ubuntu 20.04 server","permalink":"templates/ubuntu-20-04","universal":true,"latest_version":{"id":"dtv_56DNYpPqwnG54112","number":5},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu"}}]}'
+    body: '{"disk_template":{"id":"dtpl_GS03NCmS1Z17rXHq","name":"Ubuntu 20.04","description":"A
+      clean installation of Ubuntu 20.04 server","permalink":"templates/ubuntu-20-04","universal":true,"latest_version":{"id":"dtv_56DNYpPqwnG54112","number":5,"stable":true,"size_in_gb":10},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu","badge":{"url":"https://my.katapult.io/attachment/5d7a3675-a2ef-4912-8fe8-3107b781763f/cof_orange_hex.png","file_name":"cof_orange_hex.png","file_type":"image/png","file_size":23343,"digest":"e323199df22d2e846d8e2bd3c8756a15cb7d4b68","token":"5d7a3675-a2ef-4912-8fe8-3107b781763f"}}}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -23,13 +24,56 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "2338"
+      - "618"
       Content-Type:
       - application/json
       Date:
-      - Thu, 18 Feb 2021 21:39:13 GMT
+      - Fri, 26 Mar 2021 19:08:13 GMT
       Etag:
-      - W/"3d72999272c08e9e0234e81c6e81b2f6"
+      - W/"479b40da8eb87f6d72c5d7eefa237a3d"
+      Server:
+      - nginx/1.14.0 (Ubuntu)
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "199"
+      X-Request-Id:
+      - d5e12102-3408-4903-8e45-f4b02bbbf043
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.14.9 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/disk_templates/_?disk_template%5Bid%5D=dtpl_GS03NCmS1Z17rXHq
+    method: GET
+  response:
+    body: '{"disk_template":{"id":"dtpl_GS03NCmS1Z17rXHq","name":"Ubuntu 20.04","description":"A
+      clean installation of Ubuntu 20.04 server","permalink":"templates/ubuntu-20-04","universal":true,"latest_version":{"id":"dtv_56DNYpPqwnG54112","number":5,"stable":true,"size_in_gb":10},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu","badge":{"url":"https://my.katapult.io/attachment/5d7a3675-a2ef-4912-8fe8-3107b781763f/cof_orange_hex.png","file_name":"cof_orange_hex.png","file_type":"image/png","file_size":23343,"digest":"e323199df22d2e846d8e2bd3c8756a15cb7d4b68","token":"5d7a3675-a2ef-4912-8fe8-3107b781763f"}}}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "618"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 26 Mar 2021 19:08:14 GMT
+      Etag:
+      - W/"479b40da8eb87f6d72c5d7eefa237a3d"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -39,7 +83,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "195"
       X-Request-Id:
-      - 9978dc76-783f-4841-979c-b143a28846bb
+      - a61df8a3-035b-4bd8-ad8b-47a120ada7e9
     status: 200 OK
     code: 200
     duration: ""
@@ -50,11 +94,12 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/organizations/_/disk_templates?include_universal=true&organization%5Bsub_domain%5D=terraform-acc-test&page=1
+      - Terraform/0.14.9 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/disk_templates/_?disk_template%5Bid%5D=dtpl_GS03NCmS1Z17rXHq
     method: GET
   response:
-    body: '{"pagination":{"current_page":1,"total_pages":1,"total":8,"per_page":30,"large_set":false},"disk_templates":[{"id":"dtpl_zHhabpLGa0Bpjhsm","name":"CentOS 7.7","description":"A clean installation of Centos 7.7","permalink":"templates/centos-7-7","universal":true,"latest_version":{"id":"dtv_kHAtizr7ca7UgNWY","number":3},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_MIIP8b9OFiJWdEqP","name":"CentOS 7.9","description":"A clean installation of Centos 7.9","permalink":"templates/centos-7","universal":true,"latest_version":{"id":"dtv_WlHueKRDxLH8KOKS","number":1},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_IW7fNEmvhYJWvesy","name":"CentOS 8.0","description":"A clean installation of CentOs 8.0","permalink":"templates/centos-8","universal":true,"latest_version":{"id":"dtv_wuv7GK0CLJ2rQYNw","number":1},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_f7qNWTADx49mTYOC","name":"Debian 10.2","description":"A clean installation of Debian 10.2","permalink":"templates/debian-10","universal":true,"latest_version":{"id":"dtv_P1Va2OWoalchXWkE","number":1},"operating_system":{"id":"os_AXz5v4EtnIyPSZqO","name":"Debian"}},{"id":"dtpl_caWRMZXYAvJMFEsL","name":"Debian 9.11","description":"A clean installation of Debian 9.11","permalink":"templates/debian-9","universal":true,"latest_version":{"id":"dtv_FtRZTvVHIca8oe33","number":1},"operating_system":{"id":"os_AXz5v4EtnIyPSZqO","name":"Debian"}},{"id":"dtpl_zw6PNZVrZaVdqU5A","name":"Fedora 32","description":"A clean installation of Fedora 32","permalink":"templates/fedora-32","universal":true,"latest_version":{"id":"dtv_z3MWXtWkwcTfvBGu","number":3},"operating_system":{"id":"os_5pR39NVxAJ6ccp1D","name":"Fedora"}},{"id":"dtpl_dHTYevsvwvsL0Hea","name":"Ubuntu 18.04","description":"A clean installation of Ubuntu 18.04 server","permalink":"templates/ubuntu-18-04","universal":true,"latest_version":{"id":"dtv_MRXiRcTWrhXVqhBu","number":1},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu"}},{"id":"dtpl_GS03NCmS1Z17rXHq","name":"Ubuntu 20.04","description":"A clean installation of Ubuntu 20.04 server","permalink":"templates/ubuntu-20-04","universal":true,"latest_version":{"id":"dtv_56DNYpPqwnG54112","number":5},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu"}}]}'
+    body: '{"disk_template":{"id":"dtpl_GS03NCmS1Z17rXHq","name":"Ubuntu 20.04","description":"A
+      clean installation of Ubuntu 20.04 server","permalink":"templates/ubuntu-20-04","universal":true,"latest_version":{"id":"dtv_56DNYpPqwnG54112","number":5,"stable":true,"size_in_gb":10},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu","badge":{"url":"https://my.katapult.io/attachment/5d7a3675-a2ef-4912-8fe8-3107b781763f/cof_orange_hex.png","file_name":"cof_orange_hex.png","file_type":"image/png","file_size":23343,"digest":"e323199df22d2e846d8e2bd3c8756a15cb7d4b68","token":"5d7a3675-a2ef-4912-8fe8-3107b781763f"}}}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -65,13 +110,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "2338"
+      - "618"
       Content-Type:
       - application/json
       Date:
-      - Thu, 18 Feb 2021 21:42:17 GMT
+      - Fri, 26 Mar 2021 19:08:14 GMT
       Etag:
-      - W/"3d72999272c08e9e0234e81c6e81b2f6"
+      - W/"479b40da8eb87f6d72c5d7eefa237a3d"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -79,9 +124,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "157"
+      - "193"
       X-Request-Id:
-      - 321d4086-b513-4362-b8d3-b8840a6731e6
+      - 55f32cad-e017-41e5-b174-7eef581235fc
     status: 200 OK
     code: 200
     duration: ""
@@ -92,11 +137,12 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/organizations/_/disk_templates?include_universal=true&organization%5Bsub_domain%5D=terraform-acc-test&page=1
+      - Terraform/0.14.9 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/disk_templates/_?disk_template%5Bid%5D=dtpl_GS03NCmS1Z17rXHq
     method: GET
   response:
-    body: '{"pagination":{"current_page":1,"total_pages":1,"total":8,"per_page":30,"large_set":false},"disk_templates":[{"id":"dtpl_zHhabpLGa0Bpjhsm","name":"CentOS 7.7","description":"A clean installation of Centos 7.7","permalink":"templates/centos-7-7","universal":true,"latest_version":{"id":"dtv_kHAtizr7ca7UgNWY","number":3},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_MIIP8b9OFiJWdEqP","name":"CentOS 7.9","description":"A clean installation of Centos 7.9","permalink":"templates/centos-7","universal":true,"latest_version":{"id":"dtv_WlHueKRDxLH8KOKS","number":1},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_IW7fNEmvhYJWvesy","name":"CentOS 8.0","description":"A clean installation of CentOs 8.0","permalink":"templates/centos-8","universal":true,"latest_version":{"id":"dtv_wuv7GK0CLJ2rQYNw","number":1},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_f7qNWTADx49mTYOC","name":"Debian 10.2","description":"A clean installation of Debian 10.2","permalink":"templates/debian-10","universal":true,"latest_version":{"id":"dtv_P1Va2OWoalchXWkE","number":1},"operating_system":{"id":"os_AXz5v4EtnIyPSZqO","name":"Debian"}},{"id":"dtpl_caWRMZXYAvJMFEsL","name":"Debian 9.11","description":"A clean installation of Debian 9.11","permalink":"templates/debian-9","universal":true,"latest_version":{"id":"dtv_FtRZTvVHIca8oe33","number":1},"operating_system":{"id":"os_AXz5v4EtnIyPSZqO","name":"Debian"}},{"id":"dtpl_zw6PNZVrZaVdqU5A","name":"Fedora 32","description":"A clean installation of Fedora 32","permalink":"templates/fedora-32","universal":true,"latest_version":{"id":"dtv_z3MWXtWkwcTfvBGu","number":3},"operating_system":{"id":"os_5pR39NVxAJ6ccp1D","name":"Fedora"}},{"id":"dtpl_dHTYevsvwvsL0Hea","name":"Ubuntu 18.04","description":"A clean installation of Ubuntu 18.04 server","permalink":"templates/ubuntu-18-04","universal":true,"latest_version":{"id":"dtv_MRXiRcTWrhXVqhBu","number":1},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu"}},{"id":"dtpl_GS03NCmS1Z17rXHq","name":"Ubuntu 20.04","description":"A clean installation of Ubuntu 20.04 server","permalink":"templates/ubuntu-20-04","universal":true,"latest_version":{"id":"dtv_56DNYpPqwnG54112","number":5},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu"}}]}'
+    body: '{"disk_template":{"id":"dtpl_GS03NCmS1Z17rXHq","name":"Ubuntu 20.04","description":"A
+      clean installation of Ubuntu 20.04 server","permalink":"templates/ubuntu-20-04","universal":true,"latest_version":{"id":"dtv_56DNYpPqwnG54112","number":5,"stable":true,"size_in_gb":10},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu","badge":{"url":"https://my.katapult.io/attachment/5d7a3675-a2ef-4912-8fe8-3107b781763f/cof_orange_hex.png","file_name":"cof_orange_hex.png","file_type":"image/png","file_size":23343,"digest":"e323199df22d2e846d8e2bd3c8756a15cb7d4b68","token":"5d7a3675-a2ef-4912-8fe8-3107b781763f"}}}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -107,13 +153,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "2338"
+      - "618"
       Content-Type:
       - application/json
       Date:
-      - Thu, 18 Feb 2021 21:42:17 GMT
+      - Fri, 26 Mar 2021 19:08:15 GMT
       Etag:
-      - W/"3d72999272c08e9e0234e81c6e81b2f6"
+      - W/"479b40da8eb87f6d72c5d7eefa237a3d"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -121,9 +167,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "156"
+      - "191"
       X-Request-Id:
-      - 68680f20-b7e1-47a2-8c1a-5ffe754a8887
+      - 97ceaac6-85eb-4650-9146-e00325774446
     status: 200 OK
     code: 200
     duration: ""
@@ -134,11 +180,12 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/organizations/_/disk_templates?include_universal=true&organization%5Bsub_domain%5D=terraform-acc-test&page=1
+      - Terraform/0.14.9 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/disk_templates/_?disk_template%5Bid%5D=dtpl_GS03NCmS1Z17rXHq
     method: GET
   response:
-    body: '{"pagination":{"current_page":1,"total_pages":1,"total":8,"per_page":30,"large_set":false},"disk_templates":[{"id":"dtpl_zHhabpLGa0Bpjhsm","name":"CentOS 7.7","description":"A clean installation of Centos 7.7","permalink":"templates/centos-7-7","universal":true,"latest_version":{"id":"dtv_kHAtizr7ca7UgNWY","number":3},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_MIIP8b9OFiJWdEqP","name":"CentOS 7.9","description":"A clean installation of Centos 7.9","permalink":"templates/centos-7","universal":true,"latest_version":{"id":"dtv_WlHueKRDxLH8KOKS","number":1},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_IW7fNEmvhYJWvesy","name":"CentOS 8.0","description":"A clean installation of CentOs 8.0","permalink":"templates/centos-8","universal":true,"latest_version":{"id":"dtv_wuv7GK0CLJ2rQYNw","number":1},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_f7qNWTADx49mTYOC","name":"Debian 10.2","description":"A clean installation of Debian 10.2","permalink":"templates/debian-10","universal":true,"latest_version":{"id":"dtv_P1Va2OWoalchXWkE","number":1},"operating_system":{"id":"os_AXz5v4EtnIyPSZqO","name":"Debian"}},{"id":"dtpl_caWRMZXYAvJMFEsL","name":"Debian 9.11","description":"A clean installation of Debian 9.11","permalink":"templates/debian-9","universal":true,"latest_version":{"id":"dtv_FtRZTvVHIca8oe33","number":1},"operating_system":{"id":"os_AXz5v4EtnIyPSZqO","name":"Debian"}},{"id":"dtpl_zw6PNZVrZaVdqU5A","name":"Fedora 32","description":"A clean installation of Fedora 32","permalink":"templates/fedora-32","universal":true,"latest_version":{"id":"dtv_z3MWXtWkwcTfvBGu","number":3},"operating_system":{"id":"os_5pR39NVxAJ6ccp1D","name":"Fedora"}},{"id":"dtpl_dHTYevsvwvsL0Hea","name":"Ubuntu 18.04","description":"A clean installation of Ubuntu 18.04 server","permalink":"templates/ubuntu-18-04","universal":true,"latest_version":{"id":"dtv_MRXiRcTWrhXVqhBu","number":1},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu"}},{"id":"dtpl_GS03NCmS1Z17rXHq","name":"Ubuntu 20.04","description":"A clean installation of Ubuntu 20.04 server","permalink":"templates/ubuntu-20-04","universal":true,"latest_version":{"id":"dtv_56DNYpPqwnG54112","number":5},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu"}}]}'
+    body: '{"disk_template":{"id":"dtpl_GS03NCmS1Z17rXHq","name":"Ubuntu 20.04","description":"A
+      clean installation of Ubuntu 20.04 server","permalink":"templates/ubuntu-20-04","universal":true,"latest_version":{"id":"dtv_56DNYpPqwnG54112","number":5,"stable":true,"size_in_gb":10},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu","badge":{"url":"https://my.katapult.io/attachment/5d7a3675-a2ef-4912-8fe8-3107b781763f/cof_orange_hex.png","file_name":"cof_orange_hex.png","file_type":"image/png","file_size":23343,"digest":"e323199df22d2e846d8e2bd3c8756a15cb7d4b68","token":"5d7a3675-a2ef-4912-8fe8-3107b781763f"}}}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -149,13 +196,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "2338"
+      - "618"
       Content-Type:
       - application/json
       Date:
-      - Thu, 18 Feb 2021 21:42:18 GMT
+      - Fri, 26 Mar 2021 19:08:15 GMT
       Etag:
-      - W/"3d72999272c08e9e0234e81c6e81b2f6"
+      - W/"479b40da8eb87f6d72c5d7eefa237a3d"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -163,9 +210,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "155"
+      - "189"
       X-Request-Id:
-      - 1ae6d8d3-f785-4d13-b835-c519769ec2ba
+      - de9bb25e-53c6-42c2-8996-706a7ef7a64a
     status: 200 OK
     code: 200
     duration: ""
@@ -176,11 +223,12 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/organizations/_/disk_templates?include_universal=true&organization%5Bsub_domain%5D=terraform-acc-test&page=1
+      - Terraform/0.14.9 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.3 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/disk_templates/_?disk_template%5Bid%5D=dtpl_GS03NCmS1Z17rXHq
     method: GET
   response:
-    body: '{"pagination":{"current_page":1,"total_pages":1,"total":8,"per_page":30,"large_set":false},"disk_templates":[{"id":"dtpl_zHhabpLGa0Bpjhsm","name":"CentOS 7.7","description":"A clean installation of Centos 7.7","permalink":"templates/centos-7-7","universal":true,"latest_version":{"id":"dtv_kHAtizr7ca7UgNWY","number":3},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_MIIP8b9OFiJWdEqP","name":"CentOS 7.9","description":"A clean installation of Centos 7.9","permalink":"templates/centos-7","universal":true,"latest_version":{"id":"dtv_WlHueKRDxLH8KOKS","number":1},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_IW7fNEmvhYJWvesy","name":"CentOS 8.0","description":"A clean installation of CentOs 8.0","permalink":"templates/centos-8","universal":true,"latest_version":{"id":"dtv_wuv7GK0CLJ2rQYNw","number":1},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_f7qNWTADx49mTYOC","name":"Debian 10.2","description":"A clean installation of Debian 10.2","permalink":"templates/debian-10","universal":true,"latest_version":{"id":"dtv_P1Va2OWoalchXWkE","number":1},"operating_system":{"id":"os_AXz5v4EtnIyPSZqO","name":"Debian"}},{"id":"dtpl_caWRMZXYAvJMFEsL","name":"Debian 9.11","description":"A clean installation of Debian 9.11","permalink":"templates/debian-9","universal":true,"latest_version":{"id":"dtv_FtRZTvVHIca8oe33","number":1},"operating_system":{"id":"os_AXz5v4EtnIyPSZqO","name":"Debian"}},{"id":"dtpl_zw6PNZVrZaVdqU5A","name":"Fedora 32","description":"A clean installation of Fedora 32","permalink":"templates/fedora-32","universal":true,"latest_version":{"id":"dtv_z3MWXtWkwcTfvBGu","number":3},"operating_system":{"id":"os_5pR39NVxAJ6ccp1D","name":"Fedora"}},{"id":"dtpl_dHTYevsvwvsL0Hea","name":"Ubuntu 18.04","description":"A clean installation of Ubuntu 18.04 server","permalink":"templates/ubuntu-18-04","universal":true,"latest_version":{"id":"dtv_MRXiRcTWrhXVqhBu","number":1},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu"}},{"id":"dtpl_GS03NCmS1Z17rXHq","name":"Ubuntu 20.04","description":"A clean installation of Ubuntu 20.04 server","permalink":"templates/ubuntu-20-04","universal":true,"latest_version":{"id":"dtv_56DNYpPqwnG54112","number":5},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu"}}]}'
+    body: '{"disk_template":{"id":"dtpl_GS03NCmS1Z17rXHq","name":"Ubuntu 20.04","description":"A
+      clean installation of Ubuntu 20.04 server","permalink":"templates/ubuntu-20-04","universal":true,"latest_version":{"id":"dtv_56DNYpPqwnG54112","number":5,"stable":true,"size_in_gb":10},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu","badge":{"url":"https://my.katapult.io/attachment/5d7a3675-a2ef-4912-8fe8-3107b781763f/cof_orange_hex.png","file_name":"cof_orange_hex.png","file_type":"image/png","file_size":23343,"digest":"e323199df22d2e846d8e2bd3c8756a15cb7d4b68","token":"5d7a3675-a2ef-4912-8fe8-3107b781763f"}}}}'
     headers:
       Access-Control-Allow-Methods:
       - '*'
@@ -191,13 +239,13 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - "2338"
+      - "618"
       Content-Type:
       - application/json
       Date:
-      - Thu, 18 Feb 2021 21:42:18 GMT
+      - Fri, 26 Mar 2021 19:08:15 GMT
       Etag:
-      - W/"3d72999272c08e9e0234e81c6e81b2f6"
+      - W/"479b40da8eb87f6d72c5d7eefa237a3d"
       Server:
       - nginx/1.14.0 (Ubuntu)
       Strict-Transport-Security:
@@ -205,51 +253,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "154"
+      - "187"
       X-Request-Id:
-      - c7834646-916b-4184-a4fa-5a514cca2ac5
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      Accept:
-      - application/json
-      User-Agent:
-      - Terraform/0.14.6 (+https://www.terraform.io) Terraform-Plugin-SDK/2.4.2 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/organizations/_/disk_templates?include_universal=true&organization%5Bsub_domain%5D=terraform-acc-test&page=1
-    method: GET
-  response:
-    body: '{"pagination":{"current_page":1,"total_pages":1,"total":8,"per_page":30,"large_set":false},"disk_templates":[{"id":"dtpl_zHhabpLGa0Bpjhsm","name":"CentOS 7.7","description":"A clean installation of Centos 7.7","permalink":"templates/centos-7-7","universal":true,"latest_version":{"id":"dtv_kHAtizr7ca7UgNWY","number":3},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_MIIP8b9OFiJWdEqP","name":"CentOS 7.9","description":"A clean installation of Centos 7.9","permalink":"templates/centos-7","universal":true,"latest_version":{"id":"dtv_WlHueKRDxLH8KOKS","number":1},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_IW7fNEmvhYJWvesy","name":"CentOS 8.0","description":"A clean installation of CentOs 8.0","permalink":"templates/centos-8","universal":true,"latest_version":{"id":"dtv_wuv7GK0CLJ2rQYNw","number":1},"operating_system":{"id":"os_i8XPKQHdAQY98ljt","name":"CentOS"}},{"id":"dtpl_f7qNWTADx49mTYOC","name":"Debian 10.2","description":"A clean installation of Debian 10.2","permalink":"templates/debian-10","universal":true,"latest_version":{"id":"dtv_P1Va2OWoalchXWkE","number":1},"operating_system":{"id":"os_AXz5v4EtnIyPSZqO","name":"Debian"}},{"id":"dtpl_caWRMZXYAvJMFEsL","name":"Debian 9.11","description":"A clean installation of Debian 9.11","permalink":"templates/debian-9","universal":true,"latest_version":{"id":"dtv_FtRZTvVHIca8oe33","number":1},"operating_system":{"id":"os_AXz5v4EtnIyPSZqO","name":"Debian"}},{"id":"dtpl_zw6PNZVrZaVdqU5A","name":"Fedora 32","description":"A clean installation of Fedora 32","permalink":"templates/fedora-32","universal":true,"latest_version":{"id":"dtv_z3MWXtWkwcTfvBGu","number":3},"operating_system":{"id":"os_5pR39NVxAJ6ccp1D","name":"Fedora"}},{"id":"dtpl_dHTYevsvwvsL0Hea","name":"Ubuntu 18.04","description":"A clean installation of Ubuntu 18.04 server","permalink":"templates/ubuntu-18-04","universal":true,"latest_version":{"id":"dtv_MRXiRcTWrhXVqhBu","number":1},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu"}},{"id":"dtpl_GS03NCmS1Z17rXHq","name":"Ubuntu 20.04","description":"A clean installation of Ubuntu 20.04 server","permalink":"templates/ubuntu-20-04","universal":true,"latest_version":{"id":"dtv_56DNYpPqwnG54112","number":5},"operating_system":{"id":"os_DH6P34tVwUGYlcEN","name":"Ubuntu"}}]}'
-    headers:
-      Access-Control-Allow-Methods:
-      - '*'
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - "2338"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 18 Feb 2021 21:42:18 GMT
-      Etag:
-      - W/"3d72999272c08e9e0234e81c6e81b2f6"
-      Server:
-      - nginx/1.14.0 (Ubuntu)
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "200"
-      X-Ratelimit-Remaining:
-      - "153"
-      X-Request-Id:
-      - e19edbb1-7d88-4125-9106-13cc74aab644
+      - 1a046b27-1534-40e5-afd4-ca31dbd715c6
     status: 200 OK
     code: 200
     duration: ""

@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/pkg/katapult"
@@ -15,10 +14,10 @@ import (
 func TestAccKatapultDataSourceDiskTemplate_by_id(t *testing.T) {
 	tt := newTestTools(t)
 
-	tpl, err := testHelperFetchRandomDiskTemplate(tt)
+	tpl, _, err := tt.Meta.Client.DiskTemplates.GetByPermalink(
+		tt.Ctx, "templates/ubuntu-20-04",
+	)
 	require.NoError(t, err)
-
-	res := "data.katapult_disk_template.main"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -32,7 +31,9 @@ func TestAccKatapultDataSourceDiskTemplate_by_id(t *testing.T) {
 					tpl.ID,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultDiskTemplateAttrs(tt, res, "", tpl),
+					testAccCheckKatapultDiskTemplateAttrs(
+						tt, "data.katapult_disk_template.main", tpl, "",
+					),
 				),
 			},
 		},
@@ -42,10 +43,10 @@ func TestAccKatapultDataSourceDiskTemplate_by_id(t *testing.T) {
 func TestAccKatapultDataSourceDiskTemplate_by_permalink(t *testing.T) {
 	tt := newTestTools(t)
 
-	tpl, err := testHelperFetchRandomDiskTemplate(tt)
+	tpl, _, err := tt.Meta.Client.DiskTemplates.GetByPermalink(
+		tt.Ctx, "templates/ubuntu-20-04",
+	)
 	require.NoError(t, err)
-
-	res := "data.katapult_disk_template.main"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -59,7 +60,9 @@ func TestAccKatapultDataSourceDiskTemplate_by_permalink(t *testing.T) {
 					tpl.Permalink,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultDiskTemplateAttrs(tt, res, "", tpl),
+					testAccCheckKatapultDiskTemplateAttrs(
+						tt, "data.katapult_disk_template.main", tpl, "",
+					),
 				),
 			},
 		},
@@ -86,22 +89,18 @@ func TestAccKatapultDataSourceDiskTemplate_blank(t *testing.T) {
 func TestAccKatapultDataSourceDiskTemplate_invalid(t *testing.T) {
 	tt := newTestTools(t)
 
-	tpl, err := testHelperFetchRandomDiskTemplate(tt)
-	require.NoError(t, err)
-
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: tt.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: undent.Stringf(`
+				Config: undent.String(`
 					data "katapult_disk_template" "main" {
-					  name = "%s"
+					  name = "Ubuntu 20.04"
 					}`,
-					tpl.Name,
 				),
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta("Computed attributes cannot be set"),
+					regexp.QuoteMeta("one of `id,permalink` must be specified"),
 				),
 			},
 		},
@@ -112,22 +111,11 @@ func TestAccKatapultDataSourceDiskTemplate_invalid(t *testing.T) {
 // Helpers
 //
 
-func testHelperFetchRandomDiskTemplate(
-	tt *testTools,
-) (*katapult.DiskTemplate, error) {
-	templates, err := testHelperFetchAllDiskTemplates(tt)
-	if err != nil {
-		return nil, err
-	}
-
-	return templates[acctest.RandIntRange(0, len(templates))], nil
-}
-
 func testAccCheckKatapultDiskTemplateAttrs(
 	tt *testTools,
 	res string,
-	prefix string,
 	tpl *katapult.DiskTemplate,
+	prefix string,
 ) resource.TestCheckFunc {
 	tfs := []resource.TestCheckFunc{
 		resource.TestCheckResourceAttr(res, prefix+"id", tpl.ID),
