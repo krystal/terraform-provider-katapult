@@ -1,5 +1,26 @@
 # Katapult Terraform Provider
 
+<p>
+  <a href="https://github.com/krystal/terraform-provider-katapult/releases">
+    <img src="https://img.shields.io/github/v/tag/krystal/terraform-provider-katapult?label=release" alt="GitHub tag (latest SemVer)">
+  </a>
+  <a href="https://github.com/krystal/terraform-provider-katapult/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/workflow/status/krystal/terraform-provider-katapult/CI.svg?logo=github" alt="Build Status">
+  </a>
+  <a href="https://github.com/krystal/terraform-provider-katapult/actions/workflows/nightly.yml">
+    <img src="https://img.shields.io/github/workflow/status/krystal/terraform-provider-katapult/Nightly%20Acceptance%20Tests.svg?logo=github&label=nightly%20acceptance%20tests" alt="Nightly Acceptance Tests">
+  </a>
+  <a href="https://github.com/krystal/terraform-provider-katapult/issues">
+    <img src="https://img.shields.io/github/issues-raw/krystal/terraform-provider-katapult.svg?style=flat&logo=github&logoColor=white" alt="GitHub issues">
+  </a>
+  <a href="https://github.com/krystal/terraform-provider-katapult/pulls">
+    <img src="https://img.shields.io/github/issues-pr-raw/krystal/terraform-provider-katapult.svg?style=flat&logo=github&logoColor=white" alt="GitHub pull requests">
+  </a>
+  <a href="https://github.com/krystal/terraform-provider-katapult/blob/master/LICENSE">
+    <img src="https://img.shields.io/github/license/krystal/terraform-provider-katapult.svg?style=flat" alt="License Status">
+  </a>
+</p>
+
 - [Provider Documentation](https://registry.terraform.io/providers/krystal/katapult/latest/docs)
 - Katapult website: [https://katapult.io](https://katapult.io)
 - Terraform website: [https://www.terraform.io](https://www.terraform.io)
