@@ -212,6 +212,10 @@ func TestAccKatapultVirtualMachine_minimal(t *testing.T) {
 						"katapult_virtual_machine.base", "ip_addresses.*",
 						"katapult_ip.web", "address",
 					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"network_speed_profile", "10gbps",
+					),
 				),
 			},
 		},
@@ -234,6 +238,7 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 			{
 				Config: undent.Stringf(`
 					resource "katapult_ip" "web" {}
+					resource "katapult_ip" "internal" {}
 
 					resource "katapult_virtual_machine_group" "web" {
 						name = "%s"
@@ -249,8 +254,12 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 							install_agent = true
 						}
 						group_id       = katapult_virtual_machine_group.web.id
-						ip_address_ids = [katapult_ip.web.id]
+						ip_address_ids = [
+							katapult_ip.web.id,
+							katapult_ip.internal.id
+						]
 						tags = ["web", "public"]
+						network_speed_profile = "1gbps"
 					}`,
 					name+"-group", name, name+"-host",
 				),
@@ -297,19 +306,27 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
-						"ip_address_ids.#", "1",
+						"ip_address_ids.#", "2",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_address_ids.*",
 						"katapult_ip.web", "id",
 					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"katapult_virtual_machine.base", "ip_address_ids.*",
+						"katapult_ip.internal", "id",
+					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
-						"ip_addresses.#", "1",
+						"ip_addresses.#", "2",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_addresses.*",
 						"katapult_ip.web", "address",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"katapult_virtual_machine.base", "ip_addresses.*",
+						"katapult_ip.internal", "address",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
@@ -320,6 +337,10 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttr(
 						"katapult_virtual_machine.base", "tags.*", "public",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"network_speed_profile", "1gbps",
 					),
 				),
 			},
@@ -355,6 +376,7 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 						}
 						ip_address_ids = [katapult_ip.web.id]
 						tags = ["web", "public"]
+						network_speed_profile = "1gbps"
 					}`,
 					name, name+"-host",
 				),
@@ -392,6 +414,10 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(
 						"katapult_virtual_machine.base", "tags.*", "public",
 					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"network_speed_profile", "1gbps",
+					),
 				),
 			},
 			{
@@ -408,6 +434,7 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 						}
 						ip_address_ids = [katapult_ip.web.id]
 						tags = ["web", "app", "lb"]
+						network_speed_profile = "10gbps"
 					}`,
 					name+"-diff", name+"-host-diff",
 				),
@@ -447,6 +474,10 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttr(
 						"katapult_virtual_machine.base", "tags.*", "lb",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"network_speed_profile", "10gbps",
 					),
 				),
 			},
@@ -686,6 +717,103 @@ func TestAccKatapultVirtualMachine_update_group(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
 						"group_id", "",
+					),
+				),
+			},
+		},
+	})
+}
+
+func TestAccKatapultVirtualMachine_update_network_speed_profile(t *testing.T) {
+	tt := newTestTools(t)
+
+	name := tt.ResourceName("update_speed_profile")
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+					resource "katapult_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+						name          = "%s"
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [
+							katapult_ip.web.id,
+						]
+					}`, name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultVirtualMachineExists(
+						tt, "katapult_virtual_machine.base",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"network_speed_profile", "10gbps",
+					),
+				),
+			},
+			{
+				Config: undent.Stringf(`
+					resource "katapult_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+						name          = "%s"
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [
+							katapult_ip.web.id,
+						]
+						network_speed_profile = "10gbps"
+					}`, name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultVirtualMachineExists(
+						tt, "katapult_virtual_machine.base",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"network_speed_profile", "10gbps",
+					),
+				),
+			},
+			{
+				Config: undent.Stringf(`
+					resource "katapult_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+						name          = "%s"
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [
+							katapult_ip.web.id,
+						]
+						network_speed_profile = "1gbps"
+					}`, name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultVirtualMachineExists(
+						tt, "katapult_virtual_machine.base",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"network_speed_profile", "1gbps",
 					),
 				),
 			},
