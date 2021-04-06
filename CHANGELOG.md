@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.4](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.3...v0.0.4) (2021-04-06)
+
+
+### Documentation
+
+* **network:** add missing speed profile examples ([f0882ab](https://github.com/krystal/terraform-provider-katapult/commit/f0882abec8a668ca0ea308a505393a1672e2a53f))
+* **virtual_machine:** fix disk template value in example ([00f406e](https://github.com/krystal/terraform-provider-katapult/commit/00f406e5d1a8954118e1a431423d33fffb09aa82))
+
 ### [0.0.3](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.2...v0.0.3) (2021-04-06)
 
 
