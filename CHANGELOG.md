@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.3](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.2...v0.0.3) (2021-04-06)
+
+
+### Features
+
+* **logging:** add debug logging of VM buildspec ([7556482](https://github.com/krystal/terraform-provider-katapult/commit/7556482e5fef937ab76324e673b8ab6143f49d2c))
+* **network:** add katapult_network_speed_profile data source ([9b3e087](https://github.com/krystal/terraform-provider-katapult/commit/9b3e0878732f4df84a0e7f12319ca09a8bdfe0f4))
+* **network:** add katapult_network_speed_profiles data source ([0c2c3bf](https://github.com/krystal/terraform-provider-katapult/commit/0c2c3bf62275234d2a6a01b1db1fb65708b50937))
+* **virtual_machine:** enable reading and setting `network_speed_profile` ([163fa9f](https://github.com/krystal/terraform-provider-katapult/commit/163fa9fd726d68b3be36e71530786c56fdcd8653))
+
+
+### Bug Fixes
+
+* **disk_template:** use get request to fetch single disk template ([4232479](https://github.com/krystal/terraform-provider-katapult/commit/4232479822d8a044baf1738dd94670f7a11745c3))
+
+
+### Documentation
+
+* **readme:** add status badges ([c0e347a](https://github.com/krystal/terraform-provider-katapult/commit/c0e347a306d83f157f965f211c7847dd78a9157a))
+
 ### [0.0.2](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.1...v0.0.2) (2021-03-09)
 
 
