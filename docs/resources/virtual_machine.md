@@ -42,7 +42,7 @@ resource "katapult_virtual_machine" "base" {
   tags     = ["web", "public"]
 
   package       = "rock-3"
-  disk_template = "ubuntu-20-04"
+  disk_template = "templates/ubuntu-20-04"
   disk_template_options = {
     install_agent = true
   }
