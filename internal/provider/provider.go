@@ -154,14 +154,17 @@ func configure(
 		}
 
 		c, err := katapult.NewClient(&katapult.Config{
-			APIKey:    m.confAPIKey,
-			UserAgent: p.UserAgent("terraform-provider-katapult", conf.Version),
+			APIKey:     m.confAPIKey,
+			HTTPClient: conf.HTTPClient,
+			UserAgent: p.UserAgent(
+				"terraform-provider-katapult", conf.Version,
+			),
 		})
 		if err != nil {
 			return m, diag.FromErr(err)
 		}
 
-		rhc := newRetryableHTTPClient(conf, m.Logger)
+		rhc := newRetryableHTTPClient(conf, c.HTTPClient(), m.Logger)
 		err = c.SetHTTPClient(rhc.StandardClient())
 		if err != nil {
 			return m, diag.FromErr(err)
@@ -194,18 +197,17 @@ func configure(
 
 func newRetryableHTTPClient(
 	conf *Config,
+	httpClient *http.Client,
 	logger hclog.Logger,
 ) *retryablehttp.Client {
 	client := retryablehttp.NewClient()
+	client.HTTPClient = httpClient
 	client.Logger = logger
+
 	client.RetryWaitMin = 1 * time.Second
 	client.RetryWaitMax = 2 * time.Minute
 	client.RetryMax = 4
 	client.CheckRetry = requestRetryPolicy
-
-	if conf.HTTPClient != nil {
-		client.HTTPClient = conf.HTTPClient
-	}
 
 	return client
 }

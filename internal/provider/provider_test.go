@@ -96,14 +96,11 @@ type testTools struct {
 	Recorder          *recorder.Recorder
 	Meta              *Meta
 	ProviderFactories map[string]func() (*schema.Provider, error)
-	Cleanup           func()
-	RandID            string
+	randID            string
 }
 
 func newTestTools(t *testing.T) *testTools {
-	r, stop := newVCRRecorder(t)
-	t.Cleanup(stop)
-
+	r := newVCRRecorder(t)
 	factories := providerFactories(r)
 	ctx := context.TODO()
 
@@ -121,16 +118,37 @@ func newTestTools(t *testing.T) *testTools {
 		Recorder:          r,
 		Meta:              m,
 		ProviderFactories: factories,
-		Cleanup:           stop,
 	}
 }
 
 func (tt *testTools) ResourceName(name string) string {
-	if tt.RandID == "" {
-		tt.RandID = testVCRRecorderRandID(tt.T, tt.Recorder)
+	return fmt.Sprintf("%s-%s-%s", testAccResourceNamePrefix, name, tt.RandID())
+}
+
+func (tt *testTools) RandID() string {
+	if tt.randID != "" {
+		return tt.randID
 	}
 
-	return fmt.Sprintf("%s-%s-%s", testAccResourceNamePrefix, name, tt.RandID)
+	rand := acctest.RandString(12)
+	if tt.Recorder == nil {
+		return rand
+	}
+
+	randIDFile := testDataFilePath(tt.T, ".cassette.rand_id")
+	if tt.Recorder.Mode() == recorder.ModeReplaying {
+		data, err := ioutil.ReadFile(randIDFile)
+		require.NoError(tt.T, err, "missing rand required for VCR replay")
+		rand = string(bytes.TrimSpace(data))
+	} else if tt.Recorder.Mode() == recorder.ModeRecording {
+		err := os.MkdirAll(filepath.Dir(randIDFile), 0o755)
+		require.NoError(tt.T, err, "failed to write rand VCR resource ID")
+
+		err = ioutil.WriteFile(randIDFile, []byte(rand), 0o644) //nolint:gosec
+		require.NoError(tt.T, err, "failed to write rand VCR resource ID")
+	}
+
+	return rand
 }
 
 func testDataFilePath(t *testing.T, suffix string) string {
@@ -144,7 +162,7 @@ func testDataFilePath(t *testing.T, suffix string) string {
 	return filepath.Join(".", "testdata", baseName)
 }
 
-func newVCRRecorder(t *testing.T) (*recorder.Recorder, func()) {
+func newVCRRecorder(t *testing.T) *recorder.Recorder {
 	cassettePath := testDataFilePath(t, ".cassette")
 
 	var mode recorder.Mode
@@ -152,13 +170,12 @@ func newVCRRecorder(t *testing.T) (*recorder.Recorder, func()) {
 
 	vcrMode := strings.ToLower(os.Getenv("VCR"))
 	switch vcrMode {
+	case "disabled", "off", "no", "0":
+		return nil
 	case "record", "rec":
 		mode = recorder.ModeRecording
-	case "disabled", "off", "no", "0":
-		mode = recorder.ModeDisabled
 	default:
-		// Prevent real requests unless VCR is explicitly set to record mode or
-		// disabled.
+		// Prevent real requests unless VCR is explicitly set to record mode.
 		transport = &stopRequests{}
 		mode = recorder.ModeReplaying
 	}
@@ -174,39 +191,11 @@ func newVCRRecorder(t *testing.T) (*recorder.Recorder, func()) {
 		return nil
 	})
 
-	stop := func() {
+	t.Cleanup(func() {
 		assert.NoError(t, r.Stop())
-	}
+	})
 
-	return r, stop
-}
-
-func testVCRRecorderRandID(
-	t *testing.T,
-	r *recorder.Recorder,
-) string {
-	randIDFile := testDataFilePath(t, ".cassette.rand_id")
-	rand := acctest.RandString(12)
-
-	if r.Mode() == recorder.ModeReplaying {
-		data, err := ioutil.ReadFile(randIDFile)
-		if err != nil {
-			t.Fatal(fmt.Errorf("missing rand required for VCR replay: %w", err))
-		}
-		rand = string(bytes.TrimSpace(data))
-	} else if r.Mode() == recorder.ModeRecording {
-		err := os.MkdirAll(filepath.Dir(randIDFile), 0o755)
-		if err != nil {
-			t.Fatal(fmt.Errorf("failed to write rand VCR resource ID: %w", err))
-		}
-
-		err = ioutil.WriteFile(randIDFile, []byte(rand), 0o644) //nolint:gosec
-		if err != nil {
-			t.Fatal(fmt.Errorf("failed to write rand VCR resource ID: %w", err))
-		}
-	}
-
-	return rand
+	return r
 }
 
 //
