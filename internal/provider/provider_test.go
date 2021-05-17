@@ -162,7 +162,7 @@ func testDataFilePath(t *testing.T, suffix string) string {
 	return filepath.Join(".", "testdata", baseName)
 }
 
-func newVCRRecorder(t *testing.T) (*recorder.Recorder, func()) {
+func newVCRRecorder(t *testing.T) *recorder.Recorder {
 	cassettePath := testDataFilePath(t, ".cassette")
 
 	var mode recorder.Mode
@@ -170,13 +170,12 @@ func newVCRRecorder(t *testing.T) (*recorder.Recorder, func()) {
 
 	vcrMode := strings.ToLower(os.Getenv("VCR"))
 	switch vcrMode {
+	case "disabled", "off", "no", "0":
+		return nil
 	case "record", "rec":
 		mode = recorder.ModeRecording
-	case "disabled", "off", "no", "0":
-		mode = recorder.ModeDisabled
 	default:
-		// Prevent real requests unless VCR is explicitly set to record mode or
-		// disabled.
+		// Prevent real requests unless VCR is explicitly set to record mode.
 		transport = &stopRequests{}
 		mode = recorder.ModeReplaying
 	}
@@ -192,11 +191,11 @@ func newVCRRecorder(t *testing.T) (*recorder.Recorder, func()) {
 		return nil
 	})
 
-	stop := func() {
+	t.Cleanup(func() {
 		assert.NoError(t, r.Stop())
-	}
+	})
 
-	return r, stop
+	return r
 }
 
 //
