@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 func dataSourceVirtualMachineGroup() *schema.Resource {
@@ -34,7 +34,7 @@ func dataSourceVirtualMachineGroupRead(
 
 	id := d.Get("id").(string)
 
-	vmg, _, err := m.Client.VirtualMachineGroups.GetByID(ctx, id)
+	vmg, _, err := m.Core.VirtualMachineGroups.GetByID(ctx, id)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -50,7 +50,7 @@ func dataSourceVirtualMachineGroupRead(
 }
 
 func flattenVirtualMachineGroup(
-	pkg *katapult.VirtualMachineGroup,
+	pkg *core.VirtualMachineGroup,
 ) map[string]interface{} {
 	r := make(map[string]interface{})
 

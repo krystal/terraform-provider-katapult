@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 	"github.com/krystal/terraform-provider-katapult/internal/hashcode"
 )
 
@@ -31,7 +31,7 @@ func purgeTrashObjectByObjectID(
 	objectID string,
 ) error {
 	return purgeTrashObject(
-		ctx, m, timeout, &katapult.TrashObject{ObjectID: objectID},
+		ctx, m, timeout, &core.TrashObject{ObjectID: objectID},
 	)
 }
 
@@ -39,9 +39,9 @@ func purgeTrashObject(
 	ctx context.Context,
 	m *Meta,
 	timeout time.Duration,
-	trash *katapult.TrashObject,
+	trash *core.TrashObject,
 ) error {
-	task, resp, err := m.Client.TrashObjects.Purge(ctx, trash)
+	task, resp, err := m.Core.TrashObjects.Purge(ctx, trash.Ref())
 	if err != nil {
 		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
 			return nil
@@ -59,22 +59,22 @@ func waitForTaskCompletion(
 	ctx context.Context,
 	m *Meta,
 	timeout time.Duration,
-	task *katapult.Task,
-) (*katapult.Task, error) {
+	task *core.Task,
+) (*core.Task, error) {
 	taskWaiter := &resource.StateChangeConf{
 		Pending: []string{
-			string(katapult.TaskPending),
-			string(katapult.TaskRunning),
+			string(core.TaskPending),
+			string(core.TaskRunning),
 		},
 		Target: []string{
-			string(katapult.TaskCompleted),
+			string(core.TaskCompleted),
 		},
 		Refresh: func() (interface{}, string, error) {
-			t, _, e := m.Client.Tasks.Get(ctx, task.ID)
+			t, _, e := m.Core.Tasks.Get(ctx, task.ID)
 			if e != nil {
 				return 0, "", e
 			}
-			if t.Status == katapult.TaskFailed {
+			if t.Status == core.TaskFailed {
 				return 0, string(t.Status), errors.New("task failed")
 			}
 
@@ -87,7 +87,7 @@ func waitForTaskCompletion(
 	}
 
 	t, err := taskWaiter.WaitForStateContext(ctx)
-	if tsk, ok := t.(*katapult.Task); ok {
+	if tsk, ok := t.(*core.Task); ok {
 		return tsk, err
 	}
 

@@ -10,8 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/krystal/go-katapult/pkg/buildspec"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/buildspec"
+	"github.com/krystal/go-katapult/core"
 )
 
 func resourceVirtualMachine() *schema.Resource {
@@ -145,10 +145,10 @@ func resourceVirtualMachineCreate(
 
 	dcSpec := &buildspec.DataCenter{}
 	switch {
-	case m.DataCenterRef().ID != "":
-		dcSpec.ID = m.DataCenterRef().ID
+	case m.DataCenterRef.ID != "":
+		dcSpec.ID = m.DataCenterRef.ID
 	default:
-		dcSpec.Permalink = m.DataCenterRef().Permalink
+		dcSpec.Permalink = m.DataCenterRef.Permalink
 	}
 
 	spec := &buildspec.VirtualMachineSpec{
@@ -205,9 +205,9 @@ func resourceVirtualMachineCreate(
 		}
 	}
 
-	ipGroups := map[string][]*katapult.IPAddress{}
+	ipGroups := map[string][]*core.IPAddress{}
 	for _, rawIP := range d.Get("ip_address_ids").(*schema.Set).List() {
-		ip, _, err := m.Client.IPAddresses.GetByID(ctx, rawIP.(string))
+		ip, _, err := m.Core.IPAddresses.GetByID(ctx, rawIP.(string))
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -258,8 +258,8 @@ func resourceVirtualMachineCreate(
 		}
 	}
 
-	initBuild, _, err := m.Client.VirtualMachineBuilds.CreateFromSpec(
-		ctx, m.OrganizationRef(), spec,
+	initBuild, _, err := m.Core.VirtualMachineBuilds.CreateFromSpec(
+		ctx, m.OrganizationRef, spec,
 	)
 	if err != nil {
 		return diag.FromErr(err)
@@ -267,15 +267,15 @@ func resourceVirtualMachineCreate(
 
 	buildWaiter := &resource.StateChangeConf{
 		Pending: []string{
-			string(katapult.VirtualMachineBuildDraft),
-			string(katapult.VirtualMachineBuildPending),
-			string(katapult.VirtualMachineBuildBuilding),
+			string(core.VirtualMachineBuildDraft),
+			string(core.VirtualMachineBuildPending),
+			string(core.VirtualMachineBuildBuilding),
 		},
 		Target: []string{
-			string(katapult.VirtualMachineBuildComplete),
+			string(core.VirtualMachineBuildComplete),
 		},
 		Refresh: func() (interface{}, string, error) {
-			b, _, e := m.Client.VirtualMachineBuilds.GetByID(
+			b, _, e := m.Core.VirtualMachineBuilds.GetByID(
 				ctx, initBuild.ID,
 			)
 			if e != nil {
@@ -300,14 +300,14 @@ func resourceVirtualMachineCreate(
 		)
 	}
 
-	vm := builtVM.(*katapult.VirtualMachine)
+	vm := builtVM.(*core.VirtualMachine)
 
 	// Only existing tags can be assigned upon creation, so if tags do not match
 	// after creation, we issue a update to TagNames which will create and
 	// assign tags as needed.
 	if !stringsEqual(vm.TagNames, spec.Tags) {
-		vm, _, err = m.Client.VirtualMachines.Update(
-			ctx, vm, &katapult.VirtualMachineUpdateArguments{
+		vm, _, err = m.Core.VirtualMachines.Update(
+			ctx, vm.Ref(), &core.VirtualMachineUpdateArguments{
 				TagNames: &spec.Tags,
 			},
 		)
@@ -320,15 +320,15 @@ func resourceVirtualMachineCreate(
 
 	vmWaiter := &resource.StateChangeConf{
 		Pending: []string{
-			string(katapult.VirtualMachineStopped),
-			string(katapult.VirtualMachineStarting),
-			string(katapult.VirtualMachineMigrating),
+			string(core.VirtualMachineStopped),
+			string(core.VirtualMachineStarting),
+			string(core.VirtualMachineMigrating),
 		},
 		Target: []string{
-			string(katapult.VirtualMachineStarted),
+			string(core.VirtualMachineStarted),
 		},
 		Refresh: func() (interface{}, string, error) {
-			v, _, e := m.Client.VirtualMachines.GetByID(ctx, vm.ID)
+			v, _, e := m.Core.VirtualMachines.GetByID(ctx, vm.ID)
 			if e != nil {
 				return 0, "", e
 			}
@@ -366,7 +366,7 @@ func resourceVirtualMachineRead(
 
 	id := d.Id()
 
-	vm, resp, err := m.Client.VirtualMachines.GetByID(ctx, id)
+	vm, resp, err := m.Core.VirtualMachines.GetByID(ctx, id)
 	if err != nil {
 		if resp != nil {
 			if resp.Response != nil && resp.StatusCode == 404 {
@@ -416,14 +416,14 @@ func resourceVirtualMachineRead(
 
 	// As we set the speed profile for all interfaces on a VM, we only care
 	// about fetching details about any single interface.
-	vmnets, _, err := m.Client.VirtualMachineNetworkInterfaces.List(
-		ctx, vm, &katapult.ListOptions{Page: 1, PerPage: 1},
+	vmnets, _, err := m.Core.VirtualMachineNetworkInterfaces.List(
+		ctx, vm.Ref(), &core.ListOptions{Page: 1, PerPage: 1},
 	)
 	if err != nil {
 		diags = append(diags, diag.FromErr(err)...)
 	} else if len(vmnets) > 0 {
-		vmnet, _, err2 := m.Client.VirtualMachineNetworkInterfaces.Get(
-			ctx, vmnets[0].ID,
+		vmnet, _, err2 := m.Core.VirtualMachineNetworkInterfaces.Get(
+			ctx, vmnets[0].Ref(),
 		)
 		if err2 != nil {
 			diags = append(diags, diag.FromErr(err2)...)
@@ -447,9 +447,9 @@ func resourceVirtualMachineUpdate(
 ) diag.Diagnostics {
 	m := meta.(*Meta)
 
-	vm := &katapult.VirtualMachine{ID: d.Id()}
+	vm := &core.VirtualMachine{ID: d.Id()}
 
-	args := &katapult.VirtualMachineUpdateArguments{}
+	args := &core.VirtualMachineUpdateArguments{}
 
 	if d.HasChange("name") {
 		args.Name = d.Get("name").(string)
@@ -467,7 +467,7 @@ func resourceVirtualMachineUpdate(
 		}
 
 		var err error
-		vm, _, err = m.Client.VirtualMachines.GetByID(ctx, vm.ID)
+		vm, _, err = m.Core.VirtualMachines.GetByID(ctx, vm.ID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -482,8 +482,8 @@ func resourceVirtualMachineUpdate(
 		}
 
 		for _, id := range removeIDs {
-			_, err := m.Client.IPAddresses.Unallocate(
-				ctx, &katapult.IPAddress{ID: id},
+			_, err := m.Core.IPAddresses.Unallocate(
+				ctx, core.IPAddressRef{ID: id},
 			)
 			if err != nil {
 				return diag.FromErr(err)
@@ -509,13 +509,13 @@ func resourceVirtualMachineUpdate(
 		groupID := d.Get("group_id").(string)
 
 		if groupID == "" {
-			args.Group = katapult.NullVirtualMachineGroup
+			args.Group = core.NullVirtualMachineGroupRef
 		} else {
-			args.Group = &katapult.VirtualMachineGroup{ID: groupID}
+			args.Group = &core.VirtualMachineGroupRef{ID: groupID}
 		}
 	}
 
-	_, _, err := m.Client.VirtualMachines.Update(ctx, vm, args)
+	_, _, err := m.Core.VirtualMachines.Update(ctx, vm.Ref(), args)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -531,7 +531,7 @@ func resourceVirtualMachineDelete( //nolint:funlen
 	m := meta.(*Meta)
 	diags := diag.Diagnostics{}
 
-	vm, resp, err := m.Client.VirtualMachines.GetByID(ctx, d.Id())
+	vm, resp, err := m.Core.VirtualMachines.GetByID(ctx, d.Id())
 	if err != nil {
 		if resp != nil {
 			if resp.Response != nil && resp.StatusCode == 404 {
@@ -558,26 +558,26 @@ func resourceVirtualMachineDelete( //nolint:funlen
 	}
 
 	switch vm.State {
-	case katapult.VirtualMachineStarted:
+	case core.VirtualMachineStarted:
 		err2 := stopVirtualMachine(ctx, m, d.Timeout(schema.TimeoutDelete), vm)
 		if err2 != nil {
 			return append(diags, diag.FromErr(
 				fmt.Errorf("failed to stop virtual machine: %w", err2),
 			)...)
 		}
-	case katapult.VirtualMachineStopping,
-		katapult.VirtualMachineShuttingDown:
+	case core.VirtualMachineStopping,
+		core.VirtualMachineShuttingDown:
 		vmWaiter := &resource.StateChangeConf{
 			Pending: []string{
-				string(katapult.VirtualMachineStarted),
-				string(katapult.VirtualMachineStopping),
-				string(katapult.VirtualMachineShuttingDown),
+				string(core.VirtualMachineStarted),
+				string(core.VirtualMachineStopping),
+				string(core.VirtualMachineShuttingDown),
 			},
 			Target: []string{
-				string(katapult.VirtualMachineStopped),
+				string(core.VirtualMachineStopped),
 			},
 			Refresh: func() (interface{}, string, error) {
-				v, _, err2 := m.Client.VirtualMachines.GetByID(ctx, vm.ID)
+				v, _, err2 := m.Core.VirtualMachines.GetByID(ctx, vm.ID)
 				if err2 != nil {
 					return 0, "", err2
 				}
@@ -596,7 +596,7 @@ func resourceVirtualMachineDelete( //nolint:funlen
 				fmt.Errorf("failed to stop virtual machine: %w", err),
 			)...)
 		}
-	case katapult.VirtualMachineStopped:
+	case core.VirtualMachineStopped:
 		// no action needed
 	default:
 		return append(diags, diag.FromErr(
@@ -607,7 +607,7 @@ func resourceVirtualMachineDelete( //nolint:funlen
 		)...)
 	}
 
-	trash, _, err := m.Client.VirtualMachines.Delete(ctx, vm)
+	trash, _, err := m.Core.VirtualMachines.Delete(ctx, vm.Ref())
 	if err != nil {
 		return append(diags, diag.FromErr(
 			fmt.Errorf("failed to delete virtual machine: %w", err),
@@ -633,9 +633,9 @@ func stopVirtualMachine(
 	ctx context.Context,
 	m *Meta,
 	timeout time.Duration,
-	vm *katapult.VirtualMachine,
+	vm *core.VirtualMachine,
 ) error {
-	task, resp, err := m.Client.VirtualMachines.Stop(ctx, vm)
+	task, resp, err := m.Core.VirtualMachines.Stop(ctx, vm.Ref())
 	if err != nil {
 		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
 			return nil
@@ -650,7 +650,7 @@ func stopVirtualMachine(
 }
 
 func normalizeVirtualMachinePackage(
-	pkg *katapult.VirtualMachinePackage,
+	pkg *core.VirtualMachinePackage,
 ) string {
 	if pkg == nil {
 		return ""
@@ -672,7 +672,7 @@ func flattenTagNames(names []string) *schema.Set {
 	return schema.NewSet(stringHash, v)
 }
 
-func flattenIPAddressIDs(ips []*katapult.IPAddress) []string {
+func flattenIPAddressIDs(ips []*core.IPAddress) []string {
 	var ids []string
 	for _, ip := range ips {
 		ids = append(ids, ip.ID)
@@ -681,7 +681,7 @@ func flattenIPAddressIDs(ips []*katapult.IPAddress) []string {
 	return ids
 }
 
-func flattenIPAddresses(ips []*katapult.IPAddress) []string {
+func flattenIPAddresses(ips []*core.IPAddress) []string {
 	var addresses []string
 	for _, ip := range ips {
 		addresses = append(addresses, ip.Address)
@@ -697,8 +697,8 @@ func unallocateAllVirtualMachineIPs(
 ) error {
 	ipIDs := d.Get("ip_address_ids").(*schema.Set).List()
 	for _, ipID := range ipIDs {
-		ip := &katapult.IPAddress{ID: ipID.(string)}
-		_, err := m.Client.IPAddresses.Unallocate(ctx, ip)
+		ip := &core.IPAddress{ID: ipID.(string)}
+		_, err := m.Core.IPAddresses.Unallocate(ctx, ip.Ref())
 		if err != nil {
 			return fmt.Errorf(
 				"failed to unallocate IP %s from virtual machine %s: %w",
@@ -713,7 +713,7 @@ func unallocateAllVirtualMachineIPs(
 func allocateIPsToVirtualMachine(
 	ctx context.Context,
 	m *Meta,
-	vm *katapult.VirtualMachine,
+	vm *core.VirtualMachine,
 	ipIDs []string,
 ) error {
 	if len(ipIDs) == 0 {
@@ -726,7 +726,7 @@ func allocateIPsToVirtualMachine(
 	}
 
 	for _, ipID := range ipIDs {
-		ip, _, err2 := m.Client.IPAddresses.GetByID(ctx, ipID)
+		ip, _, err2 := m.Core.IPAddresses.GetByID(ctx, ipID)
 		if err2 != nil {
 			return err2
 		}
@@ -735,7 +735,7 @@ func allocateIPsToVirtualMachine(
 			return fmt.Errorf("could not determine network of IP ID: %s", ipID)
 		}
 
-		var vmnet *katapult.VirtualMachineNetworkInterface
+		var vmnet *core.VirtualMachineNetworkInterface
 		for _, ni := range vmnets {
 			if ni.Network != nil && ni.Network.ID == ip.Network.ID {
 				vmnet = ni
@@ -748,8 +748,8 @@ func allocateIPsToVirtualMachine(
 			)
 		}
 
-		_, _, err2 = m.Client.VirtualMachineNetworkInterfaces.AllocateIP(
-			ctx, vmnet, ip,
+		_, _, err2 = m.Core.VirtualMachineNetworkInterfaces.AllocateIP(
+			ctx, vmnet.Ref(), ip.Ref(),
 		)
 		if err2 != nil {
 			return err2
@@ -762,13 +762,13 @@ func allocateIPsToVirtualMachine(
 func fetchAllVMNetworkInterfaces(
 	ctx context.Context,
 	m *Meta,
-	vm *katapult.VirtualMachine,
-) ([]*katapult.VirtualMachineNetworkInterface, error) {
-	var vmnets []*katapult.VirtualMachineNetworkInterface
+	vm *core.VirtualMachine,
+) ([]*core.VirtualMachineNetworkInterface, error) {
+	var vmnets []*core.VirtualMachineNetworkInterface
 	totalPages := 2
 	for pageNum := 1; pageNum < totalPages; pageNum++ {
-		pageResult, r, err := m.Client.VirtualMachineNetworkInterfaces.List(
-			ctx, vm, &katapult.ListOptions{
+		pageResult, r, err := m.Core.VirtualMachineNetworkInterfaces.List(
+			ctx, vm.Ref(), &core.ListOptions{
 				Page: pageNum,
 			},
 		)
@@ -787,7 +787,7 @@ func updateVMNetworkSpeedProfile(
 	ctx context.Context,
 	d *schema.ResourceData,
 	m *Meta,
-	vm *katapult.VirtualMachine,
+	vm *core.VirtualMachine,
 	speedProfilePermalink string,
 ) error {
 	if speedProfilePermalink == "" {
@@ -800,9 +800,9 @@ func updateVMNetworkSpeedProfile(
 	}
 
 	for _, vmnet := range vmnets {
-		task, resp, err := m.Client.VirtualMachineNetworkInterfaces.
+		task, resp, err := m.Core.VirtualMachineNetworkInterfaces.
 			UpdateSpeedProfile(
-				ctx, vmnet, &katapult.NetworkSpeedProfile{
+				ctx, vmnet.Ref(), core.NetworkSpeedProfileRef{
 					Permalink: speedProfilePermalink,
 				},
 			)

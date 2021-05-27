@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 func dataSourceDiskTemplates() *schema.Resource {
@@ -46,11 +46,11 @@ func dataSourceDiskTemplatesRead(
 
 	universal := d.Get("include_universal").(bool)
 
-	var templates []*katapult.DiskTemplate
+	var templates []*core.DiskTemplate
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := m.Client.DiskTemplates.List(
-			ctx, m.OrganizationRef(), &katapult.DiskTemplateListOptions{
+		pageResult, resp, err := m.Core.DiskTemplates.List(
+			ctx, m.OrganizationRef, &core.DiskTemplateListOptions{
 				IncludeUniversal: universal,
 				Page:             pageNum,
 			},
@@ -74,7 +74,7 @@ func dataSourceDiskTemplatesRead(
 }
 
 func flattenDiskTemplates(
-	tpls []*katapult.DiskTemplate,
+	tpls []*core.DiskTemplate,
 ) []map[string]interface{} {
 	r := make([]map[string]interface{}, 0, len(tpls))
 

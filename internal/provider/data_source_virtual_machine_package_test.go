@@ -9,14 +9,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/jimeh/undent"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAccKatapultDataSourceVirtualMachinePackage_by_id(t *testing.T) {
 	tt := newTestTools(t)
 
-	pkg, _, err := tt.Meta.Client.VirtualMachinePackages.GetByPermalink(
+	pkg, _, err := tt.Meta.Core.VirtualMachinePackages.GetByPermalink(
 		tt.Ctx, "rock-6",
 	)
 	require.NoError(t, err)
@@ -49,7 +49,7 @@ func TestAccKatapultDataSourceVirtualMachinePackage_by_id(t *testing.T) {
 func TestAccKatapultDataSourceVirtualMachinePackage_by_permalink(t *testing.T) {
 	tt := newTestTools(t)
 
-	pkg, _, err := tt.Meta.Client.VirtualMachinePackages.GetByPermalink(
+	pkg, _, err := tt.Meta.Core.VirtualMachinePackages.GetByPermalink(
 		tt.Ctx, "rock-3",
 	)
 	require.NoError(t, err)
@@ -105,7 +105,7 @@ func testAccCheckKatapultVirtualMachinePackageExists(
 	res string,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		c := tt.Meta.Client
+		c := tt.Meta.Core
 
 		rs, ok := s.RootModule().Resources[res]
 		if !ok {
@@ -126,7 +126,7 @@ func testAccCheckKatapultVirtualMachinePackageExists(
 func testAccCheckKatapultVirtualMachinePackageAttrs(
 	tt *testTools,
 	res string,
-	pkg *katapult.VirtualMachinePackage,
+	pkg *core.VirtualMachinePackage,
 	prefix string,
 ) resource.TestCheckFunc {
 	return resource.ComposeAggregateTestCheckFunc(

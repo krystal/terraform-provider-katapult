@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,12 +38,12 @@ func TestAccKatapultDataSourceVirtualMachinePackages_all(t *testing.T) {
 
 func testHelperFetchAllVirtualMachinePackages(
 	tt *testTools,
-) ([]*katapult.VirtualMachinePackage, error) {
-	var pkgs []*katapult.VirtualMachinePackage
+) ([]*core.VirtualMachinePackage, error) {
+	var pkgs []*core.VirtualMachinePackage
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := tt.Meta.Client.VirtualMachinePackages.List(
-			tt.Ctx, &katapult.ListOptions{Page: pageNum},
+		pageResult, resp, err := tt.Meta.Core.VirtualMachinePackages.List(
+			tt.Ctx, &core.ListOptions{Page: pageNum},
 		)
 		if err != nil {
 			return nil, err
@@ -63,7 +63,7 @@ func testHelperFetchAllVirtualMachinePackages(
 func testAccCheckKatapultVirtualMachinePackages(
 	tt *testTools,
 	res string,
-	pkgs []*katapult.VirtualMachinePackage,
+	pkgs []*core.VirtualMachinePackage,
 ) resource.TestCheckFunc {
 	tfs := []resource.TestCheckFunc{}
 

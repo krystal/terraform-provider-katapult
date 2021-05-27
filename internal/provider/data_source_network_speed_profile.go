@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 func dataSourceNetworkSpeedProfile() *schema.Resource {
@@ -77,11 +77,11 @@ func fetchNetworkSpeedProfile(
 	m *Meta,
 	id string,
 	permalink string,
-) (*katapult.NetworkSpeedProfile, error) {
+) (*core.NetworkSpeedProfile, error) {
 	totalPages := 2
 	for pageNum := 1; pageNum < totalPages; pageNum++ {
-		profiles, resp, err := m.Client.NetworkSpeedProfiles.List(
-			ctx, m.OrganizationRef(), &katapult.ListOptions{Page: pageNum},
+		profiles, resp, err := m.Core.NetworkSpeedProfiles.List(
+			ctx, m.OrganizationRef, &core.ListOptions{Page: pageNum},
 		)
 		if err != nil {
 			return nil, err
@@ -100,7 +100,7 @@ func fetchNetworkSpeedProfile(
 }
 
 func flattenNetworkSpeedProfile(
-	profile *katapult.NetworkSpeedProfile,
+	profile *core.NetworkSpeedProfile,
 ) map[string]interface{} {
 	f := make(map[string]interface{})
 

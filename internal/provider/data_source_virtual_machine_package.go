@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 func dataSourceVirtualMachinePackage() *schema.Resource {
@@ -68,14 +68,14 @@ func dataSourceVirtualMachinePackageRead(
 	id := d.Get("id").(string)
 	permalink := d.Get("permalink").(string)
 
-	var pkg *katapult.VirtualMachinePackage
+	var pkg *core.VirtualMachinePackage
 	var err error
 
 	switch {
 	case id != "":
-		pkg, _, err = m.Client.VirtualMachinePackages.GetByID(ctx, id)
+		pkg, _, err = m.Core.VirtualMachinePackages.GetByID(ctx, id)
 	case permalink != "":
-		pkg, _, err = m.Client.VirtualMachinePackages.GetByPermalink(
+		pkg, _, err = m.Core.VirtualMachinePackages.GetByPermalink(
 			ctx, permalink,
 		)
 	}
@@ -102,7 +102,7 @@ func dataSourceVirtualMachinePackageRead(
 }
 
 func flattenVirtualMachinePackage(
-	pkg *katapult.VirtualMachinePackage,
+	pkg *core.VirtualMachinePackage,
 ) map[string]interface{} {
 	r := make(map[string]interface{})
 

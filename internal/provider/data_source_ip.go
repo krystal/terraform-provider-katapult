@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 func dataSourceIP() *schema.Resource {
@@ -37,14 +37,14 @@ func dataSourceIPRead(
 	id := d.Get("id").(string)
 	address := d.Get("address").(string)
 
-	var ip *katapult.IPAddress
+	var ip *core.IPAddress
 	var err error
 
 	switch {
 	case id != "":
-		ip, _, err = m.Client.IPAddresses.GetByID(ctx, id)
+		ip, _, err = m.Core.IPAddresses.GetByID(ctx, id)
 	default:
-		ip, _, err = m.Client.IPAddresses.GetByAddress(ctx, address)
+		ip, _, err = m.Core.IPAddresses.GetByAddress(ctx, address)
 	}
 	if err != nil {
 		return diag.FromErr(err)

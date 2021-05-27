@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/jimeh/undent"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,12 +27,12 @@ func testSweepIPs(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()
 
-	var ips []*katapult.IPAddress
+	var ips []*core.IPAddress
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := m.Client.IPAddresses.List(
-			ctx, m.OrganizationRef(),
-			&katapult.ListOptions{Page: pageNum},
+		pageResult, resp, err := m.Core.IPAddresses.List(
+			ctx, m.OrganizationRef,
+			&core.ListOptions{Page: pageNum},
 		)
 		if err != nil {
 			return err
@@ -56,7 +56,7 @@ func testSweepIPs(_ string) error {
 		log.Printf(
 			"[DEBUG]  - Deleting IP Address %s (%s)\n", ip.ID, ip.Address,
 		)
-		_, err := m.Client.IPAddresses.Delete(ctx, ip)
+		_, err := m.Core.IPAddresses.Delete(ctx, ip.Ref())
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,9 @@ func testSweepIPs(_ string) error {
 func TestAccKatapultIP_minimal(t *testing.T) {
 	tt := newTestTools(t)
 
-	network, err := defaultNetworkForDataCenter(tt.Ctx, tt.Meta)
+	network, _, err := tt.Meta.Core.DataCenters.DefaultNetwork(
+		tt.Ctx, tt.Meta.DataCenterRef,
+	)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -112,7 +114,9 @@ func TestAccKatapultIP_minimal(t *testing.T) {
 func TestAccKatapultIP_ipv4(t *testing.T) {
 	tt := newTestTools(t)
 
-	network, err := defaultNetworkForDataCenter(tt.Ctx, tt.Meta)
+	network, _, err := tt.Meta.Core.DataCenters.DefaultNetwork(
+		tt.Ctx, tt.Meta.DataCenterRef,
+	)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -160,7 +164,9 @@ func TestAccKatapultIP_ipv4(t *testing.T) {
 func TestAccKatapultIP_ipv6(t *testing.T) {
 	tt := newTestTools(t)
 
-	network, err := defaultNetworkForDataCenter(tt.Ctx, tt.Meta)
+	network, _, err := tt.Meta.Core.DataCenters.DefaultNetwork(
+		tt.Ctx, tt.Meta.DataCenterRef,
+	)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -336,7 +342,9 @@ func TestAccKatapultIP_label_without_vip(t *testing.T) {
 func TestAccKatapultIP_with_network_id(t *testing.T) {
 	tt := newTestTools(t)
 
-	network, err := defaultNetworkForDataCenter(tt.Ctx, tt.Meta)
+	network, _, err := tt.Meta.Core.DataCenters.DefaultNetwork(
+		tt.Ctx, tt.Meta.DataCenterRef,
+	)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -457,7 +465,7 @@ func testAccCheckKatapultIPExists(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		ip, _, err := m.Client.IPAddresses.GetByID(tt.Ctx, rs.Primary.ID)
+		ip, _, err := m.Core.IPAddresses.GetByID(tt.Ctx, rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -469,7 +477,7 @@ func testAccCheckKatapultIPExists(
 func testAccCheckKatapultIPAttrs(
 	tt *testTools,
 	res string,
-	ip *katapult.IPAddress,
+	ip *core.IPAddress,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if ip == nil {
@@ -479,7 +487,7 @@ func testAccCheckKatapultIPAttrs(
 			}
 
 			var err error
-			ip, _, err = tt.Meta.Client.IPAddresses.GetByID(
+			ip, _, err = tt.Meta.Core.IPAddresses.GetByID(
 				tt.Ctx, rs.Primary.ID,
 			)
 			if err != nil {
@@ -529,7 +537,7 @@ func testAccCheckKatapultIPDestroy(
 				continue
 			}
 
-			ip, _, err := m.Client.IPAddresses.GetByID(tt.Ctx, rs.Primary.ID)
+			ip, _, err := m.Core.IPAddresses.GetByID(tt.Ctx, rs.Primary.ID)
 			if err == nil && ip != nil {
 				return fmt.Errorf(
 					"katapult_ip %s (%s) was not destroyed",

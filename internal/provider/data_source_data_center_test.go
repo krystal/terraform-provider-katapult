@@ -8,14 +8,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/jimeh/undent"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAccKatapultDataSourceDataCenter_default(t *testing.T) {
 	tt := newTestTools(t)
 
-	dc, err := tt.Meta.DataCenter(tt.Ctx)
+	dc, _, err := tt.Meta.Core.DataCenters.Get(tt.Ctx, tt.Meta.DataCenterRef)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -40,7 +40,7 @@ func TestAccKatapultDataSourceDataCenter_default(t *testing.T) {
 func TestAccKatapultDataSourceDataCenter_by_id(t *testing.T) {
 	tt := newTestTools(t)
 
-	dc, err := tt.Meta.DataCenter(tt.Ctx)
+	dc, _, err := tt.Meta.Core.DataCenters.Get(tt.Ctx, tt.Meta.DataCenterRef)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -70,7 +70,7 @@ func TestAccKatapultDataSourceDataCenter_by_id(t *testing.T) {
 func TestAccKatapultDataSourceDataCenter_by_permalink(t *testing.T) {
 	tt := newTestTools(t)
 
-	dc, err := tt.Meta.DataCenter(tt.Ctx)
+	dc, _, err := tt.Meta.Core.DataCenters.Get(tt.Ctx, tt.Meta.DataCenterRef)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -100,7 +100,7 @@ func TestAccKatapultDataSourceDataCenter_by_permalink(t *testing.T) {
 func TestAccKatapultDataSourceDataCenter_invalid(t *testing.T) {
 	tt := newTestTools(t)
 
-	dc, err := tt.Meta.DataCenter(tt.Ctx)
+	dc, _, err := tt.Meta.Core.DataCenters.Get(tt.Ctx, tt.Meta.DataCenterRef)
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -127,7 +127,7 @@ func testAccCheckKatapultDataCenterExists(
 	res string,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		c := tt.Meta.Client
+		c := tt.Meta.Core
 
 		rs, ok := s.RootModule().Resources[res]
 		if !ok {
@@ -143,7 +143,7 @@ func testAccCheckKatapultDataCenterExists(
 func testAccCheckKatapultDataCenterAttrs(
 	tt *testTools,
 	res string,
-	dc *katapult.DataCenter,
+	dc *core.DataCenter,
 	prefix string,
 ) resource.TestCheckFunc {
 	tfs := []resource.TestCheckFunc{

@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/jimeh/undent"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 func init() { //nolint:gochecknoinits
@@ -27,11 +27,11 @@ func testSweepLoadBalancers(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()
 
-	var loadBalancers []*katapult.LoadBalancer
+	var loadBalancers []*core.LoadBalancer
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := m.Client.LoadBalancers.List(
-			ctx, m.OrganizationRef(), &katapult.ListOptions{Page: pageNum},
+		pageResult, resp, err := m.Core.LoadBalancers.List(
+			ctx, m.OrganizationRef, &core.ListOptions{Page: pageNum},
 		)
 		if err != nil {
 			return err
@@ -49,7 +49,7 @@ func testSweepLoadBalancers(_ string) error {
 		log.Printf(
 			"[DEBUG]  - Deleting Load Balancer %s (%s)\n", lb.ID, lb.Name,
 		)
-		_, _, err := m.Client.LoadBalancers.Delete(ctx, lb)
+		_, _, err := m.Core.LoadBalancers.Delete(ctx, lb.Ref())
 		if err != nil {
 			return err
 		}
@@ -86,7 +86,7 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main",
 						"resource_type",
-						string(katapult.VirtualMachinesResourceType),
+						string(core.VirtualMachinesResourceType),
 					),
 				),
 			},
@@ -120,7 +120,7 @@ func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main",
 						"resource_type",
-						string(katapult.VirtualMachinesResourceType),
+						string(core.VirtualMachinesResourceType),
 					),
 				),
 			},
@@ -193,7 +193,7 @@ func testAccCheckKatapultLoadBalancerExists(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		lb, _, err := m.Client.LoadBalancers.GetByID(
+		lb, _, err := m.Core.LoadBalancers.GetByID(
 			tt.Ctx, rs.Primary.ID,
 		)
 		if err != nil {
@@ -216,7 +216,7 @@ func testAccCheckKatapultLoadBalancerDestroy(
 				continue
 			}
 
-			lb, _, err := m.Client.LoadBalancers.GetByID(tt.Ctx, rs.Primary.ID)
+			lb, _, err := m.Core.LoadBalancers.GetByID(tt.Ctx, rs.Primary.ID)
 			if err == nil && lb != nil {
 				return fmt.Errorf(
 					"katapult_load_balancer %s (%s) was not destroyed",

@@ -7,14 +7,14 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/jimeh/undent"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAccKatapultDataSourceDiskTemplate_by_id(t *testing.T) {
 	tt := newTestTools(t)
 
-	tpl, _, err := tt.Meta.Client.DiskTemplates.GetByPermalink(
+	tpl, _, err := tt.Meta.Core.DiskTemplates.GetByPermalink(
 		tt.Ctx, "templates/ubuntu-20-04",
 	)
 	require.NoError(t, err)
@@ -43,7 +43,7 @@ func TestAccKatapultDataSourceDiskTemplate_by_id(t *testing.T) {
 func TestAccKatapultDataSourceDiskTemplate_by_permalink(t *testing.T) {
 	tt := newTestTools(t)
 
-	tpl, _, err := tt.Meta.Client.DiskTemplates.GetByPermalink(
+	tpl, _, err := tt.Meta.Core.DiskTemplates.GetByPermalink(
 		tt.Ctx, "templates/ubuntu-20-04",
 	)
 	require.NoError(t, err)
@@ -114,7 +114,7 @@ func TestAccKatapultDataSourceDiskTemplate_invalid(t *testing.T) {
 func testAccCheckKatapultDiskTemplateAttrs(
 	tt *testTools,
 	res string,
-	tpl *katapult.DiskTemplate,
+	tpl *core.DiskTemplate,
 	prefix string,
 ) resource.TestCheckFunc {
 	tfs := []resource.TestCheckFunc{

@@ -17,7 +17,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 const defaultGeneratedNamePrefix = "tf"
@@ -68,7 +69,7 @@ func New(c *Config) func() *schema.Provider {
 					DefaultFunc: schema.EnvDefaultFunc(
 						"KATAPULT_ORGANIZATION", nil,
 					),
-					Description: "Organization sub-domain or ID. Can be " +
+					Description: "Organization sub-domain. Can be " +
 						"specified with the `KATAPULT_ORGANIZATION` " +
 						"environment variable.",
 				},
@@ -78,7 +79,7 @@ func New(c *Config) func() *schema.Provider {
 					DefaultFunc: schema.EnvDefaultFunc(
 						"KATAPULT_DATA_CENTER", nil,
 					),
-					Description: "Data center permalink or ID. Can be " +
+					Description: "Data center permalink. Can be " +
 						"specified with the `KATAPULT_DATA_CENTER` " +
 						"environment variable.",
 				},
@@ -153,21 +154,15 @@ func configure(
 			m.GeneratedNamePrefix = defaultGeneratedNamePrefix
 		}
 
-		c, err := katapult.NewClient(&katapult.Config{
-			APIKey:     m.confAPIKey,
-			HTTPClient: conf.HTTPClient,
-			UserAgent: p.UserAgent(
-				"terraform-provider-katapult", conf.Version,
+		opts := []katapult.Opt{
+			katapult.WithAPIKey(m.confAPIKey),
+			katapult.WithUserAgent(
+				p.UserAgent("terraform-provider-katapult", conf.Version),
 			),
-		})
-		if err != nil {
-			return m, diag.FromErr(err)
 		}
 
-		rhc := newRetryableHTTPClient(conf, c.HTTPClient(), m.Logger)
-		err = c.SetHTTPClient(rhc.StandardClient())
-		if err != nil {
-			return m, diag.FromErr(err)
+		if conf.HTTPClient != nil {
+			opts = append(opts, katapult.WithHTTPClient(conf.HTTPClient))
 		}
 
 		// Debug override of API URL for internal testing purposes.
@@ -177,19 +172,26 @@ func configure(
 				return m, diag.FromErr(err)
 			}
 
-			err = c.SetBaseURL(u)
-			if err != nil {
-				return m, diag.FromErr(err)
-			}
+			opts = append(opts, katapult.WithBaseURL(u))
 		}
 
+		c, err := katapult.New(opts...)
+		if err != nil {
+			return m, diag.FromErr(err)
+		}
+
+		rhc := newRetryableHTTPClient(conf, c.HTTPClient, m.Logger)
+		c.HTTPClient = rhc.StandardClient()
+
 		m.Client = c
-		m.organizationRef, _ = katapult.NewOrganizationLookup(
-			d.Get("organization").(string),
-		)
-		m.dataCenterRef, _ = katapult.NewDataCenterLookup(
-			d.Get("data_center").(string),
-		)
+		m.Core = core.New(m.Client)
+
+		m.OrganizationRef = core.OrganizationRef{
+			SubDomain: d.Get("organization").(string),
+		}
+		m.DataCenterRef = core.DataCenterRef{
+			Permalink: d.Get("data_center").(string),
+		}
 
 		return m, nil
 	}
