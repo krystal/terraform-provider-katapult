@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 func dataSourceVirtualMachinePackages() *schema.Resource {
@@ -41,11 +41,11 @@ func dataSourceVirtualMachinePackagesRead(
 	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
-	var pkgs []*katapult.VirtualMachinePackage
+	var pkgs []*core.VirtualMachinePackage
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := m.Client.VirtualMachinePackages.List(
-			ctx, &katapult.ListOptions{Page: pageNum},
+		pageResult, resp, err := m.Core.VirtualMachinePackages.List(
+			ctx, &core.ListOptions{Page: pageNum},
 		)
 		if err != nil {
 			return diag.FromErr(err)
@@ -66,7 +66,7 @@ func dataSourceVirtualMachinePackagesRead(
 }
 
 func flattenVirtualMachinePackages(
-	pkgs []*katapult.VirtualMachinePackage,
+	pkgs []*core.VirtualMachinePackage,
 ) []map[string]interface{} {
 	r := make([]map[string]interface{}, 0, len(pkgs))
 

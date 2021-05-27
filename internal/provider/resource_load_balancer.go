@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 //nolint:unused
@@ -96,18 +96,18 @@ func resourceLoadBalancerCreate(
 
 	t, ids := extractLoadBalancerResourceTypeAndIDs(d, m)
 	if t == "" {
-		t = katapult.VirtualMachinesResourceType
+		t = core.VirtualMachinesResourceType
 	}
 
-	args := &katapult.LoadBalancerCreateArguments{
+	args := &core.LoadBalancerCreateArguments{
 		Name:         name,
 		ResourceType: t,
 		ResourceIDs:  &ids,
-		DataCenter:   m.DataCenterRef(),
+		DataCenter:   m.DataCenterRef,
 	}
 
-	lb, _, err := m.Client.LoadBalancers.Create(
-		ctx, m.OrganizationRef(), args,
+	lb, _, err := m.Core.LoadBalancers.Create(
+		ctx, m.OrganizationRef, args,
 	)
 	if err != nil {
 		return diag.FromErr(err)
@@ -129,7 +129,7 @@ func resourceLoadBalancerRead(
 
 	id := d.Id()
 
-	lb, resp, err := m.Client.LoadBalancers.GetByID(ctx, id)
+	lb, resp, err := m.Core.LoadBalancers.GetByID(ctx, id)
 	if err != nil {
 		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
 			d.SetId("")
@@ -161,8 +161,8 @@ func resourceLoadBalancerUpdate(
 
 	id := d.Id()
 
-	lb := &katapult.LoadBalancer{ID: id}
-	args := &katapult.LoadBalancerUpdateArguments{}
+	lbRef := core.LoadBalancerRef{ID: id}
+	args := &core.LoadBalancerUpdateArguments{}
 
 	if d.HasChange("name") {
 		args.Name = d.Get("name").(string)
@@ -174,7 +174,7 @@ func resourceLoadBalancerUpdate(
 		args.ResourceIDs = &ids
 	}
 
-	_, _, err := m.Client.LoadBalancers.Update(ctx, lb, args)
+	_, _, err := m.Core.LoadBalancers.Update(ctx, lbRef, args)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -190,9 +190,9 @@ func resourceLoadBalancerDelete(
 ) diag.Diagnostics {
 	m := meta.(*Meta)
 
-	lb := &katapult.LoadBalancer{ID: d.Id()}
+	lbRef := core.LoadBalancerRef{ID: d.Id()}
 
-	_, _, err := m.Client.LoadBalancers.Delete(ctx, lb)
+	_, _, err := m.Core.LoadBalancers.Delete(ctx, lbRef)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -203,17 +203,17 @@ func resourceLoadBalancerDelete(
 //nolint:unused
 func populateLoadBalancerTargets(
 	d *schema.ResourceData,
-	t katapult.ResourceType,
+	t core.ResourceType,
 	ids []string,
 ) {
 	list := flattenLoadBalancerResourceIDs(ids)
 
 	switch t {
-	case katapult.VirtualMachinesResourceType:
+	case core.VirtualMachinesResourceType:
 		_ = d.Set("virtual_machine", list)
-	case katapult.VirtualMachineGroupsResourceType:
+	case core.VirtualMachineGroupsResourceType:
 		_ = d.Set("virtual_machine_group", list)
-	case katapult.TagsResourceType:
+	case core.TagsResourceType:
 		_ = d.Set("tag", list)
 	}
 }
@@ -232,19 +232,19 @@ func flattenLoadBalancerResourceIDs(ids []string) []map[string]string {
 func extractLoadBalancerResourceTypeAndIDs(
 	d *schema.ResourceData,
 	m *Meta,
-) (katapult.ResourceType, []string) {
-	var t katapult.ResourceType
+) (core.ResourceType, []string) {
+	var t core.ResourceType
 	var list []interface{}
 	ids := []string{}
 
 	if v, ok := d.GetOk("virtual_machine"); ok {
-		t = katapult.VirtualMachinesResourceType
+		t = core.VirtualMachinesResourceType
 		list = v.([]interface{})
 	} else if v, ok := d.GetOk("virtual_machine_group"); ok {
-		t = katapult.VirtualMachineGroupsResourceType
+		t = core.VirtualMachineGroupsResourceType
 		list = v.([]interface{})
 	} else if v, ok := d.GetOk("tag"); ok {
-		t = katapult.TagsResourceType
+		t = core.TagsResourceType
 		list = v.([]interface{})
 	}
 

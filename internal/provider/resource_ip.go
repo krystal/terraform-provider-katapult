@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 func resourceIP() *schema.Resource {
@@ -81,19 +81,22 @@ func resourceIPCreate(
 ) diag.Diagnostics {
 	m := meta.(*Meta)
 
-	var network *katapult.Network
+	var network *core.Network
 	if rawNet, ok := d.GetOk("network_id"); ok {
-		network = &katapult.Network{ID: rawNet.(string)}
+		network = &core.Network{ID: rawNet.(string)}
 	} else {
 		var err error
-		network, err = defaultNetworkForDataCenter(ctx, m)
+		network, _, err = m.Core.DataCenters.DefaultNetwork(
+			ctx, m.DataCenterRef,
+		)
+
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
-	args := &katapult.IPAddressCreateArguments{
-		Network: network,
+	args := &core.IPAddressCreateArguments{
+		Network: network.Ref(),
 		Version: unflattenIPVersion(d.Get("version").(int)),
 	}
 
@@ -102,8 +105,8 @@ func resourceIPCreate(
 		args.Label = d.Get("label").(string)
 	}
 
-	ip, _, err := m.Client.IPAddresses.Create(
-		ctx, m.OrganizationRef(), args,
+	ip, _, err := m.Core.IPAddresses.Create(
+		ctx, m.OrganizationRef, args,
 	)
 	if err != nil {
 		return diag.FromErr(err)
@@ -122,7 +125,7 @@ func resourceIPRead(
 	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
-	ip, resp, err := m.Client.IPAddresses.GetByID(ctx, d.Id())
+	ip, resp, err := m.Core.IPAddresses.GetByID(ctx, d.Id())
 	if err != nil {
 		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
 			d.SetId("")
@@ -155,8 +158,8 @@ func resourceIPUpdate(
 ) diag.Diagnostics {
 	m := meta.(*Meta)
 
-	ip := &katapult.IPAddress{ID: d.Id()}
-	args := &katapult.IPAddressUpdateArguments{}
+	ipRef := core.IPAddressRef{ID: d.Id()}
+	args := &core.IPAddressUpdateArguments{}
 
 	if d.HasChange("vip") {
 		vip := d.Get("vip").(bool)
@@ -167,7 +170,7 @@ func resourceIPUpdate(
 		args.Label = d.Get("label").(string)
 	}
 
-	_, _, err := m.Client.IPAddresses.Update(ctx, ip, args)
+	_, _, err := m.Core.IPAddresses.Update(ctx, ipRef, args)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -182,9 +185,8 @@ func resourceIPDelete(
 ) diag.Diagnostics {
 	m := meta.(*Meta)
 
-	ip := &katapult.IPAddress{ID: d.Id()}
-
-	_, err := m.Client.IPAddresses.Delete(ctx, ip)
+	ipRef := core.IPAddressRef{ID: d.Id()}
+	_, err := m.Core.IPAddresses.Delete(ctx, ipRef)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -192,12 +194,12 @@ func resourceIPDelete(
 	return diag.Diagnostics{}
 }
 
-func unflattenIPVersion(ver int) katapult.IPVersion {
+func unflattenIPVersion(ver int) core.IPVersion {
 	switch ver {
 	case 6:
-		return katapult.IPv6
+		return core.IPv6
 	default:
-		return katapult.IPv4
+		return core.IPv4
 	}
 }
 

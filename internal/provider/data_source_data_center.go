@@ -2,12 +2,10 @@ package provider
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 func dataSourceDataCenter() *schema.Resource {
@@ -51,16 +49,16 @@ func dataSourceDataCenterRead(
 	id := d.Get("id").(string)
 	permalink := d.Get("permalink").(string)
 
-	var dc *katapult.DataCenter
+	var dc *core.DataCenter
 	var err error
 
 	switch {
 	case id != "":
-		dc, _, err = m.Client.DataCenters.GetByID(ctx, id)
+		dc, _, err = m.Core.DataCenters.GetByID(ctx, id)
 	case permalink != "":
-		dc, _, err = m.Client.DataCenters.GetByPermalink(ctx, permalink)
+		dc, _, err = m.Core.DataCenters.GetByPermalink(ctx, permalink)
 	default:
-		dc, err = m.DataCenter(ctx)
+		dc, _, err = m.Core.DataCenters.Get(ctx, m.DataCenterRef)
 	}
 	if err != nil {
 		return diag.FromErr(err)
@@ -76,32 +74,4 @@ func dataSourceDataCenterRead(
 	d.SetId(dc.ID)
 
 	return diags
-}
-
-func defaultNetworkForDataCenter(
-	ctx context.Context,
-	m *Meta,
-) (*katapult.Network, error) {
-	networks, _, _, err := m.Client.Networks.List(
-		ctx, m.OrganizationRef(),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	dcID, err := m.DataCenterID(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, network := range networks {
-		if network.DataCenter != nil && network.DataCenter.ID == dcID &&
-			strings.Contains(strings.ToLower(network.Name), "public") {
-			return network, nil
-		}
-	}
-
-	return nil, fmt.Errorf(
-		"default network for data center %s could not be determined", dcID,
-	)
 }

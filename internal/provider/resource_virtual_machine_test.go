@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/jimeh/undent"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 func init() { //nolint:gochecknoinits
@@ -27,11 +27,11 @@ func testSweepVirtualMachines(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()
 
-	var vms []*katapult.VirtualMachine
+	var vms []*core.VirtualMachine
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := m.Client.VirtualMachines.List(
-			ctx, m.OrganizationRef(), &katapult.ListOptions{Page: pageNum},
+		pageResult, resp, err := m.Core.VirtualMachines.List(
+			ctx, m.OrganizationRef, &core.ListOptions{Page: pageNum},
 		)
 		if err != nil {
 			return err
@@ -46,7 +46,7 @@ func testSweepVirtualMachines(_ string) error {
 			continue
 		}
 
-		vm, _, err := m.Client.VirtualMachines.GetByID(ctx, vmSlim.ID)
+		vm, _, err := m.Core.VirtualMachines.GetByID(ctx, vmSlim.ID)
 		if err != nil {
 			return err
 		}
@@ -56,24 +56,24 @@ func testSweepVirtualMachines(_ string) error {
 		)
 
 		switch vm.State {
-		case katapult.VirtualMachineStarted:
+		case core.VirtualMachineStarted:
 			err2 := stopVirtualMachine(ctx, m, 5*time.Minute, vm)
 			if err2 != nil {
 				return err2
 			}
-		case katapult.VirtualMachineStopping,
-			katapult.VirtualMachineShuttingDown:
+		case core.VirtualMachineStopping,
+			core.VirtualMachineShuttingDown:
 			vmWaiter := &resource.StateChangeConf{
 				Pending: []string{
-					string(katapult.VirtualMachineStarted),
-					string(katapult.VirtualMachineStopping),
-					string(katapult.VirtualMachineShuttingDown),
+					string(core.VirtualMachineStarted),
+					string(core.VirtualMachineStopping),
+					string(core.VirtualMachineShuttingDown),
 				},
 				Target: []string{
-					string(katapult.VirtualMachineStopped),
+					string(core.VirtualMachineStopped),
 				},
 				Refresh: func() (interface{}, string, error) {
-					v, _, err2 := m.Client.VirtualMachines.GetByID(
+					v, _, err2 := m.Core.VirtualMachines.GetByID(
 						ctx, vm.ID,
 					)
 					if err2 != nil {
@@ -95,7 +95,7 @@ func testSweepVirtualMachines(_ string) error {
 					"failed to shutdown virtual machine: %w", err2,
 				)
 			}
-		case katapult.VirtualMachineStopped:
+		case core.VirtualMachineStopped:
 			// no action needed
 		default:
 			return fmt.Errorf(
@@ -104,30 +104,30 @@ func testSweepVirtualMachines(_ string) error {
 			)
 		}
 
-		trash, _, err := m.Client.VirtualMachines.Delete(ctx, vm)
+		trash, _, err := m.Core.VirtualMachines.Delete(ctx, vm.Ref())
 		if err != nil {
 			return err
 		}
 
-		task, _, err := m.Client.TrashObjects.Purge(ctx, trash)
+		task, _, err := m.Core.TrashObjects.Purge(ctx, trash.Ref())
 		if err != nil {
 			return err
 		}
 
 		taskWaiter := &resource.StateChangeConf{
 			Pending: []string{
-				string(katapult.TaskPending),
-				string(katapult.TaskRunning),
+				string(core.TaskPending),
+				string(core.TaskRunning),
 			},
 			Target: []string{
-				string(katapult.TaskCompleted),
+				string(core.TaskCompleted),
 			},
 			Refresh: func() (interface{}, string, error) {
-				t, _, e := m.Client.Tasks.Get(ctx, task.ID)
+				t, _, e := m.Core.Tasks.Get(ctx, task.ID)
 				if e != nil {
 					return 0, "", e
 				}
-				if t.Status == katapult.TaskFailed {
+				if t.Status == core.TaskFailed {
 					return 0, string(t.Status), errors.New("task failed")
 				}
 
@@ -830,7 +830,7 @@ func testAccCheckKatapultVirtualMachineExists(
 	res string,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		c := tt.Meta.Client
+		c := tt.Meta.Core
 
 		rs, ok := s.RootModule().Resources[res]
 		if !ok {
@@ -857,7 +857,7 @@ func testAccCheckKatapultVirtualMachineDestroy(
 				continue
 			}
 
-			vm, _, err := m.Client.VirtualMachines.GetByID(
+			vm, _, err := m.Core.VirtualMachines.GetByID(
 				tt.Ctx, rs.Primary.ID,
 			)
 			if err == nil && vm != nil {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/jimeh/undent"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 	"github.com/stretchr/testify/require"
 )
 
@@ -65,7 +65,7 @@ func TestAccKatapultDataSourceDiskTemplates_exclude_universal(t *testing.T) {
 	allTpls, err := testHelperFetchAllDiskTemplates(tt)
 	require.NoError(t, err)
 
-	tpls := []*katapult.DiskTemplate{}
+	tpls := []*core.DiskTemplate{}
 	for _, t := range allTpls {
 		if !t.Universal {
 			tpls = append(tpls, t)
@@ -98,13 +98,13 @@ func TestAccKatapultDataSourceDiskTemplates_exclude_universal(t *testing.T) {
 
 func testHelperFetchAllDiskTemplates(
 	tt *testTools,
-) ([]*katapult.DiskTemplate, error) {
-	var templates []*katapult.DiskTemplate
+) ([]*core.DiskTemplate, error) {
+	var templates []*core.DiskTemplate
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := tt.Meta.Client.DiskTemplates.List(
-			tt.Ctx, tt.Meta.OrganizationRef(),
-			&katapult.DiskTemplateListOptions{
+		pageResult, resp, err := tt.Meta.Core.DiskTemplates.List(
+			tt.Ctx, tt.Meta.OrganizationRef,
+			&core.DiskTemplateListOptions{
 				IncludeUniversal: true,
 				Page:             pageNum,
 			},
@@ -127,7 +127,7 @@ func testHelperFetchAllDiskTemplates(
 func testAccCheckKatapultDiskTemplates(
 	tt *testTools,
 	res string,
-	tpls []*katapult.DiskTemplate,
+	tpls []*core.DiskTemplate,
 ) resource.TestCheckFunc {
 	tfs := []resource.TestCheckFunc{}
 

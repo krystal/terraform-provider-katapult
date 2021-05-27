@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,13 +40,13 @@ func TestAccKatapultDataSourceNetworkSpeedProfiles_all(t *testing.T) {
 
 func testHelperFetchAllNetworkSpeedProfiles(
 	tt *testTools,
-) ([]*katapult.NetworkSpeedProfile, error) {
-	var profiles []*katapult.NetworkSpeedProfile
+) ([]*core.NetworkSpeedProfile, error) {
+	var profiles []*core.NetworkSpeedProfile
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := tt.Meta.Client.NetworkSpeedProfiles.List(
-			tt.Ctx, tt.Meta.OrganizationRef(),
-			&katapult.ListOptions{Page: pageNum},
+		pageResult, resp, err := tt.Meta.Core.NetworkSpeedProfiles.List(
+			tt.Ctx, tt.Meta.OrganizationRef,
+			&core.ListOptions{Page: pageNum},
 		)
 		if err != nil {
 			return nil, err
@@ -66,7 +66,7 @@ func testHelperFetchAllNetworkSpeedProfiles(
 func testAccCheckKatapultNetworkSpeedProfiles(
 	tt *testTools,
 	res string,
-	profiles []*katapult.NetworkSpeedProfile,
+	profiles []*core.NetworkSpeedProfile,
 ) resource.TestCheckFunc {
 	tfs := []resource.TestCheckFunc{}
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 func dataSourceVirtualMachine() *schema.Resource {
@@ -36,14 +36,14 @@ func dataSourceVirtualMachineRead(
 	id := d.Get("id").(string)
 	fqdn := d.Get("fqdn").(string)
 
-	var vm *katapult.VirtualMachine
+	var vm *core.VirtualMachine
 	var err error
 
 	switch {
 	case id != "":
-		vm, _, err = m.Client.VirtualMachines.GetByID(ctx, id)
+		vm, _, err = m.Core.VirtualMachines.GetByID(ctx, id)
 	case fqdn != "":
-		vm, _, err = m.Client.VirtualMachines.GetByFQDN(ctx, fqdn)
+		vm, _, err = m.Core.VirtualMachines.GetByFQDN(ctx, fqdn)
 	}
 	if err != nil {
 		return diag.FromErr(err)

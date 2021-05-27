@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 func resourceVirtualMachineGroup() *schema.Resource {
@@ -42,13 +42,13 @@ func resourceVirtualMachineGroupCreate(
 ) diag.Diagnostics {
 	m := meta.(*Meta)
 	segregate := d.Get("segregate").(bool)
-	args := &katapult.VirtualMachineGroupCreateArguments{
+	args := &core.VirtualMachineGroupCreateArguments{
 		Name:      d.Get("name").(string),
 		Segregate: &segregate,
 	}
 
-	vmg, _, err := m.Client.VirtualMachineGroups.Create(
-		ctx, m.OrganizationRef(), args,
+	vmg, _, err := m.Core.VirtualMachineGroups.Create(
+		ctx, m.OrganizationRef, args,
 	)
 	if err != nil {
 		return diag.FromErr(err)
@@ -67,7 +67,7 @@ func resourceVirtualMachineGroupRead(
 	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
-	vmg, resp, err := m.Client.VirtualMachineGroups.GetByID(ctx, d.Id())
+	vmg, resp, err := m.Core.VirtualMachineGroups.GetByID(ctx, d.Id())
 	if err != nil {
 		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
 			d.SetId("")
@@ -91,9 +91,8 @@ func resourceVirtualMachineGroupUpdate(
 ) diag.Diagnostics {
 	m := meta.(*Meta)
 
-	vmg := &katapult.VirtualMachineGroup{ID: d.Id()}
-
-	args := &katapult.VirtualMachineGroupUpdateArguments{}
+	vmGroupRef := core.VirtualMachineGroupRef{ID: d.Id()}
+	args := &core.VirtualMachineGroupUpdateArguments{}
 
 	if d.HasChange("name") {
 		args.Name = d.Get("name").(string)
@@ -103,7 +102,7 @@ func resourceVirtualMachineGroupUpdate(
 		args.Segregate = &segregate
 	}
 
-	_, _, err := m.Client.VirtualMachineGroups.Update(ctx, vmg, args)
+	_, _, err := m.Core.VirtualMachineGroups.Update(ctx, vmGroupRef, args)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -118,9 +117,8 @@ func resourceVirtualMachineGroupDelete(
 ) diag.Diagnostics {
 	m := meta.(*Meta)
 
-	vmg := &katapult.VirtualMachineGroup{ID: d.Id()}
-
-	_, err := m.Client.VirtualMachineGroups.Delete(ctx, vmg)
+	vmGroupRef := core.VirtualMachineGroupRef{ID: d.Id()}
+	_, err := m.Core.VirtualMachineGroups.Delete(ctx, vmGroupRef)
 	if err != nil {
 		return diag.FromErr(err)
 	}

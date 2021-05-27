@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/krystal/go-katapult/pkg/katapult"
+	"github.com/krystal/go-katapult/core"
 )
 
 func dataSourceDiskTemplate() *schema.Resource {
@@ -58,14 +58,14 @@ func dataSourceDiskTemplateRead(
 	id := d.Get("id").(string)
 	permalink := d.Get("permalink").(string)
 
-	var template *katapult.DiskTemplate
+	var template *core.DiskTemplate
 	var err error
 
 	switch {
 	case id != "":
-		template, _, err = m.Client.DiskTemplates.GetByID(ctx, id)
+		template, _, err = m.Core.DiskTemplates.GetByID(ctx, id)
 	case permalink != "":
-		template, _, err = m.Client.DiskTemplates.GetByPermalink(ctx, permalink)
+		template, _, err = m.Core.DiskTemplates.GetByPermalink(ctx, permalink)
 	}
 	if err != nil {
 		return diag.FromErr(err)
@@ -93,7 +93,7 @@ func dataSourceDiskTemplateRead(
 	return diags
 }
 
-func flattenDiskTemplate(tpl *katapult.DiskTemplate) map[string]interface{} {
+func flattenDiskTemplate(tpl *core.DiskTemplate) map[string]interface{} {
 	dt := make(map[string]interface{})
 
 	dt["id"] = tpl.ID

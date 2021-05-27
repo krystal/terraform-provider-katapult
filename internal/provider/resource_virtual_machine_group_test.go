@@ -24,8 +24,8 @@ func testSweepVMGroups(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()
 
-	vmgs, _, err := m.Client.VirtualMachineGroups.List(
-		ctx, m.OrganizationRef(),
+	vmgs, _, err := m.Core.VirtualMachineGroups.List(
+		ctx, m.OrganizationRef,
 	)
 	if err != nil {
 		return err
@@ -40,7 +40,7 @@ func testSweepVMGroups(_ string) error {
 			"[DEBUG]  - Deleting Virtual Machine Group %s (%s)\n",
 			vmg.ID, vmg.Name,
 		)
-		_, err := m.Client.VirtualMachineGroups.Delete(ctx, vmg)
+		_, err := m.Core.VirtualMachineGroups.Delete(ctx, vmg.Ref())
 		if err != nil {
 			return err
 		}
@@ -269,7 +269,7 @@ func testAccCheckKatapultVMGroupDestroy(
 				continue
 			}
 
-			vmg, _, err := m.Client.VirtualMachineGroups.GetByID(
+			vmg, _, err := m.Core.VirtualMachineGroups.GetByID(
 				tt.Ctx, rs.Primary.ID,
 			)
 
@@ -297,7 +297,7 @@ func testAccCheckKatapultVMGroupExists(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		ip, _, err := m.Client.VirtualMachineGroups.GetByID(
+		ip, _, err := m.Core.VirtualMachineGroups.GetByID(
 			tt.Ctx, rs.Primary.ID,
 		)
 		if err != nil {

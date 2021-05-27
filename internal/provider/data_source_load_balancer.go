@@ -34,7 +34,7 @@ func dataSourceLoadBalancerRead(
 
 	id := d.Get("id").(string)
 
-	lb, _, err := m.Client.LoadBalancers.GetByID(ctx, id)
+	lb, _, err := m.Core.LoadBalancers.GetByID(ctx, id)
 	if err != nil {
 		return diag.FromErr(err)
 	}
