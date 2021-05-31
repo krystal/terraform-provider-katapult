@@ -23,7 +23,7 @@ require (
 	github.com/hashicorp/yamux v0.0.0-20210316155119-a95892c5f864 // indirect
 	github.com/jimeh/undent v1.1.0
 	github.com/klauspost/compress v1.12.3 // indirect
-	github.com/krystal/go-katapult v0.1.2
+	github.com/krystal/go-katapult v0.1.4
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect

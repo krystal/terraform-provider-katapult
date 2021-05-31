@@ -1,0 +1,516 @@
+---
+version: 1
+interactions:
+- request:
+    body: |
+      {"organization":{"sub_domain":"terraform-acc-test"},"properties":{"data_center":{"permalink":"netwise"},"name":"tf-acc-test-rule-basic-toz7my0jrecn","resource_type":"virtual_machines","resource_ids":[]}}
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/0.15.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.6.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.dev/core/v1/organizations/_/load_balancers
+    method: POST
+  response:
+    body: '{"load_balancer":{"id":"lb_9bi8br4rL1N9OtQe","name":"tf-acc-test-rule-basic-toz7my0jrecn","resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"address":"185.199.223.132"},"https_redirect":false,"data_center":{"id":"loc_gTvEnqqnKohbFBJR","name":"Netwise"}}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 31 May 2021 13:56:52 GMT
+      Etag:
+      - W/"4210e9b77889970a314ce8342d354cc2"
+      Server:
+      - nginx/1.17.7
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Correlation-Id:
+      - 23c423cd-472b-4c5c-8ce3-a5e200cae08e
+      X-Katapult-Api:
+      - core
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "169"
+      X-Ratelimit-Reset:
+      - "1622469420"
+      X-Request-Id:
+      - ab8104791f4b06d389dfb03ec2ede6c1
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.15.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.6.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.dev/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_9bi8br4rL1N9OtQe
+    method: GET
+  response:
+    body: '{"load_balancer":{"id":"lb_9bi8br4rL1N9OtQe","name":"tf-acc-test-rule-basic-toz7my0jrecn","resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"address":"185.199.223.132"},"https_redirect":false,"data_center":{"id":"loc_gTvEnqqnKohbFBJR","name":"Netwise"}}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 31 May 2021 13:56:53 GMT
+      Etag:
+      - W/"4210e9b77889970a314ce8342d354cc2"
+      Server:
+      - nginx/1.17.7
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Correlation-Id:
+      - 90ac0529-d962-4550-b825-c0a300279a46
+      X-Katapult-Api:
+      - core
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "167"
+      X-Ratelimit-Reset:
+      - "1622469420"
+      X-Request-Id:
+      - 508b1be6b95b8752f8dca8d30913c7e1
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: |
+      {"properties":{"algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","proxy_protocol":false}}
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/0.15.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.6.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.dev/core/v1/load_balancers/lb_9bi8br4rL1N9OtQe/rules
+    method: POST
+  response:
+    body: '{"load_balancer_rule":{"id":"lbrule_RZ8wV55Wi2fSYEju","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 31 May 2021 13:56:53 GMT
+      Etag:
+      - W/"b6102bdf9742b177ec19bc75f0680e10"
+      Server:
+      - nginx/1.17.7
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Correlation-Id:
+      - f1ef5454-202a-46ad-b0f2-79ee674af082
+      X-Katapult-Api:
+      - core
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "166"
+      X-Ratelimit-Reset:
+      - "1622469420"
+      X-Request-Id:
+      - c2e67f0697ee01a9344a8e6d4c2ddc18
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.15.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.6.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.dev/core/v1/load_balancers/rules/_?load_balancer_rule%5Bid%5D=lbrule_RZ8wV55Wi2fSYEju
+    method: GET
+  response:
+    body: '{"load_balancer_rule":{"id":"lbrule_RZ8wV55Wi2fSYEju","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 31 May 2021 13:56:53 GMT
+      Etag:
+      - W/"b6102bdf9742b177ec19bc75f0680e10"
+      Server:
+      - nginx/1.17.7
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Correlation-Id:
+      - 0478540b-e331-4e9b-9a5c-5a7bbafbe3b8
+      X-Katapult-Api:
+      - core
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "163"
+      X-Ratelimit-Reset:
+      - "1622469420"
+      X-Request-Id:
+      - 270b154003d9d0479d8d9807a6627fb5
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-SDK/2.6.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.dev/core/v1/load_balancers/rules/_?load_balancer_rule%5Bid%5D=lbrule_RZ8wV55Wi2fSYEju
+    method: GET
+  response:
+    body: '{"load_balancer_rule":{"id":"lbrule_RZ8wV55Wi2fSYEju","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 31 May 2021 13:56:53 GMT
+      Etag:
+      - W/"b6102bdf9742b177ec19bc75f0680e10"
+      Server:
+      - nginx/1.17.7
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Correlation-Id:
+      - 1ceb5d74-e99a-42c2-949e-bd7832898438
+      X-Katapult-Api:
+      - core
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "158"
+      X-Ratelimit-Reset:
+      - "1622469420"
+      X-Request-Id:
+      - 701fc4073621ac1210189b6029ed9b2e
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.15.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.6.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.dev/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_9bi8br4rL1N9OtQe
+    method: GET
+  response:
+    body: '{"load_balancer":{"id":"lb_9bi8br4rL1N9OtQe","name":"tf-acc-test-rule-basic-toz7my0jrecn","resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"address":"185.199.223.132"},"https_redirect":false,"data_center":{"id":"loc_gTvEnqqnKohbFBJR","name":"Netwise"}}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 31 May 2021 13:56:54 GMT
+      Etag:
+      - W/"4210e9b77889970a314ce8342d354cc2"
+      Server:
+      - nginx/1.17.7
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Correlation-Id:
+      - 815fb29b-4759-4703-bed0-4b71c61756a5
+      X-Katapult-Api:
+      - core
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "155"
+      X-Ratelimit-Reset:
+      - "1622469420"
+      X-Request-Id:
+      - 3058c766bb6707c3b6ce4041bbbee467
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.15.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.6.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.dev/core/v1/load_balancers/rules/_?load_balancer_rule%5Bid%5D=lbrule_RZ8wV55Wi2fSYEju
+    method: GET
+  response:
+    body: '{"load_balancer_rule":{"id":"lbrule_RZ8wV55Wi2fSYEju","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 31 May 2021 13:56:54 GMT
+      Etag:
+      - W/"b6102bdf9742b177ec19bc75f0680e10"
+      Server:
+      - nginx/1.17.7
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Correlation-Id:
+      - 791ffe51-ac68-4f9d-857b-39f98ae36e44
+      X-Katapult-Api:
+      - core
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "154"
+      X-Ratelimit-Reset:
+      - "1622469420"
+      X-Request-Id:
+      - 3ae57d192d70e1bbf197de9baeaa9ad0
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.15.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.6.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.dev/core/v1/load_balancers/rules/_?load_balancer_rule%5Bid%5D=lbrule_RZ8wV55Wi2fSYEju
+    method: GET
+  response:
+    body: '{"load_balancer_rule":{"id":"lbrule_RZ8wV55Wi2fSYEju","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 31 May 2021 13:56:54 GMT
+      Etag:
+      - W/"b6102bdf9742b177ec19bc75f0680e10"
+      Server:
+      - nginx/1.17.7
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Correlation-Id:
+      - b2645869-1fbe-47b3-9612-25bf0a4803b1
+      X-Katapult-Api:
+      - core
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "149"
+      X-Ratelimit-Reset:
+      - "1622469420"
+      X-Request-Id:
+      - c6c04a2dcb3f51168d13972c2ecac65f
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.15.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.6.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.dev/core/v1/load_balancers/rules/_?load_balancer_rule%5Bid%5D=lbrule_RZ8wV55Wi2fSYEju
+    method: DELETE
+  response:
+    body: '{"load_balancer_rule":{"id":"lbrule_RZ8wV55Wi2fSYEju"}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "55"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 31 May 2021 13:56:55 GMT
+      Etag:
+      - W/"0759322d2832ea7acb1e7051add20118"
+      Server:
+      - nginx/1.17.7
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      X-Correlation-Id:
+      - f5b681bc-8593-45f9-a730-e6118f8609f6
+      X-Katapult-Api:
+      - core
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "146"
+      X-Ratelimit-Reset:
+      - "1622469420"
+      X-Request-Id:
+      - b80207a59d7cfd25d292074e6ab521a8
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/0.15.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.6.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.dev/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_9bi8br4rL1N9OtQe
+    method: DELETE
+  response:
+    body: '{"load_balancer":{"id":"lb_9bi8br4rL1N9OtQe","name":"tf-acc-test-rule-basic-toz7my0jrecn"}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "91"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 31 May 2021 13:56:55 GMT
+      Etag:
+      - W/"e970b5689508217bee50c260c9a8b9b2"
+      Server:
+      - nginx/1.17.7
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      X-Correlation-Id:
+      - 849b0681-aaca-4419-a9e2-aeef04d74376
+      X-Katapult-Api:
+      - core
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "145"
+      X-Ratelimit-Reset:
+      - "1622469420"
+      X-Request-Id:
+      - 27a8b20c2814a2a467b684a10069f9e8
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-SDK/2.6.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.dev/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_9bi8br4rL1N9OtQe
+    method: GET
+  response:
+    body: '{"error":{"code":"load_balancer_not_found","description":"No load balancer
+      was found matching any of the criteria provided in the arguments","detail":{}}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache
+      Content-Length:
+      - "154"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 31 May 2021 13:56:56 GMT
+      Server:
+      - nginx/1.17.7
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      X-Api-Schema:
+      - json-error
+      X-Correlation-Id:
+      - a18725e9-93d6-4a7f-b0d1-3f102a509a1f
+      X-Katapult-Api:
+      - core
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "138"
+      X-Ratelimit-Reset:
+      - "1622469420"
+      X-Request-Id:
+      - 3843211b9ca96a603388b75dabfc248d
+    status: 404 Not Found
+    code: 404
+    duration: ""
