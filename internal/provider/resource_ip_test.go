@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"log"
 	"regexp"
 	"strconv"
 	"testing"
@@ -44,18 +43,18 @@ func testSweepIPs(_ string) error {
 
 	for _, ip := range ips {
 		if ip.AllocationID != "" {
-			log.Printf(
-				"[DEBUG]  - Skipping IP Address %s (%s), "+
-					"allocated to %s (%s)\n",
-				ip.ID, ip.Address, ip.AllocationID, ip.AllocationType,
+			m.Logger.Info(
+				"skipping IP address: has allocation",
+				"id", ip.ID,
+				"address", ip.Address,
+				"allocation_id", ip.AllocationID,
+				"allocation_type", ip.AllocationType,
 			)
 
 			continue
 		}
 
-		log.Printf(
-			"[DEBUG]  - Deleting IP Address %s (%s)\n", ip.ID, ip.Address,
-		)
+		m.Logger.Info("deleting IP address", "id", ip.ID, "address", ip.Address)
 		_, err := m.Core.IPAddresses.Delete(ctx, ip.Ref())
 		if err != nil {
 			return err

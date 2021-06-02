@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"testing"
 
@@ -36,9 +35,8 @@ func testSweepVMGroups(_ string) error {
 			continue
 		}
 
-		log.Printf(
-			"[DEBUG]  - Deleting Virtual Machine Group %s (%s)\n",
-			vmg.ID, vmg.Name,
+		m.Logger.Info(
+			"deleting virtual machine group", "id", vmg.ID, "name", vmg.Name,
 		)
 		_, err := m.Core.VirtualMachineGroups.Delete(ctx, vmg.Ref())
 		if err != nil {
