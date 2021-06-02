@@ -1,6 +1,12 @@
-# Katapult Terraform Provider
+<p align="center">
+  <a href="https://registry.terraform.io/providers/krystal/katapult/latest/docs"><img alt="logo" width="325px" src="https://github.com/krystal/terraform-provider-katapult/raw/main/docs/logo.svg" /></a>
+</p>
 
-<p>
+<h1 align="center">
+  Katapult Terraform Provider
+</h1>
+
+<p align="center">
   <a href="https://github.com/krystal/terraform-provider-katapult/releases">
     <img src="https://img.shields.io/github/v/tag/krystal/terraform-provider-katapult?label=release" alt="GitHub tag (latest SemVer)">
   </a>
@@ -21,11 +27,12 @@
   </a>
 </p>
 
-- [Provider Documentation](https://registry.terraform.io/providers/krystal/katapult/latest/docs)
+## Documentation
+
+- Katapult Terraform Provider:
+  [https://registry.terraform.io/providers/krystal/katapult/latest/docs](https://registry.terraform.io/providers/krystal/katapult/latest/docs)
 - Katapult website: [https://katapult.io](https://katapult.io)
 - Terraform website: [https://www.terraform.io](https://www.terraform.io)
-
-<img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" width="600px">
 
 ## Status
 
