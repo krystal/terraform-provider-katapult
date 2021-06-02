@@ -26,12 +26,19 @@ jobs:
         run: make testacc
         env:
           VERBOSE: "true"
-          VCR: "off"
+          VCR: "rec"
           # TODO Remove parallel option when all parallel issues are resolved.
           TESTARGS: "-parallel=1"
+          TF_LOG: DEBUG
+          KATAPULT_LOG_LEVEL: DEBUG
           KATAPULT_API_KEY: ${{ secrets.KATAPULT_API_KEY }}
           KATAPULT_ORGANIZATION: ${{ secrets.KATAPULT_ORGANIZATION }}
           KATAPULT_DATA_CENTER: ${{ secrets.KATAPULT_DATA_CENTER }}
+      - name: save VCR cassettes as build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: vcr-casettes
+          path: internal/provider/testdata/
 
   sweeper:
     runs-on: ubuntu-latest
