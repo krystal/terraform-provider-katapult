@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"testing"
 
@@ -46,9 +45,7 @@ func testSweepLoadBalancers(_ string) error {
 			continue
 		}
 
-		log.Printf(
-			"[DEBUG]  - Deleting Load Balancer %s (%s)\n", lb.ID, lb.Name,
-		)
+		m.Logger.Info("deleting load balancer", "id", lb.ID, "name", lb.Name)
 		_, _, err := m.Core.LoadBalancers.Delete(ctx, lb.Ref())
 		if err != nil {
 			return err

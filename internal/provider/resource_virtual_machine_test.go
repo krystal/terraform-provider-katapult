@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 	"testing"
@@ -51,9 +50,7 @@ func testSweepVirtualMachines(_ string) error {
 			return err
 		}
 
-		log.Printf(
-			"[DEBUG]  - Deleting Virtual Machine %s (%s)\n", vm.ID, vm.Name,
-		)
+		m.Logger.Info("deleting virtual machine", "id", vm.ID, "name", vm.Name)
 
 		switch vm.State {
 		case core.VirtualMachineStarted:
@@ -88,7 +85,10 @@ func testSweepVirtualMachines(_ string) error {
 				ContinuousTargetOccurence: 1,
 			}
 
-			log.Printf("[DEBUG]    - stopping %s...\n", vm.ID)
+			m.Logger.Info(
+				"stopping virtual machine", "id", vm.ID, "name", vm.Name,
+			)
+
 			_, err2 := vmWaiter.WaitForStateContext(ctx)
 			if err2 != nil {
 				return fmt.Errorf(
@@ -139,7 +139,10 @@ func testSweepVirtualMachines(_ string) error {
 			ContinuousTargetOccurence: 1,
 		}
 
-		log.Printf("[DEBUG]    - purging %s to purge...\n", vm.ID)
+		m.Logger.Info(
+			"purging virtual machine", "id", vm.ID, "name", vm.Name,
+		)
+
 		_, err = taskWaiter.WaitForStateContext(ctx)
 		if err != nil {
 			return err

@@ -142,7 +142,9 @@ func configure(
 	) (interface{}, diag.Diagnostics) {
 		m := &Meta{
 			Logger: hclog.New(&hclog.LoggerOptions{
-				Level: hclog.LevelFromString(d.Get("log_level").(string)),
+				Name:       "katapult",
+				Level:      hclog.LevelFromString(d.Get("log_level").(string)),
+				TimeFormat: "2006/01/02 15:04:05",
 			}),
 			confAPIKey:          d.Get("api_key").(string),
 			confDataCenter:      d.Get("data_center").(string),
