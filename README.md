@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://registry.terraform.io/providers/krystal/katapult/latest/docs"><img alt="logo" width="325px" src="https://github.com/krystal/terraform-provider-katapult/raw/main/docs/logo.svg" /></a>
+  <a href="https://registry.terraform.io/providers/krystal/katapult/latest/docs"><img alt="logo" width="325px" src="https://github.com/krystal/terraform-provider-katapult/raw/main/img/logo.svg" /></a>
 </p>
 
 <h1 align="center">
