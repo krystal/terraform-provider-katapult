@@ -36,6 +36,7 @@ jobs:
           KATAPULT_ORGANIZATION: ${{ secrets.KATAPULT_ORGANIZATION }}
           KATAPULT_DATA_CENTER: ${{ secrets.KATAPULT_DATA_CENTER }}
       - name: save VCR cassettes as build artifact
+        if: ${{ always() }}
         uses: actions/upload-artifact@v2
         with:
           name: vcr-casettes
