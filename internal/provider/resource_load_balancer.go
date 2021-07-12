@@ -2,9 +2,11 @@ package provider
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
 )
 
@@ -129,9 +131,9 @@ func resourceLoadBalancerRead(
 
 	id := d.Id()
 
-	lb, resp, err := m.Core.LoadBalancers.GetByID(ctx, id)
+	lb, _, err := m.Core.LoadBalancers.GetByID(ctx, id)
 	if err != nil {
-		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
+		if errors.Is(err, katapult.ErrNotFound) {
 			d.SetId("")
 
 			return diags

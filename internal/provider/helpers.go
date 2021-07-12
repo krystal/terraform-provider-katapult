@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
 	"github.com/krystal/terraform-provider-katapult/internal/hashcode"
 )
@@ -41,9 +42,9 @@ func purgeTrashObject(
 	timeout time.Duration,
 	trash *core.TrashObject,
 ) error {
-	task, resp, err := m.Core.TrashObjects.Purge(ctx, trash.Ref())
+	task, _, err := m.Core.TrashObjects.Purge(ctx, trash.Ref())
 	if err != nil {
-		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
+		if errors.Is(err, katapult.ErrNotFound) {
 			return nil
 		}
 

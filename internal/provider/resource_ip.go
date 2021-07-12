@@ -2,11 +2,13 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
 )
 
@@ -125,9 +127,9 @@ func resourceIPRead(
 	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
-	ip, resp, err := m.Core.IPAddresses.GetByID(ctx, d.Id())
+	ip, _, err := m.Core.IPAddresses.GetByID(ctx, d.Id())
 	if err != nil {
-		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
+		if errors.Is(err, katapult.ErrNotFound) {
 			d.SetId("")
 
 			return diags

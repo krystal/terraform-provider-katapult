@@ -2,9 +2,11 @@ package provider
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
 )
 
@@ -67,9 +69,9 @@ func resourceVirtualMachineGroupRead(
 	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
-	vmg, resp, err := m.Core.VirtualMachineGroups.GetByID(ctx, d.Id())
+	vmg, _, err := m.Core.VirtualMachineGroups.GetByID(ctx, d.Id())
 	if err != nil {
-		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
+		if errors.Is(err, katapult.ErrNotFound) {
 			d.SetId("")
 
 			return diags

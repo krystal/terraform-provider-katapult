@@ -163,8 +163,13 @@ func configure(
 			),
 		}
 
+		httpClient := conf.HTTPClient
+		if httpClient == nil {
+			httpClient = &http.Client{Timeout: 60 * time.Second}
+		}
+
 		if conf.HTTPClient != nil {
-			opts = append(opts, katapult.WithHTTPClient(conf.HTTPClient))
+			opts = append(opts, katapult.WithHTTPClient(httpClient))
 		}
 
 		// Debug override of API URL for internal testing purposes.
@@ -182,7 +187,7 @@ func configure(
 			return m, diag.FromErr(err)
 		}
 
-		rhc := newRetryableHTTPClient(conf, c.HTTPClient, m.Logger)
+		rhc := newRetryableHTTPClient(conf, httpClient, m.Logger)
 		c.HTTPClient = rhc.StandardClient()
 
 		m.Client = c

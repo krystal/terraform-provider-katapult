@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/buildspec"
 	"github.com/krystal/go-katapult/core"
 )
@@ -366,19 +368,16 @@ func resourceVirtualMachineRead(
 
 	id := d.Id()
 
-	vm, resp, err := m.Core.VirtualMachines.GetByID(ctx, id)
+	vm, _, err := m.Core.VirtualMachines.GetByID(ctx, id)
 	if err != nil {
-		if resp != nil {
-			if resp.Response != nil && resp.StatusCode == 404 {
-				d.SetId("")
+		if errors.Is(err, katapult.ErrNotFound) {
+			d.SetId("")
 
-				return diags
-			} else if resp.Error != nil &&
-				resp.Error.Code == "object_in_trash" {
-				return append(diags, diag.FromErr(fmt.Errorf(
-					"virtual machine %s: %w", id, err,
-				))...)
-			}
+			return diags
+		} else if errors.Is(err, core.ErrObjectInTrash) {
+			return append(diags, diag.FromErr(fmt.Errorf(
+				"virtual machine %s: %w", id, err,
+			))...)
 		}
 
 		return diag.FromErr(err)
@@ -531,25 +530,22 @@ func resourceVirtualMachineDelete( //nolint:funlen
 	m := meta.(*Meta)
 	diags := diag.Diagnostics{}
 
-	vm, resp, err := m.Core.VirtualMachines.GetByID(ctx, d.Id())
+	vm, _, err := m.Core.VirtualMachines.GetByID(ctx, d.Id())
 	if err != nil {
-		if resp != nil {
-			if resp.Response != nil && resp.StatusCode == 404 {
-				return diags
-			} else if resp.Error != nil &&
-				resp.Error.Code == "object_in_trash" {
-				err2 := purgeTrashObjectByObjectID(
-					ctx, m, d.Timeout(schema.TimeoutDelete), vm.ID,
-				)
-				if err2 != nil {
-					diags = append(diags, diag.FromErr(fmt.Errorf(
-						"failed to purge virtual machine from trash: %w",
-						err2,
-					))...)
-				}
-
-				return diags
+		if errors.Is(err, katapult.ErrNotFound) {
+			return diags
+		} else if errors.Is(err, core.ErrObjectInTrash) {
+			err2 := purgeTrashObjectByObjectID(
+				ctx, m, d.Timeout(schema.TimeoutDelete), vm.ID,
+			)
+			if err2 != nil {
+				diags = append(diags, diag.FromErr(fmt.Errorf(
+					"failed to purge virtual machine from trash: %w",
+					err2,
+				))...)
 			}
+
+			return diags
 		}
 
 		return append(diags, diag.FromErr(
@@ -635,9 +631,9 @@ func stopVirtualMachine(
 	timeout time.Duration,
 	vm *core.VirtualMachine,
 ) error {
-	task, resp, err := m.Core.VirtualMachines.Stop(ctx, vm.Ref())
+	task, _, err := m.Core.VirtualMachines.Stop(ctx, vm.Ref())
 	if err != nil {
-		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
+		if errors.Is(err, katapult.ErrNotFound) {
 			return nil
 		}
 
@@ -800,15 +796,14 @@ func updateVMNetworkSpeedProfile(
 	}
 
 	for _, vmnet := range vmnets {
-		task, resp, err := m.Core.VirtualMachineNetworkInterfaces.
+		task, _, err := m.Core.VirtualMachineNetworkInterfaces.
 			UpdateSpeedProfile(
 				ctx, vmnet.Ref(), core.NetworkSpeedProfileRef{
 					Permalink: speedProfilePermalink,
 				},
 			)
 		if err != nil {
-			if resp != nil && resp.Error != nil &&
-				resp.Error.Code == "speed_profile_already_assigned" {
+			if errors.Is(err, core.ErrSpeedProfileAlreadyAssigned) {
 				continue
 			}
 
