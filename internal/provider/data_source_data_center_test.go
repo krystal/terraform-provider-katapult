@@ -115,7 +115,7 @@ func TestAccKatapultDataSourceDataCenter_invalid(t *testing.T) {
 					dc.Name,
 				),
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta("Computed attributes cannot be set"),
+					regexp.QuoteMeta(`Can't configure a value for "name"`),
 				),
 			},
 		},
