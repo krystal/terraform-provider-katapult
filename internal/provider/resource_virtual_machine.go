@@ -522,7 +522,7 @@ func resourceVirtualMachineUpdate(
 	return resourceVirtualMachineRead(ctx, d, meta)
 }
 
-func resourceVirtualMachineDelete( //nolint:funlen
+func resourceVirtualMachineDelete(
 	ctx context.Context,
 	d *schema.ResourceData,
 	meta interface{},
@@ -553,7 +553,7 @@ func resourceVirtualMachineDelete( //nolint:funlen
 		)...)
 	}
 
-	switch vm.State {
+	switch vm.State { //nolint:exhaustive
 	case core.VirtualMachineStarted:
 		err2 := stopVirtualMachine(ctx, m, d.Timeout(schema.TimeoutDelete), vm)
 		if err2 != nil {
@@ -640,7 +640,7 @@ func stopVirtualMachine(
 		return err
 	}
 
-	_, err = waitForTaskCompletion(ctx, m, timeout, task)
+	err = waitForTaskCompletion(ctx, m, timeout, task)
 
 	return err
 }
@@ -660,7 +660,7 @@ func normalizeVirtualMachinePackage(
 }
 
 func flattenTagNames(names []string) *schema.Set {
-	var v []interface{}
+	v := make([]interface{}, 0, len(names))
 	for _, name := range names {
 		v = append(v, name)
 	}
@@ -669,7 +669,7 @@ func flattenTagNames(names []string) *schema.Set {
 }
 
 func flattenIPAddressIDs(ips []*core.IPAddress) []string {
-	var ids []string
+	ids := make([]string, 0, len(ips))
 	for _, ip := range ips {
 		ids = append(ids, ip.ID)
 	}
@@ -678,7 +678,7 @@ func flattenIPAddressIDs(ips []*core.IPAddress) []string {
 }
 
 func flattenIPAddresses(ips []*core.IPAddress) []string {
-	var addresses []string
+	addresses := make([]string, 0, len(ips))
 	for _, ip := range ips {
 		addresses = append(addresses, ip.Address)
 	}
@@ -810,7 +810,7 @@ func updateVMNetworkSpeedProfile(
 			return err
 		}
 
-		_, err = waitForTaskCompletion(
+		err = waitForTaskCompletion(
 			ctx, m, d.Timeout(schema.TimeoutUpdate), task,
 		)
 		if err != nil {

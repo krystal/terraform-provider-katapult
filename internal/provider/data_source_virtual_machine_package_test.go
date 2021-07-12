@@ -37,7 +37,7 @@ func TestAccKatapultDataSourceVirtualMachinePackage_by_id(t *testing.T) {
 						tt, "data.katapult_virtual_machine_package.main",
 					),
 					testAccCheckKatapultVirtualMachinePackageAttrs(
-						tt, "data.katapult_virtual_machine_package.main",
+						"data.katapult_virtual_machine_package.main",
 						pkg, "",
 					),
 				),
@@ -70,7 +70,7 @@ func TestAccKatapultDataSourceVirtualMachinePackage_by_permalink(t *testing.T) {
 						tt, "data.katapult_virtual_machine_package.main",
 					),
 					testAccCheckKatapultVirtualMachinePackageAttrs(
-						tt, "data.katapult_virtual_machine_package.main",
+						"data.katapult_virtual_machine_package.main",
 						pkg, "",
 					),
 				),
@@ -124,7 +124,6 @@ func testAccCheckKatapultVirtualMachinePackageExists(
 }
 
 func testAccCheckKatapultVirtualMachinePackageAttrs(
-	tt *testTools,
 	res string,
 	pkg *core.VirtualMachinePackage,
 	prefix string,

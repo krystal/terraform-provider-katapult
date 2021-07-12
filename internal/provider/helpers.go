@@ -13,11 +13,11 @@ import (
 )
 
 func stringHash(v interface{}) int {
-	return hashcode.String(v.(string))
+	return hashcode.String(v.(string)) //nolint:staticcheck
 }
 
 func newSchemaStringSet(strs []string) *schema.Set {
-	var v []interface{}
+	v := make([]interface{}, 0, len(strs))
 	for _, id := range strs {
 		v = append(v, id)
 	}
@@ -51,7 +51,7 @@ func purgeTrashObject(
 		return err
 	}
 
-	_, err = waitForTaskCompletion(ctx, m, timeout, task)
+	err = waitForTaskCompletion(ctx, m, timeout, task)
 
 	return err
 }
@@ -61,7 +61,7 @@ func waitForTaskCompletion(
 	m *Meta,
 	timeout time.Duration,
 	task *core.Task,
-) (*core.Task, error) {
+) error {
 	taskWaiter := &resource.StateChangeConf{
 		Pending: []string{
 			string(core.TaskPending),
@@ -87,12 +87,9 @@ func waitForTaskCompletion(
 		ContinuousTargetOccurence: 1,
 	}
 
-	t, err := taskWaiter.WaitForStateContext(ctx)
-	if tsk, ok := t.(*core.Task); ok {
-		return tsk, err
-	}
+	_, err := taskWaiter.WaitForStateContext(ctx)
 
-	return nil, err
+	return err
 }
 
 func stringsDiff(a, b []string) []string {

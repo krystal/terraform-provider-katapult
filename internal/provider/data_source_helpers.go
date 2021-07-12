@@ -17,7 +17,7 @@ func dataSourceSchemaFromResourceSchema(
 			ForceNew:    false,
 		}
 
-		switch v.Type {
+		switch v.Type { //nolint:exhaustive
 		case schema.TypeSet:
 			dv.Set = v.Set
 

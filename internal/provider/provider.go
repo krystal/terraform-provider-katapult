@@ -187,7 +187,7 @@ func configure(
 			return m, diag.FromErr(err)
 		}
 
-		rhc := newRetryableHTTPClient(conf, httpClient, m.Logger)
+		rhc := newRetryableHTTPClient(httpClient, m.Logger)
 		c.HTTPClient = rhc.StandardClient()
 
 		m.Client = c
@@ -205,7 +205,6 @@ func configure(
 }
 
 func newRetryableHTTPClient(
-	conf *Config,
 	httpClient *http.Client,
 	logger hclog.Logger,
 ) *retryablehttp.Client {

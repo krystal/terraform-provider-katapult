@@ -96,7 +96,7 @@ func resourceLoadBalancerCreate(
 	m := meta.(*Meta)
 	name := m.UseOrGenerateName(d.Get("name").(string))
 
-	t, ids := extractLoadBalancerResourceTypeAndIDs(d, m)
+	t, ids := extractLoadBalancerResourceTypeAndIDs(d)
 	if t == "" {
 		t = core.VirtualMachinesResourceType
 	}
@@ -171,7 +171,7 @@ func resourceLoadBalancerUpdate(
 	}
 
 	if d.HasChanges("virtual_machine", "virtual_machine_group", "tag") {
-		t, ids := extractLoadBalancerResourceTypeAndIDs(d, m)
+		t, ids := extractLoadBalancerResourceTypeAndIDs(d)
 		args.ResourceType = t
 		args.ResourceIDs = &ids
 	}
@@ -233,7 +233,6 @@ func flattenLoadBalancerResourceIDs(ids []string) []map[string]string {
 //nolint:unused
 func extractLoadBalancerResourceTypeAndIDs(
 	d *schema.ResourceData,
-	m *Meta,
 ) (core.ResourceType, []string) {
 	var t core.ResourceType
 	var list []interface{}

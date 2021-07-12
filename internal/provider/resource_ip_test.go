@@ -80,7 +80,7 @@ func TestAccKatapultIP_minimal(t *testing.T) {
 			{
 				Config: `resource "katapult_ip" "web" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web", nil),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web"),
 					resource.TestCheckResourceAttr(
 						"katapult_ip.web", "network_id", network.ID,
 					),
@@ -130,7 +130,7 @@ func TestAccKatapultIP_ipv4(t *testing.T) {
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web", nil),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web"),
 					resource.TestCheckResourceAttr(
 						"katapult_ip.web", "network_id", network.ID,
 					),
@@ -180,7 +180,7 @@ func TestAccKatapultIP_ipv6(t *testing.T) {
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web", nil),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web"),
 					resource.TestCheckResourceAttr(
 						"katapult_ip.web", "network_id", network.ID,
 					),
@@ -251,7 +251,7 @@ func TestAccKatapultIP_vip(t *testing.T) {
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_ip.vip", nil),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.vip"),
 					resource.TestCheckResourceAttr(
 						"katapult_ip.vip", "vip", "true",
 					),
@@ -359,7 +359,7 @@ func TestAccKatapultIP_with_network_id(t *testing.T) {
 					network.ID,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_ip.net", nil),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.net"),
 					resource.TestCheckResourceAttr(
 						"katapult_ip.net", "network_id", network.ID,
 					),
@@ -385,7 +385,7 @@ func TestAccKatapultIP_update(t *testing.T) {
 			{
 				Config: `resource "katapult_ip" "update" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update", nil),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update"),
 					resource.TestCheckResourceAttr(
 						"katapult_ip.update", "vip", "false",
 					),
@@ -402,7 +402,7 @@ func TestAccKatapultIP_update(t *testing.T) {
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update", nil),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update"),
 					resource.TestCheckResourceAttr(
 						"katapult_ip.update", "vip", "true",
 					),
@@ -419,7 +419,7 @@ func TestAccKatapultIP_update(t *testing.T) {
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update", nil),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update"),
 					resource.TestCheckResourceAttr(
 						"katapult_ip.update", "vip", "true",
 					),
@@ -435,7 +435,7 @@ func TestAccKatapultIP_update(t *testing.T) {
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update", nil),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update"),
 					resource.TestCheckResourceAttr(
 						"katapult_ip.update", "vip", "false",
 					),
@@ -476,22 +476,19 @@ func testAccCheckKatapultIPExists(
 func testAccCheckKatapultIPAttrs(
 	tt *testTools,
 	res string,
-	ip *core.IPAddress,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		if ip == nil {
-			rs, ok := s.RootModule().Resources[res]
-			if !ok {
-				return fmt.Errorf("resource not found: %s", res)
-			}
+		rs, ok := s.RootModule().Resources[res]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", res)
+		}
 
-			var err error
-			ip, _, err = tt.Meta.Core.IPAddresses.GetByID(
-				tt.Ctx, rs.Primary.ID,
-			)
-			if err != nil {
-				return err
-			}
+		var err error
+		ip, _, err := tt.Meta.Core.IPAddresses.GetByID(
+			tt.Ctx, rs.Primary.ID,
+		)
+		if err != nil {
+			return err
 		}
 
 		tfs := []resource.TestCheckFunc{
