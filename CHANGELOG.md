@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.5](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.4...v0.0.5) (2021-07-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** The provider `organization` and `data_center` attributes can no longer accept IDs. You must provide the organization sub-domain and data center permalink.
+
+### Features
+
+* **deps:** update to latest go-katapult client library ([e1e9e1f](https://github.com/krystal/terraform-provider-katapult/commit/e1e9e1f0e31dcb69c32ba12d0aafc4b7b8b3b198))
+
+
+### Bug Fixes
+
+* **deps:** update terraform-json package to fix state version error ([976bcb1](https://github.com/krystal/terraform-provider-katapult/commit/976bcb1c1495bbb6a2691cccbff5a84981b6e255))
+
+
+### Documentation
+
+* **readme:** improve visual styling ([08d3b1f](https://github.com/krystal/terraform-provider-katapult/commit/08d3b1f8752a4f7f0689d1e1cb138e284bbb4198))
+* **readme:** update requirements to include Terraform versions later than 0.14.x ([be7f115](https://github.com/krystal/terraform-provider-katapult/commit/be7f115f497561ec48d3553b4cbdf560aa966638))
+
 ### [0.0.4](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.3...v0.0.4) (2021-04-06)
 
 
