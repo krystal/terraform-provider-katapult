@@ -25,7 +25,7 @@ func TestAccKatapultDataSourceDiskTemplates_default(t *testing.T) {
 				Config: `data "katapult_disk_templates" "main" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultDiskTemplates(
-						tt, "data.katapult_disk_templates.main", tpls,
+						"data.katapult_disk_templates.main", tpls,
 					),
 				),
 			},
@@ -51,7 +51,7 @@ func TestAccKatapultDataSourceDiskTemplates_include_universal(t *testing.T) {
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultDiskTemplates(
-						tt, "data.katapult_disk_templates.main", tpls,
+						"data.katapult_disk_templates.main", tpls,
 					),
 				),
 			},
@@ -84,7 +84,7 @@ func TestAccKatapultDataSourceDiskTemplates_exclude_universal(t *testing.T) {
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultDiskTemplates(
-						tt, "data.katapult_disk_templates.main", tpls,
+						"data.katapult_disk_templates.main", tpls,
 					),
 				),
 			},
@@ -125,7 +125,6 @@ func testHelperFetchAllDiskTemplates(
 }
 
 func testAccCheckKatapultDiskTemplates(
-	tt *testTools,
 	res string,
 	tpls []*core.DiskTemplate,
 ) resource.TestCheckFunc {
@@ -133,9 +132,9 @@ func testAccCheckKatapultDiskTemplates(
 
 	for i, tpl := range tpls {
 		prefix := fmt.Sprintf("templates.%d.", i)
-		tfs = append(tfs, testAccCheckKatapultDiskTemplateAttrs(
-			tt, res, tpl, prefix,
-		))
+		tfs = append(tfs,
+			testAccCheckKatapultDiskTemplateAttrs(res, tpl, prefix),
+		)
 	}
 
 	return resource.ComposeAggregateTestCheckFunc(tfs...)

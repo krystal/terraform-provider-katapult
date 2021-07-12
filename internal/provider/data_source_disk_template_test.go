@@ -32,7 +32,7 @@ func TestAccKatapultDataSourceDiskTemplate_by_id(t *testing.T) {
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultDiskTemplateAttrs(
-						tt, "data.katapult_disk_template.main", tpl, "",
+						"data.katapult_disk_template.main", tpl, "",
 					),
 				),
 			},
@@ -61,7 +61,7 @@ func TestAccKatapultDataSourceDiskTemplate_by_permalink(t *testing.T) {
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultDiskTemplateAttrs(
-						tt, "data.katapult_disk_template.main", tpl, "",
+						"data.katapult_disk_template.main", tpl, "",
 					),
 				),
 			},
@@ -112,7 +112,6 @@ func TestAccKatapultDataSourceDiskTemplate_invalid(t *testing.T) {
 //
 
 func testAccCheckKatapultDiskTemplateAttrs(
-	tt *testTools,
 	res string,
 	tpl *core.DiskTemplate,
 	prefix string,

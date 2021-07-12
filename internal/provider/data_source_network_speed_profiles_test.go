@@ -25,7 +25,7 @@ func TestAccKatapultDataSourceNetworkSpeedProfiles_all(t *testing.T) {
 				Config: `data "katapult_network_speed_profiles" "main" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultNetworkSpeedProfiles(
-						tt, "data.katapult_network_speed_profiles.main",
+						"data.katapult_network_speed_profiles.main",
 						profiles,
 					),
 				),
@@ -64,7 +64,6 @@ func testHelperFetchAllNetworkSpeedProfiles(
 }
 
 func testAccCheckKatapultNetworkSpeedProfiles(
-	tt *testTools,
 	res string,
 	profiles []*core.NetworkSpeedProfile,
 ) resource.TestCheckFunc {

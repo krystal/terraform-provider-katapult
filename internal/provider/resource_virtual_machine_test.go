@@ -52,7 +52,7 @@ func testSweepVirtualMachines(_ string) error {
 
 		m.Logger.Info("deleting virtual machine", "id", vm.ID, "name", vm.Name)
 
-		switch vm.State {
+		switch vm.State { //nolint:exhaustive
 		case core.VirtualMachineStarted:
 			err2 := stopVirtualMachine(ctx, m, 5*time.Minute, vm)
 			if err2 != nil {

@@ -24,7 +24,7 @@ func TestAccKatapultDataSourceVirtualMachinePackages_all(t *testing.T) {
 				Config: `data "katapult_virtual_machine_packages" "all" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultVirtualMachinePackages(
-						tt, "data.katapult_virtual_machine_packages.all", pkgs,
+						"data.katapult_virtual_machine_packages.all", pkgs,
 					),
 				),
 			},
@@ -61,7 +61,6 @@ func testHelperFetchAllVirtualMachinePackages(
 }
 
 func testAccCheckKatapultVirtualMachinePackages(
-	tt *testTools,
 	res string,
 	pkgs []*core.VirtualMachinePackage,
 ) resource.TestCheckFunc {
@@ -69,9 +68,9 @@ func testAccCheckKatapultVirtualMachinePackages(
 
 	for i, pkg := range pkgs {
 		prefix := fmt.Sprintf("packages.%d.", i)
-		tfs = append(tfs, testAccCheckKatapultVirtualMachinePackageAttrs(
-			tt, res, pkg, prefix,
-		))
+		tfs = append(tfs,
+			testAccCheckKatapultVirtualMachinePackageAttrs(res, pkg, prefix),
+		)
 	}
 
 	return resource.ComposeAggregateTestCheckFunc(tfs...)

@@ -61,9 +61,11 @@ func testAccPreCheck(t *testing.T) {
 	}
 }
 
+type providerFactoryList map[string]func() (*schema.Provider, error)
+
 func providerFactories(
 	r *recorder.Recorder,
-) map[string]func() (*schema.Provider, error) {
+) providerFactoryList {
 	conf := &Config{
 		Version:             testAccProviderVersion,
 		GeneratedNamePrefix: testAccResourceNamePrefix,
@@ -73,7 +75,8 @@ func providerFactories(
 		conf.HTTPClient = &http.Client{Transport: r}
 	}
 
-	return map[string]func() (*schema.Provider, error){
+	return providerFactoryList{
+		//nolint:unparam
 		"katapult": func() (*schema.Provider, error) {
 			pf := New(conf)
 
@@ -95,7 +98,7 @@ type testTools struct {
 	Ctx               context.Context
 	Recorder          *recorder.Recorder
 	Meta              *Meta
-	ProviderFactories map[string]func() (*schema.Provider, error)
+	ProviderFactories providerFactoryList
 	randID            string
 }
 

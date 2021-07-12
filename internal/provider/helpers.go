@@ -7,16 +7,17 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
 	"github.com/krystal/terraform-provider-katapult/internal/hashcode"
 )
 
 func stringHash(v interface{}) int {
-	return hashcode.String(v.(string))
+	return hashcode.String(v.(string)) //nolint:staticcheck
 }
 
 func newSchemaStringSet(strs []string) *schema.Set {
-	var v []interface{}
+	v := make([]interface{}, 0, len(strs))
 	for _, id := range strs {
 		v = append(v, id)
 	}
@@ -41,16 +42,16 @@ func purgeTrashObject(
 	timeout time.Duration,
 	trash *core.TrashObject,
 ) error {
-	task, resp, err := m.Core.TrashObjects.Purge(ctx, trash.Ref())
+	task, _, err := m.Core.TrashObjects.Purge(ctx, trash.Ref())
 	if err != nil {
-		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
+		if errors.Is(err, katapult.ErrNotFound) {
 			return nil
 		}
 
 		return err
 	}
 
-	_, err = waitForTaskCompletion(ctx, m, timeout, task)
+	err = waitForTaskCompletion(ctx, m, timeout, task)
 
 	return err
 }
@@ -60,7 +61,7 @@ func waitForTaskCompletion(
 	m *Meta,
 	timeout time.Duration,
 	task *core.Task,
-) (*core.Task, error) {
+) error {
 	taskWaiter := &resource.StateChangeConf{
 		Pending: []string{
 			string(core.TaskPending),
@@ -86,12 +87,9 @@ func waitForTaskCompletion(
 		ContinuousTargetOccurence: 1,
 	}
 
-	t, err := taskWaiter.WaitForStateContext(ctx)
-	if tsk, ok := t.(*core.Task); ok {
-		return tsk, err
-	}
+	_, err := taskWaiter.WaitForStateContext(ctx)
 
-	return nil, err
+	return err
 }
 
 func stringsDiff(a, b []string) []string {

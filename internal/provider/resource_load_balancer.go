@@ -2,9 +2,11 @@ package provider
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
 )
 
@@ -94,7 +96,7 @@ func resourceLoadBalancerCreate(
 	m := meta.(*Meta)
 	name := m.UseOrGenerateName(d.Get("name").(string))
 
-	t, ids := extractLoadBalancerResourceTypeAndIDs(d, m)
+	t, ids := extractLoadBalancerResourceTypeAndIDs(d)
 	if t == "" {
 		t = core.VirtualMachinesResourceType
 	}
@@ -129,9 +131,9 @@ func resourceLoadBalancerRead(
 
 	id := d.Id()
 
-	lb, resp, err := m.Core.LoadBalancers.GetByID(ctx, id)
+	lb, _, err := m.Core.LoadBalancers.GetByID(ctx, id)
 	if err != nil {
-		if resp != nil && resp.Response != nil && resp.StatusCode == 404 {
+		if errors.Is(err, katapult.ErrNotFound) {
 			d.SetId("")
 
 			return diags
@@ -169,7 +171,7 @@ func resourceLoadBalancerUpdate(
 	}
 
 	if d.HasChanges("virtual_machine", "virtual_machine_group", "tag") {
-		t, ids := extractLoadBalancerResourceTypeAndIDs(d, m)
+		t, ids := extractLoadBalancerResourceTypeAndIDs(d)
 		args.ResourceType = t
 		args.ResourceIDs = &ids
 	}
@@ -231,7 +233,6 @@ func flattenLoadBalancerResourceIDs(ids []string) []map[string]string {
 //nolint:unused
 func extractLoadBalancerResourceTypeAndIDs(
 	d *schema.ResourceData,
-	m *Meta,
 ) (core.ResourceType, []string) {
 	var t core.ResourceType
 	var list []interface{}

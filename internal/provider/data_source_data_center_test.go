@@ -29,7 +29,7 @@ func TestAccKatapultDataSourceDataCenter_default(t *testing.T) {
 						tt, "data.katapult_data_center.main",
 					),
 					testAccCheckKatapultDataCenterAttrs(
-						tt, "data.katapult_data_center.main", dc, "",
+						"data.katapult_data_center.main", dc, "",
 					),
 				),
 			},
@@ -59,7 +59,7 @@ func TestAccKatapultDataSourceDataCenter_by_id(t *testing.T) {
 						tt, "data.katapult_data_center.main",
 					),
 					testAccCheckKatapultDataCenterAttrs(
-						tt, "data.katapult_data_center.main", dc, "",
+						"data.katapult_data_center.main", dc, "",
 					),
 				),
 			},
@@ -89,7 +89,7 @@ func TestAccKatapultDataSourceDataCenter_by_permalink(t *testing.T) {
 						tt, "data.katapult_data_center.main",
 					),
 					testAccCheckKatapultDataCenterAttrs(
-						tt, "data.katapult_data_center.main", dc, "",
+						"data.katapult_data_center.main", dc, "",
 					),
 				),
 			},
@@ -115,7 +115,7 @@ func TestAccKatapultDataSourceDataCenter_invalid(t *testing.T) {
 					dc.Name,
 				),
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta("Computed attributes cannot be set"),
+					regexp.QuoteMeta(`Can't configure a value for "name"`),
 				),
 			},
 		},
@@ -141,7 +141,6 @@ func testAccCheckKatapultDataCenterExists(
 }
 
 func testAccCheckKatapultDataCenterAttrs(
-	tt *testTools,
 	res string,
 	dc *core.DataCenter,
 	prefix string,

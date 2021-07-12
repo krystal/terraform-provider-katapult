@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	version string = "dev"
-	commit  string = ""
+	version = "dev"
+	commit  = ""
 )
 
 func main() {
