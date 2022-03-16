@@ -30,14 +30,14 @@ resource "katapult_virtual_machine_group" "web-1" {
 
 ### Required
 
-- **name** (String)
+- `name` (String)
 
 ### Optional
 
-- **segregate** (Boolean) Defaults to `true`.
+- `segregate` (Boolean) Defaults to `true`.
 
 ### Read-Only
 
-- **id** (String) The ID of this resource.
+- `id` (String) The ID of this resource.
 
 

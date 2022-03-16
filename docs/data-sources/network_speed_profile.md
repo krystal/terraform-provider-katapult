@@ -29,13 +29,13 @@ data "katapult_network_speed_profile" "10gbps" {
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **permalink** (String)
+- `id` (String) The ID of this resource.
+- `permalink` (String)
 
 ### Read-Only
 
-- **download_speed** (Number) Download speed in Mbit. A  value of `0` means unrestricted.
-- **name** (String)
-- **upload_speed** (Number) Upload speed in Mbit. A value of `0` means unrestricted.
+- `download_speed` (Number) Download speed in Mbit. A  value of `0` means unrestricted.
+- `name` (String)
+- `upload_speed` (Number) Upload speed in Mbit. A value of `0` means unrestricted.
 
 

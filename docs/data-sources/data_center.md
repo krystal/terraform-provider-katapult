@@ -32,13 +32,13 @@ data "katapult_data_center" "lon" {
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **permalink** (String)
+- `id` (String) The ID of this resource.
+- `permalink` (String)
 
 ### Read-Only
 
-- **country_id** (String)
-- **country_name** (String)
-- **name** (String)
+- `country_id` (String)
+- `country_name` (String)
+- `name` (String)
 
 

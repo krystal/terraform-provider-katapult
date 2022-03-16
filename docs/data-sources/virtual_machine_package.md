@@ -29,16 +29,16 @@ data "katapult_virtual_machine_package" "rock3" {
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **permalink** (String)
+- `id` (String) The ID of this resource.
+- `permalink` (String)
 
 ### Read-Only
 
-- **cpu_cores** (Number) Number of CPU cores.
-- **ipv4_addresses** (Number) Number of included IPv4 addresses.
-- **memory_in_gb** (Number) Memory in GB.
-- **name** (String)
-- **privacy** (String)
-- **storage_in_gb** (Number) Storage in GB.
+- `cpu_cores` (Number) Number of CPU cores.
+- `ipv4_addresses` (Number) Number of included IPv4 addresses.
+- `memory_in_gb` (Number) Memory in GB.
+- `name` (String)
+- `privacy` (String)
+- `storage_in_gb` (Number) Storage in GB.
 
 

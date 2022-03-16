@@ -24,11 +24,11 @@ data "katapult_virtual_machine_group" "group-1" {
 
 ### Required
 
-- **id** (String) The ID of this resource.
+- `id` (String) The ID of this resource.
 
 ### Read-Only
 
-- **name** (String)
-- **segregate** (Boolean)
+- `name` (String)
+- `segregate` (Boolean)
 
 
