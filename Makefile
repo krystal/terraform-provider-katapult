@@ -64,8 +64,12 @@ LDFLAGS := -w -s
 VERSION ?= $(shell git describe --tags --exact 2>/dev/null)
 GIT_SHA ?= $(shell git rev-parse --short HEAD 2>/dev/null)
 
+# Major and minor dev version should match that of the latest version, but patch
+# should always be 999.
+DEV_VERSION = 0.0.999
+
 ifeq ($(VERSION),)
-	VERSION = 0.0.1-dev
+	VERSION = $(DEV_VERSION)
 endif
 
 .PHONY: build
@@ -76,14 +80,35 @@ $(BINARY): $(SOURCES)
 		-X main.version=$(VERSION) \
 		-X main.commit=$(GIT_SHA)"
 
-TF_PLUGINS ?= $(HOME)/.terraform.d/plugins
-INSTALL_DIR = $(TF_PLUGINS)/$(HOSTNAME)/$(NAMESPACE)/$(NAME)/$(VERSION)
+TF_PLUGINS ?= $(HOME)/.terraform.d/plugins_local
+INSTALL_DIR = $(TF_PLUGINS)/$(HOSTNAME)/$(NAMESPACE)/$(NAME)/$(DEV_VERSION)
 
 .PHONY: install
-install: build
+install:
+	@echo "Please configure your $(HOME)/.terraformrc file something like this:"
+	@echo ""
+	@echo "    provider_installation {"
+	@echo "      filesystem_mirror {"
+	@echo "        path    = \"$(HOME)/.terraform.d/plugins_local/\""
+	@echo "        include = [\"registry.terraform.io/krystal/katapult\"]"
+	@echo "      }"
+	@echo "      direct {"
+	@echo "        exclude = [\"registry.terraform.io/krystal/katapult\"]"
+	@echo "      }"
+	@echo "    }"
+	@echo ""
+	@echo "You MUST comment out the 'version' constraint in the required_providers"
+	@echo "block in any Terraform installation you test this in."
+	@echo ""
+	@echo "You MUST delete existing cached plugins from any .terraform directories"
+	@echo "in Terraform installations you want to test against so that it will"
+	@echo "perform a lookup on the local mirror"
+	@echo ""
 	$(eval OS_ARCH := $(shell go env GOOS)_$(shell go env GOARCH))
-	mkdir -p "$(INSTALL_DIR)/$(OS_ARCH)"
-	cp "$(BINARY)" "$(INSTALL_DIR)/$(OS_ARCH)/"
+	go build $(V) -a -o "$(INSTALL_DIR)/$(OS_ARCH)/$(notdir $(BINARY))" \
+		-ldflags "$(LDFLAGS) \
+		-X main.version=$(DEV_VERSION) \
+		-X main.commit=$(GIT_SHA)"
 
 #
 # Development
