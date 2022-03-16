@@ -44,7 +44,7 @@ listed in the release notes and changelog.
 ## Requirements
 
 - [Terraform](https://www.terraform.io/downloads.html) 0.14.x or later
-- [Go](https://golang.org/dl/) 1.16 (to build the provider plugin)
+- [Go](https://golang.org/dl/) 1.17 (to build the provider plugin)
 
 ## Using the Provider
 
@@ -75,7 +75,7 @@ make build
 
 ### Requirements
 
-- [Go](https://golang.org/dl/) 1.16 or later.
+- [Go](https://golang.org/dl/) 1.17 or later.
 - [Terraform](https://www.terraform.io/downloads.html) 0.14.x or later.
 
 ### Rules
@@ -92,8 +92,8 @@ make build
   `~/.terraform.d/plugins/registry.terraform.io/krystal/katapult/{VERSION}/`,
   allowing Terraform to use the custom builds.
 - `make test` — Run unit tests.
-- `make testacc` — Run acceptance tests. By default it prevent requests to
-  Katapult's API to create real resources, and instead playback previously
+- `make testacc` — Run acceptance tests. By default it prevents requests to
+  Katapult's API to create real resources, and instead plays back previously
   record requests. To enable real requests against Katapult, set the `VCR`
   environment variable to `rec` to record requests, or `off` to disable the VCR
   request recording/playback all together.
