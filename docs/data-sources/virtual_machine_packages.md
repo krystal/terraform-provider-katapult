@@ -22,21 +22,21 @@ data "katapult_virtual_machine_packages" "all" {}
 
 ### Read-Only
 
-- **id** (String) Always set to `all`.
-- **packages** (List of Object) (see [below for nested schema](#nestedatt--packages))
+- `id` (String) Always set to `all`.
+- `packages` (List of Object) (see [below for nested schema](#nestedatt--packages))
 
 <a id="nestedatt--packages"></a>
 ### Nested Schema for `packages`
 
 Read-Only:
 
-- **cpu_cores** (Number)
-- **id** (String)
-- **ipv4_addresses** (Number)
-- **memory_in_gb** (Number)
-- **name** (String)
-- **permalink** (String)
-- **privacy** (String)
-- **storage_in_gb** (Number)
+- `cpu_cores` (Number)
+- `id` (String)
+- `ipv4_addresses` (Number)
+- `memory_in_gb` (Number)
+- `name` (String)
+- `permalink` (String)
+- `privacy` (String)
+- `storage_in_gb` (Number)
 
 

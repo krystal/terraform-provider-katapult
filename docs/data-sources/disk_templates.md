@@ -22,24 +22,24 @@ data "katapult_disk_templates" "all" {}
 
 ### Optional
 
-- **include_universal** (Boolean) Include universal disk templates. Defaults to `true`.
+- `include_universal` (Boolean) Include universal disk templates. Defaults to `true`.
 
 ### Read-Only
 
-- **id** (String) Always set to provider organization value.
-- **templates** (List of Object) (see [below for nested schema](#nestedatt--templates))
+- `id` (String) Always set to provider organization value.
+- `templates` (List of Object) (see [below for nested schema](#nestedatt--templates))
 
 <a id="nestedatt--templates"></a>
 ### Nested Schema for `templates`
 
 Read-Only:
 
-- **description** (String)
-- **id** (String)
-- **name** (String)
-- **os_family** (String)
-- **permalink** (String)
-- **template_version** (Number)
-- **universal** (Boolean)
+- `description` (String)
+- `id` (String)
+- `name` (String)
+- `os_family` (String)
+- `permalink` (String)
+- `template_version` (Number)
+- `universal` (Boolean)
 
 

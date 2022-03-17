@@ -33,18 +33,18 @@ resource "katapult_ip" "primary-db" {
 
 ### Optional
 
-- **label** (String) VIP label. Required when **vip** is `true`.
-- **network_id** (String)
-- **version** (Number) IPv4 or IPv6. Defaults to `4`.
-- **vip** (Boolean) Defaults to `false`.
+- `label` (String) VIP label. Required when **vip** is `true`.
+- `network_id` (String)
+- `version` (Number) IPv4 or IPv6. Defaults to `4`.
+- `vip` (Boolean) Defaults to `false`.
 
 ### Read-Only
 
-- **address** (String)
-- **address_with_mask** (String)
-- **allocation_id** (String)
-- **allocation_type** (String)
-- **id** (String) The ID of this resource.
-- **reverse_dns** (String)
+- `address` (String)
+- `address_with_mask` (String)
+- `allocation_id` (String)
+- `allocation_type` (String)
+- `id` (String) The ID of this resource.
+- `reverse_dns` (String)
 
 

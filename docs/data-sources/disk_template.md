@@ -29,15 +29,15 @@ data "katapult_disk_template" "ubuntu-18-04" {
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **permalink** (String)
+- `id` (String) The ID of this resource.
+- `permalink` (String)
 
 ### Read-Only
 
-- **description** (String)
-- **name** (String)
-- **os_family** (String)
-- **template_version** (Number)
-- **universal** (Boolean)
+- `description` (String)
+- `name` (String)
+- `os_family` (String)
+- `template_version` (Number)
+- `universal` (Boolean)
 
 

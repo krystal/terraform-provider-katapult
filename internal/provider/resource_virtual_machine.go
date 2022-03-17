@@ -115,9 +115,9 @@ func resourceVirtualMachine() *schema.Resource {
 }
 
 func resourceVirtualMachineCustomizeDiff(
-	ctx context.Context,
+	_ context.Context,
 	d *schema.ResourceDiff,
-	meta interface{},
+	_ interface{},
 ) error {
 	if d.HasChange("ip_address_ids") {
 		err := d.SetNewComputed("ip_addresses")

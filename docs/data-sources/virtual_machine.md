@@ -29,22 +29,22 @@ data "katapult_virtual_machine" "web-1" {
 
 ### Optional
 
-- **fqdn** (String)
-- **id** (String) The ID of this resource.
+- `fqdn` (String)
+- `id` (String) The ID of this resource.
 
 ### Read-Only
 
-- **description** (String)
-- **disk_template** (String) Permalink or ID of a Disk Template.
-- **disk_template_options** (Map of String)
-- **group_id** (String)
-- **hostname** (String)
-- **ip_address_ids** (Set of String) One or more IP IDs.
-- **ip_addresses** (Set of String)
-- **name** (String)
-- **network_speed_profile** (String) Permalink of a Network Speed Profile.
-- **package** (String) Permalink or ID of a Virtual Machine Package.
-- **state** (String)
-- **tags** (Set of String)
+- `description` (String)
+- `disk_template` (String) Permalink or ID of a Disk Template.
+- `disk_template_options` (Map of String)
+- `group_id` (String)
+- `hostname` (String)
+- `ip_address_ids` (Set of String) One or more IP IDs.
+- `ip_addresses` (Set of String)
+- `name` (String)
+- `network_speed_profile` (String) Permalink of a Network Speed Profile.
+- `package` (String) Permalink or ID of a Virtual Machine Package.
+- `state` (String)
+- `tags` (Set of String)
 
 

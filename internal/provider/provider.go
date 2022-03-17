@@ -137,7 +137,7 @@ func configure(
 	p *schema.Provider,
 ) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(
-		ctx context.Context,
+		_ context.Context,
 		d *schema.ResourceData,
 	) (interface{}, diag.Diagnostics) {
 		m := &Meta{
@@ -156,7 +156,7 @@ func configure(
 			m.GeneratedNamePrefix = defaultGeneratedNamePrefix
 		}
 
-		opts := []katapult.Opt{
+		opts := []katapult.Option{
 			katapult.WithAPIKey(m.confAPIKey),
 			katapult.WithUserAgent(
 				p.UserAgent("terraform-provider-katapult", conf.Version),

@@ -22,18 +22,18 @@ data "katapult_network_speed_profiles" "all" {}
 
 ### Read-Only
 
-- **id** (String) Always set to provider organization value.
-- **profiles** (List of Object) (see [below for nested schema](#nestedatt--profiles))
+- `id` (String) Always set to provider organization value.
+- `profiles` (List of Object) (see [below for nested schema](#nestedatt--profiles))
 
 <a id="nestedatt--profiles"></a>
 ### Nested Schema for `profiles`
 
 Read-Only:
 
-- **download_speed** (Number)
-- **id** (String)
-- **name** (String)
-- **permalink** (String)
-- **upload_speed** (Number)
+- `download_speed` (Number)
+- `id` (String)
+- `name` (String)
+- `permalink` (String)
+- `upload_speed` (Number)
 
 

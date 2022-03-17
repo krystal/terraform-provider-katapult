@@ -63,35 +63,35 @@ resource "katapult_virtual_machine" "base" {
 
 ### Required
 
-- **disk_template** (String) Permalink or ID of a Disk Template.
-- **ip_address_ids** (Set of String) One or more IP IDs.
-- **package** (String) Permalink or ID of a Virtual Machine Package.
+- `disk_template` (String) Permalink or ID of a Disk Template.
+- `ip_address_ids` (Set of String) One or more IP IDs.
+- `package` (String) Permalink or ID of a Virtual Machine Package.
 
 ### Optional
 
-- **description** (String)
-- **disk_template_options** (Map of String)
-- **group_id** (String)
-- **hostname** (String)
-- **name** (String)
-- **network_speed_profile** (String) Permalink of a Network Speed Profile.
-- **tags** (Set of String)
-- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `description` (String)
+- `disk_template_options` (Map of String)
+- `group_id` (String)
+- `hostname` (String)
+- `name` (String)
+- `network_speed_profile` (String) Permalink of a Network Speed Profile.
+- `tags` (Set of String)
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
-- **fqdn** (String)
-- **id** (String) The ID of this resource.
-- **ip_addresses** (Set of String)
-- **state** (String)
+- `fqdn` (String)
+- `id` (String) The ID of this resource.
+- `ip_addresses` (Set of String)
+- `state` (String)
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- **create** (String)
-- **delete** (String)
-- **update** (String)
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 

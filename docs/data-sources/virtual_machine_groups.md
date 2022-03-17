@@ -22,16 +22,16 @@ data "katapult_virtual_machine_groups" "all" {}
 
 ### Read-Only
 
-- **groups** (List of Object) (see [below for nested schema](#nestedatt--groups))
-- **id** (String) Always set to provider organization value.
+- `groups` (List of Object) (see [below for nested schema](#nestedatt--groups))
+- `id` (String) Always set to provider organization value.
 
 <a id="nestedatt--groups"></a>
 ### Nested Schema for `groups`
 
 Read-Only:
 
-- **id** (String)
-- **name** (String)
-- **segregate** (Boolean)
+- `id` (String)
+- `name` (String)
+- `segregate` (Boolean)
 
 
