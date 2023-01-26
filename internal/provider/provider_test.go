@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -140,14 +139,14 @@ func (tt *testTools) RandID() string {
 
 	randIDFile := testDataFilePath(tt.T, ".cassette.rand_id")
 	if tt.Recorder.Mode() == recorder.ModeReplaying {
-		data, err := ioutil.ReadFile(randIDFile)
+		data, err := os.ReadFile(randIDFile)
 		require.NoError(tt.T, err, "missing rand required for VCR replay")
 		rand = string(bytes.TrimSpace(data))
 	} else if tt.Recorder.Mode() == recorder.ModeRecording {
 		err := os.MkdirAll(filepath.Dir(randIDFile), 0o755)
 		require.NoError(tt.T, err, "failed to write rand VCR resource ID")
 
-		err = ioutil.WriteFile(randIDFile, []byte(rand), 0o644) //nolint:gosec
+		err = os.WriteFile(randIDFile, []byte(rand), 0o644) //nolint:gosec
 		require.NoError(tt.T, err, "failed to write rand VCR resource ID")
 	}
 

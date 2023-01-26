@@ -15,6 +15,7 @@ func dataSourceVirtualMachine() *schema.Resource {
 		Type:         schema.TypeString,
 		Optional:     true,
 		AtLeastOneOf: []string{"id", "fqdn"},
+		Description:  "The ID of this resource.",
 	}
 
 	ds["fqdn"].Optional = true

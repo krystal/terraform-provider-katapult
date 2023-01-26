@@ -14,6 +14,7 @@ func dataSourceIP() *schema.Resource {
 	ds["id"] = &schema.Schema{
 		Type:         schema.TypeString,
 		Optional:     true,
+		Description:  "The ID of this resource.",
 		AtLeastOneOf: []string{"id", "address"},
 	}
 

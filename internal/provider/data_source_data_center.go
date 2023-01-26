@@ -13,9 +13,10 @@ func dataSourceDataCenter() *schema.Resource {
 		ReadContext: dataSourceDataCenterRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Type:     schema.TypeString,
-				Computed: true,
-				Optional: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Optional:    true,
+				Description: "The ID of this resource.",
 			},
 			"name": {
 				Type:     schema.TypeString,

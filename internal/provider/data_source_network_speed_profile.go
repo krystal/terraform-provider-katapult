@@ -16,6 +16,7 @@ func dataSourceNetworkSpeedProfile() *schema.Resource {
 				Type:         schema.TypeString,
 				Computed:     true,
 				Optional:     true,
+				Description:  "The ID of this resource.",
 				AtLeastOneOf: []string{"id", "permalink"},
 			},
 			"name": {
