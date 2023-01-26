@@ -96,6 +96,8 @@ make build
   record requests. To enable real requests against Katapult, set the `VCR`
   environment variable to `rec` to record requests, or `off` to disable the VCR
   request recording/playback all together.
+- `make lint` — Run golangci-lint to lint all Go code.
+- `make docs` — Re-generate docs into `./docs` folder.
 
 ## Releasing the Provider
 
