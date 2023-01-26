@@ -105,85 +105,13 @@ the way.
 All Terraform providers must follow [Semantic Versioning](https://semver.org),
 and this provider is no different. To help make this easier, we use the
 [Conventional Commit](https://www.conventionalcommits.org/en/v1.0.0/) commit
-message format in combination with a tool called
-[`standard-version`](https://github.com/conventional-changelog/standard-version)
-for automatic version bumping and changelog generation.
+message format, along with Google's
+[release-please](https://github.com/googleapis/release-please) tool.
 
-We use [GitHub Actions](https://github.com/features/actions) and
-[goreleaser](https://goreleaser.com) to build, sign, and publish binaries as
-GitHub Releases for all supported platforms.
+The end result is, that whenever `main` changes, a new release-please will
+create/update a release pull request as needed. The PR contains updates to the
+changelog, and has automatically calculated and bumped the version as needed
+based on Conventional Commits and Semantic Versioning.
 
-### Steps
-
-In your local development working directory:
-
-1. Ensure your working directory is on the `main` branch and fully to to date.
-2. Run `make next-version` to preview both the changelog update and next version
-   based on commits since the last release. If you need to override/customize
-   the changelog and/or automatically determined version, please see
-   [Customize Changelog or Version](#customize-changelog-or-version) below.
-3. Run `make new-version` from the root of your working directory. This will use
-   `standard-version` to:
-   1. Determine the current version by looking at the most recent Semantic
-      Version formatted git tag.
-   2. Look at the list of commits since the last version, and based on
-      conventional commit standards, determine if this next version is a new
-      PATCH, MINOR, or MAJOR version.
-   3. Update `CHANGELOG.md` based on all new commit messages of types `feat`,
-      `fix`, and `docs` since the last release.
-   4. Commit the changes to `CHANGELOG.md` with a commit message of:
-      ```
-      chore(release): <VERSION>
-      ```
-   5. Tag the release commit as `v<VERSION>`.
-4. Push the release commit and tag with:
-   ```
-   git push --follow-tags origin main
-   ```
-5. Wait for GitHub Actions to complete running for the tag you just pushed. The
-   final step called "release" will create a draft GitHub Release for the new
-   version.
-6. Go to
-   [Releases](https://github.com/krystal/terraform-provider-katapult/releases)
-   and edit the new draft release. Typically the release description/body should
-   be the same as the new changelog content for that version. So feel free to
-   copy/paste it. This will be automated at some point in the future.
-7. Publish the draft release.
-8. Wait 5-10 minutes, and the new version should appear on the
-   [Terraform Registry](https://registry.terraform.io/providers/krystal/katapult/latest).
-
-### Customize Changelog or Version
-
-To customize the changelog and/or version number picked by `standard-version`,
-instead of running `make new-version`, just run standard-version manually with
-additional options.
-
-Examples:
-
-- Preview what standard-version will do with `--dry-run`:
-  ```
-  npx standard-version --dry-run
-  ```
-- Customize changelog, by skipping the commit and tag steps:
-  ```
-  npx standard-version --skip.commit --skip.tag
-  ```
-- Override next version with the `-r` flag to be `v2.3.1`:
-  ```
-  npx standard-version -r 2.3.1
-  ```
-
-If you skipped the commit and/or tag stages, you will need to perform them
-manually.
-
-The Git tag **MUST** start with a `v` prefix, and be fully semantic version
-compatible.
-
-The commit message, assuming `v2.3.1`, should be:
-
-```
-chore(release): 2.3.1
-```
-
-Once done, simply push the commit and tag, and wait for the draft GitHub release
-to be created.
+Merging the release PR, will trigger a full release with binaries being built
+and published to a GitHub Release.
