@@ -80,6 +80,24 @@ func dataSourceVirtualMachineRead(
 		diags = append(diags, diag.FromErr(err)...)
 	}
 
+	// As we set the speed profile for all interfaces on a VM, we only care
+	// about fetching details about any single interface.
+	vmnets, _, err := m.Core.VirtualMachineNetworkInterfaces.List(
+		ctx, vm.Ref(), &core.ListOptions{Page: 1, PerPage: 1},
+	)
+	if err != nil {
+		diags = append(diags, diag.FromErr(err)...)
+	} else if len(vmnets) > 0 {
+		vmnet, _, err2 := m.Core.VirtualMachineNetworkInterfaces.Get(
+			ctx, vmnets[0].Ref(),
+		)
+		if err2 != nil {
+			diags = append(diags, diag.FromErr(err2)...)
+		} else if vmnet.SpeedProfile != nil {
+			_ = d.Set("network_speed_profile", vmnet.SpeedProfile.Permalink)
+		}
+	}
+
 	err = d.Set("tags", flattenTagNames(vm.TagNames))
 	if err != nil {
 		diags = append(diags, diag.FromErr(err)...)

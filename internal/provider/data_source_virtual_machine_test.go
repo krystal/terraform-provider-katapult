@@ -41,6 +41,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 						ip_address_ids = [katapult_ip.web.id]
 						group_id      = katapult_virtual_machine_group.web.id
 						tags = ["web", "public"]
+						network_speed_profile = "1gbps"
 					}
 
 					data "katapult_virtual_machine" "src" {
@@ -86,6 +87,10 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_virtual_machine.src", "group_id",
 						"katapult_virtual_machine_group.web", "id",
+					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_virtual_machine.src",
+						"network_speed_profile", "1gbps",
 					),
 					// TODO: populate and check disk_template and options when
 					// supported by the API.
@@ -136,6 +141,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 						ip_address_ids = [katapult_ip.web.id]
 						group_id      = katapult_virtual_machine_group.web.id
 						tags = ["web", "public"]
+						network_speed_profile = "1gbps"
 					}
 
 					data "katapult_virtual_machine" "src" {
@@ -181,6 +187,10 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_virtual_machine.src", "group_id",
 						"katapult_virtual_machine_group.web", "id",
+					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_virtual_machine.src",
+						"network_speed_profile", "1gbps",
 					),
 					// TODO: populate and check disk_template and options when
 					// supported by the API.
