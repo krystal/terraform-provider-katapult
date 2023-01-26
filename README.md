@@ -11,10 +11,10 @@
     <img src="https://img.shields.io/github/v/tag/krystal/terraform-provider-katapult?label=release" alt="GitHub tag (latest SemVer)">
   </a>
   <a href="https://github.com/krystal/terraform-provider-katapult/actions/workflows/ci.yml">
-    <img src="https://img.shields.io/github/workflow/status/krystal/terraform-provider-katapult/CI.svg?logo=github" alt="Build Status">
+    <img src="https://img.shields.io/github/actions/workflow/status/krystal/terraform-provider-katapult/ci.yml?logo=github" alt="Build Status">
   </a>
   <a href="https://github.com/krystal/terraform-provider-katapult/actions/workflows/nightly.yml">
-    <img src="https://img.shields.io/github/workflow/status/krystal/terraform-provider-katapult/Nightly%20Acceptance%20Tests.svg?logo=github&label=nightly%20acceptance%20tests" alt="Nightly Acceptance Tests">
+    <img src="https://img.shields.io/github/actions/workflow/status/krystal/terraform-provider-katapult/nightly.yml?logo=github&label=nightly%20acceptance%20tests" alt="Nightly Acceptance Tests">
   </a>
   <a href="https://github.com/krystal/terraform-provider-katapult/issues">
     <img src="https://img.shields.io/github/issues-raw/krystal/terraform-provider-katapult.svg?style=flat&logo=github&logoColor=white" alt="GitHub issues">
