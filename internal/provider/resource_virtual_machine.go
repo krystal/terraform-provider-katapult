@@ -16,7 +16,7 @@ import (
 	"github.com/krystal/go-katapult/core"
 )
 
-func resourceVirtualMachine() *schema.Resource {
+func resourceVirtualMachine() *schema.Resource { //nolint:funlen
 	return &schema.Resource{
 		CreateContext: resourceVirtualMachineCreate,
 		ReadContext:   resourceVirtualMachineRead,
@@ -75,6 +75,32 @@ func resourceVirtualMachine() *schema.Resource {
 				ForceNew: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
+				},
+			},
+			"disk": {
+				Type:     schema.TypeList,
+				Optional: true,
+				ForceNew: true,
+				Description: "Specify one or more disks with custom sizes to " +
+					"create and attach to the Virtual Machine during " +
+					"creation. First defined disk will be used as the boot " +
+					"disk. If no disks are defined, a single disk will be " +
+					"created based on the chosen package.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Description: "Name of the disk.",
+						},
+						"size": {
+							Type:        schema.TypeInt,
+							Required:    true,
+							ForceNew:    true,
+							Description: "Size of the disk in GB.",
+						},
+					},
 				},
 			},
 			"ip_address_ids": {
@@ -204,6 +230,29 @@ func resourceVirtualMachineCreate(
 					Value: rawValue.(string),
 				},
 			)
+		}
+	}
+
+	if rawDisks, ok := d.GetOk("disk"); ok {
+		for i, rawDisk := range rawDisks.([]interface{}) {
+			disk := rawDisk.(map[string]interface{})
+			var name string
+			if diskName, ok := disk["name"]; ok {
+				name = diskName.(string)
+			}
+
+			if name == "" {
+				if i == 0 {
+					name = "System Disk"
+				} else {
+					name = fmt.Sprintf("Disk #%d", i+1)
+				}
+			}
+
+			spec.SystemDisks = append(spec.SystemDisks, &buildspec.SystemDisk{
+				Name: name,
+				Size: disk["size"].(int),
+			})
 		}
 	}
 

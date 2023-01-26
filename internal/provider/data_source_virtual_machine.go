@@ -20,6 +20,9 @@ func dataSourceVirtualMachine() *schema.Resource {
 
 	ds["fqdn"].Optional = true
 
+	// Remove creation-only fields which cannot be read back from the API.
+	delete(ds, "disk")
+
 	return &schema.Resource{
 		ReadContext: dataSourceVirtualMachineRead,
 		Schema:      ds,
