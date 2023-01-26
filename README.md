@@ -43,7 +43,7 @@ listed in the release notes and changelog.
 
 ## Requirements
 
-- [Terraform](https://www.terraform.io/downloads.html) 0.14.x or later
+- [Terraform](https://www.terraform.io/downloads.html) 1.0 or later.
 
 ## Using the Provider
 
@@ -75,7 +75,7 @@ make build
 ### Requirements
 
 - [Go](https://golang.org/dl/) 1.19 or later.
-- [Terraform](https://www.terraform.io/downloads.html) 0.14.x or later.
+- [Terraform](https://www.terraform.io/downloads.html) 1.0 or later.
 
 ### Rules
 
