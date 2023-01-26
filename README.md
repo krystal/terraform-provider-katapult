@@ -44,7 +44,6 @@ listed in the release notes and changelog.
 ## Requirements
 
 - [Terraform](https://www.terraform.io/downloads.html) 0.14.x or later
-- [Go](https://golang.org/dl/) 1.17 (to build the provider plugin)
 
 ## Using the Provider
 
@@ -75,7 +74,7 @@ make build
 
 ### Requirements
 
-- [Go](https://golang.org/dl/) 1.17 or later.
+- [Go](https://golang.org/dl/) 1.19 or later.
 - [Terraform](https://www.terraform.io/downloads.html) 0.14.x or later.
 
 ### Rules

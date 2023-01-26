@@ -1,6 +1,6 @@
 module github.com/krystal/terraform-provider-katapult
 
-go 1.17
+go 1.19
 
 require (
 	github.com/dnaeon/go-vcr v1.1.0
