@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.7](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.6...v0.0.7) (2023-01-26)
+
+
+### Features
+
+* **deps:** change minimum supported Terraform version from 0.14.x to 1.0.x ([11bda78](https://github.com/krystal/terraform-provider-katapult/commit/11bda78609e61213a003baeb0ffb28059819d104))
+* **resource/virtual_machine:** add support for setting number and size of disks during creation ([94f42ca](https://github.com/krystal/terraform-provider-katapult/commit/94f42ca0a3649dabb21c1974b92db581f3a41576))
+
+
+### Bug Fixes
+
+* **data/virtual_machine:** populate network_speed_profile field ([cf88729](https://github.com/krystal/terraform-provider-katapult/commit/cf887296ff91a05b73d2ee9937ab7e4fa225f7e5))
+
 ### [0.0.6](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.5...v0.0.6) (2022-03-17)
 
 ### [0.0.5](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.4...v0.0.5) (2021-07-12)
