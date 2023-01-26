@@ -32,6 +32,17 @@ resource "katapult_virtual_machine" "base" {
     install_agent = true
   }
 
+  # First defined disk becomes the boot disk that the OS is installed on.
+  disk {
+    name = "System Disk" # Optional
+    size = 20            # GB
+  }
+
+  disk {
+    name = "Data" # Optional
+    size = 100    # GB
+  }
+
   ip_address_ids = [
     katapult_ip.web-2.id,
     katapult_ip.web-2-internal.id

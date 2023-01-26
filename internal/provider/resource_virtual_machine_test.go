@@ -351,6 +351,146 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 	})
 }
 
+// TODO: Update this test to verify that the VM was created with the correct set
+// of disks when go-katapult API client gains support for fetching VM disk
+// details.
+func TestAccKatapultVirtualMachine_custom_disks(t *testing.T) {
+	tt := newTestTools(t)
+
+	name := tt.ResourceName("custom-disks")
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+					resource "katapult_ip" "web" {}
+					resource "katapult_ip" "internal" {}
+
+					resource "katapult_virtual_machine_group" "web" {
+						name = "%s"
+					}
+
+					resource "katapult_virtual_machine" "base" {
+						name          = "%s"
+						hostname      = "%s"
+						description   = "A web server."
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						group_id       = katapult_virtual_machine_group.web.id
+						ip_address_ids = [
+							katapult_ip.web.id,
+							katapult_ip.internal.id
+						]
+						tags = ["web", "public"]
+						network_speed_profile = "1gbps"
+						disk {
+							name = "System"
+							size = 20
+						}
+						disk {
+							name = "Data"
+							size = 10
+						}
+						disk { # Automatically named "Disk #3"
+							size = 10
+						}
+					}`,
+					name+"-group", name, name+"-host",
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultVirtualMachineExists(
+						tt, "katapult_virtual_machine.base",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"name", name,
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"hostname", name+"-host",
+					),
+					resource.TestMatchResourceAttr(
+						"katapult_virtual_machine.base",
+						"fqdn", regexp.MustCompile(
+							fmt.Sprintf(
+								`^%s\..+$`,
+								regexp.QuoteMeta(name+"-host"),
+							),
+						),
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"description", "A web server.",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"package", "rock-3",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"disk_template", "ubuntu-18-04",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"disk_template_options.install_agent", "true",
+					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_virtual_machine.base", "group_id",
+						"katapult_virtual_machine_group.web", "id",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"ip_address_ids.#", "2",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"katapult_virtual_machine.base", "ip_address_ids.*",
+						"katapult_ip.web", "id",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"katapult_virtual_machine.base", "ip_address_ids.*",
+						"katapult_ip.internal", "id",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"ip_addresses.#", "2",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"katapult_virtual_machine.base", "ip_addresses.*",
+						"katapult_ip.web", "address",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"katapult_virtual_machine.base", "ip_addresses.*",
+						"katapult_ip.internal", "address",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"tags.#", "2",
+					),
+					resource.TestCheckTypeSetElemAttr(
+						"katapult_virtual_machine.base", "tags.*", "web",
+					),
+					resource.TestCheckTypeSetElemAttr(
+						"katapult_virtual_machine.base", "tags.*", "public",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"network_speed_profile", "1gbps",
+					),
+				),
+			},
+		},
+	})
+}
+
 func TestAccKatapultVirtualMachine_update(t *testing.T) {
 	tt := newTestTools(t)
 

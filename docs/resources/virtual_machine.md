@@ -47,6 +47,17 @@ resource "katapult_virtual_machine" "base" {
     install_agent = true
   }
 
+  # First defined disk becomes the boot disk that the OS is installed on.
+  disk {
+    name = "System Disk" # Optional
+    size = 20            # GB
+  }
+
+  disk {
+    name = "Data" # Optional
+    size = 100    # GB
+  }
+
   ip_address_ids = [
     katapult_ip.web-2.id,
     katapult_ip.web-2-internal.id
@@ -70,6 +81,7 @@ resource "katapult_virtual_machine" "base" {
 ### Optional
 
 - `description` (String)
+- `disk` (Block List) Specify one or more disks with custom sizes to create and attach to the Virtual Machine during creation. First defined disk will be used as the boot disk. If no disks are defined, a single disk will be created based on the chosen package. (see [below for nested schema](#nestedblock--disk))
 - `disk_template_options` (Map of String)
 - `group_id` (String)
 - `hostname` (String)
@@ -84,6 +96,18 @@ resource "katapult_virtual_machine" "base" {
 - `id` (String) The ID of this resource.
 - `ip_addresses` (Set of String)
 - `state` (String)
+
+<a id="nestedblock--disk"></a>
+### Nested Schema for `disk`
+
+Required:
+
+- `size` (Number) Size of the disk in GB.
+
+Optional:
+
+- `name` (String) Name of the disk.
+
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
