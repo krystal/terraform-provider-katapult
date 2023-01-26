@@ -14,8 +14,9 @@ func dataSourceVirtualMachineGroup() *schema.Resource {
 	)
 
 	ds["id"] = &schema.Schema{
-		Type:     schema.TypeString,
-		Required: true,
+		Type:        schema.TypeString,
+		Required:    true,
+		Description: "The ID of this resource.",
 	}
 
 	return &schema.Resource{
