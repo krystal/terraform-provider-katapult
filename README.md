@@ -110,10 +110,13 @@ and this provider is no different. To help make this easier, we use the
 message format, along with Google's
 [release-please](https://github.com/googleapis/release-please) tool.
 
-The end result is, that whenever `main` changes, a new release-please will
-create/update a release pull request as needed. The PR contains updates to the
+The end result is, that whenever `main` changes, release-please will create or
+update a release pull request as needed. The PR contains updates to the
 changelog, and has automatically calculated and bumped the version as needed
 based on Conventional Commits and Semantic Versioning.
 
 Merging the release PR, will trigger a full release with binaries being built
-and published to a GitHub Release.
+and published to a GitHub Release. However, because the release is created and
+published by release-please before goreleaser runs and builds binary assets, the
+Terraform Registry may complain it found no binary assets. In that case forcing
+a re-sync under the provider settings in Terraform Registry should resolve it.
