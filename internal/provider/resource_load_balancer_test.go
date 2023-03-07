@@ -177,7 +177,6 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 // Helpers
 //
 
-//nolint:unused
 func testAccCheckKatapultLoadBalancerExists(
 	tt *testTools,
 	res string,
@@ -201,7 +200,6 @@ func testAccCheckKatapultLoadBalancerExists(
 	}
 }
 
-//nolint:unused
 func testAccCheckKatapultLoadBalancerDestroy(
 	tt *testTools,
 ) resource.TestCheckFunc {

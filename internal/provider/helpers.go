@@ -9,20 +9,28 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
-	"github.com/krystal/terraform-provider-katapult/internal/hashcode"
 )
 
-func stringHash(v interface{}) int {
-	return hashcode.String(v.(string)) //nolint:staticcheck
-}
-
-func newSchemaStringSet(strs []string) *schema.Set {
-	v := make([]interface{}, 0, len(strs))
-	for _, id := range strs {
-		v = append(v, id)
+func stringSliceToSchemaSet(s []string) *schema.Set {
+	set := &schema.Set{F: schema.HashString}
+	for _, v := range s {
+		set.Add(v)
 	}
 
-	return schema.NewSet(stringHash, v)
+	return set
+}
+
+func schemaSetToSlice[T any](s *schema.Set) []T {
+	if s == nil {
+		return nil
+	}
+
+	r := make([]T, 0, s.Len())
+	for _, v := range s.List() {
+		r = append(r, v.(T))
+	}
+
+	return r
 }
 
 func purgeTrashObjectByObjectID(

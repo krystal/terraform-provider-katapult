@@ -69,7 +69,7 @@ func dataSourceVirtualMachineRead(
 
 	err = d.Set(
 		"ip_address_ids",
-		newSchemaStringSet(flattenIPAddressIDs(vm.IPAddresses)),
+		stringSliceToSchemaSet(flattenIPAddressIDs(vm.IPAddresses)),
 	)
 	if err != nil {
 		diags = append(diags, diag.FromErr(err)...)
@@ -77,7 +77,7 @@ func dataSourceVirtualMachineRead(
 
 	err = d.Set(
 		"ip_addresses",
-		newSchemaStringSet(flattenIPAddresses(vm.IPAddresses)),
+		stringSliceToSchemaSet(flattenIPAddresses(vm.IPAddresses)),
 	)
 	if err != nil {
 		diags = append(diags, diag.FromErr(err)...)
@@ -101,7 +101,7 @@ func dataSourceVirtualMachineRead(
 		}
 	}
 
-	err = d.Set("tags", flattenTagNames(vm.TagNames))
+	err = d.Set("tags", stringSliceToSchemaSet(vm.TagNames))
 	if err != nil {
 		diags = append(diags, diag.FromErr(err)...)
 	}

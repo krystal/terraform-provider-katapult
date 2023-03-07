@@ -197,9 +197,7 @@ func resourceVirtualMachineCreate(
 	}
 
 	if rawTags, ok := d.GetOk("tags"); ok {
-		for _, tag := range rawTags.(*schema.Set).List() {
-			spec.Tags = append(spec.Tags, tag.(string))
-		}
+		spec.Tags = schemaSetToSlice[string](rawTags.(*schema.Set))
 	}
 
 	pkgRef := d.Get("package").(string)
@@ -257,8 +255,9 @@ func resourceVirtualMachineCreate(
 	}
 
 	ipGroups := map[string][]*core.IPAddress{}
-	for _, rawIP := range d.Get("ip_address_ids").(*schema.Set).List() {
-		ip, _, err := m.Core.IPAddresses.GetByID(ctx, rawIP.(string))
+	ipIDs := schemaSetToSlice[string](d.Get("ip_address_ids").(*schema.Set))
+	for _, ipID := range ipIDs {
+		ip, _, err := m.Core.IPAddresses.GetByID(ctx, ipID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -448,7 +447,7 @@ func resourceVirtualMachineRead(
 
 	err = d.Set(
 		"ip_address_ids",
-		newSchemaStringSet(flattenIPAddressIDs(vm.IPAddresses)),
+		stringSliceToSchemaSet(flattenIPAddressIDs(vm.IPAddresses)),
 	)
 	if err != nil {
 		diags = append(diags, diag.FromErr(err)...)
@@ -456,7 +455,7 @@ func resourceVirtualMachineRead(
 
 	err = d.Set(
 		"ip_addresses",
-		newSchemaStringSet(flattenIPAddresses(vm.IPAddresses)),
+		stringSliceToSchemaSet(flattenIPAddresses(vm.IPAddresses)),
 	)
 	if err != nil {
 		diags = append(diags, diag.FromErr(err)...)
@@ -480,7 +479,7 @@ func resourceVirtualMachineRead(
 		}
 	}
 
-	err = d.Set("tags", flattenTagNames(vm.TagNames))
+	err = d.Set("tags", stringSliceToSchemaSet(vm.TagNames))
 	if err != nil {
 		diags = append(diags, diag.FromErr(err)...)
 	}
@@ -509,10 +508,9 @@ func resourceVirtualMachineUpdate(
 		args.Description = d.Get("description").(string)
 	}
 	if d.HasChange("ip_address_ids") {
-		var targetIDs []string
-		for _, rawID := range d.Get("ip_address_ids").(*schema.Set).List() {
-			targetIDs = append(targetIDs, rawID.(string))
-		}
+		targetIDs := schemaSetToSlice[string](
+			d.Get("ip_address_ids").(*schema.Set),
+		)
 
 		var err error
 		vm, _, err = m.Core.VirtualMachines.GetByID(ctx, vm.ID)
@@ -547,10 +545,7 @@ func resourceVirtualMachineUpdate(
 		}
 	}
 	if d.HasChange("tags") {
-		tags := []string{}
-		for _, tag := range d.Get("tags").(*schema.Set).List() {
-			tags = append(tags, tag.(string))
-		}
+		tags := schemaSetToSlice[string](d.Get("tags").(*schema.Set))
 		args.TagNames = &tags
 	}
 	if d.HasChange("group_id") {
@@ -708,15 +703,6 @@ func normalizeVirtualMachinePackage(
 	return pkg.ID
 }
 
-func flattenTagNames(names []string) *schema.Set {
-	v := make([]interface{}, 0, len(names))
-	for _, name := range names {
-		v = append(v, name)
-	}
-
-	return schema.NewSet(stringHash, v)
-}
-
 func flattenIPAddressIDs(ips []*core.IPAddress) []string {
 	ids := make([]string, 0, len(ips))
 	for _, ip := range ips {
@@ -740,9 +726,10 @@ func unallocateAllVirtualMachineIPs(
 	d *schema.ResourceData,
 	m *Meta,
 ) error {
-	ipIDs := d.Get("ip_address_ids").(*schema.Set).List()
+	ipIDs := schemaSetToSlice[string](d.Get("ip_address_ids").(*schema.Set))
+
 	for _, ipID := range ipIDs {
-		ip := &core.IPAddress{ID: ipID.(string)}
+		ip := &core.IPAddress{ID: ipID}
 		_, err := m.Core.IPAddresses.Unallocate(ctx, ip.Ref())
 		if err != nil {
 			return fmt.Errorf(

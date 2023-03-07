@@ -46,9 +46,9 @@ $(TOOLDIR)/$(1): Makefile
 endef
 
 $(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports@latest))
-$(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50))
+$(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.51))
 $(eval $(call tool,gomod,github.com/Helcaraxan/gomod@latest))
-$(eval $(call tool,tfplugindocs,github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.13))
+$(eval $(call tool,tfplugindocs,github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.14))
 $(eval $(call tool,tfproviderlint,github.com/bflad/tfproviderlint/cmd/tfproviderlint@latest))
 
 .PHONY: tools
@@ -105,7 +105,7 @@ install:
 	@echo "perform a lookup on the local mirror"
 	@echo ""
 	$(eval OS_ARCH := $(shell go env GOOS)_$(shell go env GOARCH))
-	go build $(V) -a -o "$(INSTALL_DIR)/$(OS_ARCH)/$(notdir $(BINARY))" \
+	go build $(V) -o "$(INSTALL_DIR)/$(OS_ARCH)/$(notdir $(BINARY))" \
 		-ldflags "$(LDFLAGS) \
 		-X main.version=$(DEV_VERSION) \
 		-X main.commit=$(GIT_SHA)"

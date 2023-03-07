@@ -6,37 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_stringHash(t *testing.T) {
-	tests := []struct {
-		v    interface{}
-		want int
-	}{
-		{
-			v:    interface{}("ip_u0dcMHFL8VmIT97t"),
-			want: 1404159140,
-		},
-		{
-			v:    interface{}("ip_AlelTt7hL0PHHrdZ"),
-			want: 476370370,
-		},
-		{
-			v:    interface{}("public"),
-			want: 1001664029,
-		},
-		{
-			v:    interface{}("web"),
-			want: 365508689,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.v.(string), func(t *testing.T) {
-			got := stringHash(tt.v)
-
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
 func Test_stringsDiff(t *testing.T) {
 	tests := []struct {
 		name string
