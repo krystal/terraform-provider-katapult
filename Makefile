@@ -105,7 +105,7 @@ install:
 	@echo "perform a lookup on the local mirror"
 	@echo ""
 	$(eval OS_ARCH := $(shell go env GOOS)_$(shell go env GOARCH))
-	go build $(V) -a -o "$(INSTALL_DIR)/$(OS_ARCH)/$(notdir $(BINARY))" \
+	go build $(V) -o "$(INSTALL_DIR)/$(OS_ARCH)/$(notdir $(BINARY))" \
 		-ldflags "$(LDFLAGS) \
 		-X main.version=$(DEV_VERSION) \
 		-X main.commit=$(GIT_SHA)"
