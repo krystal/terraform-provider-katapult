@@ -104,7 +104,7 @@ type testTools struct {
 func newTestTools(t *testing.T) *testTools {
 	r := newVCRRecorder(t)
 	factories := providerFactories(r)
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	p, err := factories["katapult"]()
 	require.NoError(t, err)
@@ -185,22 +185,43 @@ func testDataFilePath(t *testing.T, suffix string) string {
 	return filepath.Join(".", "testdata", baseName)
 }
 
+func exampleResourceConfig(t *testing.T, name string) string {
+	t.Helper()
+
+	filename := filepath.Join(
+		"..", "..", "examples", "resources", name, "resource.tf",
+	)
+	data, err := os.ReadFile(filename)
+	require.NoError(t, err)
+
+	return string(data)
+}
+
+func vcrMode() recorder.Mode {
+	switch strings.ToLower(os.Getenv("VCR")) {
+	case "disabled", "off", "no", "0":
+		return recorder.ModeDisabled
+	case "record", "rec":
+		return recorder.ModeRecording
+	default:
+		// Prevent real requests unless VCR is explicitly set to record mode.
+		return recorder.ModeReplaying
+	}
+}
+
 func newVCRRecorder(t *testing.T) *recorder.Recorder {
 	cassettePath := testDataFilePath(t, ".cassette")
 
-	var mode recorder.Mode
 	var transport http.RoundTripper
+	mode := vcrMode()
 
-	vcrMode := strings.ToLower(os.Getenv("VCR"))
-	switch vcrMode {
-	case "disabled", "off", "no", "0":
+	switch mode {
+	case recorder.ModeDisabled:
 		return nil
-	case "record", "rec":
-		mode = recorder.ModeRecording
-	default:
-		// Prevent real requests unless VCR is explicitly set to record mode.
+	case recorder.ModeReplaying:
 		transport = &stopRequests{}
-		mode = recorder.ModeReplaying
+	case recorder.ModeRecording:
+		// Use the default transport.
 	}
 
 	r, err := recorder.NewAsMode(cassettePath, mode, transport)
