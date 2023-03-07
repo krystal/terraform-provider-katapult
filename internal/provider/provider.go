@@ -107,6 +107,7 @@ func New(c *Config) func() *schema.Provider {
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"katapult_ip":                    resourceIP(),
+				"katapult_security_group":        resourceSecurityGroup(),
 				"katapult_security_group_rule":   resourceSecurityGroupRule(),
 				"katapult_virtual_machine":       resourceVirtualMachine(),
 				"katapult_virtual_machine_group": resourceVirtualMachineGroup(),
