@@ -228,7 +228,7 @@ func TestAccKatapultVirtualMachine_minimal(t *testing.T) {
 func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("basic")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -357,7 +357,7 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 func TestAccKatapultVirtualMachine_custom_disks(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("custom-disks")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -494,7 +494,7 @@ func TestAccKatapultVirtualMachine_custom_disks(t *testing.T) {
 func TestAccKatapultVirtualMachine_update(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("update")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -769,7 +769,7 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 func TestAccKatapultVirtualMachine_update_group(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("update_group")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -870,7 +870,7 @@ func TestAccKatapultVirtualMachine_update_group(t *testing.T) {
 func TestAccKatapultVirtualMachine_update_network_speed_profile(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("update_speed_profile")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

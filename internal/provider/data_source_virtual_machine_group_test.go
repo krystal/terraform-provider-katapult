@@ -11,7 +11,7 @@ import (
 func TestAccKatapultDataSourceVMGroup_basic(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("data-source-basic")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -52,7 +52,7 @@ func TestAccKatapultDataSourceVMGroup_basic(t *testing.T) {
 func TestAccKatapultDataSourceVMGroup_not_segregated(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("data-source-not-segregated")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

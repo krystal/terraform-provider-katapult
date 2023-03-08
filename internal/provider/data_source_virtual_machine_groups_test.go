@@ -10,7 +10,7 @@ import (
 func TestAccKatapultDataSourceVMGroups_default(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("data-source-group")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

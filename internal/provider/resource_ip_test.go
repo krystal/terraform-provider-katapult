@@ -235,7 +235,7 @@ func TestAccKatapultIP_ipv5(t *testing.T) {
 func TestAccKatapultIP_vip(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("web-vip")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

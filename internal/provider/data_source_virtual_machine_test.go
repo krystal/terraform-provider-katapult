@@ -11,7 +11,7 @@ import (
 func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("data-source-by-id")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -111,7 +111,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("data-source-by-fqdn")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

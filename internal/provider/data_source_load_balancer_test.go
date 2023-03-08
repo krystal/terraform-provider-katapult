@@ -12,7 +12,7 @@ func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
 	t.Skip("not yet feature complete")
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("basic")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
