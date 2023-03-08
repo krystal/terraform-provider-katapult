@@ -120,6 +120,7 @@ func New(c *Config) func() *schema.Provider {
 				"katapult_ip":                       dataSourceIP(),
 				"katapult_network_speed_profile":    dataSourceNetworkSpeedProfile(),
 				"katapult_network_speed_profiles":   dataSourceNetworkSpeedProfiles(),
+				"katapult_security_group_rule":      dataSourceSecurityGroupRule(),
 				"katapult_virtual_machine":          dataSourceVirtualMachine(),
 				"katapult_virtual_machine_group":    dataSourceVirtualMachineGroup(),
 				"katapult_virtual_machine_groups":   dataSourceVirtualMachineGroups(),

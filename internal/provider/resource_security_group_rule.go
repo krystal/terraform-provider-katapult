@@ -139,7 +139,7 @@ func resourceSecurityGroupRuleRead(
 	m := meta.(*Meta)
 	var diags diag.Diagnostics
 
-	sgr, _, err := m.Core.SecurityGroupRules.GetByID(ctx, d.Id())
+	_, err := sharedSecurityGroupRuleRead(ctx, d, m, d.Id())
 	if err != nil {
 		if errors.Is(err, katapult.ErrNotFound) {
 			d.SetId("")
@@ -148,6 +148,20 @@ func resourceSecurityGroupRuleRead(
 		}
 
 		return diag.FromErr(err)
+	}
+
+	return diag.Diagnostics{}
+}
+
+func sharedSecurityGroupRuleRead(
+	ctx context.Context,
+	d *schema.ResourceData,
+	m *Meta,
+	id string,
+) (string, error) {
+	sgr, _, err := m.Core.SecurityGroupRules.GetByID(ctx, id)
+	if err != nil {
+		return "", err
 	}
 
 	if sgr.SecurityGroup != nil {
@@ -160,10 +174,10 @@ func resourceSecurityGroupRuleRead(
 
 	err = d.Set("targets", stringSliceToSchemaSet(sgr.Targets))
 	if err != nil {
-		return diag.FromErr(err)
+		return "", err
 	}
 
-	return diag.Diagnostics{}
+	return sgr.ID, nil
 }
 
 func resourceSecurityGroupRuleUpdate(
