@@ -123,8 +123,29 @@ func newTestTools(t *testing.T) *testTools {
 	}
 }
 
-func (tt *testTools) ResourceName(name string) string {
-	return fmt.Sprintf("%s-%s-%s", testAccResourceNamePrefix, name, tt.RandID())
+// ResourceName returns the name of a resource in the test provider, for the
+// purpose of having unique names which can easily be identified as belonging to
+// the acceptance test suite.
+func (tt *testTools) ResourceName(name ...string) string {
+	if len(name) == 0 && strings.HasPrefix(tt.T.Name(), "TestAcc") {
+		if parts := strings.Split(tt.T.Name(), "_"); len(parts) > 1 {
+			if strings.Contains(parts[0], "DataSource") {
+				name = append(name, "data-source")
+			}
+
+			name = append(name, parts[1:]...)
+		}
+	}
+
+	if len(name) == 0 {
+		name = []string{"default"}
+	}
+
+	nameStr := strings.Join(name, "-")
+
+	return fmt.Sprintf("%s-%s-%s",
+		testAccResourceNamePrefix, nameStr, tt.RandID(),
+	)
 }
 
 func (tt *testTools) RandID() string {

@@ -50,7 +50,7 @@ func testSweepVMGroups(_ string) error {
 func TestAccKatapultVMGroup_minimal(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("minimal")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -91,7 +91,7 @@ func TestAccKatapultVMGroup_minimal(t *testing.T) {
 func TestAccKatapultVMGroup_segregated(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("segregated")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -132,7 +132,7 @@ func TestAccKatapultVMGroup_segregated(t *testing.T) {
 func TestAccKatapultVMGroup_not_segregated(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("not-segregated")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -171,7 +171,7 @@ func TestAccKatapultVMGroup_not_segregated(t *testing.T) {
 func TestAccKatapultVMGroup_update(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName("update")
+	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
