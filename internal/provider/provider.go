@@ -33,7 +33,7 @@ type Config struct {
 	GeneratedNamePrefix string
 }
 
-func New(c *Config) func() *schema.Provider {
+func New(c *Config) func() *schema.Provider { //nolint:funlen
 	once.Do(func() {
 		// Set descriptions to support markdown syntax, this will be used in
 		// document generation and the language server.
@@ -107,6 +107,8 @@ func New(c *Config) func() *schema.Provider {
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"katapult_ip":                    resourceIP(),
+				"katapult_security_group":        resourceSecurityGroup(),
+				"katapult_security_group_rule":   resourceSecurityGroupRule(),
 				"katapult_virtual_machine":       resourceVirtualMachine(),
 				"katapult_virtual_machine_group": resourceVirtualMachineGroup(),
 			},
@@ -118,6 +120,10 @@ func New(c *Config) func() *schema.Provider {
 				"katapult_ip":                       dataSourceIP(),
 				"katapult_network_speed_profile":    dataSourceNetworkSpeedProfile(),
 				"katapult_network_speed_profiles":   dataSourceNetworkSpeedProfiles(),
+				"katapult_security_group":           dataSourceSecurityGroup(),
+				"katapult_security_group_rule":      dataSourceSecurityGroupRule(),
+				"katapult_security_group_rules":     dataSourceSecurityGroupRules(),
+				"katapult_security_groups":          dataSourceSecurityGroups(),
 				"katapult_virtual_machine":          dataSourceVirtualMachine(),
 				"katapult_virtual_machine_group":    dataSourceVirtualMachineGroup(),
 				"katapult_virtual_machine_groups":   dataSourceVirtualMachineGroups(),

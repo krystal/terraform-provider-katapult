@@ -1,0 +1,537 @@
+---
+version: 1
+interactions:
+- request:
+    body: |
+      {"organization":{"sub_domain":"terraform-acc-test"},"properties":{"name":"tf-acc-test-data-source-by-id-gcz1sapciiwt","associations":[],"allow_all_inbound":false,"allow_all_outbound":false}}
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/1.3.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.10.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/organizations/_/security_groups
+    method: POST
+  response:
+    body: '{"security_group":{"id":"sg_0OPIk1axnxCe3Zj3","name":"tf-acc-test-data-source-by-id-gcz1sapciiwt","allow_all_inbound":false,"allow_all_outbound":false,"associations":[]}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "170"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Mar 2023 18:31:42 GMT
+      Etag:
+      - W/"1cf58f6d1223a85daa45806c0957f46d"
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "999"
+      X-Request-Id:
+      - b90e65bd-1099-4c36-9ad4-16ed53289945
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/1.3.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.10.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/security_groups/_?security_group%5Bid%5D=sg_0OPIk1axnxCe3Zj3
+    method: GET
+  response:
+    body: '{"security_group":{"id":"sg_0OPIk1axnxCe3Zj3","name":"tf-acc-test-data-source-by-id-gcz1sapciiwt","allow_all_inbound":false,"allow_all_outbound":false,"associations":[]}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "170"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Mar 2023 18:31:42 GMT
+      Etag:
+      - W/"1cf58f6d1223a85daa45806c0957f46d"
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "998"
+      X-Request-Id:
+      - c6b7053a-6310-4bf9-82c1-0ffcc197348a
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: |
+      {"properties":{"direction":"inbound","protocol":"TCP","ports":"22","targets":["93.89.203.0/24"],"notes":"Trusted SSH"}}
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/1.3.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.10.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/security_groups/sg_0OPIk1axnxCe3Zj3/rules
+    method: POST
+  response:
+    body: '{"security_group_rule":{"id":"sgr_3SESZnu6YDdqsIZ6","security_group":{"id":"sg_0OPIk1axnxCe3Zj3","name":"tf-acc-test-data-source-by-id-gcz1sapciiwt"},"direction":"inbound","protocol":"TCP","ports":"22","targets":["93.89.203.0/24"],"notes":"Trusted
+      SSH"}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "254"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Mar 2023 18:31:42 GMT
+      Etag:
+      - W/"491b082be814c0130792d52467b81f6e"
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "997"
+      X-Request-Id:
+      - 1044bd9e-476d-4b32-8733-94412936fb35
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/1.3.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.10.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/security_groups/rules/_?security_group_rule%5Bid%5D=sgr_3SESZnu6YDdqsIZ6
+    method: GET
+  response:
+    body: '{"security_group_rule":{"id":"sgr_3SESZnu6YDdqsIZ6","security_group":{"id":"sg_0OPIk1axnxCe3Zj3","name":"tf-acc-test-data-source-by-id-gcz1sapciiwt"},"direction":"inbound","protocol":"TCP","ports":"22","targets":["93.89.203.0/24"],"notes":"Trusted
+      SSH"}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "254"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Mar 2023 18:31:42 GMT
+      Etag:
+      - W/"491b082be814c0130792d52467b81f6e"
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "996"
+      X-Request-Id:
+      - 81e02fa9-4c4e-4725-b722-e25a233682a8
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/1.3.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.10.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/security_groups/rules/_?security_group_rule%5Bid%5D=sgr_3SESZnu6YDdqsIZ6
+    method: GET
+  response:
+    body: '{"security_group_rule":{"id":"sgr_3SESZnu6YDdqsIZ6","security_group":{"id":"sg_0OPIk1axnxCe3Zj3","name":"tf-acc-test-data-source-by-id-gcz1sapciiwt"},"direction":"inbound","protocol":"TCP","ports":"22","targets":["93.89.203.0/24"],"notes":"Trusted
+      SSH"}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "254"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Mar 2023 18:31:42 GMT
+      Etag:
+      - W/"491b082be814c0130792d52467b81f6e"
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "995"
+      X-Request-Id:
+      - 9d650bb9-a46e-4e27-85de-c58cb0fdd9d7
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-SDK/2.10.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/security_groups/rules/_?security_group_rule%5Bid%5D=sgr_3SESZnu6YDdqsIZ6
+    method: GET
+  response:
+    body: '{"security_group_rule":{"id":"sgr_3SESZnu6YDdqsIZ6","security_group":{"id":"sg_0OPIk1axnxCe3Zj3","name":"tf-acc-test-data-source-by-id-gcz1sapciiwt"},"direction":"inbound","protocol":"TCP","ports":"22","targets":["93.89.203.0/24"],"notes":"Trusted
+      SSH"}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "254"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Mar 2023 18:31:42 GMT
+      Etag:
+      - W/"491b082be814c0130792d52467b81f6e"
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "994"
+      X-Request-Id:
+      - a1f1afc4-8e72-4a54-9180-d69bc4e25489
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/1.3.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.10.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/security_groups/rules/_?security_group_rule%5Bid%5D=sgr_3SESZnu6YDdqsIZ6
+    method: GET
+  response:
+    body: '{"security_group_rule":{"id":"sgr_3SESZnu6YDdqsIZ6","security_group":{"id":"sg_0OPIk1axnxCe3Zj3","name":"tf-acc-test-data-source-by-id-gcz1sapciiwt"},"direction":"inbound","protocol":"TCP","ports":"22","targets":["93.89.203.0/24"],"notes":"Trusted
+      SSH"}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "254"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Mar 2023 18:31:43 GMT
+      Etag:
+      - W/"491b082be814c0130792d52467b81f6e"
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "993"
+      X-Request-Id:
+      - c68975f3-74d4-4f92-85a3-1e660ebb9492
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/1.3.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.10.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/security_groups/_?security_group%5Bid%5D=sg_0OPIk1axnxCe3Zj3
+    method: GET
+  response:
+    body: '{"security_group":{"id":"sg_0OPIk1axnxCe3Zj3","name":"tf-acc-test-data-source-by-id-gcz1sapciiwt","allow_all_inbound":false,"allow_all_outbound":false,"associations":[]}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "170"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Mar 2023 18:31:43 GMT
+      Etag:
+      - W/"1cf58f6d1223a85daa45806c0957f46d"
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "992"
+      X-Request-Id:
+      - 6ac1bf99-1232-4f83-ad34-2afba28a03e2
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/1.3.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.10.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/security_groups/rules/_?security_group_rule%5Bid%5D=sgr_3SESZnu6YDdqsIZ6
+    method: GET
+  response:
+    body: '{"security_group_rule":{"id":"sgr_3SESZnu6YDdqsIZ6","security_group":{"id":"sg_0OPIk1axnxCe3Zj3","name":"tf-acc-test-data-source-by-id-gcz1sapciiwt"},"direction":"inbound","protocol":"TCP","ports":"22","targets":["93.89.203.0/24"],"notes":"Trusted
+      SSH"}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "254"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Mar 2023 18:31:43 GMT
+      Etag:
+      - W/"491b082be814c0130792d52467b81f6e"
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "991"
+      X-Request-Id:
+      - fb24aedb-abea-4003-be4c-402726c2e5a2
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/1.3.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.10.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/security_groups/rules/_?security_group_rule%5Bid%5D=sgr_3SESZnu6YDdqsIZ6
+    method: GET
+  response:
+    body: '{"security_group_rule":{"id":"sgr_3SESZnu6YDdqsIZ6","security_group":{"id":"sg_0OPIk1axnxCe3Zj3","name":"tf-acc-test-data-source-by-id-gcz1sapciiwt"},"direction":"inbound","protocol":"TCP","ports":"22","targets":["93.89.203.0/24"],"notes":"Trusted
+      SSH"}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "254"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Mar 2023 18:31:43 GMT
+      Etag:
+      - W/"491b082be814c0130792d52467b81f6e"
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "990"
+      X-Request-Id:
+      - ab02188f-7ab0-4895-8a9a-1f8655543d9a
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/1.3.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.10.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/security_groups/rules/_?security_group_rule%5Bid%5D=sgr_3SESZnu6YDdqsIZ6
+    method: GET
+  response:
+    body: '{"security_group_rule":{"id":"sgr_3SESZnu6YDdqsIZ6","security_group":{"id":"sg_0OPIk1axnxCe3Zj3","name":"tf-acc-test-data-source-by-id-gcz1sapciiwt"},"direction":"inbound","protocol":"TCP","ports":"22","targets":["93.89.203.0/24"],"notes":"Trusted
+      SSH"}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "254"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Mar 2023 18:31:43 GMT
+      Etag:
+      - W/"491b082be814c0130792d52467b81f6e"
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "989"
+      X-Request-Id:
+      - 3460fb27-b8a5-46fc-9909-56eb16c681dd
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/1.3.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.10.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/security_groups/rules/_?security_group_rule%5Bid%5D=sgr_3SESZnu6YDdqsIZ6
+    method: DELETE
+  response:
+    body: '{"security_group_rule":{"id":"sgr_3SESZnu6YDdqsIZ6"}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "53"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Mar 2023 18:31:43 GMT
+      Etag:
+      - W/"65beabc53a7bf1c79e25e1fc0d28b8d0"
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "988"
+      X-Request-Id:
+      - ef861264-571b-4df6-b994-c5f9fc3ed98f
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/1.3.4 (+https://www.terraform.io) Terraform-Plugin-SDK/2.10.1 terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/security_groups/_?security_group%5Bid%5D=sg_0OPIk1axnxCe3Zj3
+    method: DELETE
+  response:
+    body: '{"security_group":{"id":"sg_0OPIk1axnxCe3Zj3","name":"tf-acc-test-data-source-by-id-gcz1sapciiwt"}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "99"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Mar 2023 18:31:43 GMT
+      Etag:
+      - W/"d54682a27f74a7a107daffedb74d0299"
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "987"
+      X-Request-Id:
+      - 51e9f7e9-2da8-4079-a80d-6813011a0dec
+    status: 200 OK
+    code: 200
+    duration: ""
