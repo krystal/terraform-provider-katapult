@@ -123,6 +123,7 @@ func New(c *Config) func() *schema.Provider { //nolint:funlen
 				"katapult_security_group":           dataSourceSecurityGroup(),
 				"katapult_security_group_rule":      dataSourceSecurityGroupRule(),
 				"katapult_security_group_rules":     dataSourceSecurityGroupRules(),
+				"katapult_security_groups":          dataSourceSecurityGroups(),
 				"katapult_virtual_machine":          dataSourceVirtualMachine(),
 				"katapult_virtual_machine_group":    dataSourceVirtualMachineGroup(),
 				"katapult_virtual_machine_groups":   dataSourceVirtualMachineGroups(),
