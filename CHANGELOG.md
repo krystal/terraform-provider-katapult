@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.9](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.8...v0.0.9) (2023-03-09)
+
+
+### Features
+
+* **security_groups:** add katapult_security_group data source ([d2ce789](https://github.com/krystal/terraform-provider-katapult/commit/d2ce789392b9c9530d55de6fd5ac0c9e356ee40d))
+* **security_groups:** add katapult_security_group resource ([cee9f25](https://github.com/krystal/terraform-provider-katapult/commit/cee9f250f03db5b9a65c69c69283bd5ab3dcaee8))
+* **security_groups:** add katapult_security_group_rule data source ([b53fc6b](https://github.com/krystal/terraform-provider-katapult/commit/b53fc6ba78f33f6cf4588acabfceeb074dcba98f))
+* **security_groups:** add katapult_security_group_rule resource ([83a5f0c](https://github.com/krystal/terraform-provider-katapult/commit/83a5f0c81febad63869b096239c161bbc165e724))
+* **security_groups:** add katapult_security_group_rules data source ([8c1a3d8](https://github.com/krystal/terraform-provider-katapult/commit/8c1a3d852a2a859b162e698e08067eb76f196ca1))
+* **security_groups:** add katapult_security_groups data source ([e29a7ca](https://github.com/krystal/terraform-provider-katapult/commit/e29a7caf7b31f3b64441761f2544efe6e106d149))
+
 ## [0.0.8](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.7...v0.0.8) (2023-01-26)
 
 
