@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.25.0
 	github.com/jimeh/rands v0.3.0
 	github.com/jimeh/undent v1.1.1
-	github.com/krystal/go-katapult v0.2.0
+	github.com/krystal/go-katapult v0.2.1
 	github.com/stretchr/testify v1.8.2
 )
 

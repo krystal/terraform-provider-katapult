@@ -123,6 +123,7 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"katapult_ip":                    resourceIP(),
+				"katapult_file_storage_volume":   resourceFileStorageVolume(),
 				"katapult_security_group":        resourceSecurityGroup(),
 				"katapult_security_group_rule":   resourceSecurityGroupRule(),
 				"katapult_virtual_machine":       resourceVirtualMachine(),
