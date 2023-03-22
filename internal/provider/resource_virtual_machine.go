@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/jimeh/rands"
 	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/buildspec"
 	"github.com/krystal/go-katapult/core"
@@ -28,6 +29,14 @@ func resourceVirtualMachine() *schema.Resource { //nolint:funlen
 			Delete: schema.DefaultTimeout(10 * time.Minute),
 			Update: schema.DefaultTimeout(10 * time.Minute),
 		},
+		//nolint:lll
+		Description: strings.TrimSpace(`
+
+The Virtual Machine resource allows you to create and manage Virtual Machines in Katapult.
+
+~> **Warning:** Deleting a virtual machine resource with Terraform will by default purge the VM from Katapult's trash, permanently deleting it. If you wish to instead keep a deleted VM in the trash, set the` + "`skip_trash_object_purge`" + ` provider option to ` + "`true`" + `. By default, objects in the trash are permanently deleted after 48 hours.
+
+`),
 		Schema: map[string]*schema.Schema{
 			"id": {
 				Type:     schema.TypeString,
@@ -566,6 +575,7 @@ func resourceVirtualMachineUpdate(
 	return resourceVirtualMachineRead(ctx, d, meta)
 }
 
+//nolint:funlen
 func resourceVirtualMachineDelete(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -579,6 +589,10 @@ func resourceVirtualMachineDelete(
 		if errors.Is(err, katapult.ErrNotFound) {
 			return diags
 		} else if errors.Is(err, core.ErrObjectInTrash) {
+			if m.SkipTrashObjectPurge {
+				return diags
+			}
+
 			err2 := purgeTrashObjectByObjectID(
 				ctx, m, d.Timeout(schema.TimeoutDelete), vm.ID,
 			)
@@ -647,6 +661,23 @@ func resourceVirtualMachineDelete(
 		)...)
 	}
 
+	// If we're leaving the VM in the trash when done, we need to change the
+	// hostname to something unique, as the hostname is unique within the
+	// organization, and would otherwise prevent us from creating a new VM with
+	// the same hostname.
+	if m.SkipTrashObjectPurge {
+		vm, err = addVMUniqueHostnameSuffix(ctx, m, vm)
+		if err != nil {
+			return append(diags, diag.FromErr(
+				fmt.Errorf(
+					"failed to change virtual machine hostname before "+
+						"moving to trash: %w",
+					err,
+				),
+			)...)
+		}
+	}
+
 	trash, _, err := m.Core.VirtualMachines.Delete(ctx, vm.Ref())
 	if err != nil {
 		return append(diags, diag.FromErr(
@@ -659,14 +690,57 @@ func resourceVirtualMachineDelete(
 		return append(diags, diag.FromErr(err)...)
 	}
 
-	err = purgeTrashObject(ctx, m, d.Timeout(schema.TimeoutDelete), trash)
-	if err != nil {
-		return append(diags, diag.FromErr(
-			fmt.Errorf("failed to purge virtual machine from trash: %w", err),
-		)...)
+	if !m.SkipTrashObjectPurge {
+		err = purgeTrashObject(ctx, m, d.Timeout(schema.TimeoutDelete), trash)
+		if err != nil {
+			return append(diags, diag.FromErr(
+				fmt.Errorf(
+					"failed to purge virtual machine from trash: %w", err,
+				),
+			)...)
+		}
 	}
 
 	return diags
+}
+
+// addVMUniqueHostnameSuffix appends a random string to the hostname to make it
+// unique. This is specifically intended for when deleting a VM and leaving it
+// in the trash, to avoid a hostname if Terraform tries to re-create the VM with
+// the same hostname.
+//
+// We can't reliably use the VM ID, as it uses both uppercase and lowercase
+// letters, and the hostname must be all lowercase.
+func addVMUniqueHostnameSuffix(
+	ctx context.Context,
+	m *Meta,
+	vm *core.VirtualMachine,
+) (*core.VirtualMachine, error) {
+	id, err := rands.Alphanumeric(12)
+	if err != nil {
+		return nil, err
+	}
+
+	hostname := vm.Hostname
+	suffix := "-" + id
+	if len(hostname)+len(suffix) > 63 {
+		hostname = hostname[:63-len(suffix)]
+	}
+	hostname += suffix
+
+	vm, _, err = m.Core.VirtualMachines.Update(
+		ctx, vm.Ref(),
+		&core.VirtualMachineUpdateArguments{Hostname: hostname},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to change virtual machine hostname before "+
+				"moving to trash: %w",
+			err,
+		)
+	}
+
+	return vm, nil
 }
 
 func stopVirtualMachine(

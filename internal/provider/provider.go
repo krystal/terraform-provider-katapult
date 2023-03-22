@@ -83,6 +83,22 @@ func New(c *Config) func() *schema.Provider { //nolint:funlen
 						"specified with the `KATAPULT_DATA_CENTER` " +
 						"environment variable.",
 				},
+				"skip_trash_object_purge": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					DefaultFunc: schema.EnvDefaultFunc(
+						"KATAPULT_SKIP_TRASH_OBJECT_PURGE", false,
+					),
+					//nolint:lll
+					Description: strings.TrimSpace(`
+
+Skip purging deleted resources from Katapult's trash when they are destroyed by Terraform. Only relevant to some resources which are moved to the trash when they are deleted. Can be specified with the
+` + "`KATAPULT_SKIP_TRASH_OBJECT_PURGE`" + ` environment variable. Defaults to ` + "`false`" + `.
+
+  ~> **Note:** Using ` + "`skip_trash_object_purge`" + ` can quickly lead to a build up of a lot objects in the trash if you are replacing resources repeatedly. Hence this option is disabled by default, and should only be used if you are sure you want to keep deleted resources in the trash.
+
+`),
+				},
 				"log_level": {
 					Type:     schema.TypeString,
 					Optional: true,
@@ -152,10 +168,11 @@ func configure(
 				Level:      hclog.LevelFromString(d.Get("log_level").(string)),
 				TimeFormat: "2006/01/02 15:04:05",
 			}),
-			confAPIKey:          d.Get("api_key").(string),
-			confDataCenter:      d.Get("data_center").(string),
-			confOrganization:    d.Get("organization").(string),
-			GeneratedNamePrefix: conf.GeneratedNamePrefix,
+			confAPIKey:           d.Get("api_key").(string),
+			confDataCenter:       d.Get("data_center").(string),
+			confOrganization:     d.Get("organization").(string),
+			SkipTrashObjectPurge: d.Get("skip_trash_object_purge").(bool),
+			GeneratedNamePrefix:  conf.GeneratedNamePrefix,
 		}
 
 		if m.GeneratedNamePrefix == "" {
