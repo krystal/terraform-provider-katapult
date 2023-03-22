@@ -31,6 +31,7 @@ func testSweepSecurityGroups(_ string) error {
 	m := sweepMeta()
 	ctx := context.Background()
 
+	toDelete := []*core.SecurityGroup{}
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		pageResults, resp, err := m.Core.SecurityGroups.List(
@@ -40,25 +41,30 @@ func testSweepSecurityGroups(_ string) error {
 			return err
 		}
 
+		totalPages = resp.Pagination.TotalPages
 		for _, sg := range pageResults {
-			if !strings.HasPrefix(sg.Name, testAccResourceNamePrefix) {
-				continue
-			}
-
-			m.Logger.Info(
-				"deleting security group", "id", sg.ID, "name", sg.Name,
-			)
-			_, _, err := m.Core.SecurityGroups.Delete(ctx, sg.Ref())
-			if err != nil {
-				return err
+			if strings.HasPrefix(sg.Name, testAccResourceNamePrefix) {
+				toDelete = append(toDelete, sg)
 			}
 		}
+	}
 
-		totalPages = resp.Pagination.TotalPages
+	for _, sg := range toDelete {
+		m.Logger.Info(
+			"deleting security group", "id", sg.ID, "name", sg.Name,
+		)
+		_, _, err := m.Core.SecurityGroups.Delete(ctx, sg.Ref())
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
+
+//
+// Tests
+//
 
 func TestAccKatapultSecurityGroup_example(t *testing.T) {
 	if vcrMode() == recorder.ModeReplaying {
