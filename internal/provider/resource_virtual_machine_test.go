@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/jimeh/undent"
+	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
 )
 
@@ -109,29 +110,22 @@ func testSweepVirtualMachines(_ string) error {
 			return err
 		}
 
-		task, _, err := m.Core.TrashObjects.Purge(ctx, trash.Ref())
+		trashRef := trash.Ref()
+		_, _, err = m.Core.TrashObjects.Purge(ctx, trashRef)
 		if err != nil {
 			return err
 		}
 
 		taskWaiter := &resource.StateChangeConf{
-			Pending: []string{
-				string(core.TaskPending),
-				string(core.TaskRunning),
-			},
-			Target: []string{
-				string(core.TaskCompleted),
-			},
+			Pending: []string{"exists"},
+			Target:  []string{"not_found"},
 			Refresh: func() (interface{}, string, error) {
-				t, _, e := m.Core.Tasks.Get(ctx, task.ID)
-				if e != nil {
-					return 0, "", e
-				}
-				if t.Status == core.TaskFailed {
-					return 0, string(t.Status), errors.New("task failed")
+				_, _, e := m.Core.TrashObjects.Get(ctx, trashRef)
+				if e != nil && errors.Is(e, katapult.ErrNotFound) {
+					return 1, "not_found", nil
 				}
 
-				return t, string(t.Status), nil
+				return nil, "exists", nil
 			},
 			Timeout:                   5 * time.Minute,
 			Delay:                     2 * time.Second,
