@@ -134,6 +134,7 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 				"katapult_data_center":              dataSourceDataCenter(),
 				"katapult_disk_template":            dataSourceDiskTemplate(),
 				"katapult_disk_templates":           dataSourceDiskTemplates(),
+				"katapult_file_storage_volume":      dataSourceFileStorageVolume(),
 				"katapult_ip":                       dataSourceIP(),
 				"katapult_network_speed_profile":    dataSourceNetworkSpeedProfile(),
 				"katapult_network_speed_profiles":   dataSourceNetworkSpeedProfiles(),
