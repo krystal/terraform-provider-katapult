@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.0.10](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.9...v0.0.10) (2023-03-23)
+
+
+### Features
+
+* **destroy:** add skip_trash_object_purge provider option ([e45ba3f](https://github.com/krystal/terraform-provider-katapult/commit/e45ba3f23b7c2bf880cf777430f191778a4dd50f))
+* **file_storage_volumes:** add katapult_file_storage_volume data source ([bc4355a](https://github.com/krystal/terraform-provider-katapult/commit/bc4355afbabf1952c97327957d4e5812267ee32b))
+* **file_storage_volumes:** add katapult_file_storage_volume resource ([9bb3471](https://github.com/krystal/terraform-provider-katapult/commit/9bb3471ea39bd00f939045c6dc70ae7ea50cc394))
+* **file_storage_volumes:** add katapult_file_storage_volumes data source ([3bac917](https://github.com/krystal/terraform-provider-katapult/commit/3bac91701d2a6f9a1524602f10be7308cb3c756b))
+
 ## [0.0.9](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.8...v0.0.9) (2023-03-09)
 
 
