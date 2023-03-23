@@ -26,7 +26,7 @@ data "katapult_security_groups" "all" {}
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) Always set to provider organization value.
 - `security_groups` (List of Object) (see [below for nested schema](#nestedatt--security_groups))
 
 <a id="nestedatt--security_groups"></a>

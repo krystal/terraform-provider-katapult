@@ -16,6 +16,11 @@ func dataSourceSecurityGroups() *schema.Resource {
 		Description: "Fetch all security groups in the organization, " +
 			"optionally including all rules for each security group.",
 		Schema: map[string]*schema.Schema{
+			"id": {
+				Description: "Always set to provider organization value.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"include_rules": {
 				Type: schema.TypeBool,
 				Description: "Whether to include rules in the output. Can " +
