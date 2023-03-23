@@ -12,7 +12,8 @@ type Meta struct {
 	Core   *core.Client
 	Logger hclog.Logger
 
-	GeneratedNamePrefix string
+	GeneratedNamePrefix  string
+	SkipTrashObjectPurge bool
 
 	// Raw provider attribute string values
 	confAPIKey       string

@@ -3,12 +3,15 @@
 page_title: "katapult_virtual_machine Resource - terraform-provider-katapult"
 subcategory: ""
 description: |-
-  
+  The Virtual Machine resource allows you to create and manage Virtual Machines in Katapult.
+  ~> Warning: Deleting a virtual machine resource with Terraform will by default purge the VM from Katapult's trash, permanently deleting it. If you wish to instead keep a deleted VM in the trash, set theskip_trash_object_purge provider option to true. By default, objects in the trash are permanently deleted after 48 hours.
 ---
 
 # katapult_virtual_machine (Resource)
 
+The Virtual Machine resource allows you to create and manage Virtual Machines in Katapult.
 
+~> **Warning:** Deleting a virtual machine resource with Terraform will by default purge the VM from Katapult's trash, permanently deleting it. If you wish to instead keep a deleted VM in the trash, set the`skip_trash_object_purge` provider option to `true`. By default, objects in the trash are permanently deleted after 48 hours.
 
 ## Example Usage
 

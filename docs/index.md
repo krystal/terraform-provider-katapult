@@ -40,3 +40,7 @@ provider "katapult" {
 ### Optional
 
 - `log_level` (String) Log level used by Katapult Terraform provider. Can be specified with the `KATAPULT_LOG_LEVEL` environment variable. Defaults to `info`.
+- `skip_trash_object_purge` (Boolean) Skip purging deleted resources from Katapult's trash when they are destroyed by Terraform. Only relevant to some resources which are moved to the trash when they are deleted. Can be specified with the
+`KATAPULT_SKIP_TRASH_OBJECT_PURGE` environment variable. Defaults to `false`.
+
+  ~> **Note:** Using `skip_trash_object_purge` can quickly lead to a build up of a lot objects in the trash if you are replacing resources repeatedly. Hence this option is disabled by default, and should only be used if you are sure you want to keep deleted resources in the trash.

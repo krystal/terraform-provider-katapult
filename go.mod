@@ -8,6 +8,7 @@ require (
 	github.com/hashicorp/go-hclog v1.4.0
 	github.com/hashicorp/go-retryablehttp v0.7.2
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.25.0
+	github.com/jimeh/rands v0.3.0
 	github.com/jimeh/undent v1.1.1
 	github.com/krystal/go-katapult v0.2.0
 	github.com/stretchr/testify v1.8.2
