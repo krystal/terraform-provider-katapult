@@ -611,47 +611,21 @@ func resourceVirtualMachineDelete(
 		)...)
 	}
 
+	vmRef := vm.Ref()
+	stopped := false
 	switch vm.State { //nolint:exhaustive
 	case core.VirtualMachineStarted:
-		err2 := stopVirtualMachine(ctx, m, d.Timeout(schema.TimeoutDelete), vm)
-		if err2 != nil {
-			return append(diags, diag.FromErr(
-				fmt.Errorf("failed to stop virtual machine: %w", err2),
-			)...)
-		}
-	case core.VirtualMachineStopping,
-		core.VirtualMachineShuttingDown:
-		vmWaiter := &resource.StateChangeConf{
-			Pending: []string{
-				string(core.VirtualMachineStarted),
-				string(core.VirtualMachineStopping),
-				string(core.VirtualMachineShuttingDown),
-			},
-			Target: []string{
-				string(core.VirtualMachineStopped),
-			},
-			Refresh: func() (interface{}, string, error) {
-				v, _, err2 := m.Core.VirtualMachines.GetByID(ctx, vm.ID)
-				if err2 != nil {
-					return 0, "", err2
-				}
-
-				return v, string(v.State), nil
-			},
-			Timeout:                   d.Timeout(schema.TimeoutDelete),
-			Delay:                     2 * time.Second,
-			MinTimeout:                5 * time.Second,
-			ContinuousTargetOccurence: 1,
-		}
-
-		_, err = vmWaiter.WaitForStateContext(ctx)
+		_, _, err = m.Core.VirtualMachines.Stop(ctx, vmRef)
 		if err != nil {
 			return append(diags, diag.FromErr(
 				fmt.Errorf("failed to stop virtual machine: %w", err),
 			)...)
 		}
+	case core.VirtualMachineStopping,
+		core.VirtualMachineShuttingDown:
+		// We only need to wait for the VM to stop.
 	case core.VirtualMachineStopped:
-		// no action needed
+		stopped = true
 	default:
 		return append(diags, diag.FromErr(
 			fmt.Errorf(
@@ -659,6 +633,17 @@ func resourceVirtualMachineDelete(
 				string(vm.State),
 			),
 		)...)
+	}
+
+	if !stopped {
+		vm, err = waitForVirtualMachineToStop(
+			ctx, m, d.Timeout(schema.TimeoutDelete), vmRef,
+		)
+		if err != nil {
+			return append(diags, diag.FromErr(
+				fmt.Errorf("failed to stop virtual machine: %w", err),
+			)...)
+		}
 	}
 
 	// If we're leaving the VM in the trash when done, we need to change the
@@ -743,24 +728,38 @@ func addVMUniqueHostnameSuffix(
 	return vm, nil
 }
 
-func stopVirtualMachine(
+func waitForVirtualMachineToStop(
 	ctx context.Context,
 	m *Meta,
 	timeout time.Duration,
-	vm *core.VirtualMachine,
-) error {
-	task, _, err := m.Core.VirtualMachines.Stop(ctx, vm.Ref())
-	if err != nil {
-		if errors.Is(err, katapult.ErrNotFound) {
-			return nil
-		}
+	vmRef core.VirtualMachineRef,
+) (*core.VirtualMachine, error) {
+	waiter := &resource.StateChangeConf{
+		Pending: []string{
+			string(core.VirtualMachineStarted),
+			string(core.VirtualMachineStopping),
+			string(core.VirtualMachineShuttingDown),
+		},
+		Target: []string{
+			string(core.VirtualMachineStopped),
+		},
+		Refresh: func() (interface{}, string, error) {
+			vm, _, e := m.Core.VirtualMachines.Get(ctx, vmRef)
+			if e != nil {
+				return vm, "", e
+			}
 
-		return err
+			return vm, string(vm.State), nil
+		},
+		Timeout:                   timeout,
+		Delay:                     1 * time.Second,
+		MinTimeout:                5 * time.Second,
+		ContinuousTargetOccurence: 1,
 	}
 
-	err = waitForTaskCompletion(ctx, m, timeout, task)
+	rawVM, err := waiter.WaitForStateContext(ctx)
 
-	return err
+	return rawVM.(*core.VirtualMachine), err
 }
 
 func normalizeVirtualMachinePackage(

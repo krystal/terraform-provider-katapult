@@ -53,15 +53,27 @@ func testSweepVirtualMachines(_ string) error {
 
 		m.Logger.Info("deleting virtual machine", "id", vm.ID, "name", vm.Name)
 
+		stopped := false
 		switch vm.State { //nolint:exhaustive
 		case core.VirtualMachineStarted:
-			err2 := stopVirtualMachine(ctx, m, 5*time.Minute, vm)
-			if err2 != nil {
-				return err2
+			_, _, err = m.Core.VirtualMachines.Stop(ctx, vm.Ref())
+			if err != nil {
+				return err
 			}
 		case core.VirtualMachineStopping,
 			core.VirtualMachineShuttingDown:
-			vmWaiter := &resource.StateChangeConf{
+			// Wait for the VM to stop.
+		case core.VirtualMachineStopped:
+			stopped = true
+		default:
+			return fmt.Errorf(
+				"cannot stop virtual machine in state: %s",
+				string(vm.State),
+			)
+		}
+
+		if !stopped {
+			stopWaiter := &resource.StateChangeConf{
 				Pending: []string{
 					string(core.VirtualMachineStarted),
 					string(core.VirtualMachineStopping),
@@ -90,19 +102,12 @@ func testSweepVirtualMachines(_ string) error {
 				"stopping virtual machine", "id", vm.ID, "name", vm.Name,
 			)
 
-			_, err2 := vmWaiter.WaitForStateContext(ctx)
-			if err2 != nil {
+			_, err = stopWaiter.WaitForStateContext(ctx)
+			if err != nil {
 				return fmt.Errorf(
-					"failed to shutdown virtual machine: %w", err2,
+					"failed to shutdown virtual machine: %w", err,
 				)
 			}
-		case core.VirtualMachineStopped:
-			// no action needed
-		default:
-			return fmt.Errorf(
-				"cannot stop virtual machine in state: %s",
-				string(vm.State),
-			)
 		}
 
 		trash, _, err := m.Core.VirtualMachines.Delete(ctx, vm.Ref())
@@ -116,7 +121,7 @@ func testSweepVirtualMachines(_ string) error {
 			return err
 		}
 
-		taskWaiter := &resource.StateChangeConf{
+		trashWaiter := &resource.StateChangeConf{
 			Pending: []string{"exists"},
 			Target:  []string{"not_found"},
 			Refresh: func() (interface{}, string, error) {
@@ -137,7 +142,7 @@ func testSweepVirtualMachines(_ string) error {
 			"purging virtual machine", "id", vm.ID, "name", vm.Name,
 		)
 
-		_, err = taskWaiter.WaitForStateContext(ctx)
+		_, err = trashWaiter.WaitForStateContext(ctx)
 		if err != nil {
 			return err
 		}
