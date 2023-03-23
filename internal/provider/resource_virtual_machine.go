@@ -575,7 +575,7 @@ func resourceVirtualMachineUpdate(
 	return resourceVirtualMachineRead(ctx, d, meta)
 }
 
-//nolint:funlen
+//nolint:funlen,gocyclo
 func resourceVirtualMachineDelete(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -583,6 +583,8 @@ func resourceVirtualMachineDelete(
 ) diag.Diagnostics {
 	m := meta.(*Meta)
 	diags := diag.Diagnostics{}
+
+	timeout := d.Timeout(schema.TimeoutDelete)
 
 	vm, _, err := m.Core.VirtualMachines.GetByID(ctx, d.Id())
 	if err != nil {
@@ -593,9 +595,7 @@ func resourceVirtualMachineDelete(
 				return diags
 			}
 
-			err2 := purgeTrashObjectByObjectID(
-				ctx, m, d.Timeout(schema.TimeoutDelete), vm.ID,
-			)
+			err2 := purgeTrashObjectByObjectID(ctx, m, timeout, vm.ID)
 			if err2 != nil {
 				diags = append(diags, diag.FromErr(fmt.Errorf(
 					"failed to purge virtual machine from trash: %w",
@@ -611,15 +611,24 @@ func resourceVirtualMachineDelete(
 		)...)
 	}
 
-	vmRef := vm.Ref()
 	stopped := false
 	switch vm.State { //nolint:exhaustive
 	case core.VirtualMachineStarted:
-		_, _, err = m.Core.VirtualMachines.Stop(ctx, vmRef)
-		if err != nil {
+		var task *core.Task
+		task, _, err = m.Core.VirtualMachines.Stop(ctx, vm.Ref())
+		if err != nil && !isErrNotFoundOrInTrash(err) {
 			return append(diags, diag.FromErr(
 				fmt.Errorf("failed to stop virtual machine: %w", err),
 			)...)
+		}
+
+		if task != nil {
+			err = waitForTaskCompletion(ctx, m, timeout, task)
+			if err != nil && !isErrNotFoundOrInTrash(err) {
+				return append(diags, diag.FromErr(
+					fmt.Errorf("failed to stop virtual machine: %w", err),
+				)...)
+			}
 		}
 	case core.VirtualMachineStopping,
 		core.VirtualMachineShuttingDown:
@@ -636,10 +645,10 @@ func resourceVirtualMachineDelete(
 	}
 
 	if !stopped {
-		vm, err = waitForVirtualMachineToStop(
-			ctx, m, d.Timeout(schema.TimeoutDelete), vmRef,
+		_, err = waitForVirtualMachineToStop(
+			ctx, m, timeout, vm.Ref(),
 		)
-		if err != nil {
+		if err != nil && !isErrNotFoundOrInTrash(err) {
 			return append(diags, diag.FromErr(
 				fmt.Errorf("failed to stop virtual machine: %w", err),
 			)...)
@@ -652,7 +661,7 @@ func resourceVirtualMachineDelete(
 	// the same hostname.
 	if m.SkipTrashObjectPurge {
 		vm, err = addVMUniqueHostnameSuffix(ctx, m, vm)
-		if err != nil {
+		if err != nil && !isErrNotFoundOrInTrash(err) {
 			return append(diags, diag.FromErr(
 				fmt.Errorf(
 					"failed to change virtual machine hostname before "+
@@ -663,8 +672,8 @@ func resourceVirtualMachineDelete(
 		}
 	}
 
-	trash, _, err := m.Core.VirtualMachines.Delete(ctx, vm.Ref())
-	if err != nil {
+	_, _, err = m.Core.VirtualMachines.Delete(ctx, vm.Ref())
+	if err != nil && !isErrNotFoundOrInTrash(err) {
 		return append(diags, diag.FromErr(
 			fmt.Errorf("failed to delete virtual machine: %w", err),
 		)...)
@@ -676,8 +685,10 @@ func resourceVirtualMachineDelete(
 	}
 
 	if !m.SkipTrashObjectPurge {
-		err = purgeTrashObject(ctx, m, d.Timeout(schema.TimeoutDelete), trash)
-		if err != nil {
+		err = purgeTrashObjectByObjectID(
+			ctx, m, timeout, vm.ID,
+		)
+		if err != nil && !isErrNotFoundOrInTrash(err) {
 			return append(diags, diag.FromErr(
 				fmt.Errorf(
 					"failed to purge virtual machine from trash: %w", err,
@@ -804,7 +815,7 @@ func unallocateAllVirtualMachineIPs(
 	for _, ipID := range ipIDs {
 		ip := &core.IPAddress{ID: ipID}
 		_, err := m.Core.IPAddresses.Unallocate(ctx, ip.Ref())
-		if err != nil {
+		if err != nil && !errors.Is(err, katapult.ErrNotFound) {
 			return fmt.Errorf(
 				"failed to unallocate IP %s from virtual machine %s: %w",
 				ipID, d.Id(), err,

@@ -123,6 +123,7 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"katapult_ip":                    resourceIP(),
+				"katapult_file_storage_volume":   resourceFileStorageVolume(),
 				"katapult_security_group":        resourceSecurityGroup(),
 				"katapult_security_group_rule":   resourceSecurityGroupRule(),
 				"katapult_virtual_machine":       resourceVirtualMachine(),
@@ -133,6 +134,8 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 				"katapult_data_center":              dataSourceDataCenter(),
 				"katapult_disk_template":            dataSourceDiskTemplate(),
 				"katapult_disk_templates":           dataSourceDiskTemplates(),
+				"katapult_file_storage_volume":      dataSourceFileStorageVolume(),
+				"katapult_file_storage_volumes":     dataSourceFileStorageVolumes(),
 				"katapult_ip":                       dataSourceIP(),
 				"katapult_network_speed_profile":    dataSourceNetworkSpeedProfile(),
 				"katapult_network_speed_profiles":   dataSourceNetworkSpeedProfiles(),

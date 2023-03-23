@@ -11,6 +11,11 @@ import (
 	"github.com/krystal/go-katapult/core"
 )
 
+func isErrNotFoundOrInTrash(err error) bool {
+	return errors.Is(err, katapult.ErrNotFound) ||
+		errors.Is(err, core.ErrObjectInTrash)
+}
+
 func stringSliceToSchemaSet(s []string) *schema.Set {
 	set := &schema.Set{F: schema.HashString}
 	for _, v := range s {
@@ -40,7 +45,7 @@ func purgeTrashObjectByObjectID(
 	objectID string,
 ) error {
 	return purgeTrashObject(
-		ctx, m, timeout, &core.TrashObject{ObjectID: objectID},
+		ctx, m, timeout, core.TrashObjectRef{ObjectID: objectID},
 	)
 }
 
@@ -48,9 +53,8 @@ func purgeTrashObject(
 	ctx context.Context,
 	m *Meta,
 	timeout time.Duration,
-	trash *core.TrashObject,
+	ref core.TrashObjectRef,
 ) error {
-	ref := trash.Ref()
 	_, _, err := m.Core.TrashObjects.Purge(ctx, ref)
 	if err != nil {
 		if errors.Is(err, katapult.ErrNotFound) {
