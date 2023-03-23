@@ -50,7 +50,8 @@ func purgeTrashObject(
 	timeout time.Duration,
 	trash *core.TrashObject,
 ) error {
-	task, _, err := m.Core.TrashObjects.Purge(ctx, trash.Ref())
+	ref := trash.Ref()
+	_, _, err := m.Core.TrashObjects.Purge(ctx, ref)
 	if err != nil {
 		if errors.Is(err, katapult.ErrNotFound) {
 			return nil
@@ -59,7 +60,35 @@ func purgeTrashObject(
 		return err
 	}
 
-	err = waitForTaskCompletion(ctx, m, timeout, task)
+	err = waitForTrashObjectNotFound(ctx, m, timeout, ref)
+
+	return err
+}
+
+func waitForTrashObjectNotFound(
+	ctx context.Context,
+	m *Meta,
+	timeout time.Duration,
+	ref core.TrashObjectRef,
+) error {
+	waiter := &resource.StateChangeConf{
+		Pending: []string{"exists"},
+		Target:  []string{"not_found"},
+		Refresh: func() (interface{}, string, error) {
+			_, _, e := m.Core.TrashObjects.Get(ctx, ref)
+			if e != nil && errors.Is(e, katapult.ErrNotFound) {
+				return 1, "not_found", nil
+			}
+
+			return nil, "exists", nil
+		},
+		Timeout:                   timeout,
+		Delay:                     1 * time.Second,
+		MinTimeout:                5 * time.Second,
+		ContinuousTargetOccurence: 1,
+	}
+
+	_, err := waiter.WaitForStateContext(ctx)
 
 	return err
 }
@@ -81,10 +110,10 @@ func waitForTaskCompletion(
 		Refresh: func() (interface{}, string, error) {
 			t, _, e := m.Core.Tasks.Get(ctx, task.ID)
 			if e != nil {
-				return 0, "", e
+				return t, "", e
 			}
 			if t.Status == core.TaskFailed {
-				return 0, string(t.Status), errors.New("task failed")
+				return t, string(t.Status), errors.New("task failed")
 			}
 
 			return t, string(t.Status), nil
