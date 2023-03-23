@@ -52,7 +52,6 @@ func dataSourceSecurityGroupsRead(
 	}
 
 	err = d.Set("security_groups", groups)
-	m.Logger.Debug("set security groups", "groups", groups, "err", err)
 	if err != nil {
 		return diag.FromErr(err)
 	}
