@@ -997,10 +997,29 @@ func testAccCheckKatapultVirtualMachineDestroy(
 			vm, _, err := m.Core.VirtualMachines.GetByID(
 				tt.Ctx, rs.Primary.ID,
 			)
-			if err == nil && vm != nil {
+			if !errors.Is(err, katapult.ErrNotFound) {
+				if err != nil {
+					return err
+				}
+
 				return fmt.Errorf(
 					"katapult_virtual_machine %s (%s) was not destroyed",
 					rs.Primary.ID, vm.Name,
+				)
+			}
+
+			_, _, err = m.Core.TrashObjects.GetByObjectID(
+				tt.Ctx, rs.Primary.ID,
+			)
+			if !errors.Is(err, katapult.ErrNotFound) {
+				if err != nil {
+					return err
+				}
+
+				return fmt.Errorf(
+					"katapult_virtual_machine %s was deleted, but not "+
+						"purged from trash",
+					rs.Primary.ID,
 				)
 			}
 		}
