@@ -139,12 +139,15 @@ test-deps:
 
 .PHONY: lint
 lint: $(TOOLDIR)/golangci-lint
-	golangci-lint $(V) run --fix
+	golangci-lint $(V) run
 
 .PHONY: lint-provider
 lint-provider: $(TOOLDIR)/tfproviderlint
 	tfproviderlint ./...
 
+.PHONY: format
+format: $(TOOLDIR)/golangci-lint
+	golangci-lint $(V) run --fix
 
 
 sweep:
