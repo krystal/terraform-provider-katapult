@@ -619,8 +619,8 @@ func TestAccKatapultSecurityGroupRule_invalid(t *testing.T) {
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
-						"expected direction to be one of [inbound outbound], " +
-							"got upwards",
+						`expected direction to be one of ` +
+							`["inbound" "outbound"], got upwards`,
 					),
 				),
 			},
@@ -641,8 +641,8 @@ func TestAccKatapultSecurityGroupRule_invalid(t *testing.T) {
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
-						"expected protocol to be one of [TCP UDP ICMP], " +
-							"got grpc",
+						`expected protocol to be one of ` +
+							`["TCP" "UDP" "ICMP"], got grpc`,
 					),
 				),
 			},
