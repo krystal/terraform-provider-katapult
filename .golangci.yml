@@ -26,7 +26,6 @@ linters:
   enable:
     - asciicheck
     - bodyclose
-    - depguard
     - dupl
     - durationcheck
     - errcheck
@@ -72,6 +71,9 @@ issues:
     - Using the variable on range scope `tt` in function literal
     - Using the variable on range scope `tc` in function literal
   exclude-rules:
+    - linters:
+        - staticcheck
+      text: "SA1019: resource.StateChangeConf is deprecated"
     - path: "_test\\.go"
       linters:
         - funlen

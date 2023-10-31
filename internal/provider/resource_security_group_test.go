@@ -1062,8 +1062,8 @@ func TestAccKatapultSecurityGroup_invalid_rules(t *testing.T) {
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
-						"expected inbound_rule.0.protocol " +
-							"to be one of [TCP UDP ICMP], got grpc",
+						`expected inbound_rule.0.protocol to be one of ` +
+							`["TCP" "UDP" "ICMP"], got grpc`,
 					),
 				),
 			},
@@ -1083,8 +1083,8 @@ func TestAccKatapultSecurityGroup_invalid_rules(t *testing.T) {
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
-						"expected outbound_rule.0.protocol " +
-							"to be one of [TCP UDP ICMP], got slashdot",
+						`expected outbound_rule.0.protocol to be one of ` +
+							`["TCP" "UDP" "ICMP"], got slashdot`,
 					),
 				),
 			},

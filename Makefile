@@ -45,7 +45,6 @@ $(TOOLDIR)/$(1): Makefile
 	GOBIN="$(CURDIR)/$(TOOLDIR)" go install "$(2)"
 endef
 
-$(eval $(call tool,gofumports,mvdan.cc/gofumpt/gofumports@latest))
 $(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.51))
 $(eval $(call tool,gomod,github.com/Helcaraxan/gomod@latest))
 $(eval $(call tool,tfplugindocs,github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.14))
@@ -147,8 +146,9 @@ lint-provider: $(TOOLDIR)/tfproviderlint
 	tfproviderlint ./...
 
 .PHONY: format
-format: $(TOOLDIR)/gofumports
-	gofumports -w .
+format: $(TOOLDIR)/golangci-lint
+	golangci-lint $(V) run --fix
+
 
 sweep:
 	$(info WARNING: This will destroy infrastructure. Use only on \
