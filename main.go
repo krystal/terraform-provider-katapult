@@ -25,7 +25,6 @@ func main() {
 			Commit:  commit,
 		})().GRPCProvider,
 	)
-
 	if err != nil {
 		log.Fatal(err)
 	}
