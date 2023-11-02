@@ -216,7 +216,7 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 
 					resource "katapult_virtual_machine" "web" {
 						hostname = "%s-web"
@@ -225,7 +225,7 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_ip.web.id]
+						ip_address_ids = [katapult_legacy_ip.web.id]
 					}
 
 					resource "katapult_file_storage_volume" "data" {
@@ -254,7 +254,7 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 					resource "katapult_virtual_machine" "web" {
 						hostname = "%s-web"
 						package       = "rock-3"
@@ -262,10 +262,10 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_ip.web.id]
+						ip_address_ids = [katapult_legacy_ip.web.id]
 					}
 
-					resource "katapult_ip" "db" {}
+					resource "katapult_legacy_ip" "db" {}
 					resource "katapult_virtual_machine" "db" {
 						hostname = "%s-db"
 						package       = "rock-3"
@@ -273,7 +273,7 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_ip.db.id]
+						ip_address_ids = [katapult_legacy_ip.db.id]
 					}
 
 					resource "katapult_file_storage_volume" "data" {
@@ -302,7 +302,7 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 					resource "katapult_virtual_machine" "web" {
 						hostname = "%s-web"
 						package       = "rock-3"
@@ -310,7 +310,7 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_ip.web.id]
+						ip_address_ids = [katapult_legacy_ip.web.id]
 					}
 
 					resource "katapult_file_storage_volume" "data" {

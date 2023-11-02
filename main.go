@@ -4,11 +4,13 @@ import (
 	"context"
 	"log"
 
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6/tf6server"
 	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
 	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	"github.com/krystal/terraform-provider-katapult/internal/provider"
+	"github.com/krystal/terraform-provider-katapult/internal/v6provider"
 )
 
 var (
@@ -31,6 +33,10 @@ func main() {
 
 	providers := []func() tfprotov6.ProviderServer{
 		func() tfprotov6.ProviderServer { return upgradedSDKServer },
+		providerserver.NewProtocol6(v6provider.New(&v6provider.KatapultProvider{
+			Version: version,
+			Commit:  commit,
+		})()),
 	}
 
 	muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)

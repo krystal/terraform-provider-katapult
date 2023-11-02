@@ -1,10 +1,11 @@
-package provider
+package v6provider
 
 import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+
 	"github.com/jimeh/undent"
 )
 
@@ -12,9 +13,9 @@ func TestAccKatapultDataSourceIP_by_id(t *testing.T) {
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
@@ -73,9 +74,9 @@ func TestAccKatapultDataSourceIP_by_address(t *testing.T) {
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
@@ -134,19 +135,18 @@ func TestAccKatapultDataSourceIP_invalid(t *testing.T) {
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: `data "katapult_ip" "src" {}`,
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta("one of `address,id` must be specified"),
+					regexp.QuoteMeta(
+						"At least one attribute out of " +
+							"[id,address] must be specified",
+					),
 				),
 			},
 		},
 	})
 }
-
-//
-// Helpers
-//
