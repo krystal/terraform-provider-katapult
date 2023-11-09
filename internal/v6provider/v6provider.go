@@ -72,19 +72,25 @@ func (k *KatapultProvider) Schema(
 			"api_key": schema.StringAttribute{
 				Optional:  true,
 				Sensitive: true,
-				MarkdownDescription: "API Key for Katapult Core API. Can be " +
+				MarkdownDescription: "**REQUIRED** via config or " +
+					"environment variable" +
+					"API Key for Katapult Core API. Can be " +
 					"specified with the `KATAPULT_API_KEY` environment " +
 					"variable.",
 			},
 			"organization": schema.StringAttribute{
 				Optional: true,
-				MarkdownDescription: "Organization sub-domain. Can be " +
+				MarkdownDescription: "**REQUIRED** via config or " +
+					"environment variable" +
+					"Organization sub-domain. Can be " +
 					"specified with the `KATAPULT_ORGANIZATION` " +
 					"environment variable.",
 			},
 			"data_center": schema.StringAttribute{
 				Optional: true,
-				MarkdownDescription: "Data center permalink. Can be " +
+				MarkdownDescription: "**REQUIRED** via config or " +
+					"environment variable" +
+					"Data center permalink. Can be " +
 					"specified with the `KATAPULT_DATA_CENTER` " +
 					"environment variable.",
 			},

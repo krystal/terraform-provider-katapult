@@ -33,10 +33,10 @@ provider "katapult" {
 
 ### Optional
 
-- `api_key` (String, Sensitive) API Key for Katapult Core API. Can be specified with the `KATAPULT_API_KEY` environment variable.
-- `data_center` (String) Data center permalink. Can be specified with the `KATAPULT_DATA_CENTER` environment variable.
+- `api_key` (String, Sensitive) **REQUIRED** via config or environment variableAPI Key for Katapult Core API. Can be specified with the `KATAPULT_API_KEY` environment variable.
+- `data_center` (String) **REQUIRED** via config or environment variableData center permalink. Can be specified with the `KATAPULT_DATA_CENTER` environment variable.
 - `log_level` (String) Log level used by Katapult Terraform provider. Can be specified with the `KATAPULT_LOG_LEVEL` environment variable. Defaults to `info`.
-- `organization` (String) Organization sub-domain. Can be specified with the `KATAPULT_ORGANIZATION` environment variable.
+- `organization` (String) **REQUIRED** via config or environment variableOrganization sub-domain. Can be specified with the `KATAPULT_ORGANIZATION` environment variable.
 - `skip_trash_object_purge` (Boolean) Skip purging deleted resources from Katapult's trash when they are destroyed by Terraform. Only relevant to some resources which are moved to the trash when they are deleted. Can be specified with the
 `KATAPULT_SKIP_TRASH_OBJECT_PURGE` environment variable. Defaults to `false`.
 
