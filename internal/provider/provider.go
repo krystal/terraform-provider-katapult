@@ -165,7 +165,7 @@ func boolOrEnv(in bool, env string) bool {
 	}
 
 	switch strings.ToLower(os.Getenv(env)) {
-	case "true", "1":
+	case "true", "1", "yes", "on", "y", "t":
 		return true
 	}
 
@@ -180,15 +180,18 @@ func configure(
 		_ context.Context,
 		d *schema.ResourceData,
 	) (interface{}, diag.Diagnostics) {
+		logLevel := stringOrEnv(
+			d.Get("log_level").(string),
+			"KATAPULT_LOG_LEVEL",
+		)
+		if logLevel == "" {
+			logLevel = "info"
+		}
+
 		m := &Meta{
 			Logger: hclog.New(&hclog.LoggerOptions{
-				Name: "katapult",
-				Level: hclog.LevelFromString(
-					stringOrEnv(
-						d.Get("log_level").(string),
-						"KATAPULT_LOG_LEVEL",
-					),
-				),
+				Name:       "katapult",
+				Level:      hclog.LevelFromString(logLevel),
 				TimeFormat: "2006/01/02 15:04:05",
 			}),
 			confAPIKey: stringOrEnv(

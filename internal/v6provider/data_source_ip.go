@@ -3,7 +3,6 @@ package v6provider
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -80,20 +79,15 @@ func (r IPDataSource) Schema(
 				},
 			},
 			"network_id": schema.StringAttribute{
-				Optional: true,
 				Computed: true,
 			},
 			"version": schema.Int64Attribute{
 				Description: "IPv4 or IPv6.",
-				Optional:    true,
 				Computed:    true,
-				Validators: []validator.Int64{
-					int64validator.OneOf(4, 6),
-				},
 			},
 			"address": schema.StringAttribute{
-				Computed: true,
 				Optional: true,
+				Computed: true,
 			},
 			"address_with_mask": schema.StringAttribute{
 				Computed: true,
@@ -102,19 +96,12 @@ func (r IPDataSource) Schema(
 				Computed: true,
 			},
 			"vip": schema.BoolAttribute{
-				Optional: true,
 				Computed: true,
 			},
 			"label": schema.StringAttribute{
 				Description:         "VIP label.",
 				MarkdownDescription: "VIP label.",
-				Optional:            true,
 				Computed:            true,
-				Validators: []validator.String{
-					stringvalidator.AlsoRequires(
-						path.MatchRelative().AtParent().AtName("vip")),
-					stringvalidator.LengthAtLeast(1),
-				},
 			},
 			"allocation_type": schema.StringAttribute{
 				Computed: true,

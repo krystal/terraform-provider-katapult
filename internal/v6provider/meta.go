@@ -64,15 +64,18 @@ func NewMeta(
 	version string,
 	terraformVersion string,
 ) (*Meta, error) {
+	logLevel = stringOrEnv(
+		logLevel,
+		"KATAPULT_LOG_LEVEL",
+	)
+	if logLevel == "" {
+		logLevel = "info"
+	}
+
 	m := &Meta{
 		Logger: hclog.New(&hclog.LoggerOptions{
-			Name: "katapult",
-			Level: hclog.LevelFromString(
-				stringOrEnv(
-					logLevel,
-					"KATAPULT_LOG_LEVEL",
-				),
-			),
+			Name:       "katapult",
+			Level:      hclog.LevelFromString(logLevel),
 			TimeFormat: "2006/01/02 15:04:05",
 		}),
 		confAPIKey: stringOrEnv(

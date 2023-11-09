@@ -88,10 +88,12 @@ func (r IPResource) Schema(
 				},
 			},
 			"version": schema.Int64Attribute{
-				Description: "IPv4 or IPv6.",
-				Optional:    true,
-				Computed:    true,
-				Default:     int64default.StaticInt64(4),
+				Description: "IPv4 or IPv6. Default is `4`.",
+				MarkdownDescription: "IPv4 or IPv6. " +
+					"Default is `4`.",
+				Optional: true,
+				Computed: true,
+				Default:  int64default.StaticInt64(4),
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
@@ -109,19 +111,21 @@ func (r IPResource) Schema(
 				Computed: true,
 			},
 			"vip": schema.BoolAttribute{
-				Optional: true,
-				Computed: true,
-				Default:  booldefault.StaticBool(false),
+				Description:         "Default is `false`.",
+				MarkdownDescription: "Default is `false`.",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
 			},
 			"label": schema.StringAttribute{
 				Description: "VIP label. Required when vip is true.",
-				MarkdownDescription: "VIP label." +
+				MarkdownDescription: "VIP label. " +
 					"Required when **vip** is `true`.",
 				Optional: true,
 				Computed: true,
 				Validators: []validator.String{
 					stringvalidator.AlsoRequires(
-						path.MatchRelative().AtParent().AtName("vip")),
+						path.MatchRoot("vip")),
 					stringvalidator.LengthAtLeast(1),
 				},
 			},
@@ -151,10 +155,8 @@ func (r *IPResource) Create(
 
 	var network *core.Network
 
-	if plan.NetworkID.ValueString() != "" {
-		network = &core.Network{
-			ID: plan.NetworkID.ValueString(),
-		}
+	if netID := plan.NetworkID.ValueString(); netID != "" {
+		network = &core.Network{ID: netID}
 	} else {
 		var err error
 		network, _, err = r.M.Core.DataCenters.DefaultNetwork(
@@ -219,8 +221,6 @@ func (r *IPResource) Read(
 
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
-
-	/* ... */
 }
 
 func (r *IPResource) Update(

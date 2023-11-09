@@ -31,16 +31,16 @@ data "katapult_ip" "web-2" {
 
 - `address` (String)
 - `id` (String) The ID of this resource.
-- `label` (String) VIP label.
-- `network_id` (String)
-- `version` (Number) IPv4 or IPv6.
-- `vip` (Boolean)
 
 ### Read-Only
 
 - `address_with_mask` (String)
 - `allocation_id` (String)
 - `allocation_type` (String)
+- `label` (String) VIP label.
+- `network_id` (String)
 - `reverse_dns` (String)
+- `version` (Number) IPv4 or IPv6.
+- `vip` (Boolean)
 
 

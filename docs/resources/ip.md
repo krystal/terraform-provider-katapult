@@ -33,10 +33,10 @@ resource "katapult_ip" "primary-db" {
 
 ### Optional
 
-- `label` (String) VIP label.Required when **vip** is `true`.
+- `label` (String) VIP label. Required when **vip** is `true`.
 - `network_id` (String)
-- `version` (Number) IPv4 or IPv6.
-- `vip` (Boolean)
+- `version` (Number) IPv4 or IPv6. Default is `4`.
+- `vip` (Boolean) Default is `false`.
 
 ### Read-Only
 

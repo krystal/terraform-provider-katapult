@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -19,8 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/krystal/go-katapult"
-	"github.com/krystal/go-katapult/core"
 )
 
 const (
@@ -151,7 +148,7 @@ func boolOrEnv(in *bool, env string) bool {
 	}
 
 	switch strings.ToLower(os.Getenv(env)) {
-	case "true", "1":
+	case "true", "1", "yes", "on", "y", "t":
 		return true
 	}
 
@@ -181,7 +178,7 @@ func userAgent(name string, terraformVersion string, version string) string {
 	return ua
 }
 
-//nolint:funlen // just over 100 lines
+
 func (k *KatapultProvider) Configure(
 	ctx context.Context,
 	req provider.ConfigureRequest,
@@ -197,94 +194,23 @@ func (k *KatapultProvider) Configure(
 	diags := req.Config.Get(ctx, &conf)
 	resp.Diagnostics.Append(diags...)
 
-	m := &Meta{
-		Logger: hclog.New(&hclog.LoggerOptions{
-			Name: "katapult",
-			Level: hclog.LevelFromString(
-				stringOrEnv(
-					conf.LogLevel.ValueString(),
-					"KATAPULT_LOG_LEVEL",
-				),
-			),
-			TimeFormat: "2006/01/02 15:04:05",
-		}),
-		confAPIKey: stringOrEnv(
-			conf.APIKey.ValueString(),
-			"KATAPULT_API_KEY",
-		),
-		confDataCenter: stringOrEnv(
-			conf.DataCenter.ValueString(),
-			"KATAPULT_DATA_CENTER",
-		),
-		confOrganization: stringOrEnv(
-			conf.Organization.ValueString(),
-			"KATAPULT_ORGANIZATION",
-		),
-		SkipTrashObjectPurge: boolOrEnv(
-			conf.SkipTrashObjectPurge.ValueBoolPointer(),
-			"KATAPULT_SKIP_TRASH_OBJECT_PURGE",
-		),
-		GeneratedNamePrefix: k.GeneratedNamePrefix,
-	}
-
-	if m.GeneratedNamePrefix == "" {
-		m.GeneratedNamePrefix = defaultGeneratedNamePrefix
-	}
-
-	opts := []katapult.Option{
-		katapult.WithAPIKey(m.confAPIKey),
-		katapult.WithUserAgent(
-			userAgent(
-				"terraform-provider-katapult",
-				req.TerraformVersion,
-				k.Version,
-			),
-		),
-	}
-
-	httpClient := k.HTTPClient
-	if httpClient == nil {
-		httpClient = &http.Client{Timeout: 60 * time.Second}
-	}
-
-	if k.HTTPClient != nil {
-		opts = append(opts, katapult.WithHTTPClient(httpClient))
-	}
-
-	// Debug override of API URL for internal testing purposes.
-	if apiURL := os.Getenv("KATAPULT_TF_DEBUG_API_URL"); apiURL != "" {
-		u, err := url.Parse(apiURL)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"failed to parse KATAPULT_TF_DEBUG_API_URL",
-				err.Error(),
-			)
-			return
-		}
-
-		opts = append(opts, katapult.WithBaseURL(u))
-	}
-
-	c, err := katapult.New(opts...)
+	m, err := NewMeta(
+		conf.APIKey.ValueString(),
+		conf.DataCenter.ValueString(),
+		conf.Organization.ValueString(),
+		conf.SkipTrashObjectPurge.ValueBoolPointer(),
+		conf.LogLevel.ValueString(),
+		k.GeneratedNamePrefix,
+		k.HTTPClient,
+		k.Version,
+		req.TerraformVersion,
+	)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"failed to create Katapult client",
+			"Configure Error",
 			err.Error(),
 		)
 		return
-	}
-
-	rhc := newRetryableHTTPClient(httpClient, m.Logger)
-	c.HTTPClient = rhc.StandardClient()
-
-	m.Client = c
-	m.Core = core.New(m.Client)
-
-	m.OrganizationRef = core.OrganizationRef{
-		SubDomain: m.confOrganization,
-	}
-	m.DataCenterRef = core.DataCenterRef{
-		Permalink: m.confDataCenter,
 	}
 
 	k.m = m
