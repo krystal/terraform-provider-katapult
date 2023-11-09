@@ -178,7 +178,6 @@ func userAgent(name string, terraformVersion string, version string) string {
 	return ua
 }
 
-
 func (k *KatapultProvider) Configure(
 	ctx context.Context,
 	req provider.ConfigureRequest,
