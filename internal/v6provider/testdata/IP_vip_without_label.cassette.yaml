@@ -1,0 +1,88 @@
+---
+version: 1
+interactions:
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/data_centers/_/default_network?data_center%5Bpermalink%5D=uk-lon-01
+    method: GET
+  response:
+    body: '{"network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"}}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "181"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Nov 2023 12:53:30 GMT
+      Etag:
+      - W/"d60d47b2ba0b179327bb89a97b1c0e77"
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "193"
+      X-Request-Id:
+      - d5c61e49-8680-4f61-a199-d9f6eddd3c5b
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: |
+      {"organization":{"sub_domain":"terraform-acc-test"},"network":{"id":"netw_gVRkZdSKczfNg34P"},"version":"ipv4","vip":true}
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/organizations/_/ip_addresses
+    method: POST
+  response:
+    body: '{"error":{"code":"validation_error","description":"A validation error occurred
+      with the object that was being created/updated/deleted","detail":{"errors":["Label
+      can''t be blank"]}}}'
+    headers:
+      Access-Control-Allow-Methods:
+      - '*'
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache
+      Content-Length:
+      - "181"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Nov 2023 12:53:30 GMT
+      Server:
+      - Caddy
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Api-Schema:
+      - json-error
+      X-Ratelimit-Permitted:
+      - "200"
+      X-Ratelimit-Remaining:
+      - "186"
+      X-Request-Id:
+      - 7dfe10fb-feeb-48d0-8615-d37e6920a888
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""

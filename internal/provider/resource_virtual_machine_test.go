@@ -164,7 +164,7 @@ func TestAccKatapultVirtualMachine_minimal(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 
 					resource "katapult_virtual_machine" "base" {
 						package       = "rock-3"
@@ -172,7 +172,7 @@ func TestAccKatapultVirtualMachine_minimal(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_ip.web.id]
+						ip_address_ids = [katapult_legacy_ip.web.id]
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -208,11 +208,11 @@ func TestAccKatapultVirtualMachine_minimal(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_address_ids.*",
-						"katapult_ip.web", "id",
+						"katapult_legacy_ip.web", "id",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_addresses.*",
-						"katapult_ip.web", "address",
+						"katapult_legacy_ip.web", "address",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
@@ -239,8 +239,8 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
-					resource "katapult_ip" "internal" {}
+					resource "katapult_legacy_ip" "web" {}
+					resource "katapult_legacy_ip" "internal" {}
 
 					resource "katapult_virtual_machine_group" "web" {
 						name = "%s"
@@ -257,8 +257,8 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 						}
 						group_id       = katapult_virtual_machine_group.web.id
 						ip_address_ids = [
-							katapult_ip.web.id,
-							katapult_ip.internal.id
+							katapult_legacy_ip.web.id,
+							katapult_legacy_ip.internal.id
 						]
 						tags = ["web", "public"]
 						network_speed_profile = "1gbps"
@@ -312,11 +312,11 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_address_ids.*",
-						"katapult_ip.web", "id",
+						"katapult_legacy_ip.web", "id",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_address_ids.*",
-						"katapult_ip.internal", "id",
+						"katapult_legacy_ip.internal", "id",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
@@ -324,11 +324,11 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_addresses.*",
-						"katapult_ip.web", "address",
+						"katapult_legacy_ip.web", "address",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_addresses.*",
-						"katapult_ip.internal", "address",
+						"katapult_legacy_ip.internal", "address",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
@@ -368,8 +368,8 @@ func TestAccKatapultVirtualMachine_custom_disks(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
-					resource "katapult_ip" "internal" {}
+					resource "katapult_legacy_ip" "web" {}
+					resource "katapult_legacy_ip" "internal" {}
 
 					resource "katapult_virtual_machine_group" "web" {
 						name = "%s"
@@ -386,8 +386,8 @@ func TestAccKatapultVirtualMachine_custom_disks(t *testing.T) {
 						}
 						group_id       = katapult_virtual_machine_group.web.id
 						ip_address_ids = [
-							katapult_ip.web.id,
-							katapult_ip.internal.id
+							katapult_legacy_ip.web.id,
+							katapult_legacy_ip.internal.id
 						]
 						tags = ["web", "public"]
 						network_speed_profile = "1gbps"
@@ -452,11 +452,11 @@ func TestAccKatapultVirtualMachine_custom_disks(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_address_ids.*",
-						"katapult_ip.web", "id",
+						"katapult_legacy_ip.web", "id",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_address_ids.*",
-						"katapult_ip.internal", "id",
+						"katapult_legacy_ip.internal", "id",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
@@ -464,11 +464,11 @@ func TestAccKatapultVirtualMachine_custom_disks(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_addresses.*",
-						"katapult_ip.web", "address",
+						"katapult_legacy_ip.web", "address",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_addresses.*",
-						"katapult_ip.internal", "address",
+						"katapult_legacy_ip.internal", "address",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
@@ -505,7 +505,7 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 
 					resource "katapult_virtual_machine" "base" {
 						name          = "%s"
@@ -516,7 +516,7 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_ip.web.id]
+						ip_address_ids = [katapult_legacy_ip.web.id]
 						tags = ["web", "public"]
 						network_speed_profile = "1gbps"
 					}`,
@@ -564,7 +564,7 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 					resource "katapult_virtual_machine" "base" {
 						name          = "%s"
 						hostname      = "%s"
@@ -574,7 +574,7 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_ip.web.id]
+						ip_address_ids = [katapult_legacy_ip.web.id]
 						tags = ["web", "app", "lb"]
 						network_speed_profile = "10gbps"
 					}`,
@@ -640,7 +640,7 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 
 					resource "katapult_virtual_machine" "base" {
 						package       = "rock-3"
@@ -649,7 +649,7 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 							install_agent = true
 						}
 						ip_address_ids = [
-							katapult_ip.web.id,
+							katapult_legacy_ip.web.id,
 						]
 					}`,
 				),
@@ -663,7 +663,7 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_address_ids.*",
-						"katapult_ip.web", "id",
+						"katapult_legacy_ip.web", "id",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
@@ -671,14 +671,14 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_addresses.*",
-						"katapult_ip.web", "address",
+						"katapult_legacy_ip.web", "address",
 					),
 				),
 			},
 			{
 				Config: undent.String(`
-					resource "katapult_ip" "web" {}
-					resource "katapult_ip" "office" {}
+					resource "katapult_legacy_ip" "web" {}
+					resource "katapult_legacy_ip" "office" {}
 
 					resource "katapult_virtual_machine" "base" {
 						package       = "rock-3"
@@ -687,8 +687,8 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 							install_agent = true
 						}
 						ip_address_ids = [
-							katapult_ip.web.id,
-							katapult_ip.office.id,
+							katapult_legacy_ip.web.id,
+							katapult_legacy_ip.office.id,
 						]
 					}`,
 				),
@@ -702,11 +702,11 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_address_ids.*",
-						"katapult_ip.web", "id",
+						"katapult_legacy_ip.web", "id",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_address_ids.*",
-						"katapult_ip.office", "id",
+						"katapult_legacy_ip.office", "id",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
@@ -714,18 +714,18 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_addresses.*",
-						"katapult_ip.web", "address",
+						"katapult_legacy_ip.web", "address",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_addresses.*",
-						"katapult_ip.office", "address",
+						"katapult_legacy_ip.office", "address",
 					),
 				),
 			},
 			{
 				Config: undent.String(`
-					resource "katapult_ip" "web" {}
-					resource "katapult_ip" "office" {}
+					resource "katapult_legacy_ip" "web" {}
+					resource "katapult_legacy_ip" "office" {}
 
 					resource "katapult_virtual_machine" "base" {
 						package       = "rock-3"
@@ -734,7 +734,7 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 							install_agent = true
 						}
 						ip_address_ids = [
-							katapult_ip.web.id
+							katapult_legacy_ip.web.id
 						]
 						tags = ["web", "app", "lb"]
 					}`,
@@ -749,7 +749,7 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_address_ids.*",
-						"katapult_ip.web", "id",
+						"katapult_legacy_ip.web", "id",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
@@ -757,7 +757,7 @@ func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_virtual_machine.base", "ip_addresses.*",
-						"katapult_ip.web", "address",
+						"katapult_legacy_ip.web", "address",
 					),
 				),
 			},
@@ -780,7 +780,7 @@ func TestAccKatapultVirtualMachine_update_group(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 
 					resource "katapult_virtual_machine_group" "web" {
 						name = "%s"
@@ -793,7 +793,7 @@ func TestAccKatapultVirtualMachine_update_group(t *testing.T) {
 							install_agent = true
 						}
 						ip_address_ids = [
-							katapult_ip.web.id,
+							katapult_legacy_ip.web.id,
 						]
 					}`, name,
 				),
@@ -809,7 +809,7 @@ func TestAccKatapultVirtualMachine_update_group(t *testing.T) {
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 
 					resource "katapult_virtual_machine_group" "web" {
 						name = "%s"
@@ -822,7 +822,7 @@ func TestAccKatapultVirtualMachine_update_group(t *testing.T) {
 							install_agent = true
 						}
 						ip_address_ids = [
-							katapult_ip.web.id,
+							katapult_legacy_ip.web.id,
 						]
 						group_id = katapult_virtual_machine_group.web.id
 					}`, name,
@@ -839,7 +839,7 @@ func TestAccKatapultVirtualMachine_update_group(t *testing.T) {
 			},
 			{
 				Config: undent.String(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 
 					resource "katapult_virtual_machine" "base" {
 						package       = "rock-3"
@@ -848,7 +848,7 @@ func TestAccKatapultVirtualMachine_update_group(t *testing.T) {
 							install_agent = true
 						}
 						ip_address_ids = [
-							katapult_ip.web.id,
+							katapult_legacy_ip.web.id,
 						]
 					}`,
 				),
@@ -881,7 +881,7 @@ func TestAccKatapultVirtualMachine_update_network_speed_profile(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 
 					resource "katapult_virtual_machine" "base" {
 						name          = "%s"
@@ -891,7 +891,7 @@ func TestAccKatapultVirtualMachine_update_network_speed_profile(t *testing.T) {
 							install_agent = true
 						}
 						ip_address_ids = [
-							katapult_ip.web.id,
+							katapult_legacy_ip.web.id,
 						]
 					}`, name,
 				),
@@ -907,7 +907,7 @@ func TestAccKatapultVirtualMachine_update_network_speed_profile(t *testing.T) {
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 
 					resource "katapult_virtual_machine" "base" {
 						name          = "%s"
@@ -917,7 +917,7 @@ func TestAccKatapultVirtualMachine_update_network_speed_profile(t *testing.T) {
 							install_agent = true
 						}
 						ip_address_ids = [
-							katapult_ip.web.id,
+							katapult_legacy_ip.web.id,
 						]
 						network_speed_profile = "10gbps"
 					}`, name,
@@ -934,7 +934,7 @@ func TestAccKatapultVirtualMachine_update_network_speed_profile(t *testing.T) {
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 
 					resource "katapult_virtual_machine" "base" {
 						name          = "%s"
@@ -944,7 +944,7 @@ func TestAccKatapultVirtualMachine_update_network_speed_profile(t *testing.T) {
 							install_agent = true
 						}
 						ip_address_ids = [
-							katapult_ip.web.id,
+							katapult_legacy_ip.web.id,
 						]
 						network_speed_profile = "1gbps"
 					}`, name,

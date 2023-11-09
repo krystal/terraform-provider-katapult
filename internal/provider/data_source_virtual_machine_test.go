@@ -23,7 +23,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 
 					resource "katapult_virtual_machine_group" "web" {
 						name = "%s"
@@ -38,7 +38,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_ip.web.id]
+						ip_address_ids = [katapult_legacy_ip.web.id]
 						group_id      = katapult_virtual_machine_group.web.id
 						tags = ["web", "public"]
 						network_speed_profile = "1gbps"
@@ -78,11 +78,11 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_virtual_machine.src", "ip_address_ids.*",
-						"katapult_ip.web", "id",
+						"katapult_legacy_ip.web", "id",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_virtual_machine.src", "ip_addresses.*",
-						"katapult_ip.web", "address",
+						"katapult_legacy_ip.web", "address",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_virtual_machine.src", "group_id",
@@ -123,7 +123,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
+					resource "katapult_legacy_ip" "web" {}
 
 					resource "katapult_virtual_machine_group" "web" {
 						name = "%s"
@@ -138,7 +138,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_ip.web.id]
+						ip_address_ids = [katapult_legacy_ip.web.id]
 						group_id      = katapult_virtual_machine_group.web.id
 						tags = ["web", "public"]
 						network_speed_profile = "1gbps"
@@ -178,11 +178,11 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_virtual_machine.src", "ip_address_ids.*",
-						"katapult_ip.web", "id",
+						"katapult_legacy_ip.web", "id",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_virtual_machine.src", "ip_addresses.*",
-						"katapult_ip.web", "address",
+						"katapult_legacy_ip.web", "address",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_virtual_machine.src", "group_id",

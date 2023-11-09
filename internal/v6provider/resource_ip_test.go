@@ -1,4 +1,4 @@
-package provider
+package v6provider
 
 import (
 	"context"
@@ -7,16 +7,16 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/core"
 	"github.com/stretchr/testify/require"
 )
 
 func init() { //nolint:gochecknoinits
-	resource.AddTestSweepers("katapult_legacy_ip", &resource.Sweeper{
-		Name:         "katapult_legacy_ip",
+	resource.AddTestSweepers("katapult_ip", &resource.Sweeper{
+		Name:         "katapult_ip",
 		F:            testSweepIPs,
 		Dependencies: []string{"katapult_virtual_machine"},
 	})
@@ -70,39 +70,41 @@ func TestAccKatapultIP_minimal(t *testing.T) {
 	network, _, err := tt.Meta.Core.DataCenters.DefaultNetwork(
 		tt.Ctx, tt.Meta.DataCenterRef,
 	)
+
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+
+		CheckDestroy: testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "katapult_legacy_ip" "web" {}`,
+				Config: `resource "katapult_ip" "web" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_legacy_ip.web"),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web"),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.web", "network_id", network.ID,
+						"katapult_ip.web", "network_id", network.ID,
 					),
 					resource.TestMatchResourceAttr(
-						"katapult_legacy_ip.web",
+						"katapult_ip.web",
 						"address", regexp.MustCompile(
 							`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`,
 						),
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.web", "version", "4",
+						"katapult_ip.web", "version", "4",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.web", "vip", "false",
+						"katapult_ip.web", "vip", "false",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.web", "label", "",
+						"katapult_ip.web", "label", "",
 					),
 				),
 			},
 			{
-				ResourceName:      "katapult_legacy_ip.web",
+				ResourceName:      "katapult_ip.web",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -119,40 +121,40 @@ func TestAccKatapultIP_ipv4(t *testing.T) {
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
-					resource "katapult_legacy_ip" "web" {
+					resource "katapult_ip" "web" {
 						version = 4
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_legacy_ip.web"),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web"),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.web", "network_id", network.ID,
+						"katapult_ip.web", "network_id", network.ID,
 					),
 					resource.TestMatchResourceAttr(
-						"katapult_legacy_ip.web",
+						"katapult_ip.web",
 						"address", regexp.MustCompile(
 							`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`,
 						),
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.web", "version", "4",
+						"katapult_ip.web", "version", "4",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.web", "vip", "false",
+						"katapult_ip.web", "vip", "false",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.web", "label", "",
+						"katapult_ip.web", "label", "",
 					),
 				),
 			},
 			{
-				ResourceName:      "katapult_legacy_ip.web",
+				ResourceName:      "katapult_ip.web",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -169,38 +171,38 @@ func TestAccKatapultIP_ipv6(t *testing.T) {
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
-					resource "katapult_legacy_ip" "web" {
+					resource "katapult_ip" "web" {
 						version = 6
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_legacy_ip.web"),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web"),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.web", "network_id", network.ID,
+						"katapult_ip.web", "network_id", network.ID,
 					),
 					resource.TestMatchResourceAttr(
-						"katapult_legacy_ip.web",
+						"katapult_ip.web",
 						"address", regexp.MustCompile(`:.*:`),
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.web", "version", "6",
+						"katapult_ip.web", "version", "6",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.web", "vip", "false",
+						"katapult_ip.web", "vip", "false",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.web", "label", "",
+						"katapult_ip.web", "label", "",
 					),
 				),
 			},
 			{
-				ResourceName:      "katapult_legacy_ip.web",
+				ResourceName:      "katapult_ip.web",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -212,19 +214,20 @@ func TestAccKatapultIP_ipv5(t *testing.T) {
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
-					resource "katapult_legacy_ip" "web" {
+					resource "katapult_ip" "web" {
 						version = 5
 					}`,
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
-						"expected version to be one of [4 6], got 5",
+						`Attribute version value must be one ` +
+							`of: ["4" "6"], got: 5`,
 					),
 				),
 			},
@@ -238,30 +241,30 @@ func TestAccKatapultIP_vip(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_legacy_ip" "vip" {
+					resource "katapult_ip" "vip" {
 					  vip = true
 					  label = "%s"
 					}`,
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_legacy_ip.vip"),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.vip"),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.vip", "vip", "true",
+						"katapult_ip.vip", "vip", "true",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.vip", "label", name,
+						"katapult_ip.vip", "label", name,
 					),
 				),
 			},
 			{
-				ResourceName:      "katapult_legacy_ip.vip",
+				ResourceName:      "katapult_ip.vip",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -273,20 +276,21 @@ func TestAccKatapultIP_vip_empty_label(t *testing.T) {
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
-					resource "katapult_legacy_ip" "vip" {
+					resource "katapult_ip" "vip" {
 					  vip = true
 					  label = ""
 					}`,
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
-						`expected "label" to not be an empty string, got`,
+						`Attribute label string length must be at least 1,` +
+							` got: 0`,
 					),
 				),
 			},
@@ -298,13 +302,13 @@ func TestAccKatapultIP_vip_without_label(t *testing.T) {
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
-					resource "katapult_legacy_ip" "vip" {
+					resource "katapult_ip" "vip" {
 					  vip = true
 					}`,
 				),
@@ -320,18 +324,21 @@ func TestAccKatapultIP_label_without_vip(t *testing.T) {
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
-					resource "katapult_legacy_ip" "vip" {
+					resource "katapult_ip" "vip" {
 					  label = "hello"
 					}`,
 				),
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta("all of `label,vip` must be specified"),
+					regexp.QuoteMeta(
+						`Attribute "vip" must be specified when ` +
+							`"label" is specified`,
+					),
 				),
 			},
 		},
@@ -347,26 +354,26 @@ func TestAccKatapultIP_with_network_id(t *testing.T) {
 	require.NoError(t, err)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_legacy_ip" "net" {
+					resource "katapult_ip" "net" {
 					  network_id = "%s"
 					}`,
 					network.ID,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_legacy_ip.net"),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.net"),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.net", "network_id", network.ID,
+						"katapult_ip.net", "network_id", network.ID,
 					),
 				),
 			},
 			{
-				ResourceName:      "katapult_legacy_ip.net",
+				ResourceName:      "katapult_ip.net",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -378,73 +385,69 @@ func TestAccKatapultIP_update(t *testing.T) {
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "katapult_legacy_ip" "update" {}`,
+				Config: `resource "katapult_ip" "update" {}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt,
-						"katapult_legacy_ip.update"),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update"),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.update", "vip", "false",
+						"katapult_ip.update", "vip", "false",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.update", "label", "",
+						"katapult_ip.update", "label", "",
 					),
 				),
 			},
 			{
 				Config: undent.String(`
-					resource "katapult_legacy_ip" "update" {
+					resource "katapult_ip" "update" {
 						vip = true
 						label = "vip-yes"
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt,
-						"katapult_legacy_ip.update"),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update"),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.update", "vip", "true",
+						"katapult_ip.update", "vip", "true",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.update", "label", "vip-yes",
+						"katapult_ip.update", "label", "vip-yes",
 					),
 				),
 			},
 			{
 				Config: undent.String(`
-					resource "katapult_legacy_ip" "update" {
+					resource "katapult_ip" "update" {
 						vip = true
 						label = "vip-oh-yes"
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt,
-						"katapult_legacy_ip.update"),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update"),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.update", "vip", "true",
+						"katapult_ip.update", "vip", "true",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.update", "label", "vip-oh-yes",
+						"katapult_ip.update", "label", "vip-oh-yes",
 					),
 				),
 			},
 			{
 				Config: undent.String(`
-					resource "katapult_legacy_ip" "update" {
+					resource "katapult_ip" "update" {
 						vip = false
 					}`,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt,
-						"katapult_legacy_ip.update"),
+					testAccCheckKatapultIPAttrs(tt, "katapult_ip.update"),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.update", "vip", "false",
+						"katapult_ip.update", "vip", "false",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_ip.update", "label", "",
+						"katapult_ip.update", "label", "",
 					),
 				),
 			},
@@ -455,6 +458,27 @@ func TestAccKatapultIP_update(t *testing.T) {
 //
 // Helpers
 //
+
+func testAccCheckKatapultIPExists(
+	tt *testTools,
+	res string,
+) resource.TestCheckFunc {
+	m := tt.Meta
+
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[res]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", res)
+		}
+
+		ip, _, err := m.Core.IPAddresses.GetByID(tt.Ctx, rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+
+		return resource.TestCheckResourceAttr(res, "id", ip.ID)(s)
+	}
+}
 
 func testAccCheckKatapultIPAttrs(
 	tt *testTools,
@@ -482,7 +506,9 @@ func testAccCheckKatapultIPAttrs(
 			),
 			resource.TestCheckResourceAttr(res, "reverse_dns", ip.ReverseDNS),
 			resource.TestCheckResourceAttr(
-				res, "version", strconv.Itoa(flattenIPVersion(ip.Address)),
+				res,
+				"version",
+				strconv.FormatInt(flattenIPVersion(ip.Address), 10),
 			),
 			resource.TestCheckResourceAttr(
 				res, "vip", fmt.Sprintf("%t", ip.VIP),
@@ -512,7 +538,7 @@ func testAccCheckKatapultIPDestroy(
 
 	return func(s *terraform.State) error {
 		for _, rs := range s.RootModule().Resources {
-			if rs.Type != "katapult_legacy_ip" {
+			if rs.Type != "katapult_ip" {
 				continue
 			}
 

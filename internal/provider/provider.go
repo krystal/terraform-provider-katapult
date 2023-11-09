@@ -55,40 +55,38 @@ func New(c *Config) func() *schema.Provider { //nolint:funlen
 		p := &schema.Provider{
 			Schema: map[string]*schema.Schema{
 				"api_key": {
-					Type:        schema.TypeString,
-					Required:    true,
-					Sensitive:   true,
-					DefaultFunc: schema.EnvDefaultFunc("KATAPULT_API_KEY", nil),
-					Description: "API Key for Katapult Core API. Can be " +
+					Type:      schema.TypeString,
+					Optional:  true,
+					Sensitive: true,
+					Description: "**REQUIRED** via config or " +
+						"environment variable. " +
+						"API Key for Katapult Core API. Can be " +
 						"specified with the `KATAPULT_API_KEY` environment " +
 						"variable.",
 				},
 				"organization": {
 					Type:     schema.TypeString,
-					Required: true,
-					DefaultFunc: schema.EnvDefaultFunc(
-						"KATAPULT_ORGANIZATION", nil,
-					),
-					Description: "Organization sub-domain. Can be " +
+					Optional: true,
+
+					Description: "**REQUIRED** via config or " +
+						"environment variable. " +
+						"Organization sub-domain. Can be " +
 						"specified with the `KATAPULT_ORGANIZATION` " +
 						"environment variable.",
 				},
 				"data_center": {
 					Type:     schema.TypeString,
-					Required: true,
-					DefaultFunc: schema.EnvDefaultFunc(
-						"KATAPULT_DATA_CENTER", nil,
-					),
-					Description: "Data center permalink. Can be " +
+					Optional: true,
+
+					Description: "**REQUIRED** via config or " +
+						"environment variable. " +
+						"Data center permalink. Can be " +
 						"specified with the `KATAPULT_DATA_CENTER` " +
 						"environment variable.",
 				},
 				"skip_trash_object_purge": {
 					Type:     schema.TypeBool,
 					Optional: true,
-					DefaultFunc: schema.EnvDefaultFunc(
-						"KATAPULT_SKIP_TRASH_OBJECT_PURGE", false,
-					),
 					//nolint:lll
 					Description: strings.TrimSpace(`
 
@@ -122,7 +120,6 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"katapult_ip":                    resourceIP(),
 				"katapult_file_storage_volume":   resourceFileStorageVolume(),
 				"katapult_security_group":        resourceSecurityGroup(),
 				"katapult_security_group_rule":   resourceSecurityGroupRule(),
@@ -136,7 +133,6 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 				"katapult_disk_templates":           dataSourceDiskTemplates(),
 				"katapult_file_storage_volume":      dataSourceFileStorageVolume(),
 				"katapult_file_storage_volumes":     dataSourceFileStorageVolumes(),
-				"katapult_ip":                       dataSourceIP(),
 				"katapult_network_speed_profile":    dataSourceNetworkSpeedProfile(),
 				"katapult_network_speed_profiles":   dataSourceNetworkSpeedProfiles(),
 				"katapult_security_group":           dataSourceSecurityGroup(),
@@ -151,10 +147,35 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 			},
 		}
 
+		if os.Getenv("TF_ACC") == "1" {
+			p.ResourcesMap["katapult_legacy_ip"] = resourceIP()
+		}
+
 		p.ConfigureContextFunc = configure(c, p)
 
 		return p
 	}
+}
+
+func stringOrEnv(in string, env string) string {
+	if in != "" {
+		return in
+	}
+
+	return os.Getenv(env)
+}
+
+func boolOrEnv(in bool, env string) bool {
+	if in {
+		return true
+	}
+
+	switch strings.ToLower(os.Getenv(env)) {
+	case "true", "1", "yes", "on", "y", "t":
+		return true
+	}
+
+	return false
 }
 
 func configure(
@@ -165,17 +186,37 @@ func configure(
 		_ context.Context,
 		d *schema.ResourceData,
 	) (interface{}, diag.Diagnostics) {
+		logLevel := stringOrEnv(
+			d.Get("log_level").(string),
+			"KATAPULT_LOG_LEVEL",
+		)
+		if logLevel == "" {
+			logLevel = "info"
+		}
+
 		m := &Meta{
 			Logger: hclog.New(&hclog.LoggerOptions{
 				Name:       "katapult",
-				Level:      hclog.LevelFromString(d.Get("log_level").(string)),
+				Level:      hclog.LevelFromString(logLevel),
 				TimeFormat: "2006/01/02 15:04:05",
 			}),
-			confAPIKey:           d.Get("api_key").(string),
-			confDataCenter:       d.Get("data_center").(string),
-			confOrganization:     d.Get("organization").(string),
-			SkipTrashObjectPurge: d.Get("skip_trash_object_purge").(bool),
-			GeneratedNamePrefix:  conf.GeneratedNamePrefix,
+			confAPIKey: stringOrEnv(
+				d.Get("api_key").(string),
+				"KATAPULT_API_KEY",
+			),
+			confDataCenter: stringOrEnv(
+				d.Get("data_center").(string),
+				"KATAPULT_DATA_CENTER",
+			),
+			confOrganization: stringOrEnv(
+				d.Get("organization").(string),
+				"KATAPULT_ORGANIZATION",
+			),
+			SkipTrashObjectPurge: boolOrEnv(
+				d.Get("skip_trash_object_purge").(bool),
+				"KATAPULT_SKIP_TRASH_OBJECT_PURGE",
+			),
+			GeneratedNamePrefix: conf.GeneratedNamePrefix,
 		}
 
 		if m.GeneratedNamePrefix == "" {
@@ -220,10 +261,10 @@ func configure(
 		m.Core = core.New(m.Client)
 
 		m.OrganizationRef = core.OrganizationRef{
-			SubDomain: d.Get("organization").(string),
+			SubDomain: m.confOrganization,
 		}
 		m.DataCenterRef = core.DataCenterRef{
-			Permalink: d.Get("data_center").(string),
+			Permalink: m.confDataCenter,
 		}
 
 		return m, nil
