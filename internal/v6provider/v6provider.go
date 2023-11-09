@@ -226,21 +226,36 @@ func (k *KatapultProvider) Configure(
 func (k *KatapultProvider) Resources(
 	_ context.Context,
 ) []func() resource.Resource {
-	return []func() resource.Resource{
+	funcs := []func() resource.Resource{
 		func() resource.Resource {
 			return &IPResource{}
 		},
 	}
+	if os.Getenv("TF_ACC") != "" {
+		funcs = append(funcs, func() resource.Resource {
+			return &LoadBalancerResource{}
+		})
+	}
+
+	return funcs
 }
 
 func (k *KatapultProvider) DataSources(
 	_ context.Context,
 ) []func() datasource.DataSource {
-	return []func() datasource.DataSource{
+	funcs := []func() datasource.DataSource{
 		func() datasource.DataSource {
 			return &IPDataSource{}
 		},
 	}
+
+	if os.Getenv("TF_ACC") != "" {
+		funcs = append(funcs, func() datasource.DataSource {
+			return &LoadBalancerDataSource{}
+		})
+	}
+
+	return funcs
 }
 
 func newRetryableHTTPClient(

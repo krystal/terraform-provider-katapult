@@ -91,7 +91,8 @@ func newTestTools(t *testing.T) *testTools {
 
 	ctx := context.Background()
 
-	meta, err := NewMeta("", "", "", nil, "", "", k.HTTPClient, "", "")
+	meta, err := NewMeta("", "", "", nil, "",
+		testAccResourceNamePrefix, k.HTTPClient, "", "")
 	require.NoError(t, err)
 
 	k.m = meta
@@ -231,7 +232,6 @@ func newVCRRecorder(t *testing.T) *recorder.Recorder {
 // Terraform TestCheckFunc helpers
 //
 
-//nolint:unused // will be used eventually
 func testCheckGeneratedResourceName(
 	name string,
 	key string,

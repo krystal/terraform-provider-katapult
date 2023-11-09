@@ -1,4 +1,4 @@
-package provider
+package v6provider
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/core"
 )
@@ -15,13 +15,12 @@ import (
 func init() { //nolint:gochecknoinits
 	// TODO: re-enable katapult_load_balancer sweeper when Load Balancer
 	// resources are enabled again.
-	// resource.AddTestSweepers("katapult_load_balancer", &resource.Sweeper{
-	//		Name: "katapult_load_balancer",
-	//		F:    testSweepLoadBalancers,
-	// })
+	resource.AddTestSweepers("katapult_load_balancer", &resource.Sweeper{
+		Name: "katapult_load_balancer",
+		F:    testSweepLoadBalancers,
+	})
 }
 
-//nolint:deadcode,unused
 func testSweepLoadBalancers(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()
@@ -56,15 +55,14 @@ func testSweepLoadBalancers(_ string) error {
 }
 
 func TestAccKatapultLoadBalancer_basic(t *testing.T) {
-	t.Skip("not yet feature complete")
 	tt := newTestTools(t)
 
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultLoadBalancerDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -97,13 +95,12 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 }
 
 func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
-	t.Skip("not yet feature complete")
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultLoadBalancerDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "katapult_load_balancer" "main" {}`,
@@ -126,15 +123,14 @@ func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
 }
 
 func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
-	t.Skip("not yet feature complete")
 	tt := newTestTools(t)
 
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultLoadBalancerDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
