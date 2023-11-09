@@ -59,7 +59,7 @@ func New(c *Config) func() *schema.Provider { //nolint:funlen
 					Optional:  true,
 					Sensitive: true,
 					Description: "**REQUIRED** via config or " +
-						"environment variable" +
+						"environment variable. " +
 						"API Key for Katapult Core API. Can be " +
 						"specified with the `KATAPULT_API_KEY` environment " +
 						"variable.",
@@ -69,7 +69,7 @@ func New(c *Config) func() *schema.Provider { //nolint:funlen
 					Optional: true,
 
 					Description: "**REQUIRED** via config or " +
-						"environment variable" +
+						"environment variable. " +
 						"Organization sub-domain. Can be " +
 						"specified with the `KATAPULT_ORGANIZATION` " +
 						"environment variable.",
@@ -79,7 +79,7 @@ func New(c *Config) func() *schema.Provider { //nolint:funlen
 					Optional: true,
 
 					Description: "**REQUIRED** via config or " +
-						"environment variable" +
+						"environment variable. " +
 						"Data center permalink. Can be " +
 						"specified with the `KATAPULT_DATA_CENTER` " +
 						"environment variable.",
