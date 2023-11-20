@@ -176,9 +176,7 @@ func (r *LoadBalancerResource) Create(
 		return
 	}
 
-	plan.ID = types.StringValue(lb.ID)
-
-	if err := r.LoadBalancerRead(ctx, &plan, &resp.State); err != nil {
+	if err := r.LoadBalancerRead(ctx, lb.ID, &plan, &resp.State); err != nil {
 		resp.Diagnostics.AddError("Load Balancer Read Error", err.Error())
 		return
 	}
@@ -199,7 +197,12 @@ func (r *LoadBalancerResource) Read(
 		return
 	}
 
-	if err := r.LoadBalancerRead(ctx, state, &resp.State); err != nil {
+	if err := r.LoadBalancerRead(
+		ctx,
+		state.ID.ValueString(),
+		state,
+		&resp.State,
+	); err != nil {
 		resp.Diagnostics.AddError("Load Balancer Read Error", err.Error())
 		return
 	}
@@ -258,7 +261,7 @@ func (r *LoadBalancerResource) Update(
 		return
 	}
 
-	if err := r.LoadBalancerRead(ctx, &plan, &resp.State); err != nil {
+	if err := r.LoadBalancerRead(ctx, id, &plan, &resp.State); err != nil {
 		resp.Diagnostics.AddError("Load Balancer Read Error", err.Error())
 		return
 	}
@@ -298,10 +301,11 @@ func (r *LoadBalancerResource) ImportState(
 
 func (r *LoadBalancerResource) LoadBalancerRead(
 	ctx context.Context,
+	id string,
 	model *LoadBalancerResourceModel,
 	state *tfsdk.State,
 ) error {
-	lb, _, err := r.M.Core.LoadBalancers.GetByID(ctx, model.ID.ValueString())
+	lb, _, err := r.M.Core.LoadBalancers.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, katapult.ErrNotFound) {
 			state.RemoveResource(ctx)
@@ -312,6 +316,7 @@ func (r *LoadBalancerResource) LoadBalancerRead(
 		return err
 	}
 
+	model.ID = types.StringValue(id)
 	model.Name = types.StringValue(lb.Name)
 	model.ResourceType = types.StringValue(string(lb.ResourceType))
 	model.HTTPSRedirect = types.BoolValue(lb.HTTPSRedirect)
