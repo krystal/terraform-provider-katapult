@@ -1,23 +1,22 @@
-package provider
+package v6provider
 
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/core"
 )
 
 func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
-	t.Skip("not yet feature complete")
 	tt := newTestTools(t)
 
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultLoadBalancerDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
