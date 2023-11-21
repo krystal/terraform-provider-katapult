@@ -232,13 +232,7 @@ func (r *LoadBalancerResource) Update(
 		return
 	}
 
-	var id string
-	if !plan.ID.IsNull() && plan.ID.ValueString() != "" {
-		id = plan.ID.ValueString()
-	} else {
-		id = state.ID.ValueString()
-		plan.ID = state.ID
-	}
+	id := state.ID.ValueString()
 
 	lbRef := core.LoadBalancerRef{ID: id}
 	args := &core.LoadBalancerUpdateArguments{}
