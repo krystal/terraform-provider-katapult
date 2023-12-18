@@ -54,7 +54,7 @@ func testSweepLoadBalancers(_ string) error {
 	return nil
 }
 
-func TestAccKatapultLoadBalancer_basic(t *testing.T) {
+func TestAccKatapultLoadBalancer_basicWithExternal(t *testing.T) {
 	tt := newTestTools(t)
 
 	name := tt.ResourceName()
@@ -68,6 +68,7 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "main" {
 					  name = "%s"
+					  external_rules = true
 					}`,
 					name,
 				),
@@ -82,6 +83,203 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 						"katapult_load_balancer.main",
 						"resource_type",
 						string(core.VirtualMachinesResourceType),
+					),
+				),
+			},
+			{
+				ResourceName:      "katapult_load_balancer.main",
+				ImportState:       true,
+				ImportStateVerify: false,
+				ImportStateCheck: func(s []*terraform.InstanceState) error {
+					if len(s) != 1 {
+						return fmt.Errorf(
+							"expected 1 instance state, got %d", len(s),
+						)
+					}
+
+					if s[0].ID == "" {
+						return fmt.Errorf("instance state ID is empty")
+					}
+
+					if s[0].Attributes["name"] != name {
+						return fmt.Errorf(
+							"instance state name is %q, expected %q",
+							s[0].Attributes["name"], name,
+						)
+					}
+
+					return nil
+				},
+			},
+		},
+	})
+}
+
+func TestAccKatapultLoadBalancer_basicWithRule(t *testing.T) {
+	tt := newTestTools(t)
+
+	name := tt.ResourceName()
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+					resource "katapult_load_balancer" "main" {
+					  name = "%s"
+					  rules = [
+						{
+							destination_port = 8080
+							listen_port = 80
+							protocol = "HTTP"
+							passthrough_ssl = false
+						}
+					  ]
+					}`,
+					name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultLoadBalancerExists(
+						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main", "name", name,
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"resource_type",
+						string(core.VirtualMachinesResourceType),
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.destination_port",
+						"8080",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.listen_port",
+						"80",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.protocol",
+						"HTTP",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.passthrough_ssl",
+						"false",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.check_enabled",
+						"false",
+					),
+				),
+			},
+			{
+				ResourceName:      "katapult_load_balancer.main",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccKatapultLoadBalancer_basicWithRules(t *testing.T) {
+	tt := newTestTools(t)
+
+	name := tt.ResourceName()
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+					resource "katapult_load_balancer" "main" {
+					  name = "%s"
+					  rules = [
+						{
+							destination_port = 8080
+							listen_port = 80
+							protocol = "HTTP"
+							passthrough_ssl = false
+						},
+						{
+							destination_port = 8443
+							listen_port = 443
+							protocol = "HTTPS"
+							passthrough_ssl = true
+						}
+					  ]
+					}`,
+					name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultLoadBalancerExists(
+						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main", "name", name,
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"resource_type",
+						string(core.VirtualMachinesResourceType),
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.destination_port",
+						"8080",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.listen_port",
+						"80",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.protocol",
+						"HTTP",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.passthrough_ssl",
+						"false",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.check_enabled",
+						"false",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.1.destination_port",
+						"8443",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.1.listen_port",
+						"443",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.1.protocol",
+						"HTTPS",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.1.passthrough_ssl",
+						"true",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.1.check_enabled",
+						"false",
 					),
 				),
 			},
@@ -103,7 +301,9 @@ func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
 		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
 		Steps: []resource.TestStep{
 			{
-				Config: `resource "katapult_load_balancer" "main" {}`,
+				Config: `resource "katapult_load_balancer" "main" {
+					external_rules = true
+				}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultLoadBalancerExists(
 						tt, "katapult_load_balancer.main",
@@ -136,6 +336,7 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "main" {
 					  name = "%s"
+					  external_rules = true
 					}`,
 					name,
 				),
@@ -152,6 +353,7 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "main" {
 					  name = "%s"
+					  external_rules = true
 					}`,
 					name+"-different",
 				),
