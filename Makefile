@@ -45,7 +45,7 @@ $(TOOLDIR)/$(1): Makefile
 	GOBIN="$(CURDIR)/$(TOOLDIR)" go install "$(2)"
 endef
 
-$(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.51))
+$(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55))
 $(eval $(call tool,gomod,github.com/Helcaraxan/gomod@latest))
 $(eval $(call tool,tfplugindocs,github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.14))
 $(eval $(call tool,tfproviderlint,github.com/bflad/tfproviderlint/cmd/tfproviderlint@latest))
