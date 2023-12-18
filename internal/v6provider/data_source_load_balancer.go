@@ -23,6 +23,8 @@ type (
 		Tag                 types.List   `tfsdk:"tag"`
 		IPAddress           types.String `tfsdk:"ip_address"`
 		HTTPSRedirect       types.Bool   `tfsdk:"https_redirect"`
+		IncludeRules        types.Bool   `tfsdk:"include_rules"`
+		Rules               types.List   `tfsdk:"rules"`
 	}
 )
 
@@ -55,59 +57,74 @@ func (ds *LoadBalancerDataSource) Configure(
 	ds.M = m
 }
 
+func loadBalancerDataSourceSchemaAttrs() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
+		"id": schema.StringAttribute{
+			Required: true,
+		},
+		"name": schema.StringAttribute{
+			Computed: true,
+		},
+		"resource_type": schema.StringAttribute{
+			Computed: true,
+		},
+		"virtual_machine": schema.ListNestedAttribute{
+			Computed: true,
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Computed: true,
+					},
+				},
+			},
+		},
+		"virtual_machine_group": schema.ListNestedAttribute{
+			Computed: true,
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Computed: true,
+					},
+				},
+			},
+		},
+		"tag": schema.ListNestedAttribute{
+			Computed: true,
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Computed: true,
+					},
+				},
+			},
+		},
+		"ip_address": schema.StringAttribute{
+			Computed: true,
+		},
+		"https_redirect": schema.BoolAttribute{
+			Computed: true,
+		},
+		"include_rules": schema.BoolAttribute{
+			Optional:    true,
+			Computed:    true,
+			Description: "Whether to include rules in the output.",
+		},
+		"rules": schema.ListNestedAttribute{
+			Computed: true,
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: loadBalancerRuleDataSourceSchemaAttrs(),
+			},
+		},
+	}
+}
+
 func (ds *LoadBalancerDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Required: true,
-			},
-			"name": schema.StringAttribute{
-				Computed: true,
-			},
-			"resource_type": schema.StringAttribute{
-				Computed: true,
-			},
-			"virtual_machine": schema.ListNestedAttribute{
-				Computed: true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Computed: true,
-						},
-					},
-				},
-			},
-			"virtual_machine_group": schema.ListNestedAttribute{
-				Computed: true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Computed: true,
-						},
-					},
-				},
-			},
-			"tag": schema.ListNestedAttribute{
-				Computed: true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Computed: true,
-						},
-					},
-				},
-			},
-			"ip_address": schema.StringAttribute{
-				Computed: true,
-			},
-			"https_redirect": schema.BoolAttribute{
-				Computed: true,
-			},
-		},
+		Attributes: loadBalancerDataSourceSchemaAttrs(),
 	}
 }
 
@@ -147,6 +164,20 @@ func (ds *LoadBalancerDataSource) Read(
 		data.Tag = list
 	}
 	data.ID = types.StringValue(lb.ID)
+
+	if data.IncludeRules.ValueBool() {
+		rules, err := getLBRules(ctx, ds.M, lb.Ref())
+		if err != nil {
+			resp.Diagnostics.AddError("Load Balancer Rules Error", err.Error())
+
+			return
+		}
+
+		data.Rules = types.ListValueMust(
+			LoadBalancerRuleType(),
+			convertCoreLBRulesToAttrValue(rules),
+		)
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
