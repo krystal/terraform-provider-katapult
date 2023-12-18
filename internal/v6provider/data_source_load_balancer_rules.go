@@ -3,7 +3,6 @@ package v6provider
 import (
 	"context"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -95,8 +94,6 @@ func (ds *LoadBalancerRulesDataSource) Read(
 		LoadBalancerRuleType(),
 		convertCoreLBRulesToAttrValue(rules),
 	)
-
-	spew.Dump(data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
