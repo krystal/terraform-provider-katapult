@@ -5,17 +5,17 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/data_centers/_/default_network?data_center%5Bpermalink%5D=uk-lon-01
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/data_centers/:data_center/default_network?data_center%5Bpermalink%5D=uk-lon-01
     method: GET
   response:
     body: '{"network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"}}}'
     headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
       Access-Control-Allow-Methods:
-      - '*'
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
       Access-Control-Allow-Origin:
       - '*'
       Cache-Control:
@@ -25,7 +25,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Nov 2023 12:53:30 GMT
+      - Tue, 23 Jan 2024 10:36:58 GMT
       Etag:
       - W/"d60d47b2ba0b179327bb89a97b1c0e77"
       Server:
@@ -35,32 +35,31 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "193"
+      - "192"
       X-Request-Id:
-      - d5c61e49-8680-4f61-a199-d9f6eddd3c5b
+      - 1cc2d33c-3a51-4fcc-8ee4-d19cae2dcc31
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: |
-      {"organization":{"sub_domain":"terraform-acc-test"},"network":{"id":"netw_gVRkZdSKczfNg34P"},"version":"ipv4","vip":true}
+    body: '{"label":"","network":{"id":"netw_gVRkZdSKczfNg34P"},"organization":{"sub_domain":"terraform-acc-test"},"version":"ipv4","vip":true}'
     form: {}
     headers:
-      Accept:
-      - application/json
       Content-Type:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/organizations/_/ip_addresses
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/organizations/:organization/ip_addresses
     method: POST
   response:
     body: '{"error":{"code":"validation_error","description":"A validation error occurred
       with the object that was being created/updated/deleted","detail":{"errors":["Label
       can''t be blank"]}}}'
     headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
       Access-Control-Allow-Methods:
-      - '*'
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
       Access-Control-Allow-Origin:
       - '*'
       Cache-Control:
@@ -70,7 +69,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Nov 2023 12:53:30 GMT
+      - Tue, 23 Jan 2024 10:37:01 GMT
       Server:
       - Caddy
       Strict-Transport-Security:
@@ -80,9 +79,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "186"
+      - "191"
       X-Request-Id:
-      - 7dfe10fb-feeb-48d0-8615-d37e6920a888
+      - 22c073d6-eee0-47da-ba42-a9967f6a2df6
     status: 422 Unprocessable Entity
     code: 422
     duration: ""

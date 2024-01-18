@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
-	"github.com/krystal/go-katapult/core"
+	"github.com/krystal/go-katapult/next/core"
 )
 
 func init() { //nolint:gochecknoinits
@@ -25,27 +25,44 @@ func testSweepLoadBalancers(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()
 
-	var loadBalancers []*core.LoadBalancer
+	//nolint:lll // type is generated
+	var loadBalancers []core.GetOrganizationLoadBalancers200ResponseLoadBalancers
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := m.Core.LoadBalancers.List(
-			ctx, m.OrganizationRef, &core.ListOptions{Page: pageNum},
-		)
+		// pageResult, resp, err := m.Core.LoadBalancers.List(
+		// 	ctx, m.OrganizationRef, &core.ListOptions{Page: pageNum},
+		// )
+		// if err != nil {
+		// 	return err
+		// }
+
+		res, err := m.Core.GetOrganizationLoadBalancersWithResponse(ctx,
+			&core.GetOrganizationLoadBalancersParams{
+				OrganizationId: &m.confOrganization,
+				Page:           &pageNum,
+			})
 		if err != nil {
 			return err
 		}
 
-		totalPages = resp.Pagination.TotalPages
-		loadBalancers = append(loadBalancers, pageResult...)
+		resp := res.JSON200
+
+		totalPages = *resp.Pagination.TotalPages
+		loadBalancers = append(loadBalancers, resp.LoadBalancers...)
 	}
 
 	for _, lb := range loadBalancers {
-		if !strings.HasPrefix(lb.Name, testAccResourceNamePrefix) {
+		if !strings.HasPrefix(*lb.Name, testAccResourceNamePrefix) {
 			continue
 		}
 
-		m.Logger.Info("deleting load balancer", "id", lb.ID, "name", lb.Name)
-		_, _, err := m.Core.LoadBalancers.Delete(ctx, lb.Ref())
+		m.Logger.Info("deleting load balancer", "id", lb.Id, "name", lb.Name)
+		_, err := m.Core.DeleteLoadBalancerWithResponse(ctx,
+			core.DeleteLoadBalancerJSONRequestBody{
+				LoadBalancer: core.LoadBalancerLookup{
+					Id: lb.Id,
+				},
+			})
 		if err != nil {
 			return err
 		}
@@ -81,7 +98,7 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main",
 						"resource_type",
-						string(core.VirtualMachinesResourceType),
+						string(core.VirtualMachines),
 					),
 				),
 			},
@@ -114,7 +131,7 @@ func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main",
 						"resource_type",
-						string(core.VirtualMachinesResourceType),
+						string(core.VirtualMachines),
 					),
 				),
 			},
@@ -185,14 +202,17 @@ func testAccCheckKatapultLoadBalancerExists(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		lb, _, err := m.Core.LoadBalancers.GetByID(
-			tt.Ctx, rs.Primary.ID,
-		)
+		resp, err := m.Core.GetLoadBalancerWithResponse(tt.Ctx,
+			&core.GetLoadBalancerParams{
+				LoadBalancerId: &rs.Primary.ID,
+			})
 		if err != nil {
 			return err
 		}
 
-		return resource.TestCheckResourceAttr(res, "name", lb.Name)(s)
+		lb := resp.JSON200.LoadBalancer
+
+		return resource.TestCheckResourceAttr(res, "name", *lb.Name)(s)
 	}
 }
 
@@ -207,11 +227,16 @@ func testAccCheckKatapultLoadBalancerDestroy(
 				continue
 			}
 
-			lb, _, err := m.Core.LoadBalancers.GetByID(tt.Ctx, rs.Primary.ID)
-			if err == nil && lb != nil {
+			// lb, _, err := m.Core.LoadBalancers.GetByID(tt.Ctx, rs.Primary.ID)
+			resp, err := m.Core.GetLoadBalancerWithResponse(tt.Ctx,
+				&core.GetLoadBalancerParams{
+					LoadBalancerId: &rs.Primary.ID,
+				})
+
+			if err == nil && resp.JSON200 != nil {
 				return fmt.Errorf(
 					"katapult_load_balancer %s (%s) was not destroyed",
-					rs.Primary.ID, lb.Name,
+					rs.Primary.ID, *resp.JSON200.LoadBalancer.Name,
 				)
 			}
 		}

@@ -14,8 +14,10 @@ interactions:
   response:
     body: '{"network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"}}}'
     headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
       Access-Control-Allow-Methods:
-      - '*'
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
       Access-Control-Allow-Origin:
       - '*'
       Cache-Control:
@@ -25,7 +27,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Nov 2023 12:53:29 GMT
+      - Tue, 23 Jan 2024 10:45:46 GMT
       Etag:
       - W/"d60d47b2ba0b179327bb89a97b1c0e77"
       Server:
@@ -35,44 +37,43 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "196"
+      - "199"
       X-Request-Id:
-      - ac1c087a-46c0-4780-8018-0058f071a739
+      - a2f4c768-4f30-489a-b1e9-702aa2886686
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: |
-      {"organization":{"sub_domain":"terraform-acc-test"},"network":{"id":"netw_gVRkZdSKczfNg34P"},"version":"ipv4"}
+    body: '{"network":{"id":"netw_gVRkZdSKczfNg34P"},"organization":{"sub_domain":"terraform-acc-test"},"version":"ipv4"}'
     form: {}
     headers:
-      Accept:
-      - application/json
       Content-Type:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/organizations/_/ip_addresses
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/organizations/:organization/ip_addresses
     method: POST
   response:
-    body: '{"ip_address":{"id":"ip_3Mc6zF0VP1zK9Z7n","address":"185.199.222.21","reverse_dns":"185-199-222-21.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.222.21/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+    body: '{"ip_address":{"id":"ip_ZnRc6uEzkYciSp47","address":"77.72.7.215","reverse_dns":"77-72-7-215.rdns.katapult.io","vip":false,"label":null,"address_with_mask":"77.72.7.215/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
       Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
       Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null}}'
     headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
       Access-Control-Allow-Methods:
-      - '*'
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
       Access-Control-Allow-Origin:
       - '*'
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "549"
+      - "537"
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Nov 2023 12:53:30 GMT
+      - Tue, 23 Jan 2024 10:45:49 GMT
       Etag:
-      - W/"3800ced61b87a06fdc1ed4f888deb861"
+      - W/"fa0cb2c4b3d1c7495cc98ca376ce6b86"
       Server:
       - Caddy
       Strict-Transport-Security:
@@ -80,9 +81,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "191"
+      - "198"
       X-Request-Id:
-      - 3ec0dcd1-457a-4153-bda4-756183b1d3c7
+      - 36f51490-cb3c-401e-add0-fc8acc56fa16
     status: 200 OK
     code: 200
     duration: ""
@@ -90,31 +91,31 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_3Mc6zF0VP1zK9Z7n
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/ip_addresses/:ip_address?ip_address%5Bid%5D=ip_ZnRc6uEzkYciSp47
     method: GET
   response:
-    body: '{"ip_address":{"id":"ip_3Mc6zF0VP1zK9Z7n","address":"185.199.222.21","reverse_dns":"185-199-222-21.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.222.21/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+    body: '{"ip_address":{"id":"ip_ZnRc6uEzkYciSp47","address":"77.72.7.215","reverse_dns":"77-72-7-215.rdns.katapult.io","vip":false,"label":null,"address_with_mask":"77.72.7.215/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
       Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
       Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
     headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
       Access-Control-Allow-Methods:
-      - '*'
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
       Access-Control-Allow-Origin:
       - '*'
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "567"
+      - "555"
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Nov 2023 12:53:30 GMT
+      - Tue, 23 Jan 2024 10:45:49 GMT
       Etag:
-      - W/"d73e9de6162e4a6972c8f55598b5f968"
+      - W/"0f05c11911ddb99c28098ff62ed0d876"
       Server:
       - Caddy
       Strict-Transport-Security:
@@ -122,9 +123,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "182"
+      - "197"
       X-Request-Id:
-      - 526ddfe0-159f-4c3b-9431-19357ac2f008
+      - 9bd8aca0-459e-4a0e-98a3-28a629c194c5
     status: 200 OK
     code: 200
     duration: ""
@@ -136,27 +137,29 @@ interactions:
       - application/json
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_3Mc6zF0VP1zK9Z7n
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_ZnRc6uEzkYciSp47
     method: GET
   response:
-    body: '{"ip_address":{"id":"ip_3Mc6zF0VP1zK9Z7n","address":"185.199.222.21","reverse_dns":"185-199-222-21.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.222.21/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+    body: '{"ip_address":{"id":"ip_ZnRc6uEzkYciSp47","address":"77.72.7.215","reverse_dns":"77-72-7-215.rdns.katapult.io","vip":false,"label":null,"address_with_mask":"77.72.7.215/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
       Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
       Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
     headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
       Access-Control-Allow-Methods:
-      - '*'
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
       Access-Control-Allow-Origin:
       - '*'
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "567"
+      - "555"
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Nov 2023 12:53:30 GMT
+      - Tue, 23 Jan 2024 10:45:49 GMT
       Etag:
-      - W/"d73e9de6162e4a6972c8f55598b5f968"
+      - W/"0f05c11911ddb99c28098ff62ed0d876"
       Server:
       - Caddy
       Strict-Transport-Security:
@@ -164,9 +167,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "181"
+      - "196"
       X-Request-Id:
-      - eed00384-04b1-4503-8e1f-a31efb3bc902
+      - 01ae07f1-a0f5-46d4-829a-fb2eff36078f
     status: 200 OK
     code: 200
     duration: ""
@@ -174,31 +177,31 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_3Mc6zF0VP1zK9Z7n
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/ip_addresses/:ip_address?ip_address%5Bid%5D=ip_ZnRc6uEzkYciSp47
     method: GET
   response:
-    body: '{"ip_address":{"id":"ip_3Mc6zF0VP1zK9Z7n","address":"185.199.222.21","reverse_dns":"185-199-222-21.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.222.21/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+    body: '{"ip_address":{"id":"ip_ZnRc6uEzkYciSp47","address":"77.72.7.215","reverse_dns":"77-72-7-215.rdns.katapult.io","vip":false,"label":null,"address_with_mask":"77.72.7.215/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
       Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
       Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
     headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
       Access-Control-Allow-Methods:
-      - '*'
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
       Access-Control-Allow-Origin:
       - '*'
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "567"
+      - "555"
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Nov 2023 12:53:30 GMT
+      - Tue, 23 Jan 2024 10:45:49 GMT
       Etag:
-      - W/"d73e9de6162e4a6972c8f55598b5f968"
+      - W/"0f05c11911ddb99c28098ff62ed0d876"
       Server:
       - Caddy
       Strict-Transport-Security:
@@ -206,9 +209,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "179"
+      - "195"
       X-Request-Id:
-      - 006ddce6-4f5a-46ee-8851-1901249eb805
+      - 49f2aa32-8a24-4ed9-9b8f-50589aaf8dd1
     status: 200 OK
     code: 200
     duration: ""
@@ -216,31 +219,31 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_3Mc6zF0VP1zK9Z7n
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/ip_addresses/:ip_address?ip_address%5Bid%5D=ip_ZnRc6uEzkYciSp47
     method: GET
   response:
-    body: '{"ip_address":{"id":"ip_3Mc6zF0VP1zK9Z7n","address":"185.199.222.21","reverse_dns":"185-199-222-21.rdns.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.199.222.21/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+    body: '{"ip_address":{"id":"ip_ZnRc6uEzkYciSp47","address":"77.72.7.215","reverse_dns":"77-72-7-215.rdns.katapult.io","vip":false,"label":null,"address_with_mask":"77.72.7.215/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
       Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
       Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
     headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
       Access-Control-Allow-Methods:
-      - '*'
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
       Access-Control-Allow-Origin:
       - '*'
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "567"
+      - "555"
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Nov 2023 12:53:30 GMT
+      - Tue, 23 Jan 2024 10:45:49 GMT
       Etag:
-      - W/"d73e9de6162e4a6972c8f55598b5f968"
+      - W/"0f05c11911ddb99c28098ff62ed0d876"
       Server:
       - Caddy
       Strict-Transport-Security:
@@ -248,27 +251,29 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "174"
+      - "194"
       X-Request-Id:
-      - 33ce8eb3-226e-41e5-992d-f446eebfc2df
+      - b808958d-3e92-45d5-a75b-b1a5ad609e54
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: ""
+    body: '{"ip_address":{"id":"ip_ZnRc6uEzkYciSp47"}}'
     form: {}
     headers:
-      Accept:
+      Content-Type:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_3Mc6zF0VP1zK9Z7n
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/ip_addresses/:ip_address
     method: DELETE
   response:
     body: '{}'
     headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
       Access-Control-Allow-Methods:
-      - '*'
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
       Access-Control-Allow-Origin:
       - '*'
       Cache-Control:
@@ -278,7 +283,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Nov 2023 12:53:30 GMT
+      - Tue, 23 Jan 2024 10:45:52 GMT
       Etag:
       - W/"44136fa355b3678a1146ad16f7e8649e"
       Server:
@@ -288,9 +293,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "171"
+      - "193"
       X-Request-Id:
-      - 5050ff7a-2f95-44a4-9e20-4fdc1bd3e4ab
+      - 4866bd24-aa21-4467-933e-bd6fd2a48f79
     status: 200 OK
     code: 200
     duration: ""
@@ -302,14 +307,16 @@ interactions:
       - application/json
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_3Mc6zF0VP1zK9Z7n
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_ZnRc6uEzkYciSp47
     method: GET
   response:
     body: '{"error":{"code":"ip_address_not_found","description":"No IP addresses
       were found matching any of the criteria provided in the arguments","detail":{}}}'
     headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
       Access-Control-Allow-Methods:
-      - '*'
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
       Access-Control-Allow-Origin:
       - '*'
       Cache-Control:
@@ -319,7 +326,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Nov 2023 12:53:31 GMT
+      - Tue, 23 Jan 2024 10:45:52 GMT
       Server:
       - Caddy
       Strict-Transport-Security:
@@ -329,9 +336,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "200"
       X-Ratelimit-Remaining:
-      - "168"
+      - "192"
       X-Request-Id:
-      - c2b35dbe-0af8-49e5-bb32-fb3f095dc42b
+      - 88dbe13b-e159-4b5f-bfa6-a00c395314ca
     status: 404 Not Found
     code: 404
     duration: ""
