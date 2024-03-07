@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.11](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.10...v0.0.11) (2024-03-07)
+
+
+### Bug Fixes
+
+* **virtual-machine:** avoid rare error when creating a virtual machine ([#125](https://github.com/krystal/terraform-provider-katapult/issues/125)) ([63bae8d](https://github.com/krystal/terraform-provider-katapult/commit/63bae8d1e2d4e452029eb835291cfd480846a214))
+
 ## [0.0.10](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.9...v0.0.10) (2023-03-23)
 
 
