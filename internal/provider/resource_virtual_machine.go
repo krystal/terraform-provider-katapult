@@ -380,6 +380,8 @@ func resourceVirtualMachineCreate(
 	vmWaiter := &resource.StateChangeConf{
 		Pending: []string{
 			string(core.VirtualMachineStopped),
+			string(core.VirtualMachineAllocating),
+			string(core.VirtualMachineAllocated),
 			string(core.VirtualMachineStarting),
 			string(core.VirtualMachineMigrating),
 		},
