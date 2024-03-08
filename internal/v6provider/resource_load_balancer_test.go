@@ -188,6 +188,46 @@ func TestAccKatapultLoadBalancer_basicWithRule(t *testing.T) {
 	})
 }
 
+func TestAccKatapultLoadBalancer_basicWithNoRules(t *testing.T) {
+	tt := newTestTools(t)
+
+	name := tt.ResourceName()
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+					resource "katapult_load_balancer" "main" {
+					  name = "%s"
+					}`,
+					name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultLoadBalancerExists(
+						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main", "name", name,
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"resource_type",
+						string(core.VirtualMachinesResourceType),
+					),
+				),
+			},
+			{
+				ResourceName:      "katapult_load_balancer.main",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccKatapultLoadBalancer_basicWithRules(t *testing.T) {
 	tt := newTestTools(t)
 
