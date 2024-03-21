@@ -3,7 +3,9 @@ package v6provider
 import (
 	"context"
 	"errors"
+	"fmt"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -289,6 +291,7 @@ func (r *LoadBalancerResource) Read(
 	req resource.ReadRequest,
 	resp *resource.ReadResponse,
 ) {
+	fmt.Println("READ")
 	state := &LoadBalancerResourceModel{}
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -431,6 +434,7 @@ func (r *LoadBalancerResource) ImportState(
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
+	fmt.Println("IMPORT")
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
@@ -464,12 +468,19 @@ func (r *LoadBalancerResource) LoadBalancerRead(
 		return nil
 	}
 
-	if !model.Rules.IsNull() {
-		rules, err := getLBRules(ctx, r.M, lb.Ref())
-		if err != nil {
-			return err
-		}
+	rules, err := getLBRules(ctx, r.M, lb.Ref())
+	if err != nil {
+		return err
+	}
 
+	spew.Dump(rules)
+
+	// if model.Rules is null and len(rules) is 0, this is a null rules
+	// if model.Rules is null and len(rules) is not 0,
+	// this an import, we should set model.Rules
+	// if model.Rules is not null then we should always set model.rules,
+	// as this is either an update or create.
+	if !model.Rules.IsNull() || len(rules) != 0 {
 		model.Rules = types.ListValueMust(
 			LoadBalancerRuleType(),
 			convertCoreLBRulesToAttrValue(rules),
