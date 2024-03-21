@@ -13,7 +13,7 @@ description: |-
 ## Example Usage
 
 ```terraform
-# Directly assign virtual machines to the laod balancer
+# Directly assign virtual machines to the load balancer
 resource "katapult_load_balancer" "by-vms" {
   name = "by-vms"
 
@@ -27,7 +27,7 @@ resource "katapult_load_balancer" "by-vms" {
 }
 
 # Same as above, but dynamically specify virtual_machine blocks.
-resource "katapult_load_balancer" "dynamic-block" {
+resource "katapult_load_balancer" {
   name = "dynamic-block"
 
   dynamic "virtual_machine" {
@@ -64,7 +64,7 @@ resource "katapult_load_balancer" "by-tag" {
     id = "tag_2xFkGuXp8iNciPxi"
   }
 
-  dynamic "virtual_machine_group" {
+  dynamic "tag" {
     for_each = ["tag_NKWVzB706MdfYODr", "tag_SAMo9t0eHM1SuNwX"]
 
     content {
