@@ -464,15 +464,17 @@ func (r *LoadBalancerResource) LoadBalancerRead(
 		return nil
 	}
 
-	rules, err := getLBRules(ctx, r.M, lb.Ref())
-	if err != nil {
-		return err
-	}
+	if !model.Rules.IsNull() {
+		rules, err := getLBRules(ctx, r.M, lb.Ref())
+		if err != nil {
+			return err
+		}
 
-	model.Rules = types.ListValueMust(
-		LoadBalancerRuleType(),
-		convertCoreLBRulesToAttrValue(rules),
-	)
+		model.Rules = types.ListValueMust(
+			LoadBalancerRuleType(),
+			convertCoreLBRulesToAttrValue(rules),
+		)
+	}
 
 	return nil
 }
