@@ -507,7 +507,7 @@ func diffLoadBalancerRules(
 	}
 
 	for _, rule := range newRules {
-		if rule.ID.IsNull() {
+		if rule.ID.IsNull() || rule.ID.IsUnknown() {
 			create = append(create, rule)
 			continue
 		}
