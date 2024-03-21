@@ -452,6 +452,111 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 	})
 }
 
+func TestAccKatapultLoadBalancer_update_no_rules(t *testing.T) {
+	tt := newTestTools(t)
+
+	name := tt.ResourceName()
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+					resource "katapult_load_balancer" "main" {
+					  name = "%s"
+					}`,
+					name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultLoadBalancerExists(
+						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main", "name", name,
+					),
+				),
+			},
+			{
+				Config: undent.Stringf(`
+					resource "katapult_load_balancer" "main" {
+					  name = "%s"
+					  rules = [
+						{
+							destination_port = 8080
+							listen_port = 80
+							protocol = "HTTP"
+							passthrough_ssl = false
+						}
+					  ]
+					}`,
+					name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultLoadBalancerExists(
+						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main", "name",
+						name,
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"resource_type",
+						string(core.VirtualMachinesResourceType),
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.destination_port",
+						"8080",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.listen_port",
+						"80",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.protocol",
+						"HTTP",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.passthrough_ssl",
+						"false",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"rules.0.check_enabled",
+						"false",
+					),
+				),
+			},
+			{
+				Config: undent.Stringf(`
+					resource "katapult_load_balancer" "main" {
+					  name = "%s"
+					}`,
+					name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultLoadBalancerExists(
+						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main", "name",
+						name,
+					),
+					resource.TestCheckNoResourceAttr(
+						"katapult_load_balancer.main", "rules",
+					),
+				),
+			},
+		},
+	})
+}
+
 //
 // Helpers
 //
