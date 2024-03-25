@@ -115,6 +115,7 @@ install:
 
 TEST ?= $$(go list ./... | grep -v 'vendor')
 SWEEP_DIR ?= ./internal/provider
+SWEEP_V6_DIR ?= ./internal/v6provider
 
 .PHONY: clean
 clean:
@@ -154,6 +155,7 @@ sweep:
 	$(info WARNING: This will destroy infrastructure. Use only on \
 		development accounts.)
 	go test $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 60m
+	go test $(SWEEP_V6_DIR) -v -sweep=all $(SWEEPARGS) -timeout 60m
 
 .PHONY: shell
 shell: docker-dev-build
