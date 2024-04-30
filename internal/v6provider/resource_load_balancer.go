@@ -79,9 +79,6 @@ func LoadBalancerType() types.ObjectType {
 			},
 			"ip_address":     types.StringType,
 			"https_redirect": types.BoolType,
-			"rules": types.ListType{
-				ElemType: LoadBalancerRuleType(),
-			},
 		},
 	}
 }

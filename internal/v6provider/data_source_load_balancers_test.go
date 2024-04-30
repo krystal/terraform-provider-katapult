@@ -23,28 +23,10 @@ func TestAccKatapultDataSourceLoadBalancers_basic(t *testing.T) {
 					  name = "%s-m"
 					}
 
-					resource "katapult_load_balancer_rule" "first_rule" {
-						load_balancer_id = katapult_load_balancer.first.id
-						destination_port = 8080
-						listen_port = 80
-						protocol = "HTTP"
-						passthrough_ssl = false
-					}
-
 					resource "katapult_load_balancer" "second" {
 						name = "%s-t"
 						depends_on = [katapult_load_balancer.first]
-					  }
-
-					resource "katapult_load_balancer_rule" "second_rule" {
-						load_balancer_id = katapult_load_balancer.second.id
-						destination_port = 8080
-						listen_port = 80
-						protocol = "HTTP"
-						passthrough_ssl = false
-					}
-
-					`,
+					}`,
 					name,
 					name,
 				),

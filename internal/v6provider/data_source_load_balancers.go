@@ -111,11 +111,6 @@ func (ds *LoadBalancersDataSource) Read(
 	}
 
 	list := make([]attr.Value, len(loadBalancers))
-	resourceIDType := types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"id": types.StringType,
-		},
-	}
 
 	for i, lb := range loadBalancers {
 		attrs := map[string]attr.Value{
@@ -123,9 +118,9 @@ func (ds *LoadBalancersDataSource) Read(
 			"name":                   types.StringValue(lb.Name),
 			"resource_type":          types.StringValue(string(lb.ResourceType)), //nolint:lll
 			"https_redirect":         types.BoolValue(lb.HTTPSRedirect),
-			"virtual_machines":       types.ListNull(resourceIDType),
-			"virtual_machine_groups": types.ListNull(resourceIDType),
-			"tags":                   types.ListNull(resourceIDType),
+			"virtual_machines":       types.ListNull(types.StringType),
+			"virtual_machine_groups": types.ListNull(types.StringType),
+			"tags":                   types.ListNull(types.StringType),
 		}
 
 		resourceIDs := flattenLoadBalancerResourceIDs(lb.ResourceIDs)

@@ -23,16 +23,12 @@ func TestAccKatapultDataSourceLoadBalancerRules_basic(t *testing.T) {
 					  name = "%s"
 					}
 
-					esource "katapult_load_balancer_rule" "my_rule" {
+					resource "katapult_load_balancer_rule" "my_rule" {
 						load_balancer_id = katapult_load_balancer.main.id
 						destination_port = 8080
 						listen_port = 80
 						protocol = "HTTP"
 						passthrough_ssl = false
-					}
-
-					data "katapult_load_balancer_rules" "src" {
-					  id = katapult_load_balancer.main.id
 					}`,
 					name,
 				),
@@ -40,6 +36,29 @@ func TestAccKatapultDataSourceLoadBalancerRules_basic(t *testing.T) {
 					testAccCheckKatapultLoadBalancerExists(
 						tt, "katapult_load_balancer.main",
 					),
+				),
+			},
+			// setup the data source in a second step
+			// to ensure the rule is created.
+			{
+				Config: undent.Stringf(`
+				resource "katapult_load_balancer" "main" {
+					name = "%s"
+				}
+
+				resource "katapult_load_balancer_rule" "my_rule" {
+					load_balancer_id = katapult_load_balancer.main.id
+					destination_port = 8080
+					listen_port = 80
+					protocol = "HTTP"
+					passthrough_ssl = false
+				}
+
+				data "katapult_load_balancer_rules" "src" {
+				  id = katapult_load_balancer.main.id
+				}
+				`),
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"data.katapult_load_balancer_rules.src",
 						"rules.#",
