@@ -91,7 +91,6 @@ func LoadBalancerType() types.ObjectType {
 	}
 }
 
-//nolint:funlen
 func (r LoadBalancerResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
@@ -115,7 +114,7 @@ func (r LoadBalancerResource) Schema(
 			"resource_type": schema.StringAttribute{
 				Computed: true,
 			},
-			"virtual_machine": schema.ListAttribute{
+			"virtual_machines": schema.ListAttribute{
 				Optional: true,
 				Computed: true,
 				Validators: []validator.List{
@@ -126,7 +125,7 @@ func (r LoadBalancerResource) Schema(
 				},
 				ElementType: types.StringType,
 			},
-			"virtual_machine_group": schema.ListAttribute{
+			"virtual_machine_groups": schema.ListAttribute{
 				Optional: true,
 				Computed: true,
 				Validators: []validator.List{
@@ -137,7 +136,7 @@ func (r LoadBalancerResource) Schema(
 				},
 				ElementType: types.StringType,
 			},
-			"tag": schema.ListAttribute{
+			"tags": schema.ListAttribute{
 				Optional: true,
 				Computed: true,
 				Validators: []validator.List{
