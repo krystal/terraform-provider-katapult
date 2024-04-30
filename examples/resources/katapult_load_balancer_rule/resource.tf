@@ -2,7 +2,6 @@
 # existing `katapult_load_balancer`.
 resource "katapult_load_balancer" "my_lb" {
   name = "vm"
-  external_rules = true
 }
 
 resource "katapult_load_balancer_rule" "my_rule" {
