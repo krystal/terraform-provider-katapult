@@ -108,9 +108,9 @@ resource "katapult_load_balancer" "external_rules-rules" {
 - `external_rules` (Boolean) When enabled, The full list of rules are not managed by Terraform. Induvidual rules can still be managed with the `katapult_load_balancer_rule` resource. This is required to prevent Terraform from deleting rules managed outside of Terraform. Defaults to `false`.
 - `name` (String)
 - `rules` (Attributes List) (see [below for nested schema](#nestedatt--rules))
-- `tag` (Attributes List) (see [below for nested schema](#nestedatt--tag))
-- `virtual_machine` (Attributes List) (see [below for nested schema](#nestedatt--virtual_machine))
-- `virtual_machine_group` (Attributes List) (see [below for nested schema](#nestedatt--virtual_machine_group))
+- `tags` (List of String)
+- `virtual_machine_groups` (List of String)
+- `virtual_machines` (List of String)
 
 ### Read-Only
 
@@ -164,30 +164,5 @@ Optional:
 Read-Only:
 
 - `state` (String)
-
-
-
-<a id="nestedatt--tag"></a>
-### Nested Schema for `tag`
-
-Required:
-
-- `id` (String)
-
-
-<a id="nestedatt--virtual_machine"></a>
-### Nested Schema for `virtual_machine`
-
-Required:
-
-- `id` (String)
-
-
-<a id="nestedatt--virtual_machine_group"></a>
-### Nested Schema for `virtual_machine_group`
-
-Required:
-
-- `id` (String)
 
 

@@ -34,9 +34,9 @@ data "katapult_load_balancer" "db-replicas" {
 - `name` (String)
 - `resource_type` (String)
 - `rules` (Attributes List) (see [below for nested schema](#nestedatt--rules))
-- `tag` (Attributes List) (see [below for nested schema](#nestedatt--tag))
-- `virtual_machine` (Attributes List) (see [below for nested schema](#nestedatt--virtual_machine))
-- `virtual_machine_group` (Attributes List) (see [below for nested schema](#nestedatt--virtual_machine_group))
+- `tags` (List of String)
+- `virtual_machine_groups` (List of String)
+- `virtual_machines` (List of String)
 
 <a id="nestedatt--rules"></a>
 ### Nested Schema for `rules`
@@ -77,30 +77,5 @@ Read-Only:
 
 - `additional_names` (List of String)
 - `state` (String)
-
-
-
-<a id="nestedatt--tag"></a>
-### Nested Schema for `tag`
-
-Read-Only:
-
-- `id` (String)
-
-
-<a id="nestedatt--virtual_machine"></a>
-### Nested Schema for `virtual_machine`
-
-Read-Only:
-
-- `id` (String)
-
-
-<a id="nestedatt--virtual_machine_group"></a>
-### Nested Schema for `virtual_machine_group`
-
-Read-Only:
-
-- `id` (String)
 
 

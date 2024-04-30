@@ -38,9 +38,9 @@ Read-Only:
 - `name` (String)
 - `resource_type` (String)
 - `rules` (Attributes List) (see [below for nested schema](#nestedatt--load_balancers--rules))
-- `tag` (Attributes List) (see [below for nested schema](#nestedatt--load_balancers--tag))
-- `virtual_machine` (Attributes List) (see [below for nested schema](#nestedatt--load_balancers--virtual_machine))
-- `virtual_machine_group` (Attributes List) (see [below for nested schema](#nestedatt--load_balancers--virtual_machine_group))
+- `tags` (List of String)
+- `virtual_machine_groups` (List of String)
+- `virtual_machines` (List of String)
 
 <a id="nestedatt--load_balancers--rules"></a>
 ### Nested Schema for `load_balancers.rules`
@@ -81,30 +81,5 @@ Read-Only:
 
 - `additional_names` (List of String)
 - `state` (String)
-
-
-
-<a id="nestedatt--load_balancers--tag"></a>
-### Nested Schema for `load_balancers.tag`
-
-Read-Only:
-
-- `id` (String)
-
-
-<a id="nestedatt--load_balancers--virtual_machine"></a>
-### Nested Schema for `load_balancers.virtual_machine`
-
-Read-Only:
-
-- `id` (String)
-
-
-<a id="nestedatt--load_balancers--virtual_machine_group"></a>
-### Nested Schema for `load_balancers.virtual_machine_group`
-
-Read-Only:
-
-- `id` (String)
 
 
