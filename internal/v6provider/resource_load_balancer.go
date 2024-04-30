@@ -25,16 +25,16 @@ type (
 	}
 
 	LoadBalancerResourceModel struct {
-		ID                  types.String `tfsdk:"id"`
-		Name                types.String `tfsdk:"name"`
-		ResourceType        types.String `tfsdk:"resource_type"`
-		VirtualMachine      types.List   `tfsdk:"virtual_machine"`
-		VirtualMachineGroup types.List   `tfsdk:"virtual_machine_group"`
-		Tag                 types.List   `tfsdk:"tag"`
-		IPAddress           types.String `tfsdk:"ip_address"`
-		HTTPSRedirect       types.Bool   `tfsdk:"https_redirect"`
-		ExternalRules       types.Bool   `tfsdk:"external_rules"`
-		Rules               types.List   `tfsdk:"rules"`
+		ID                   types.String `tfsdk:"id"`
+		Name                 types.String `tfsdk:"name"`
+		ResourceType         types.String `tfsdk:"resource_type"`
+		VirtualMachines      types.List   `tfsdk:"virtual_machines"`
+		VirtualMachineGroups types.List   `tfsdk:"virtual_machine_groups"`
+		Tags                 types.List   `tfsdk:"tags"`
+		IPAddress            types.String `tfsdk:"ip_address"`
+		HTTPSRedirect        types.Bool   `tfsdk:"https_redirect"`
+		ExternalRules        types.Bool   `tfsdk:"external_rules"`
+		Rules                types.List   `tfsdk:"rules"`
 	}
 )
 
@@ -73,13 +73,13 @@ func LoadBalancerType() types.ObjectType {
 			"id":            types.StringType,
 			"name":          types.StringType,
 			"resource_type": types.StringType,
-			"virtual_machine": types.ListType{
+			"virtual_machines": types.ListType{
 				ElemType: types.StringType,
 			},
-			"virtual_machine_group": types.ListType{
+			"virtual_machine_groups": types.ListType{
 				ElemType: types.StringType,
 			},
-			"tag": types.ListType{
+			"tags": types.ListType{
 				ElemType: types.StringType,
 			},
 			"ip_address":     types.StringType,
@@ -310,9 +310,9 @@ func (r *LoadBalancerResource) Update(
 		args.Name = plan.Name.ValueString()
 	}
 
-	if !plan.VirtualMachine.Equal(state.VirtualMachine) ||
-		!plan.VirtualMachineGroup.Equal(state.VirtualMachineGroup) ||
-		!plan.Tag.Equal(state.Tag) {
+	if !plan.VirtualMachines.Equal(state.VirtualMachines) ||
+		!plan.VirtualMachineGroups.Equal(state.VirtualMachineGroups) ||
+		!plan.Tags.Equal(state.Tags) {
 		t, ids := extractLoadBalancerResourceTypeAndIDs(&plan)
 		args.ResourceType = t
 		args.ResourceIDs = &ids
@@ -586,17 +586,17 @@ func populateLoadBalancerTargets(
 	ids []string,
 ) {
 	list := flattenLoadBalancerResourceIDs(ids)
-	model.VirtualMachine = types.ListNull(types.StringType)
-	model.Tag = types.ListNull(types.StringType)
-	model.VirtualMachineGroup = types.ListNull(types.StringType)
+	model.VirtualMachines = types.ListNull(types.StringType)
+	model.Tags = types.ListNull(types.StringType)
+	model.VirtualMachineGroups = types.ListNull(types.StringType)
 
 	switch t {
 	case core.VirtualMachinesResourceType:
-		model.VirtualMachine = list
+		model.VirtualMachines = list
 	case core.VirtualMachineGroupsResourceType:
-		model.VirtualMachineGroup = list
+		model.VirtualMachineGroups = list
 	case core.TagsResourceType:
-		model.Tag = list
+		model.Tags = list
 	}
 }
 
@@ -618,15 +618,15 @@ func extractLoadBalancerResourceTypeAndIDs(
 	ids := []string{}
 
 	switch {
-	case !model.VirtualMachine.IsNull():
+	case !model.VirtualMachines.IsNull():
 		t = core.VirtualMachinesResourceType
-		list = model.VirtualMachine.Elements()
-	case !model.VirtualMachineGroup.IsNull():
+		list = model.VirtualMachines.Elements()
+	case !model.VirtualMachineGroups.IsNull():
 		t = core.VirtualMachineGroupsResourceType
-		list = model.VirtualMachineGroup.Elements()
-	case !model.Tag.IsNull():
+		list = model.VirtualMachineGroups.Elements()
+	case !model.Tags.IsNull():
 		t = core.TagsResourceType
-		list = model.Tag.Elements()
+		list = model.Tags.Elements()
 	}
 
 	for _, item := range list {

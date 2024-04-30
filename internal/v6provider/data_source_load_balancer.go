@@ -15,16 +15,16 @@ type (
 	}
 
 	LoadBalancerDataSourceModel struct {
-		ID                  types.String `tfsdk:"id"`
-		Name                types.String `tfsdk:"name"`
-		ResourceType        types.String `tfsdk:"resource_type"`
-		VirtualMachine      types.List   `tfsdk:"virtual_machine"`
-		VirtualMachineGroup types.List   `tfsdk:"virtual_machine_group"`
-		Tag                 types.List   `tfsdk:"tag"`
-		IPAddress           types.String `tfsdk:"ip_address"`
-		HTTPSRedirect       types.Bool   `tfsdk:"https_redirect"`
-		IncludeRules        types.Bool   `tfsdk:"include_rules"`
-		Rules               types.List   `tfsdk:"rules"`
+		ID                   types.String `tfsdk:"id"`
+		Name                 types.String `tfsdk:"name"`
+		ResourceType         types.String `tfsdk:"resource_type"`
+		VirtualMachines      types.List   `tfsdk:"virtual_machines"`
+		VirtualMachineGroups types.List   `tfsdk:"virtual_machine_groups"`
+		Tags                 types.List   `tfsdk:"tags"`
+		IPAddress            types.String `tfsdk:"ip_address"`
+		HTTPSRedirect        types.Bool   `tfsdk:"https_redirect"`
+		IncludeRules         types.Bool   `tfsdk:"include_rules"`
+		Rules                types.List   `tfsdk:"rules"`
 	}
 )
 
@@ -68,35 +68,17 @@ func loadBalancerDataSourceSchemaAttrs() map[string]schema.Attribute {
 		"resource_type": schema.StringAttribute{
 			Computed: true,
 		},
-		"virtual_machine": schema.ListNestedAttribute{
-			Computed: true,
-			NestedObject: schema.NestedAttributeObject{
-				Attributes: map[string]schema.Attribute{
-					"id": schema.StringAttribute{
-						Computed: true,
-					},
-				},
-			},
+		"virtual_machines": schema.ListAttribute{
+			Computed:    true,
+			ElementType: types.StringType,
 		},
-		"virtual_machine_group": schema.ListNestedAttribute{
-			Computed: true,
-			NestedObject: schema.NestedAttributeObject{
-				Attributes: map[string]schema.Attribute{
-					"id": schema.StringAttribute{
-						Computed: true,
-					},
-				},
-			},
+		"virtual_machine_groups": schema.ListAttribute{
+			Computed:    true,
+			ElementType: types.StringType,
 		},
-		"tag": schema.ListNestedAttribute{
-			Computed: true,
-			NestedObject: schema.NestedAttributeObject{
-				Attributes: map[string]schema.Attribute{
-					"id": schema.StringAttribute{
-						Computed: true,
-					},
-				},
-			},
+		"tags": schema.ListAttribute{
+			Computed:    true,
+			ElementType: types.StringType,
 		},
 		"ip_address": schema.StringAttribute{
 			Computed: true,
@@ -157,11 +139,11 @@ func (ds *LoadBalancerDataSource) Read(
 
 	switch lb.ResourceType {
 	case core.VirtualMachinesResourceType:
-		data.VirtualMachine = list
+		data.VirtualMachines = list
 	case core.VirtualMachineGroupsResourceType:
-		data.VirtualMachineGroup = list
+		data.VirtualMachineGroups = list
 	case core.TagsResourceType:
-		data.Tag = list
+		data.Tags = list
 	}
 	data.ID = types.StringValue(lb.ID)
 
