@@ -24,7 +24,6 @@ func TestAccKatapultLoadBalancerRule_basic(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -90,7 +89,6 @@ func TestAccKatapultLoadBalancerRule_update(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -112,7 +110,6 @@ func TestAccKatapultLoadBalancerRule_update(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 						name= "%s"
-						external_rules = true
 					}
 
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -168,7 +165,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -191,7 +187,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -215,7 +210,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -239,7 +233,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -263,7 +256,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -287,7 +279,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -311,7 +302,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -337,7 +327,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -361,7 +350,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -387,7 +375,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -419,7 +406,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -442,7 +428,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {
@@ -466,7 +451,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 					
 					resource "katapult_load_balancer_rule" "my_rule" {

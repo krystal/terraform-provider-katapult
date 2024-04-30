@@ -3,6 +3,7 @@ package v6provider
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -165,4 +166,76 @@ func (ds *LoadBalancerDataSource) Read(
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func getLBRules(
+	ctx context.Context,
+	m *Meta,
+	lbRef core.LoadBalancerRef,
+) ([]*core.LoadBalancerRule, error) {
+	var rules []*core.LoadBalancerRule
+
+	totalPages := 2
+	for pageNum := 1; pageNum <= totalPages; pageNum++ {
+		pageResult, resp, err := m.Core.LoadBalancerRules.List(
+			ctx, lbRef, &core.ListOptions{Page: pageNum},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		totalPages = resp.Pagination.TotalPages
+		rules = append(rules, pageResult...)
+	}
+
+	for i, rl := range rules {
+		rule, _, err := m.Core.LoadBalancerRules.GetByID(
+			ctx, rl.ID,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		rules[i] = rule
+	}
+
+	return rules, nil
+}
+
+func convertCoreLBRulesToAttrValue(
+	rules []*core.LoadBalancerRule,
+) []attr.Value {
+	attrs := make([]attr.Value, len(rules))
+	for i, r := range rules {
+		attrs[i] = types.ObjectValueMust(
+			LoadBalancerRuleType().AttrTypes,
+			map[string]attr.Value{
+				"id":               types.StringValue(r.ID),
+				"load_balancer_id": types.StringNull(),
+				"algorithm":        types.StringValue(string(r.Algorithm)),
+				"protocol":         types.StringValue(string(r.Protocol)),
+				"listen_port":      types.Int64Value(int64(r.ListenPort)),
+				"destination_port": types.Int64Value(int64(r.DestinationPort)),
+				"proxy_protocol":   types.BoolValue(r.ProxyProtocol),
+				"backend_ssl":      types.BoolValue(r.BackendSSL),
+				"passthrough_ssl":  types.BoolValue(r.PassthroughSSL),
+				"certificates": types.ListValueMust(
+					CertificateType(),
+					ConvertCoreCertsToTFValues(r.Certificates),
+				),
+				"check_enabled":  types.BoolValue(r.CheckEnabled),
+				"check_fall":     types.Int64Value(int64(r.CheckFall)),
+				"check_interval": types.Int64Value(int64(r.CheckInterval)),
+				"check_path":     types.StringValue(r.CheckPath),
+				"check_protocol": types.StringValue(string(r.CheckProtocol)),
+				"check_rise":     types.Int64Value(int64(r.CheckRise)),
+				"check_timeout":  types.Int64Value(int64(r.CheckTimeout)),
+				"check_http_statuses": types.StringValue(
+					string(r.CheckHTTPStatuses),
+				),
+			},
+		)
+	}
+
+	return attrs
 }

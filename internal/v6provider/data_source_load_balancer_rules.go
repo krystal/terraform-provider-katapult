@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/krystal/go-katapult/core"
 )
 
 type (
@@ -80,20 +79,6 @@ func (ds *LoadBalancerRulesDataSource) Read(
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	rules, err := getLBRules(ctx, ds.M,
-		core.LoadBalancerRef{
-			ID: data.ID.ValueString(),
-		})
-	if err != nil {
-		resp.Diagnostics.AddError("Load Balancer Rules Error", err.Error())
-
-		return
-	}
-
-	data.Rules = types.ListValueMust(
-		LoadBalancerRuleType(),
-		convertCoreLBRulesToAttrValue(rules),
-	)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

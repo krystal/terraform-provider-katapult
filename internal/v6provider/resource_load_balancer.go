@@ -4,17 +4,14 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
 )
@@ -33,8 +30,6 @@ type (
 		Tags                 types.List   `tfsdk:"tags"`
 		IPAddress            types.String `tfsdk:"ip_address"`
 		HTTPSRedirect        types.Bool   `tfsdk:"https_redirect"`
-		ExternalRules        types.Bool   `tfsdk:"external_rules"`
-		Rules                types.List   `tfsdk:"rules"`
 	}
 )
 
@@ -153,35 +148,6 @@ func (r LoadBalancerResource) Schema(
 			"https_redirect": schema.BoolAttribute{
 				Computed: true,
 			},
-			"external_rules": schema.BoolAttribute{
-				Optional: true,
-				Description: "When enabled, The full list of rules are not " +
-					"managed by Terraform. Induvidual rules can still be " +
-					"managed with the katapult_load_balancer_rule " +
-					"resource. This is required to prevent Terraform from " +
-					"deleting rules managed outside of Terraform. Defaults " +
-					"to false.",
-				MarkdownDescription: "When enabled, " +
-					"The full list of rules are not " +
-					"managed by Terraform. Induvidual rules can still be " +
-					"managed with the `katapult_load_balancer_rule` " +
-					"resource. This is required to prevent Terraform from " +
-					"deleting rules managed outside of Terraform. Defaults " +
-					"to `false`.",
-				Validators: []validator.Bool{
-					boolvalidator.ConflictsWith(path.MatchRoot("rules")),
-				},
-			},
-			"rules": schema.ListNestedAttribute{
-				Optional: true,
-				Validators: []validator.List{
-					listvalidator.ConflictsWith(
-						path.MatchRoot("external_rules")),
-				},
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: lbrSchema,
-				},
-			},
 		},
 	}
 }
@@ -220,29 +186,6 @@ func (r *LoadBalancerResource) Create(
 	if err != nil {
 		resp.Diagnostics.AddError("Load Balancer Create Error", err.Error())
 		return
-	}
-
-	if !plan.ExternalRules.ValueBool() &&
-		(!plan.Rules.IsNull() || len(plan.Rules.Elements()) > 0) {
-		rules := make(
-			[]*LoadBalancerRuleResourceModel,
-			len(plan.Rules.Elements()),
-		)
-		resp.Diagnostics.Append(plan.Rules.ElementsAs(ctx, &rules, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		for _, rule := range rules {
-			lbr, createDiags := r.createRule(ctx, rule, lb.ID)
-			if createDiags.HasError() {
-				resp.Diagnostics.Append(createDiags...)
-				return
-			}
-
-			rule.ID = types.StringValue(lbr.ID)
-			rule.LoadBalancerID = types.StringValue(lb.ID)
-		}
 	}
 
 	if err := r.LoadBalancerRead(ctx, lb.ID, &plan, &resp.State); err != nil {
@@ -317,48 +260,6 @@ func (r *LoadBalancerResource) Update(
 		args.ResourceIDs = &ids
 	}
 
-	if !plan.ExternalRules.ValueBool() {
-		create, update, del, diffDiags := diffLoadBalancerRules(
-			ctx, state.Rules, plan.Rules)
-		resp.Diagnostics.Append(diffDiags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		for _, rule := range create {
-			lbr, createDiags := r.createRule(ctx, rule, id)
-			if createDiags.HasError() {
-				resp.Diagnostics.Append(createDiags...)
-				return
-			}
-
-			rule.ID = types.StringValue(lbr.ID)
-		}
-
-		for _, rule := range update {
-			_, updateDiags := r.updateRule(ctx, rule)
-
-			if updateDiags.HasError() {
-				resp.Diagnostics.Append(updateDiags...)
-				return
-			}
-		}
-
-		for _, rule := range del {
-			_, _, err := r.M.Core.LoadBalancerRules.Delete(
-				ctx, core.LoadBalancerRuleRef{
-					ID: rule.ID.ValueString(),
-				})
-			if err != nil {
-				resp.Diagnostics.AddError(
-					"Load Balancer Rule Delete Error",
-					err.Error(),
-				)
-				return
-			}
-		}
-	}
-
 	_, _, err := r.M.Core.LoadBalancers.Update(ctx, lbRef, args)
 	if err != nil {
 		resp.Diagnostics.AddError("Load Balancer Update Error", err.Error())
@@ -429,154 +330,8 @@ func (r *LoadBalancerResource) LoadBalancerRead(
 	}
 
 	populateLoadBalancerTargets(model, lb.ResourceType, lb.ResourceIDs)
-	if model.ExternalRules.ValueBool() {
-		return nil
-	}
-
-	rules, err := getLBRules(ctx, r.M, lb.Ref())
-	if err != nil {
-		return err
-	}
-
-	// if model.Rules is null and len(rules) is 0, this is a null rules
-	// if model.Rules is null and len(rules) is not 0,
-	// this an import, we should set model.Rules
-	// if model.Rules is not null then we should always set model.rules,
-	// as this is either an update or create.
-	if !model.Rules.IsNull() || len(rules) != 0 {
-		model.Rules = types.ListValueMust(
-			LoadBalancerRuleType(),
-			convertCoreLBRulesToAttrValue(rules),
-		)
-	}
 
 	return nil
-}
-
-func diffLoadBalancerRules(
-	ctx context.Context,
-	oldList basetypes.ListValue,
-	newList basetypes.ListValue,
-) (
-	create, update, del []*LoadBalancerRuleResourceModel,
-	diags diag.Diagnostics,
-) {
-	oldRules := make([]*LoadBalancerRuleResourceModel, len(oldList.Elements()))
-	diags = oldList.ElementsAs(ctx, &oldRules, false)
-	if diags.HasError() {
-		return create, update, del, diags
-	}
-
-	newRules := make([]*LoadBalancerRuleResourceModel, len(newList.Elements()))
-	diags = newList.ElementsAs(ctx, &newRules, false)
-	if diags.HasError() {
-		return create, update, del, diags
-	}
-
-	// Create a map of existing rules for easy lookup
-
-	existing := map[string]*LoadBalancerRuleResourceModel{}
-	for _, rule := range oldRules {
-		existing[rule.ID.ValueString()] = rule
-	}
-
-	for _, rule := range newRules {
-		if rule.ID.IsNull() || rule.ID.IsUnknown() {
-			create = append(create, rule)
-			continue
-		}
-
-		id := rule.ID.ValueString()
-
-		oldRule, ok := existing[id]
-		delete(existing, id)
-
-		if !ok || diffLoadBalancerRule(oldRule, rule) {
-			update = append(update, rule)
-		}
-	}
-
-	for _, rule := range existing {
-		del = append(del, rule)
-	}
-
-	return create, update, del, diags
-}
-
-//nolint:gocyclo // this has to check everything
-func diffLoadBalancerRule(
-	oldRule, newRule *LoadBalancerRuleResourceModel,
-) bool {
-	if oldRule == nil && newRule == nil {
-		return false
-	}
-
-	if oldRule == nil || newRule == nil {
-		return true
-	}
-
-	if !oldRule.Algorithm.Equal(newRule.Algorithm) ||
-		!oldRule.Protocol.Equal(newRule.Protocol) ||
-		!oldRule.ListenPort.Equal(newRule.ListenPort) ||
-		!oldRule.DestinationPort.Equal(newRule.DestinationPort) ||
-		!oldRule.ProxyProtocol.Equal(newRule.ProxyProtocol) ||
-		!oldRule.BackendSSL.Equal(newRule.BackendSSL) ||
-		!oldRule.PassthroughSSL.Equal(newRule.PassthroughSSL) ||
-		!oldRule.CheckEnabled.Equal(newRule.CheckEnabled) ||
-		!oldRule.CheckFall.Equal(newRule.CheckFall) ||
-		!oldRule.CheckInterval.Equal(newRule.CheckInterval) ||
-		!oldRule.CheckPath.Equal(newRule.CheckPath) ||
-		!oldRule.CheckProtocol.Equal(newRule.CheckProtocol) ||
-		!oldRule.CheckRise.Equal(newRule.CheckRise) ||
-		!oldRule.CheckTimeout.Equal(newRule.CheckTimeout) ||
-		!oldRule.CheckHTTPStatuses.Equal(newRule.CheckHTTPStatuses) ||
-		!oldRule.Certificates.Equal(newRule.Certificates) {
-		return true
-	}
-
-	return false
-}
-
-func (r *LoadBalancerResource) createRule(
-	ctx context.Context,
-	rule *LoadBalancerRuleResourceModel,
-	lbID string,
-) (*core.LoadBalancerRule, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	args, diags := buildLoadBalancerRuleCreateArgs(ctx, rule)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	lbr, _, err := r.M.Core.LoadBalancerRules.Create(
-		ctx, core.LoadBalancerRef{ID: lbID}, args)
-	if err != nil {
-		diags.AddError("Load Balancer Rule Create Error", err.Error())
-		return nil, diags
-	}
-
-	return lbr, diags
-}
-
-func (r *LoadBalancerResource) updateRule(
-	ctx context.Context,
-	rule *LoadBalancerRuleResourceModel,
-) (*core.LoadBalancerRule, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	args, diags := buildLoadBalancerRuleCreateArgs(ctx, rule)
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	lbr, _, err := r.M.Core.LoadBalancerRules.Update(
-		ctx, core.LoadBalancerRuleRef{ID: rule.ID.ValueString()}, args)
-	if err != nil {
-		diags.AddError("Load Balancer Rule Update Error", err.Error())
-
-		return nil, diags
-	}
-
-	return lbr, nil
 }
 
 func populateLoadBalancerTargets(
@@ -635,76 +390,4 @@ func extractLoadBalancerResourceTypeAndIDs(
 	}
 
 	return t, ids
-}
-
-func getLBRules(
-	ctx context.Context,
-	m *Meta,
-	lbRef core.LoadBalancerRef,
-) ([]*core.LoadBalancerRule, error) {
-	var rules []*core.LoadBalancerRule
-
-	totalPages := 2
-	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := m.Core.LoadBalancerRules.List(
-			ctx, lbRef, &core.ListOptions{Page: pageNum},
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		totalPages = resp.Pagination.TotalPages
-		rules = append(rules, pageResult...)
-	}
-
-	for i, rl := range rules {
-		rule, _, err := m.Core.LoadBalancerRules.GetByID(
-			ctx, rl.ID,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		rules[i] = rule
-	}
-
-	return rules, nil
-}
-
-func convertCoreLBRulesToAttrValue(
-	rules []*core.LoadBalancerRule,
-) []attr.Value {
-	attrs := make([]attr.Value, len(rules))
-	for i, r := range rules {
-		attrs[i] = types.ObjectValueMust(
-			LoadBalancerRuleType().AttrTypes,
-			map[string]attr.Value{
-				"id":               types.StringValue(r.ID),
-				"load_balancer_id": types.StringNull(),
-				"algorithm":        types.StringValue(string(r.Algorithm)),
-				"protocol":         types.StringValue(string(r.Protocol)),
-				"listen_port":      types.Int64Value(int64(r.ListenPort)),
-				"destination_port": types.Int64Value(int64(r.DestinationPort)),
-				"proxy_protocol":   types.BoolValue(r.ProxyProtocol),
-				"backend_ssl":      types.BoolValue(r.BackendSSL),
-				"passthrough_ssl":  types.BoolValue(r.PassthroughSSL),
-				"certificates": types.ListValueMust(
-					CertificateType(),
-					ConvertCoreCertsToTFValues(r.Certificates),
-				),
-				"check_enabled":  types.BoolValue(r.CheckEnabled),
-				"check_fall":     types.Int64Value(int64(r.CheckFall)),
-				"check_interval": types.Int64Value(int64(r.CheckInterval)),
-				"check_path":     types.StringValue(r.CheckPath),
-				"check_protocol": types.StringValue(string(r.CheckProtocol)),
-				"check_rise":     types.Int64Value(int64(r.CheckRise)),
-				"check_timeout":  types.Int64Value(int64(r.CheckTimeout)),
-				"check_http_statuses": types.StringValue(
-					string(r.CheckHTTPStatuses),
-				),
-			},
-		)
-	}
-
-	return attrs
 }
