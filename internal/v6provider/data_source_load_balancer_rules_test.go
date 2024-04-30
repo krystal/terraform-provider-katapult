@@ -21,14 +21,14 @@ func TestAccKatapultDataSourceLoadBalancerRules_basic(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "main" {
 					  name = "%s"
-					  rules = [
-						{
-							destination_port = 8080
-							listen_port = 80
-							protocol = "HTTP"
-							passthrough_ssl = false
-						}
-					  ]
+					}
+
+					esource "katapult_load_balancer_rule" "my_rule" {
+						load_balancer_id = katapult_load_balancer.main.id
+						destination_port = 8080
+						listen_port = 80
+						protocol = "HTTP"
+						passthrough_ssl = false
 					}
 
 					data "katapult_load_balancer_rules" "src" {

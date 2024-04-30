@@ -21,28 +21,28 @@ func TestAccKatapultDataSourceLoadBalancers_basic(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "first" {
 					  name = "%s-m"
-					  rules = [
-						{
-							destination_port = 8080
-							listen_port = 80
-							protocol = "HTTP"
-							passthrough_ssl = false
-						}
-					  ]
+					}
+
+					resource "katapult_load_balancer_rule" "first_rule" {
+						load_balancer_id = katapult_load_balancer.first.id
+						destination_port = 8080
+						listen_port = 80
+						protocol = "HTTP"
+						passthrough_ssl = false
 					}
 
 					resource "katapult_load_balancer" "second" {
 						name = "%s-t"
-						rules = [
-						  {
-							  destination_port = 8443
-							  listen_port = 443
-							  protocol = "HTTPS"
-							  passthrough_ssl = true
-						  }
-						]
 						depends_on = [katapult_load_balancer.first]
 					  }
+
+					resource "katapult_load_balancer_rule" "second_rule" {
+						load_balancer_id = katapult_load_balancer.second.id
+						destination_port = 8080
+						listen_port = 80
+						protocol = "HTTP"
+						passthrough_ssl = false
+					}
 
 					`,
 					name,
@@ -88,28 +88,27 @@ func TestAccKatapultDataSourceLoadBalancers_rules(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "first" {
 					  name = "%s-m"
-					  rules = [
-						{
-							destination_port = 8080
-							listen_port = 80
-							protocol = "HTTP"
-							passthrough_ssl = false
-						}
-					  ]
+					}
+
+					resource "katapult_load_balancer_rule" "first_rule" {
+						load_balancer_id = katapult_load_balancer.first.id
+						destination_port = 8080
+						listen_port = 80
+						protocol = "HTTP"
+						passthrough_ssl = false
 					}
 
 					resource "katapult_load_balancer" "second" {
 					  name = "%s-t"
-					  rules = [
-						{
-							destination_port = 8443
-							listen_port = 443
-							protocol = "HTTPS"
-							passthrough_ssl = true
-							
-						}
-					  ]
 					  depends_on = [katapult_load_balancer.first]
+					}
+
+					resource "katapult_load_balancer_rule" "second_rule" {
+						load_balancer_id = katapult_load_balancer.second.id
+						destination_port = 8443
+						listen_port = 443
+						protocol = "HTTP"
+						passthrough_ssl = false
 					}
 					`,
 					name,
