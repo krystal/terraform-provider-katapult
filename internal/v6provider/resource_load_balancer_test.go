@@ -104,7 +104,6 @@ func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "katapult_load_balancer" "main" {
-					external_rules = true
 				}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultLoadBalancerExists(
@@ -138,7 +137,6 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "main" {
 					  name = "%s"
-					  external_rules = true
 					}`,
 					name,
 				),
@@ -155,7 +153,6 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "main" {
 					  name = "%s"
-					  external_rules = true
 					}`,
 					name+"-different",
 				),

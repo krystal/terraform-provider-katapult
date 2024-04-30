@@ -20,7 +20,6 @@ func TestAccKatapultDataSourceLoadBalancerRule_basic(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "my_lb" {
 					  name = "%s"
-					  external_rules = true
 					}
 
 					resource "katapult_load_balancer_rule" "my_rule" {
