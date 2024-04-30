@@ -131,7 +131,7 @@ func (ds *LoadBalancersDataSource) Read(
 		attrs := map[string]attr.Value{
 			"id":                     types.StringValue(lb.ID),
 			"name":                   types.StringValue(lb.Name),
-			"resource_type":          types.StringValue(string(lb.ResourceType)),
+			"resource_type":          types.StringValue(string(lb.ResourceType)), //nolint:lll
 			"https_redirect":         types.BoolValue(lb.HTTPSRedirect),
 			"virtual_machines":       types.ListNull(resourceIDType),
 			"virtual_machine_groups": types.ListNull(resourceIDType),
