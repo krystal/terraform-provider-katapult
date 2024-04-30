@@ -129,23 +129,23 @@ func (ds *LoadBalancersDataSource) Read(
 
 	for i, lb := range loadBalancers {
 		attrs := map[string]attr.Value{
-			"id":                    types.StringValue(lb.ID),
-			"name":                  types.StringValue(lb.Name),
-			"resource_type":         types.StringValue(string(lb.ResourceType)),
-			"https_redirect":        types.BoolValue(lb.HTTPSRedirect),
-			"virtual_machine":       types.ListNull(resourceIDType),
-			"virtual_machine_group": types.ListNull(resourceIDType),
-			"tag":                   types.ListNull(resourceIDType),
+			"id":                     types.StringValue(lb.ID),
+			"name":                   types.StringValue(lb.Name),
+			"resource_type":          types.StringValue(string(lb.ResourceType)),
+			"https_redirect":         types.BoolValue(lb.HTTPSRedirect),
+			"virtual_machines":       types.ListNull(resourceIDType),
+			"virtual_machine_groups": types.ListNull(resourceIDType),
+			"tags":                   types.ListNull(resourceIDType),
 		}
 
 		resourceIDs := flattenLoadBalancerResourceIDs(lb.ResourceIDs)
 		switch lb.ResourceType {
 		case core.VirtualMachinesResourceType:
-			attrs["virtual_machine"] = resourceIDs
+			attrs["virtual_machines"] = resourceIDs
 		case core.VirtualMachineGroupsResourceType:
-			attrs["virtual_machine_group"] = resourceIDs
+			attrs["virtual_machine_groups"] = resourceIDs
 		case core.TagsResourceType:
-			attrs["tag"] = resourceIDs
+			attrs["tags"] = resourceIDs
 		}
 
 		if lb.IPAddress != nil {

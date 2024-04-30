@@ -119,8 +119,8 @@ func (r LoadBalancerResource) Schema(
 				Computed: true,
 				Validators: []validator.List{
 					listvalidator.ConflictsWith(
-						path.MatchRoot("tag"),
-						path.MatchRoot("virtual_machine_group"),
+						path.MatchRoot("tags"),
+						path.MatchRoot("virtual_machine_groups"),
 					),
 				},
 				ElementType: types.StringType,
@@ -130,8 +130,8 @@ func (r LoadBalancerResource) Schema(
 				Computed: true,
 				Validators: []validator.List{
 					listvalidator.ConflictsWith(
-						path.MatchRoot("tag"),
-						path.MatchRoot("virtual_machine"),
+						path.MatchRoot("tags"),
+						path.MatchRoot("virtual_machines"),
 					),
 				},
 				ElementType: types.StringType,
@@ -141,8 +141,8 @@ func (r LoadBalancerResource) Schema(
 				Computed: true,
 				Validators: []validator.List{
 					listvalidator.ConflictsWith(
-						path.MatchRoot("virtual_machine"),
-						path.MatchRoot("virtual_machine_group"),
+						path.MatchRoot("virtual_machines"),
+						path.MatchRoot("virtual_machine_groups"),
 					),
 				},
 				ElementType: types.StringType,

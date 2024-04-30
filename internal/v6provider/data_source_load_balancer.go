@@ -136,6 +136,9 @@ func (ds *LoadBalancerDataSource) Read(
 	}
 
 	list := flattenLoadBalancerResourceIDs(lb.ResourceIDs)
+	data.VirtualMachines = types.ListNull(types.StringType)
+	data.Tags = types.ListNull(types.StringType)
+	data.VirtualMachineGroups = types.ListNull(types.StringType)
 
 	switch lb.ResourceType {
 	case core.VirtualMachinesResourceType:
