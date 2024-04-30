@@ -74,25 +74,13 @@ func LoadBalancerType() types.ObjectType {
 			"name":          types.StringType,
 			"resource_type": types.StringType,
 			"virtual_machine": types.ListType{
-				ElemType: types.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"id": types.StringType,
-					},
-				},
+				ElemType: types.StringType,
 			},
 			"virtual_machine_group": types.ListType{
-				ElemType: types.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"id": types.StringType,
-					},
-				},
+				ElemType: types.StringType,
 			},
 			"tag": types.ListType{
-				ElemType: types.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"id": types.StringType,
-					},
-				},
+				ElemType: types.StringType,
 			},
 			"ip_address":     types.StringType,
 			"https_redirect": types.BoolType,
@@ -127,7 +115,7 @@ func (r LoadBalancerResource) Schema(
 			"resource_type": schema.StringAttribute{
 				Computed: true,
 			},
-			"virtual_machine": schema.ListNestedAttribute{
+			"virtual_machine": schema.ListAttribute{
 				Optional: true,
 				Computed: true,
 				Validators: []validator.List{
@@ -136,15 +124,9 @@ func (r LoadBalancerResource) Schema(
 						path.MatchRoot("virtual_machine_group"),
 					),
 				},
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required: true,
-						},
-					},
-				},
+				ElementType: types.StringType,
 			},
-			"virtual_machine_group": schema.ListNestedAttribute{
+			"virtual_machine_group": schema.ListAttribute{
 				Optional: true,
 				Computed: true,
 				Validators: []validator.List{
@@ -153,15 +135,9 @@ func (r LoadBalancerResource) Schema(
 						path.MatchRoot("virtual_machine"),
 					),
 				},
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required: true,
-						},
-					},
-				},
+				ElementType: types.StringType,
 			},
-			"tag": schema.ListNestedAttribute{
+			"tag": schema.ListAttribute{
 				Optional: true,
 				Computed: true,
 				Validators: []validator.List{
@@ -170,13 +146,7 @@ func (r LoadBalancerResource) Schema(
 						path.MatchRoot("virtual_machine_group"),
 					),
 				},
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required: true,
-						},
-					},
-				},
+				ElementType: types.StringType,
 			},
 			"ip_address": schema.StringAttribute{
 				Computed: true,
@@ -616,21 +586,9 @@ func populateLoadBalancerTargets(
 	ids []string,
 ) {
 	list := flattenLoadBalancerResourceIDs(ids)
-	model.VirtualMachine = types.ListNull(types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"id": types.StringType,
-		},
-	})
-	model.Tag = types.ListNull(types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"id": types.StringType,
-		},
-	})
-	model.VirtualMachineGroup = types.ListNull(types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"id": types.StringType,
-		},
-	})
+	model.VirtualMachine = types.ListNull(types.StringType)
+	model.Tag = types.ListNull(types.StringType)
+	model.VirtualMachineGroup = types.ListNull(types.StringType)
 
 	switch t {
 	case core.VirtualMachinesResourceType:
@@ -646,18 +604,10 @@ func flattenLoadBalancerResourceIDs(ids []string) types.List {
 	values := make([]attr.Value, len(ids))
 
 	for i, id := range ids {
-		values[i] = types.ObjectValueMust(map[string]attr.Type{
-			"id": types.StringType,
-		}, map[string]attr.Value{
-			"id": types.StringValue(id),
-		})
+		values[i] = types.StringValue(id)
 	}
 
-	return types.ListValueMust(types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"id": types.StringType,
-		},
-	}, values)
+	return types.ListValueMust(types.StringType, values)
 }
 
 func extractLoadBalancerResourceTypeAndIDs(
@@ -680,10 +630,9 @@ func extractLoadBalancerResourceTypeAndIDs(
 	}
 
 	for _, item := range list {
-		i := item.(types.Object)
-		attrs := i.Attributes()
+		i := item.(types.String)
 
-		ids = append(ids, attrs["id"].(types.String).ValueString())
+		ids = append(ids, i.ValueString())
 	}
 
 	return t, ids
