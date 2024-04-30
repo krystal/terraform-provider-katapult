@@ -17,7 +17,6 @@ type (
 
 	LoadBalancersDataSourceModel struct {
 		ID            types.String `tfsdk:"id"`
-		IncludeRules  types.Bool   `tfsdk:"include_rules"`
 		LoadBalancers types.List   `tfsdk:"load_balancers"`
 	}
 )
@@ -57,21 +56,12 @@ func (ds *LoadBalancersDataSource) Schema(
 	resp *datasource.SchemaResponse,
 ) {
 	lbAttrs := loadBalancerDataSourceSchemaAttrs()
-	delete(lbAttrs, "include_rules")
 
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
 				Description: "Always set to provider organization value.",
-			},
-			"include_rules": schema.BoolAttribute{
-				Description: "Whether to include rules in the output. Can " +
-					"be slow if there are a lot of load balancers, as each " +
-					"load balancer requires a separate API " +
-					"call to fetch rules.",
-				Optional: true,
-				Computed: true,
 			},
 			"load_balancers": schema.ListNestedAttribute{
 				Computed: true,
@@ -150,23 +140,6 @@ func (ds *LoadBalancersDataSource) Read(
 
 		if lb.IPAddress != nil {
 			attrs["ip_address"] = types.StringValue(lb.IPAddress.Address)
-		}
-
-		if data.IncludeRules.ValueBool() {
-			rules, err := getLBRules(ctx, ds.M, lb.Ref())
-			if err != nil {
-				resp.Diagnostics.AddError(
-					"Load Balancer Rules Error",
-					err.Error())
-				return
-			}
-
-			attrs["rules"] = types.ListValueMust(
-				LoadBalancerRuleType(),
-				convertCoreLBRulesToAttrValue(rules),
-			)
-		} else {
-			attrs["rules"] = types.ListNull(LoadBalancerRuleType())
 		}
 
 		list[i] = types.ObjectValueMust(

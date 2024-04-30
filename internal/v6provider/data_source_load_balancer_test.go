@@ -24,7 +24,7 @@ func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
 					  name = "%s"
 					}
 
-					esource "katapult_load_balancer_rule" "my_rule" {
+					resource "katapult_load_balancer_rule" "my_rule" {
 						load_balancer_id = katapult_load_balancer.main.id
 						destination_port = 8080
 						listen_port = 80
@@ -34,7 +34,6 @@ func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
 
 					data "katapult_load_balancer" "src" {
 					  id = katapult_load_balancer.main.id
-					  include_rules = false
 					}`,
 					name,
 				),
@@ -71,17 +70,8 @@ func TestAccKatapultDataSourceLoadBalancer_rules(t *testing.T) {
 					  name = "%s"
 					}
 
-					esource "katapult_load_balancer_rule" "my_rule" {
-						load_balancer_id = katapult_load_balancer.my_lb.id
-						destination_port = 8080
-						listen_port = 80
-						protocol = "HTTP"
-						passthrough_ssl = false
-					}
-
 					data "katapult_load_balancer" "src" {
 					  id = katapult_load_balancer.main.id
-					  include_rules = true
 					}`,
 					name,
 				),
@@ -98,31 +88,6 @@ func TestAccKatapultDataSourceLoadBalancer_rules(t *testing.T) {
 						"data.katapult_load_balancer.src",
 						"resource_type",
 						string(core.VirtualMachinesResourceType),
-					),
-					resource.TestCheckResourceAttr(
-						"data.katapult_load_balancer.src",
-						"rules.#",
-						"1",
-					),
-					resource.TestCheckResourceAttr(
-						"data.katapult_load_balancer.src",
-						"rules.0.destination_port",
-						"8080",
-					),
-					resource.TestCheckResourceAttr(
-						"data.katapult_load_balancer.src",
-						"rules.0.listen_port",
-						"80",
-					),
-					resource.TestCheckResourceAttr(
-						"data.katapult_load_balancer.src",
-						"rules.0.protocol",
-						"HTTP",
-					),
-					resource.TestCheckResourceAttr(
-						"data.katapult_load_balancer.src",
-						"rules.0.passthrough_ssl",
-						"false",
 					),
 				),
 			},
