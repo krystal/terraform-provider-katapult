@@ -92,6 +92,59 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 	})
 }
 
+func TestAccKatapultLoadBalancer_vm(t *testing.T) {
+	tt := newTestTools(t)
+
+	name := tt.ResourceName()
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+				resource "katapult_ip" "web" {}
+
+				resource "katapult_virtual_machine" "base" {
+					package       = "rock-3"
+					disk_template = "ubuntu-18-04"
+					disk_template_options = {
+						install_agent = true
+					}
+					ip_address_ids = [katapult_ip.web.id]
+				}
+				
+				resource "katapult_load_balancer" "main" {
+					name = "%s"
+					virtual_machine_ids = [katapult_virtual_machine.base.id]
+				  }
+				`,
+					name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultLoadBalancerExists(
+						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main", "name", name,
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"resource_type",
+						string(core.VirtualMachinesResourceType),
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"virtual_machine_ids.#",
+						"1",
+					),
+				),
+			},
+		},
+	})
+}
+
 func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
 	tt := newTestTools(t)
 

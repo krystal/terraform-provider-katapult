@@ -19,7 +19,6 @@ func init() { //nolint:gochecknoinits
 	})
 }
 
-
 func testSweepVirtualMachines(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()
@@ -70,7 +69,7 @@ func testSweepVirtualMachines(_ string) error {
 		}
 
 		if !stopped {
-			stopWaiter := &resource.StateChangeConf{
+			stopWaiter := &Waiter{
 				Pending: []string{
 					string(core.VirtualMachineStarted),
 					string(core.VirtualMachineStopping),
@@ -118,7 +117,7 @@ func testSweepVirtualMachines(_ string) error {
 			return err
 		}
 
-		trashWaiter := &resource.StateChangeConf{
+		trashWaiter := &Waiter{
 			Pending: []string{"exists"},
 			Target:  []string{"not_found"},
 			Refresh: func() (interface{}, string, error) {
