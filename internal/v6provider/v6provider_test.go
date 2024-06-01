@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -17,9 +18,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
+	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/jimeh/rands/randsmust"
 
+	v5provider "github.com/krystal/terraform-provider-katapult/internal/provider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -79,23 +83,46 @@ type testTools struct {
 }
 
 func newTestTools(t *testing.T) *testTools {
+	ctx := context.Background()
+
 	r := newVCRRecorder(t)
-	k := &KatapultProvider{
+	v6config := &KatapultProvider{
 		Version:             testAccProviderVersion,
 		GeneratedNamePrefix: testAccResourceNamePrefix,
 	}
 
-	if r != nil {
-		k.HTTPClient = &http.Client{Transport: r}
+	v5Config := &v5provider.Config{
+		Version: testAccProviderVersion,
+		Commit:  testAccResourceNamePrefix,
 	}
 
-	ctx := context.Background()
+	if r != nil {
+		v5Config.HTTPClient = &http.Client{Transport: r}
+		v6config.HTTPClient = &http.Client{Transport: r}
+	}
 
 	meta, err := NewMeta("", "", "", nil, "",
-		testAccResourceNamePrefix, k.HTTPClient, "", "")
+		testAccResourceNamePrefix, v6config.HTTPClient, "", "")
 	require.NoError(t, err)
 
-	k.m = meta
+	v6config.m = meta
+
+	upgradedSDKServer, err := tf5to6server.UpgradeServer(
+		ctx, v5provider.New(v5Config)().GRPCProvider,
+	)
+	if err != nil {
+		require.NoError(t, err)
+	}
+
+	providers := []func() tfprotov6.ProviderServer{
+		func() tfprotov6.ProviderServer { return upgradedSDKServer },
+		providerserver.NewProtocol6(New(v6config)()),
+	}
+
+	muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return &testTools{
 		T:        t,
@@ -103,7 +130,10 @@ func newTestTools(t *testing.T) *testTools {
 		Recorder: r,
 		Meta:     meta,
 		ProviderFactories: providerFactoryList{
-			"katapult": providerserver.NewProtocol6WithError(k),
+			//nolint:unparam // must return an error to match the map signature
+			"katapult": func() (tfprotov6.ProviderServer, error) {
+				return muxServer.ProviderServer(), nil
+			},
 		},
 	}
 }

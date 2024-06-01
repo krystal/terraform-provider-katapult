@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/jimeh/rands"
@@ -324,7 +324,7 @@ func resourceVirtualMachineCreate(
 		return diag.FromErr(err)
 	}
 
-	buildWaiter := &resource.StateChangeConf{
+	buildWaiter := &retry.StateChangeConf{
 		Pending: []string{
 			string(core.VirtualMachineBuildDraft),
 			string(core.VirtualMachineBuildPending),
@@ -377,7 +377,7 @@ func resourceVirtualMachineCreate(
 		}
 	}
 
-	vmWaiter := &resource.StateChangeConf{
+	vmWaiter := &retry.StateChangeConf{
 		Pending: []string{
 			string(core.VirtualMachineStopped),
 			string(core.VirtualMachineAllocating),
@@ -747,7 +747,7 @@ func waitForVirtualMachineToStop(
 	timeout time.Duration,
 	vmRef core.VirtualMachineRef,
 ) (*core.VirtualMachine, error) {
-	waiter := &resource.StateChangeConf{
+	waiter := &retry.StateChangeConf{
 		Pending: []string{
 			string(core.VirtualMachineStarted),
 			string(core.VirtualMachineStopping),
