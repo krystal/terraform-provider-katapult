@@ -13,8 +13,6 @@ import (
 )
 
 func init() { //nolint:gochecknoinits
-	// TODO: re-enable katapult_load_balancer sweeper when Load Balancer
-	// resources are enabled again.
 	resource.AddTestSweepers("katapult_load_balancer", &resource.Sweeper{
 		Name: "katapult_load_balancer",
 		F:    testSweepLoadBalancers,
