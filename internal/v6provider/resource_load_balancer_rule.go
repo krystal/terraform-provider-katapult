@@ -36,27 +36,7 @@ type (
 		ListenPort        types.Int64  `tfsdk:"listen_port"`
 		Protocol          types.String `tfsdk:"protocol"`
 		ProxyProtocol     types.Bool   `tfsdk:"proxy_protocol"`
-		Certificates      types.List   `tfsdk:"certificates"`
-		BackendSSL        types.Bool   `tfsdk:"backend_ssl"`
-		PassthroughSSL    types.Bool   `tfsdk:"passthrough_ssl"`
-		CheckEnabled      types.Bool   `tfsdk:"check_enabled"`
-		CheckFall         types.Int64  `tfsdk:"check_fall"`
-		CheckInterval     types.Int64  `tfsdk:"check_interval"`
-		CheckHTTPStatuses types.String `tfsdk:"check_http_statuses"`
-		CheckPath         types.String `tfsdk:"check_path"`
-		CheckProtocol     types.String `tfsdk:"check_protocol"`
-		CheckRise         types.Int64  `tfsdk:"check_rise"`
-		CheckTimeout      types.Int64  `tfsdk:"check_timeout"`
-	}
-	LoadBalancerRule struct {
-		ID                types.String `tfsdk:"id"`
-		LoadBalancerID    types.String `tfsdk:"load_balancer_id"`
-		Algorithm         types.String `tfsdk:"algorithm"`
-		DestinationPort   types.Int64  `tfsdk:"destination_port"`
-		ListenPort        types.Int64  `tfsdk:"listen_port"`
-		Protocol          types.String `tfsdk:"protocol"`
-		ProxyProtocol     types.Bool   `tfsdk:"proxy_protocol"`
-		Certificates      types.List   `tfsdk:"certificates"`
+		CertificateIDs    types.Set    `tfsdk:"certificate_ids"`
 		BackendSSL        types.Bool   `tfsdk:"backend_ssl"`
 		PassthroughSSL    types.Bool   `tfsdk:"passthrough_ssl"`
 		CheckEnabled      types.Bool   `tfsdk:"check_enabled"`
@@ -370,7 +350,7 @@ func (r LoadBalancerRuleResource) ValidateConfig(
 		}
 	}
 
-	if !data.Certificates.IsNull() && proto != "HTTPS" {
+	if !data.CertificateIDs.IsNull() && proto != "HTTPS" {
 		resp.Diagnostics.AddError(
 			"certificates",
 			"certificates cannot be set if protocol is not HTTPS",
@@ -573,7 +553,7 @@ func (r *LoadBalancerRuleResource) LoadBalancerRuleRead(
 	model.ListenPort = types.Int64Value(int64(lbr.ListenPort))
 	model.Protocol = types.StringValue(string(lbr.Protocol))
 	model.ProxyProtocol = types.BoolValue(lbr.ProxyProtocol)
-	model.Certificates = types.ListValueMust(
+	model.CertificateIDs = types.SetValueMust(
 		CertificateType(),
 		ConvertCoreCertsToTFValues(lbr.Certificates),
 	)
@@ -595,13 +575,13 @@ func (r *LoadBalancerRuleResource) LoadBalancerRuleRead(
 
 func convertCertificateModelsToCertificateRefs(
 	ctx context.Context,
-	list basetypes.ListValue,
+	set basetypes.SetValue,
 ) (*[]core.CertificateRef, diag.Diagnostics) {
 	diags := diag.Diagnostics{}
 
 	certList := []*CertificateModel{}
 
-	diags.Append(list.ElementsAs(ctx, &certList, true)...)
+	diags.Append(set.ElementsAs(ctx, &certList, true)...)
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -640,7 +620,7 @@ func buildLoadBalancerRuleCreateArgs(
 
 	certs, diags := convertCertificateModelsToCertificateRefs(
 		ctx,
-		r.Certificates,
+		r.CertificateIDs,
 	)
 	if diags.HasError() {
 		return nil, diags
@@ -720,10 +700,10 @@ func buildLoadBalancerRuleUpdateArgs(
 		args.PassthroughSSL = plan.PassthroughSSL.ValueBoolPointer()
 	}
 
-	if !plan.Certificates.Equal(state.Certificates) {
+	if !plan.CertificateIDs.Equal(state.CertificateIDs) {
 		certs, diags := convertCertificateModelsToCertificateRefs(
 			ctx,
-			plan.Certificates,
+			plan.CertificateIDs,
 		)
 		if diags.HasError() {
 			return nil, diags

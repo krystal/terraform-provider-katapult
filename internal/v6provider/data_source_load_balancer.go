@@ -15,14 +15,14 @@ type (
 	}
 
 	LoadBalancerDataSourceModel struct {
-		ID                   types.String `tfsdk:"id"`
-		Name                 types.String `tfsdk:"name"`
-		ResourceType         types.String `tfsdk:"resource_type"`
-		VirtualMachines      types.List   `tfsdk:"virtual_machines"`
-		VirtualMachineGroups types.List   `tfsdk:"virtual_machine_groups"`
-		Tags                 types.List   `tfsdk:"tags"`
-		IPAddress            types.String `tfsdk:"ip_address"`
-		HTTPSRedirect        types.Bool   `tfsdk:"https_redirect"`
+		ID                     types.String `tfsdk:"id"`
+		Name                   types.String `tfsdk:"name"`
+		ResourceType           types.String `tfsdk:"resource_type"`
+		VirtualMachineIDs      types.Set    `tfsdk:"virtual_machine_ids"`
+		VirtualMachineGroupIDs types.Set    `tfsdk:"virtual_machine_group_ids"`
+		TagIDs                 types.Set    `tfsdk:"tag_ids"`
+		IPAddress              types.String `tfsdk:"ip_address"`
+		HTTPSRedirect          types.Bool   `tfsdk:"https_redirect"`
 	}
 )
 
@@ -66,15 +66,15 @@ func loadBalancerDataSourceSchemaAttrs() map[string]schema.Attribute {
 		"resource_type": schema.StringAttribute{
 			Computed: true,
 		},
-		"virtual_machines": schema.ListAttribute{
+		"virtual_machine_ids": schema.SetAttribute{
 			Computed:    true,
 			ElementType: types.StringType,
 		},
-		"virtual_machine_groups": schema.ListAttribute{
+		"virtual_machine_group_ids": schema.SetAttribute{
 			Computed:    true,
 			ElementType: types.StringType,
 		},
-		"tags": schema.ListAttribute{
+		"tag_ids": schema.SetAttribute{
 			Computed:    true,
 			ElementType: types.StringType,
 		},
@@ -123,17 +123,17 @@ func (ds *LoadBalancerDataSource) Read(
 	}
 
 	list := flattenLoadBalancerResourceIDs(lb.ResourceIDs)
-	data.VirtualMachines = types.ListNull(types.StringType)
-	data.Tags = types.ListNull(types.StringType)
-	data.VirtualMachineGroups = types.ListNull(types.StringType)
+	data.VirtualMachineIDs = types.SetNull(types.StringType)
+	data.TagIDs = types.SetNull(types.StringType)
+	data.VirtualMachineGroupIDs = types.SetNull(types.StringType)
 
 	switch lb.ResourceType {
 	case core.VirtualMachinesResourceType:
-		data.VirtualMachines = list
+		data.VirtualMachineIDs = list
 	case core.VirtualMachineGroupsResourceType:
-		data.VirtualMachineGroups = list
+		data.VirtualMachineGroupIDs = list
 	case core.TagsResourceType:
-		data.Tags = list
+		data.TagIDs = list
 	}
 	data.ID = types.StringValue(lb.ID)
 
