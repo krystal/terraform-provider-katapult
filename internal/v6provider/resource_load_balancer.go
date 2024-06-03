@@ -101,6 +101,7 @@ func (r LoadBalancerResource) Schema(
 			},
 			"name": schema.StringAttribute{
 				Optional: true,
+				Computed: true,
 			},
 			"resource_type": schema.StringAttribute{
 				Computed: true,
