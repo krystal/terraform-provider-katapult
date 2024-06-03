@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/core"
@@ -370,6 +371,13 @@ func TestAccKatapultLoadBalancer_vms_update(t *testing.T) {
 				`,
 					name,
 				),
+				// We want to assert that the plan is empty, as the order of the
+				// virtual_machine_ids should not matter.
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultLoadBalancerExists(
 						tt, "katapult_load_balancer.main",
