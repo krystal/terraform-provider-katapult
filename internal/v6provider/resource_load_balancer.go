@@ -108,7 +108,6 @@ func (r LoadBalancerResource) Schema(
 			},
 			"virtual_machine_ids": schema.SetAttribute{
 				Optional: true,
-				Computed: true,
 				Validators: []validator.Set{
 					setvalidator.ConflictsWith(
 						path.MatchRoot("tag_ids"),
@@ -119,7 +118,6 @@ func (r LoadBalancerResource) Schema(
 			},
 			"virtual_machine_group_ids": schema.SetAttribute{
 				Optional: true,
-				Computed: true,
 				Validators: []validator.Set{
 					setvalidator.ConflictsWith(
 						path.MatchRoot("tag_ids"),
@@ -130,7 +128,6 @@ func (r LoadBalancerResource) Schema(
 			},
 			"tag_ids": schema.SetAttribute{
 				Optional: true,
-				Computed: true,
 				Validators: []validator.Set{
 					setvalidator.ConflictsWith(
 						path.MatchRoot("virtual_machine_ids"),
@@ -166,15 +163,15 @@ func (r *LoadBalancerResource) Create(
 	name := r.M.UseOrGenerateName(plan.Name.ValueString())
 
 	t, ids := extractLoadBalancerResourceTypeAndIDs(&plan)
-	if t == "" {
-		t = core.VirtualMachinesResourceType
-	}
 
 	args := &core.LoadBalancerCreateArguments{
-		Name:         name,
-		ResourceType: t,
-		ResourceIDs:  &ids,
-		DataCenter:   r.M.DataCenterRef,
+		Name:       name,
+		DataCenter: r.M.DataCenterRef,
+	}
+
+	if len(ids) > 0 {
+		args.ResourceType = t
+		args.ResourceIDs = &ids
 	}
 
 	lb, _, err := r.M.Core.LoadBalancers.Create(
@@ -340,6 +337,10 @@ func populateLoadBalancerTargets(
 	model.VirtualMachineIDs = types.SetNull(types.StringType)
 	model.TagIDs = types.SetNull(types.StringType)
 	model.VirtualMachineGroupIDs = types.SetNull(types.StringType)
+
+	if len(ids) == 0 {
+		return
+	}
 
 	switch t {
 	case core.VirtualMachinesResourceType:
