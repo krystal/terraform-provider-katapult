@@ -108,6 +108,7 @@ func (r LoadBalancerResource) Schema(
 			},
 			"virtual_machine_ids": schema.SetAttribute{
 				Optional: true,
+				Computed: true,
 				Validators: []validator.Set{
 					setvalidator.ConflictsWith(
 						path.MatchRoot("tag_ids"),
@@ -118,6 +119,7 @@ func (r LoadBalancerResource) Schema(
 			},
 			"virtual_machine_group_ids": schema.SetAttribute{
 				Optional: true,
+				Computed: true,
 				Validators: []validator.Set{
 					setvalidator.ConflictsWith(
 						path.MatchRoot("tag_ids"),
@@ -128,6 +130,7 @@ func (r LoadBalancerResource) Schema(
 			},
 			"tag_ids": schema.SetAttribute{
 				Optional: true,
+				Computed: true,
 				Validators: []validator.Set{
 					setvalidator.ConflictsWith(
 						path.MatchRoot("virtual_machine_ids"),

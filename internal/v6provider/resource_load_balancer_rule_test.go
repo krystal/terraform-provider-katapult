@@ -383,7 +383,7 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 						listen_port = 80
 						protocol = "HTTP"
 						passthrough_ssl = false
-						certificates = [
+						certificate_ids = [
 							{
 								id = "cert_123"
 								name = "cert_123"
@@ -397,7 +397,7 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
-						"certificates cannot be set " +
+						"certificate_ids cannot be set " +
 							"if protocol is not HTTPS",
 					),
 				),

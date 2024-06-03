@@ -21,7 +21,7 @@ type (
 		ListenPort        types.Int64  `tfsdk:"listen_port"`
 		Protocol          types.String `tfsdk:"protocol"`
 		ProxyProtocol     types.Bool   `tfsdk:"proxy_protocol"`
-		CertificateIDs    types.List   `tfsdk:"certificates_ids"`
+		CertificateIDs    types.Set    `tfsdk:"certificate_ids"`
 		BackendSSL        types.Bool   `tfsdk:"backend_ssl"`
 		PassthroughSSL    types.Bool   `tfsdk:"passthrough_ssl"`
 		CheckEnabled      types.Bool   `tfsdk:"check_enabled"`
@@ -87,7 +87,7 @@ func loadBalancerRuleDataSourceSchemaAttrs() map[string]schema.Attribute {
 		"proxy_protocol": schema.BoolAttribute{
 			Computed: true,
 		},
-		"certificate_ids": schema.ListNestedAttribute{
+		"certificate_ids": schema.SetNestedAttribute{
 			Computed: true,
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: CertificateDataSourceSchemaAtrributes(),
@@ -168,7 +168,7 @@ func (ds LoadBalancerRuleDataSource) Read(
 	data.ListenPort = types.Int64Value(int64(lbr.ListenPort))
 	data.Protocol = types.StringValue(string(lbr.Protocol))
 	data.ProxyProtocol = types.BoolValue(lbr.ProxyProtocol)
-	data.CertificateIDs = types.ListValueMust(
+	data.CertificateIDs = types.SetValueMust(
 		CertificateType(),
 		ConvertCoreCertsToTFValues(lbr.Certificates),
 	)

@@ -89,7 +89,7 @@ func LoadBalancerRuleType() types.ObjectType {
 			"listen_port":         types.Int64Type,
 			"protocol":            types.StringType,
 			"proxy_protocol":      types.BoolType,
-			"certificates":        types.ListType{ElemType: CertificateType()},
+			"certificate_ids":     types.SetType{ElemType: CertificateType()},
 			"backend_ssl":         types.BoolType,
 			"passthrough_ssl":     types.BoolType,
 			"check_enabled":       types.BoolType,
@@ -148,7 +148,7 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 			Computed: true,
 			Default:  booldefault.StaticBool(false),
 		},
-		"certificates": schema.ListNestedAttribute{
+		"certificate_ids": schema.SetNestedAttribute{
 			Optional: true,
 			Computed: true,
 			NestedObject: schema.NestedAttributeObject{
@@ -352,8 +352,8 @@ func (r LoadBalancerRuleResource) ValidateConfig(
 
 	if !data.CertificateIDs.IsNull() && proto != "HTTPS" {
 		resp.Diagnostics.AddError(
-			"certificates",
-			"certificates cannot be set if protocol is not HTTPS",
+			"certificate_ids",
+			"certificate_ids cannot be set if protocol is not HTTPS",
 		)
 	}
 
