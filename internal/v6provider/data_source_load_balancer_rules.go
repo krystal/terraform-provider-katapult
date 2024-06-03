@@ -154,7 +154,7 @@ func convertCoreLBRulesToAttrValue(
 				"proxy_protocol":   types.BoolValue(r.ProxyProtocol),
 				"backend_ssl":      types.BoolValue(r.BackendSSL),
 				"passthrough_ssl":  types.BoolValue(r.PassthroughSSL),
-				"certificates": types.ListValueMust(
+				"certificate_ids": types.ListValueMust(
 					CertificateType(),
 					ConvertCoreCertsToTFValues(r.Certificates),
 				),
