@@ -64,7 +64,7 @@ resource "katapult_load_balancer_rule" "complete_rule" {
 
 - `algorithm` (String)
 - `backend_ssl` (Boolean)
-- `certificates` (Attributes List) (see [below for nested schema](#nestedatt--certificates))
+- `certificate_ids` (Attributes Set) (see [below for nested schema](#nestedatt--certificate_ids))
 - `check_enabled` (Boolean)
 - `check_fall` (Number)
 - `check_http_statuses` (String)
@@ -79,8 +79,8 @@ resource "katapult_load_balancer_rule" "complete_rule" {
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedatt--certificates"></a>
-### Nested Schema for `certificates`
+<a id="nestedatt--certificate_ids"></a>
+### Nested Schema for `certificate_ids`
 
 Required:
 

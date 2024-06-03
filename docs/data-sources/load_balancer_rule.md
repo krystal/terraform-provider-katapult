@@ -26,7 +26,7 @@ data "katapult_load_balancer_rule" "web-redirect" {
 
 - `algorithm` (String)
 - `backend_ssl` (Boolean)
-- `certificate_ids` (Attributes List) (see [below for nested schema](#nestedatt--certificate_ids))
+- `certificate_ids` (Attributes Set) (see [below for nested schema](#nestedatt--certificate_ids))
 - `check_enabled` (Boolean)
 - `check_fall` (Number)
 - `check_http_statuses` (String)

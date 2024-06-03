@@ -41,7 +41,7 @@ Read-Only:
 
 - `algorithm` (String)
 - `backend_ssl` (Boolean)
-- `certificate_ids` (Attributes List) (see [below for nested schema](#nestedatt--rules--certificate_ids))
+- `certificate_ids` (Attributes Set) (see [below for nested schema](#nestedatt--rules--certificate_ids))
 - `check_enabled` (Boolean)
 - `check_fall` (Number)
 - `check_http_statuses` (String)
