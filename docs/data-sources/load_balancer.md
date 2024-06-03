@@ -29,8 +29,8 @@ data "katapult_load_balancer" "db-replicas" {
 - `ip_address` (String)
 - `name` (String)
 - `resource_type` (String)
-- `tags` (List of String)
-- `virtual_machine_groups` (List of String)
-- `virtual_machines` (List of String)
+- `tag_ids` (Set of String)
+- `virtual_machine_group_ids` (Set of String)
+- `virtual_machine_ids` (Set of String)
 
 
