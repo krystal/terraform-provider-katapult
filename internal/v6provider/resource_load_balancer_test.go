@@ -289,7 +289,7 @@ func TestAccKatapultLoadBalancer_vms_update(t *testing.T) {
 			{
 				Config: undent.Stringf(`
 				resource "katapult_ip" "base" {}
-				resource "katapult_ip" "web" {}
+		
 
 				resource "katapult_virtual_machine" "base" {
 					package       = "rock-3"
@@ -299,6 +299,51 @@ func TestAccKatapultLoadBalancer_vms_update(t *testing.T) {
 					}
 					ip_address_ids = [katapult_ip.base.id]
 				}
+
+				resource "katapult_load_balancer" "main" {
+					name = "%s"
+					virtual_machine_ids = [
+						katapult_virtual_machine.base.id,
+					]
+				}
+				`,
+					name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultLoadBalancerExists(
+						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main", "name", name,
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"resource_type",
+						string(core.VirtualMachinesResourceType),
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"virtual_machine_ids.#",
+						"1",
+					),
+				),
+			},
+			{
+				Config: undent.Stringf(`
+				resource "katapult_ip" "base" {}
+		
+
+				resource "katapult_virtual_machine" "base" {
+					package       = "rock-3"
+					disk_template = "ubuntu-18-04"
+					disk_template_options = {
+						install_agent = true
+					}
+					ip_address_ids = [katapult_ip.base.id]
+				}
+
+			
+				resource "katapult_ip" "web" {}
 
 				resource "katapult_virtual_machine" "web" {
 					package       = "rock-3"
@@ -312,8 +357,8 @@ func TestAccKatapultLoadBalancer_vms_update(t *testing.T) {
 				resource "katapult_load_balancer" "main" {
 					name = "%s"
 					virtual_machine_ids = [
-						katapult_virtual_machine.base.id,
-						katapult_virtual_machine.web.id
+						katapult_virtual_machine.web.id,
+						katapult_virtual_machine.base.id
 					]
 				}
 				`,
@@ -341,7 +386,7 @@ func TestAccKatapultLoadBalancer_vms_update(t *testing.T) {
 			{
 				Config: undent.Stringf(`
 				resource "katapult_ip" "base" {}
-				resource "katapult_ip" "web" {}
+		
 
 				resource "katapult_virtual_machine" "base" {
 					package       = "rock-3"
@@ -352,6 +397,9 @@ func TestAccKatapultLoadBalancer_vms_update(t *testing.T) {
 					ip_address_ids = [katapult_ip.base.id]
 				}
 
+			
+				resource "katapult_ip" "web" {}
+
 				resource "katapult_virtual_machine" "web" {
 					package       = "rock-3"
 					disk_template = "ubuntu-18-04"
@@ -360,12 +408,13 @@ func TestAccKatapultLoadBalancer_vms_update(t *testing.T) {
 					}
 					ip_address_ids = [katapult_ip.web.id]
 				}
-				
+
+
 				resource "katapult_load_balancer" "main" {
 					name = "%s"
 					virtual_machine_ids = [
-						katapult_virtual_machine.web.id,
-						katapult_virtual_machine.base.id
+						katapult_virtual_machine.base.id,
+						katapult_virtual_machine.web.id
 					]
 				}
 				`,
@@ -438,7 +487,8 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
+
+		CheckDestroy: testAccCheckKatapultLoadBalancerDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
