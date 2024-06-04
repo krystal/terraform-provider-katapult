@@ -7,7 +7,7 @@ import (
 	"github.com/jimeh/undent"
 )
 
-func TestAccKatapultDataSourceLoadBalancerRules_basic(t *testing.T) {
+func TestAccKatapultDataSourceLoadBalancerRules_minimal(t *testing.T) {
 	tt := newTestTools(t)
 
 	name := tt.ResourceName()
@@ -55,7 +55,7 @@ func TestAccKatapultDataSourceLoadBalancerRules_basic(t *testing.T) {
 				}
 
 				data "katapult_load_balancer_rules" "src" {
-				  id = katapult_load_balancer.main.id
+				  load_balancer_id = katapult_load_balancer.main.id
 				}
 				`),
 				Check: resource.ComposeAggregateTestCheckFunc(

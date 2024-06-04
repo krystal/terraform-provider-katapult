@@ -32,7 +32,6 @@ Read-Only:
 - `https_redirect` (Boolean)
 - `ip_address` (String)
 - `name` (String)
-- `resource_type` (String)
 - `tag_ids` (Set of String)
 - `virtual_machine_group_ids` (Set of String)
 - `virtual_machine_ids` (Set of String)

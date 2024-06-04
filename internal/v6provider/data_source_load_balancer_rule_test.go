@@ -7,7 +7,7 @@ import (
 	"github.com/jimeh/undent"
 )
 
-func TestAccKatapultDataSourceLoadBalancerRule_basic(t *testing.T) {
+func TestAccKatapultDataSourceLoadBalancerRule_minimal(t *testing.T) {
 	tt := newTestTools(t)
 	name := tt.ResourceName()
 

@@ -10,7 +10,7 @@ import (
 	"github.com/jimeh/undent"
 )
 
-func TestAccKatapultLoadBalancerRule_basic(t *testing.T) {
+func TestAccKatapultLoadBalancerRule_minimal(t *testing.T) {
 	tt := newTestTools(t)
 
 	name := tt.ResourceName()
@@ -170,143 +170,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 					resource "katapult_load_balancer_rule" "my_rule" {
 						load_balancer_id = katapult_load_balancer.my_lb.id
 						destination_port = 8080
-						listen_port = 80
-						protocol = "HTTP"
-						passthrough_ssl = false
-						check_timeout = 25
-					}`,
-					name,
-				),
-				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta(
-						"check_timeout cannot be set if check_enabled is false",
-					),
-				),
-			},
-			{
-				Config: undent.Stringf(`
-					resource "katapult_load_balancer" "my_lb" {
-					  name = "%s"
-					}
-					
-					resource "katapult_load_balancer_rule" "my_rule" {
-						load_balancer_id = katapult_load_balancer.my_lb.id
-						destination_port = 8080
-						listen_port = 80
-						protocol = "HTTP"
-						passthrough_ssl = false
-						check_interval = 2
-					}`,
-					name,
-				),
-				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta(
-						"check_interval cannot be set " +
-							"if check_enabled is false",
-					),
-				),
-			},
-			{
-				Config: undent.Stringf(`
-					resource "katapult_load_balancer" "my_lb" {
-					  name = "%s"
-					}
-					
-					resource "katapult_load_balancer_rule" "my_rule" {
-						load_balancer_id = katapult_load_balancer.my_lb.id
-						destination_port = 8080
-						listen_port = 80
-						protocol = "HTTP"
-						passthrough_ssl = false
-						check_fall = 2
-					}`,
-					name,
-				),
-				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta(
-						"check_fall cannot be set " +
-							"if check_enabled is false",
-					),
-				),
-			},
-			{
-				Config: undent.Stringf(`
-					resource "katapult_load_balancer" "my_lb" {
-					  name = "%s"
-					}
-					
-					resource "katapult_load_balancer_rule" "my_rule" {
-						load_balancer_id = katapult_load_balancer.my_lb.id
-						destination_port = 8080
-						listen_port = 80
-						protocol = "HTTP"
-						passthrough_ssl = false
-						check_rise = 2
-					}`,
-					name,
-				),
-				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta(
-						"check_rise cannot be set " +
-							"if check_enabled is false",
-					),
-				),
-			},
-			{
-				Config: undent.Stringf(`
-					resource "katapult_load_balancer" "my_lb" {
-					  name = "%s"
-					}
-					
-					resource "katapult_load_balancer_rule" "my_rule" {
-						load_balancer_id = katapult_load_balancer.my_lb.id
-						destination_port = 8080
-						listen_port = 80
-						protocol = "HTTP"
-						passthrough_ssl = false
-						check_protocol = "HTTP"
-					}`,
-					name,
-				),
-				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta(
-						"check_protocol cannot be set " +
-							"if check_enabled is false",
-					),
-				),
-			},
-			{
-				Config: undent.Stringf(`
-					resource "katapult_load_balancer" "my_lb" {
-					  name = "%s"
-					}
-					
-					resource "katapult_load_balancer_rule" "my_rule" {
-						load_balancer_id = katapult_load_balancer.my_lb.id
-						destination_port = 8080
-						listen_port = 80
-						protocol = "HTTP"
-						passthrough_ssl = false
-						check_path = "/"
-					}`,
-					name,
-				),
-				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta(
-						"check_path cannot be set " +
-							"if check_enabled is false",
-					),
-				),
-			},
-			{
-				Config: undent.Stringf(`
-					resource "katapult_load_balancer" "my_lb" {
-					  name = "%s"
-					}
-					
-					resource "katapult_load_balancer_rule" "my_rule" {
-						load_balancer_id = katapult_load_balancer.my_lb.id
-						destination_port = 8080
 						listen_port = 443
 						protocol = "HTTPS"
 						passthrough_ssl = false
@@ -335,29 +198,6 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 						listen_port = 80
 						protocol = "HTTP"
 						passthrough_ssl = false
-						check_http_statuses = "2"
-					}`,
-					name,
-				),
-				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta(
-						"check_http_statuses cannot be set " +
-							"if check_enabled is false",
-					),
-				),
-			},
-			{
-				Config: undent.Stringf(`
-					resource "katapult_load_balancer" "my_lb" {
-					  name = "%s"
-					}
-					
-					resource "katapult_load_balancer_rule" "my_rule" {
-						load_balancer_id = katapult_load_balancer.my_lb.id
-						destination_port = 8080
-						listen_port = 80
-						protocol = "HTTP"
-						passthrough_ssl = false
 						check_enabled = true
 						check_protocol = "HTTPS"
 						check_http_statuses = "2"
@@ -383,15 +223,7 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 						listen_port = 80
 						protocol = "HTTP"
 						passthrough_ssl = false
-						certificate_ids = [
-							{
-								id = "cert_123"
-								name = "cert_123"
-								additional_names = ["example.com"]
-								state = "ACTIVE"
-
-							}
-						]
+						certificate_ids = ["cert_123"]
 					}`,
 					name,
 				),

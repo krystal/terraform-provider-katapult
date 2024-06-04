@@ -26,7 +26,7 @@ data "katapult_load_balancer_rule" "web-redirect" {
 
 - `algorithm` (String)
 - `backend_ssl` (Boolean)
-- `certificate_ids` (Attributes Set) (see [below for nested schema](#nestedatt--certificate_ids))
+- `certificate_ids` (Set of String)
 - `check_enabled` (Boolean)
 - `check_fall` (Number)
 - `check_http_statuses` (String)
@@ -42,18 +42,5 @@ data "katapult_load_balancer_rule" "web-redirect" {
 - `passthrough_ssl` (Boolean)
 - `protocol` (String)
 - `proxy_protocol` (Boolean)
-
-<a id="nestedatt--certificate_ids"></a>
-### Nested Schema for `certificate_ids`
-
-Required:
-
-- `id` (String)
-- `name` (String)
-
-Read-Only:
-
-- `additional_names` (List of String)
-- `state` (String)
 
 

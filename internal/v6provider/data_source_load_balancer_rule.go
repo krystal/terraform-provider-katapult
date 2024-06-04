@@ -87,11 +87,9 @@ func loadBalancerRuleDataSourceSchemaAttrs() map[string]schema.Attribute {
 		"proxy_protocol": schema.BoolAttribute{
 			Computed: true,
 		},
-		"certificate_ids": schema.SetNestedAttribute{
-			Computed: true,
-			NestedObject: schema.NestedAttributeObject{
-				Attributes: CertificateDataSourceSchemaAtrributes(),
-			},
+		"certificate_ids": schema.SetAttribute{
+			Computed:    true,
+			ElementType: types.StringType,
 		},
 		"backend_ssl": schema.BoolAttribute{
 			Computed: true,
@@ -169,7 +167,7 @@ func (ds LoadBalancerRuleDataSource) Read(
 	data.Protocol = types.StringValue(string(lbr.Protocol))
 	data.ProxyProtocol = types.BoolValue(lbr.ProxyProtocol)
 	data.CertificateIDs = types.SetValueMust(
-		CertificateType(),
+		types.StringType,
 		ConvertCoreCertsToTFValues(lbr.Certificates),
 	)
 	data.BackendSSL = types.BoolValue(lbr.BackendSSL)

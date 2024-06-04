@@ -24,7 +24,7 @@ data "katapult_load_balancer_rules" "db-replicas" {
 
 ### Required
 
-- `id` (String) The unique identifier for the Load Balancer.
+- `load_balancer_id` (String) The unique identifier for the Load Balancer.
 
 ### Read-Only
 
@@ -41,7 +41,7 @@ Read-Only:
 
 - `algorithm` (String)
 - `backend_ssl` (Boolean)
-- `certificate_ids` (Attributes Set) (see [below for nested schema](#nestedatt--rules--certificate_ids))
+- `certificate_ids` (Set of String)
 - `check_enabled` (Boolean)
 - `check_fall` (Number)
 - `check_http_statuses` (String)
@@ -56,18 +56,5 @@ Read-Only:
 - `passthrough_ssl` (Boolean)
 - `protocol` (String)
 - `proxy_protocol` (Boolean)
-
-<a id="nestedatt--rules--certificate_ids"></a>
-### Nested Schema for `rules.certificate_ids`
-
-Required:
-
-- `id` (String)
-- `name` (String)
-
-Read-Only:
-
-- `additional_names` (List of String)
-- `state` (String)
 
 

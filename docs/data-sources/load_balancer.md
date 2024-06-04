@@ -28,7 +28,6 @@ data "katapult_load_balancer" "db-replicas" {
 - `id` (String) The ID of this resource.
 - `ip_address` (String)
 - `name` (String)
-- `resource_type` (String)
 - `tag_ids` (Set of String)
 - `virtual_machine_group_ids` (Set of String)
 - `virtual_machine_ids` (Set of String)

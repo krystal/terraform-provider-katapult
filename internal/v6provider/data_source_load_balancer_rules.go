@@ -155,7 +155,7 @@ func convertCoreLBRulesToAttrValue(
 				"backend_ssl":      types.BoolValue(r.BackendSSL),
 				"passthrough_ssl":  types.BoolValue(r.PassthroughSSL),
 				"certificate_ids": types.SetValueMust(
-					CertificateType(),
+					types.StringType,
 					ConvertCoreCertsToTFValues(r.Certificates),
 				),
 				"check_enabled":  types.BoolValue(r.CheckEnabled),

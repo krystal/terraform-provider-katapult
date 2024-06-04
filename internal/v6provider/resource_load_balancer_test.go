@@ -53,7 +53,7 @@ func testSweepLoadBalancers(_ string) error {
 	return nil
 }
 
-func TestAccKatapultLoadBalancer_basic(t *testing.T) {
+func TestAccKatapultLoadBalancer_minimal(t *testing.T) {
 	tt := newTestTools(t)
 
 	name := tt.ResourceName()
@@ -415,7 +415,7 @@ func TestAccKatapultLoadBalancer_vms_update(t *testing.T) {
 	})
 }
 
-func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
+func TestAccKatapultLoadBalancer_update(t *testing.T) {
 	tt := newTestTools(t)
 
 	name := tt.ResourceName()
@@ -430,6 +430,7 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "main" {
 					  name = "%s"
+					  https_redirect = false 
 					}`,
 					name,
 				),
@@ -446,6 +447,7 @@ func TestAccKatapultLoadBalancer_update_name(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_load_balancer" "main" {
 					  name = "%s"
+					  https_redirect = true
 					}`,
 					name+"-different",
 				),

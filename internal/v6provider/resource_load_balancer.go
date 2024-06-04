@@ -65,9 +65,8 @@ func (r *LoadBalancerResource) Configure(
 func LoadBalancerType() types.ObjectType {
 	return types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"id":            types.StringType,
-			"name":          types.StringType,
-			"resource_type": types.StringType,
+			"id":   types.StringType,
+			"name": types.StringType,
 			"virtual_machine_ids": types.SetType{
 				ElemType: types.StringType,
 			},
