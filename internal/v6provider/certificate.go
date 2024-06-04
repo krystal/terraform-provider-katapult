@@ -6,7 +6,6 @@ import (
 	rschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/krystal/go-katapult/core"
 )
 
@@ -71,29 +70,10 @@ func CertificateType() types.ObjectType {
 	}
 }
 
-func ConvertCoreCertToTFValue(cert core.Certificate) basetypes.ObjectValue {
-	additionalNames := make([]attr.Value, len(cert.AdditionalNames))
-	for j, name := range cert.AdditionalNames {
-		additionalNames[j] = types.StringValue(name)
-	}
-	return types.ObjectValueMust(
-		CertificateType().AttrTypes,
-		map[string]attr.Value{
-			"id":   types.StringValue(cert.ID),
-			"name": types.StringValue(cert.Name),
-			"additional_names": types.ListValueMust(
-				types.StringType,
-				additionalNames,
-			),
-			"state": types.StringValue(cert.State),
-		},
-	)
-}
-
 func ConvertCoreCertsToTFValues(certs []core.Certificate) []attr.Value {
 	values := make([]attr.Value, len(certs))
 	for i, cert := range certs {
-		values[i] = ConvertCoreCertToTFValue(cert)
+		values[i] = types.StringValue(cert.ID)
 	}
 	return values
 }

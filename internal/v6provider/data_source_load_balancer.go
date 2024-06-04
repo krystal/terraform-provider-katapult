@@ -17,7 +17,6 @@ type (
 	LoadBalancerDataSourceModel struct {
 		ID                     types.String `tfsdk:"id"`
 		Name                   types.String `tfsdk:"name"`
-		ResourceType           types.String `tfsdk:"resource_type"`
 		VirtualMachineIDs      types.Set    `tfsdk:"virtual_machine_ids"`
 		VirtualMachineGroupIDs types.Set    `tfsdk:"virtual_machine_group_ids"`
 		TagIDs                 types.Set    `tfsdk:"tag_ids"`
@@ -61,9 +60,6 @@ func loadBalancerDataSourceSchemaAttrs() map[string]schema.Attribute {
 			Required: true,
 		},
 		"name": schema.StringAttribute{
-			Computed: true,
-		},
-		"resource_type": schema.StringAttribute{
 			Computed: true,
 		},
 		"virtual_machine_ids": schema.SetAttribute{
@@ -116,7 +112,6 @@ func (ds *LoadBalancerDataSource) Read(
 	}
 
 	data.Name = types.StringValue(lb.Name)
-	data.ResourceType = types.StringValue(string(lb.ResourceType))
 	data.HTTPSRedirect = types.BoolValue(lb.HTTPSRedirect)
 	if lb.IPAddress != nil {
 		data.IPAddress = types.StringValue(lb.IPAddress.Address)

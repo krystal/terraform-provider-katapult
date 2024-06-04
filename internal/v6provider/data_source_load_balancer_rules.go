@@ -16,8 +16,8 @@ type (
 		M *Meta
 	}
 	LoadBalancerRulesDataSourceModel struct {
-		ID    types.String `tfsdk:"id"`
-		Rules types.List   `tfsdk:"rules"`
+		LoadBalancerID types.String `tfsdk:"load_balancer_id"`
+		Rules          types.List   `tfsdk:"rules"`
 	}
 )
 
@@ -57,7 +57,7 @@ func (ds *LoadBalancerRulesDataSource) Schema(
 ) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
+			"load_balancer_id": schema.StringAttribute{
 				Required:    true,
 				Description: "The unique identifier for the Load Balancer.",
 			},
@@ -85,7 +85,7 @@ func (ds *LoadBalancerRulesDataSource) Read(
 
 	rules, err := getLBRules(ctx, ds.M,
 		core.LoadBalancerRef{
-			ID: data.ID.ValueString(),
+			ID: data.LoadBalancerID.ValueString(),
 		})
 	if err != nil {
 		resp.Diagnostics.AddError("Load Balancer Rules Error", err.Error())

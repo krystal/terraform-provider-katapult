@@ -5,7 +5,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/jimeh/undent"
-	"github.com/krystal/go-katapult/core"
 )
 
 func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
@@ -43,10 +42,6 @@ func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"data.katapult_load_balancer.src", "name", name,
-					),
-					resource.TestCheckResourceAttr(
-						"data.katapult_load_balancer.src", "resource_type",
-						string(core.VirtualMachinesResourceType),
 					),
 				),
 			},

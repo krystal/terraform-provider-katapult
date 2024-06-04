@@ -77,11 +77,6 @@ func TestAccKatapultLoadBalancer_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main", "name", name,
 					),
-					resource.TestCheckResourceAttr(
-						"katapult_load_balancer.main",
-						"resource_type",
-						string(core.VirtualMachinesResourceType),
-					),
 				),
 			},
 			{
@@ -129,11 +124,6 @@ func TestAccKatapultLoadBalancer_vm(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main", "name", name,
-					),
-					resource.TestCheckResourceAttr(
-						"katapult_load_balancer.main",
-						"resource_type",
-						string(core.VirtualMachinesResourceType),
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main",
@@ -192,11 +182,6 @@ func TestAccKatapultLoadBalancer_vm_group(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main",
-						"resource_type",
-						string(core.VirtualMachineGroupsResourceType),
-					),
-					resource.TestCheckResourceAttr(
-						"katapult_load_balancer.main",
 						"virtual_machine_ids.#",
 						"0",
 					),
@@ -249,11 +234,6 @@ func TestAccKatapultLoadBalancer_tag(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main", "name", name,
-					),
-					resource.TestCheckResourceAttr(
-						"katapult_load_balancer.main",
-						"resource_type",
-						string(core.TagsResourceType),
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main",
@@ -318,11 +298,6 @@ func TestAccKatapultLoadBalancer_vms_update(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main",
-						"resource_type",
-						string(core.VirtualMachinesResourceType),
-					),
-					resource.TestCheckResourceAttr(
-						"katapult_load_balancer.main",
 						"virtual_machine_ids.#",
 						"1",
 					),
@@ -370,11 +345,6 @@ func TestAccKatapultLoadBalancer_vms_update(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main", "name", name,
-					),
-					resource.TestCheckResourceAttr(
-						"katapult_load_balancer.main",
-						"resource_type",
-						string(core.VirtualMachinesResourceType),
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main",
@@ -436,42 +406,8 @@ func TestAccKatapultLoadBalancer_vms_update(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main",
-						"resource_type",
-						string(core.VirtualMachinesResourceType),
-					),
-					resource.TestCheckResourceAttr(
-						"katapult_load_balancer.main",
 						"virtual_machine_ids.#",
 						"2",
-					),
-				),
-			},
-		},
-	})
-}
-
-func TestAccKatapultLoadBalancer_generated_name(t *testing.T) {
-	tt := newTestTools(t)
-
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
-		Steps: []resource.TestStep{
-			{
-				Config: `resource "katapult_load_balancer" "main" {
-				}`,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultLoadBalancerExists(
-						tt, "katapult_load_balancer.main",
-					),
-					testCheckGeneratedResourceName(
-						"katapult_load_balancer.main", "name",
-					),
-					resource.TestCheckResourceAttr(
-						"katapult_load_balancer.main",
-						"resource_type",
-						string(core.VirtualMachinesResourceType),
 					),
 				),
 			},

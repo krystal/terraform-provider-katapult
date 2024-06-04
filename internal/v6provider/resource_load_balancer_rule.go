@@ -89,7 +89,7 @@ func LoadBalancerRuleType() types.ObjectType {
 			"listen_port":         types.Int64Type,
 			"protocol":            types.StringType,
 			"proxy_protocol":      types.BoolType,
-			"certificate_ids":     types.SetType{ElemType: CertificateType()},
+			"certificate_ids":     types.SetType{ElemType: types.StringType},
 			"backend_ssl":         types.BoolType,
 			"passthrough_ssl":     types.BoolType,
 			"check_enabled":       types.BoolType,
@@ -148,12 +148,10 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 			Computed: true,
 			Default:  booldefault.StaticBool(false),
 		},
-		"certificate_ids": schema.SetNestedAttribute{
-			Optional: true,
-			Computed: true,
-			NestedObject: schema.NestedAttributeObject{
-				Attributes: CertificateResourceSchemaAtrributes(),
-			},
+		"certificate_ids": schema.SetAttribute{
+			Optional:    true,
+			Computed:    true,
+			ElementType: types.StringType,
 		},
 		"backend_ssl": schema.BoolAttribute{
 			Optional: true,
@@ -259,7 +257,6 @@ func (r LoadBalancerRuleResource) Schema(
 	}
 }
 
-//nolint:funlen,gocyclo
 func (r LoadBalancerRuleResource) ValidateConfig(
 	ctx context.Context,
 	req resource.ValidateConfigRequest,
@@ -273,38 +270,10 @@ func (r LoadBalancerRuleResource) ValidateConfig(
 		return
 	}
 
-	ce := data.CheckEnabled.ValueBool()
 	proto := data.Protocol.ValueString()
 	checkProto := data.CheckProtocol.ValueString()
 
-	if data.CheckTimeout.ValueInt64Pointer() != nil && !ce {
-		resp.Diagnostics.AddError(
-			"check_timeout",
-			"check_timeout cannot be set if check_enabled is false",
-		)
-	}
-
-	if data.CheckRise.ValueInt64Pointer() != nil && !ce {
-		resp.Diagnostics.AddError(
-			"check_rise",
-			"check_rise cannot be set if check_enabled is false",
-		)
-	}
-
-	if data.CheckProtocol.ValueStringPointer() != nil && !ce {
-		resp.Diagnostics.AddError(
-			"check_protocol",
-			"check_protocol cannot be set if check_enabled is false",
-		)
-	}
-
 	if data.CheckPath.ValueStringPointer() != nil {
-		if !ce {
-			resp.Diagnostics.AddError(
-				"check_path",
-				"check_path cannot be set if check_enabled is false",
-			)
-		}
 		if checkProto != "HTTP" {
 			resp.Diagnostics.AddError(
 				"check_path",
@@ -313,34 +282,7 @@ func (r LoadBalancerRuleResource) ValidateConfig(
 		}
 	}
 
-	if data.CheckFall.ValueInt64Pointer() != nil && !ce {
-		resp.Diagnostics.AddError(
-			"check_fall",
-			"check_fall cannot be set if check_enabled is false",
-		)
-	}
-
-	if data.CheckInterval.ValueInt64Pointer() != nil && !ce {
-		resp.Diagnostics.AddError(
-			"check_interval",
-			"check_interval cannot be set if check_enabled is false",
-		)
-	}
-
-	if data.CheckTimeout.ValueInt64Pointer() != nil && !ce {
-		resp.Diagnostics.AddError(
-			"check_timeout",
-			"check_timeout cannot be set if check_enabled is false",
-		)
-	}
-
 	if data.CheckHTTPStatuses.ValueStringPointer() != nil {
-		if !ce {
-			resp.Diagnostics.AddError(
-				"check_http_statuses",
-				"check_http_statuses cannot be set if check_enabled is false",
-			)
-		}
 		if checkProto != "HTTP" {
 			resp.Diagnostics.AddError(
 				"check_http_statuses",
@@ -554,7 +496,7 @@ func (r *LoadBalancerRuleResource) LoadBalancerRuleRead(
 	model.Protocol = types.StringValue(string(lbr.Protocol))
 	model.ProxyProtocol = types.BoolValue(lbr.ProxyProtocol)
 	model.CertificateIDs = types.SetValueMust(
-		CertificateType(),
+		types.StringType,
 		ConvertCoreCertsToTFValues(lbr.Certificates),
 	)
 	model.BackendSSL = types.BoolValue(lbr.BackendSSL)
@@ -579,7 +521,7 @@ func convertCertificateModelsToCertificateRefs(
 ) (*[]core.CertificateRef, diag.Diagnostics) {
 	diags := diag.Diagnostics{}
 
-	certList := []*CertificateModel{}
+	certList := []types.String{}
 
 	diags.Append(set.ElementsAs(ctx, &certList, true)...)
 	if diags.HasError() {
@@ -589,7 +531,7 @@ func convertCertificateModelsToCertificateRefs(
 	certs := make([]core.CertificateRef, len(certList))
 	for i, cert := range certList {
 		certs[i] = core.CertificateRef{
-			ID: cert.ID.ValueString(),
+			ID: cert.ValueString(),
 		}
 	}
 

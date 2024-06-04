@@ -258,10 +258,9 @@ func newVCRRecorder(t *testing.T) *recorder.Recorder {
 	return r
 }
 
-//
 // Terraform TestCheckFunc helpers
 //
-
+//nolint:unused // will be used eventually
 func testCheckGeneratedResourceName(
 	name string,
 	key string,

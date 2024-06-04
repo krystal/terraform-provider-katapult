@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -24,7 +25,6 @@ type (
 	LoadBalancerResourceModel struct {
 		ID                     types.String `tfsdk:"id"`
 		Name                   types.String `tfsdk:"name"`
-		ResourceType           types.String `tfsdk:"resource_type"`
 		VirtualMachineIDs      types.Set    `tfsdk:"virtual_machine_ids"`
 		VirtualMachineGroupIDs types.Set    `tfsdk:"virtual_machine_group_ids"`
 		TagIDs                 types.Set    `tfsdk:"tag_ids"`
@@ -88,23 +88,13 @@ func (r LoadBalancerResource) Schema(
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
-	lbrSchema := LoadBalancerRuleSchemaAttributes()
-	delete(lbrSchema, "load_balancer_id")
-	lbrSchema["load_balancer_id"] = schema.StringAttribute{
-		Optional: true,
-	}
-
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
 			},
 			"name": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
-			},
-			"resource_type": schema.StringAttribute{
-				Computed: true,
+				Required: true,
 			},
 			"virtual_machine_ids": schema.SetAttribute{
 				Optional: true,
@@ -140,7 +130,9 @@ func (r LoadBalancerResource) Schema(
 				Computed: true,
 			},
 			"https_redirect": schema.BoolAttribute{
+				Optional: true,
 				Computed: true,
+				Default:  booldefault.StaticBool(false),
 			},
 		},
 	}
@@ -165,8 +157,10 @@ func (r *LoadBalancerResource) Create(
 	t, ids := extractLoadBalancerResourceTypeAndIDs(&plan)
 
 	args := &core.LoadBalancerCreateArguments{
-		Name:       name,
-		DataCenter: r.M.DataCenterRef,
+		Name:          name,
+		DataCenter:    r.M.DataCenterRef,
+		HTTPSRedirect: plan.HTTPSRedirect.ValueBoolPointer(),
+		ResourceType:  core.VirtualMachinesResourceType,
 	}
 
 	if len(ids) > 0 {
@@ -246,6 +240,10 @@ func (r *LoadBalancerResource) Update(
 		args.Name = plan.Name.ValueString()
 	}
 
+	if !plan.HTTPSRedirect.Equal(state.HTTPSRedirect) {
+		args.HTTPSRedirect = plan.HTTPSRedirect.ValueBoolPointer()
+	}
+
 	if !plan.VirtualMachineIDs.Equal(state.VirtualMachineIDs) ||
 		!plan.VirtualMachineGroupIDs.Equal(state.VirtualMachineGroupIDs) ||
 		!plan.TagIDs.Equal(state.TagIDs) {
@@ -317,7 +315,6 @@ func (r *LoadBalancerResource) LoadBalancerRead(
 
 	model.ID = types.StringValue(id)
 	model.Name = types.StringValue(lb.Name)
-	model.ResourceType = types.StringValue(string(lb.ResourceType))
 	model.HTTPSRedirect = types.BoolValue(lb.HTTPSRedirect)
 	if lb.IPAddress != nil {
 		model.IPAddress = types.StringValue(lb.IPAddress.Address)
@@ -370,13 +367,13 @@ func extractLoadBalancerResourceTypeAndIDs(
 	ids := []string{}
 
 	switch {
-	case !model.VirtualMachineIDs.IsUnknown():
+	case !model.VirtualMachineIDs.IsNull():
 		t = core.VirtualMachinesResourceType
 		list = model.VirtualMachineIDs.Elements()
-	case !model.VirtualMachineGroupIDs.IsUnknown():
+	case !model.VirtualMachineGroupIDs.IsNull():
 		t = core.VirtualMachineGroupsResourceType
 		list = model.VirtualMachineGroupIDs.Elements()
-	case !model.TagIDs.IsUnknown():
+	case !model.TagIDs.IsNull():
 		t = core.TagsResourceType
 		list = model.TagIDs.Elements()
 	}
