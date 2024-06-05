@@ -91,7 +91,6 @@ func resourceIPCreate(
 		network, _, err = m.Core.DataCenters.DefaultNetwork(
 			ctx, m.DataCenterRef,
 		)
-
 		if err != nil {
 			return diag.FromErr(err)
 		}
