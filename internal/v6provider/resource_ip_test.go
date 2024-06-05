@@ -38,6 +38,9 @@ func testSweepIPs(_ string) error {
 		if err != nil {
 			return err
 		}
+		if res.JSON200 == nil {
+			return fmt.Errorf("unexpected nil response")
+		}
 
 		totalPages = *res.JSON200.Pagination.TotalPages
 		ips = append(ips, res.JSON200.IpAddresses...)
@@ -80,6 +83,8 @@ func TestAccKatapultIP_minimal(t *testing.T) {
 			DataCenterPermalink: &tt.Meta.confDataCenter,
 		})
 	require.NoError(t, err)
+	require.NotNil(t, res)
+	require.NotNil(t, res.JSON200)
 
 	network := res.JSON200.Network
 	require.NotNil(t, network.Id)
@@ -511,6 +516,14 @@ func testAccCheckKatapultIPExists(
 	}
 }
 
+func defaultToEmpty[T any](v *T) *T {
+	if v == nil {
+		return new(T)
+	}
+
+	return v
+}
+
 func testAccCheckKatapultIPAttrs(
 	tt *testTools,
 	res string,
@@ -550,10 +563,10 @@ func testAccCheckKatapultIPAttrs(
 				res, "vip", fmt.Sprintf("%t", *ip.Vip),
 			),
 			resource.TestCheckResourceAttr(
-				res, "allocation_type", *ip.AllocationType,
+				res, "allocation_type", *(defaultToEmpty(ip.AllocationType)),
 			),
 			resource.TestCheckResourceAttr(
-				res, "allocation_id", *ip.AllocationId,
+				res, "allocation_id", *(defaultToEmpty(ip.AllocationId)),
 			),
 		}
 
@@ -582,12 +595,10 @@ func testAccCheckKatapultIPDestroy(
 				&core.GetIpAddressParams{
 					IpAddressId: &rs.Primary.ID,
 				})
-
-			ip := response.JSON200.IpAddress
 			if err == nil && response.JSON200 != nil {
 				return fmt.Errorf(
 					"katapult_ip %s (%s) was not destroyed",
-					rs.Primary.ID, *ip.Address)
+					rs.Primary.ID, *response.JSON200.IpAddress.Address)
 			}
 		}
 
