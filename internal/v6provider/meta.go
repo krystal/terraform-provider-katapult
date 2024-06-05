@@ -9,15 +9,14 @@ import (
 	"github.com/hashicorp/go-hclog"
 
 	"github.com/krystal/go-katapult"
-	Core "github.com/krystal/go-katapult/next/core"
+	core "github.com/krystal/go-katapult/next/core"
 
-	"github.com/krystal/go-katapult/core"
 	"github.com/krystal/go-katapult/namegenerator"
 )
 
 type Meta struct {
 	Client *katapult.Client
-	Core   Core.ClientWithResponsesInterface
+	Core   core.ClientWithResponsesInterface
 	Logger hclog.Logger
 
 	GeneratedNamePrefix  string
@@ -27,10 +26,6 @@ type Meta struct {
 	confAPIKey       string
 	confDataCenter   string
 	confOrganization string
-
-	// Internal cache of shallow lookup reference objects
-	DataCenterRef   core.DataCenterRef
-	OrganizationRef core.OrganizationRef
 }
 
 func (m *Meta) UseOrGenerateName(name string) string {
@@ -147,23 +142,16 @@ func NewMeta(
 
 	m.Client = c
 
-	Core, err := Core.NewClientWithResponses(
+	CoreClient, err := core.NewClientWithResponses(
 		serverURL.String(),
 		m.confAPIKey,
-		Core.WithHTTPClient(rhc.StandardClient()),
+		core.WithHTTPClient(rhc.StandardClient()),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	m.Core = Core
-
-	m.OrganizationRef = core.OrganizationRef{
-		SubDomain: m.confOrganization,
-	}
-	m.DataCenterRef = core.DataCenterRef{
-		Permalink: m.confDataCenter,
-	}
+	m.Core = CoreClient
 
 	return m, nil
 }
