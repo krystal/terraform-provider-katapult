@@ -32,7 +32,7 @@ func testSweepIPs(_ string) error {
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
 		res, err := m.Core.GetOrganizationIpAddressesWithResponse(ctx,
 			&core.GetOrganizationIpAddressesParams{
-				OrganizationSubDomain: &m.OrganizationRef.ID,
+				OrganizationSubDomain: &m.confOrganization,
 				Page:                  &pageNum,
 			})
 		if err != nil {

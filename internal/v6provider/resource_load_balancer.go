@@ -173,7 +173,7 @@ func (r *LoadBalancerResource) Create(
 
 	args := core.PostOrganizationLoadBalancersJSONRequestBody{
 		Organization: core.OrganizationLookup{
-			SubDomain: &r.M.OrganizationRef.SubDomain,
+			SubDomain: &r.M.confOrganization,
 		},
 		Properties: core.LoadBalancerArguments{
 			Name:         &name,

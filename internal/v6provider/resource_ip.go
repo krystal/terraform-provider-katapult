@@ -159,7 +159,7 @@ func (r *IPResource) Create(
 	} else {
 		res, err := r.M.Core.GetDataCenterDefaultNetworkWithResponse(ctx,
 			&core.GetDataCenterDefaultNetworkParams{
-				DataCenterPermalink: &r.M.DataCenterRef.Permalink,
+				DataCenterPermalink: &r.M.confDataCenter,
 			})
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -174,7 +174,7 @@ func (r *IPResource) Create(
 
 	args := core.PostOrganizationIpAddressesJSONRequestBody{
 		Organization: core.OrganizationLookup{
-			SubDomain: &r.M.OrganizationRef.SubDomain,
+			SubDomain: &r.M.confOrganization,
 		},
 		Network: core.NetworkLookup{
 			Id: networkID,
