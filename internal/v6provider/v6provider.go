@@ -230,6 +230,9 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource {
 			return &IPResource{}
 		},
+		func() resource.Resource {
+			return &AddressListResource{}
+		},
 	}
 	if os.Getenv("TF_ACC") != "" {
 		funcs = append(funcs, func() resource.Resource {
