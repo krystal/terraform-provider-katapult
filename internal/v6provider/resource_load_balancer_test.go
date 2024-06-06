@@ -29,13 +29,6 @@ func testSweepLoadBalancers(_ string) error {
 	var loadBalancers []core.GetOrganizationLoadBalancers200ResponseLoadBalancers
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		// pageResult, resp, err := m.Core.LoadBalancers.List(
-		// 	ctx, m.OrganizationRef, &core.ListOptions{Page: pageNum},
-		// )
-		// if err != nil {
-		// 	return err
-		// }
-
 		res, err := m.Core.GetOrganizationLoadBalancersWithResponse(ctx,
 			&core.GetOrganizationLoadBalancersParams{
 				OrganizationId: &m.confOrganization,
