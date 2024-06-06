@@ -233,6 +233,9 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource {
 			return &AddressListResource{}
 		},
+		func() resource.Resource {
+			return &AddressListEntryResource{}
+		},
 	}
 	if os.Getenv("TF_ACC") != "" {
 		funcs = append(funcs, func() resource.Resource {
