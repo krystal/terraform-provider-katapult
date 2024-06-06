@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -169,10 +170,10 @@ func (r *AddressListEntryResource) Update(
 		return
 	}
 
-	_, err := r.M.Core.PatchAddressListEntryWithResponse(ctx,
+	res, err := r.M.Core.PatchAddressListEntryWithResponse(ctx,
 		core.PatchAddressListEntryJSONRequestBody{
 			AddressListEntry: core.AddressListEntryLookup{
-				Id: plan.ID.ValueStringPointer(),
+				Id: state.ID.ValueStringPointer(),
 			},
 			Properties: core.AddressListEntryArguments{
 				Name:    plan.Name.ValueStringPointer(),
@@ -184,12 +185,23 @@ func (r *AddressListEntryResource) Update(
 
 		return
 	}
-	id := plan.ID.ValueString()
+
+	if res.StatusCode() < 200 || res.StatusCode() >= 300 {
+		resp.Diagnostics.AddError(
+			"Address Entry List Update Error",
+			string(res.Body),
+		)
+		return
+	}
+
+	id := state.ID.ValueString()
 	err = r.AddressListEntryRead(ctx, id, &plan, &resp.State)
 	if err != nil {
 		resp.Diagnostics.AddError("Address List Entry Read Error", err.Error())
 		return
 	}
+
+	spew.Dump(plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -246,10 +258,12 @@ func (r *AddressListEntryResource) AddressListEntryRead(
 	}
 
 	if res.JSON200 == nil {
-		return fmt.Errorf("no address list found with ID %s", id)
+		return fmt.Errorf("no address list entry found with ID %s", id)
 	}
 
 	entry := res.JSON200.AddressListEntry
+
+	spew.Dump(entry)
 
 	model.ID = types.StringPointerValue(entry.Id)
 	model.Name = types.StringPointerValue(entry.Name)

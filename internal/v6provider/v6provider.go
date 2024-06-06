@@ -249,6 +249,9 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource {
 			return &LoadBalancerRuleResource{}
 		},
+		func() resource.Resource {
+			return &AddressListEntryResource{}
+		},
 	}
 }
 
