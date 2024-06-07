@@ -155,6 +155,7 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 		},
 		"certificate_ids": schema.SetAttribute{
 			Optional:    true,
+			Computed:    true,
 			ElementType: types.StringType,
 		},
 		"backend_ssl": schema.BoolAttribute{
