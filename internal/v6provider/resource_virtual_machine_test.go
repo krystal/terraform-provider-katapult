@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
@@ -69,7 +70,7 @@ func testSweepVirtualMachines(_ string) error {
 		}
 
 		if !stopped {
-			stopWaiter := &Waiter{
+			stopWaiter := &retry.StateChangeConf{
 				Pending: []string{
 					string(core.VirtualMachineStarted),
 					string(core.VirtualMachineStopping),
@@ -117,7 +118,7 @@ func testSweepVirtualMachines(_ string) error {
 			return err
 		}
 
-		trashWaiter := &Waiter{
+		trashWaiter := &retry.StateChangeConf{
 			Pending: []string{"exists"},
 			Target:  []string{"not_found"},
 			Refresh: func() (interface{}, string, error) {
