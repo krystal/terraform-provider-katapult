@@ -2,7 +2,6 @@ package v6provider
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -92,8 +91,6 @@ func (ds *LoadBalancerRulesDataSource) Read(
 
 		return
 	}
-
-	fmt.Println(rules)
 
 	data.Rules = types.ListValueMust(
 		LoadBalancerRuleType(),

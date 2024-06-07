@@ -14,7 +14,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -112,6 +114,9 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 		},
 		"load_balancer_id": schema.StringAttribute{
 			Required: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.RequiresReplace(),
+			},
 		},
 		"algorithm": schema.StringAttribute{
 			Computed: true,
@@ -150,7 +155,6 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 		},
 		"certificate_ids": schema.SetAttribute{
 			Optional:    true,
-			Computed:    true,
 			ElementType: types.StringType,
 		},
 		"backend_ssl": schema.BoolAttribute{

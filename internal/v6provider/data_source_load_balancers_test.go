@@ -40,10 +40,21 @@ func TestAccKatapultDataSourceLoadBalancers_minimal(t *testing.T) {
 				),
 			},
 			{
-				Config: undent.String((`
+				Config: undent.Stringf(`
+				resource "katapult_load_balancer" "first" {
+					name = "%s-m"
+				  }
+
+				  resource "katapult_load_balancer" "second" {
+					  name = "%s-t"
+					  depends_on = [katapult_load_balancer.first]
+				  }
 				data "katapult_load_balancers" "src" {}
 
-				`)),
+				`,
+					name,
+					name,
+				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"data.katapult_load_balancers.src",
