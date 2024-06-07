@@ -57,7 +57,7 @@ func TestAccKatapultDataSourceLoadBalancerRules_minimal(t *testing.T) {
 				data "katapult_load_balancer_rules" "src" {
 				  load_balancer_id = katapult_load_balancer.main.id
 				}
-				`),
+				`, name),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"data.katapult_load_balancer_rules.src",
