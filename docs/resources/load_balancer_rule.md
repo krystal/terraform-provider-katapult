@@ -13,7 +13,7 @@ description: |-
 ## Example Usage
 
 ```terraform
-# Use a seperate `katapult_load_balancer_rule` resource to add rules to an
+# Use a `katapult_load_balancer_rule` resource to add rules to an
 # existing `katapult_load_balancer`.
 resource "katapult_load_balancer" "my_lb" {
   name = "vm"
