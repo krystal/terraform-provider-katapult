@@ -230,6 +230,9 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource {
 			return &IPResource{}
 		},
+		func() resource.Resource {
+			return &FileStorageVolumeResource{}
+		},
 	}
 	if os.Getenv("TF_ACC") != "" {
 		funcs = append(funcs, func() resource.Resource {
@@ -246,6 +249,12 @@ func (k *KatapultProvider) DataSources(
 	funcs := []func() datasource.DataSource{
 		func() datasource.DataSource {
 			return &IPDataSource{}
+		},
+		func() datasource.DataSource {
+			return &FileStorageVolumeDataSource{}
+		},
+		func() datasource.DataSource {
+			return &FileStorageVolumesDataSource{}
 		},
 	}
 
