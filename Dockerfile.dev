@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine
+FROM alpine:latest
 
 RUN apk add --no-cache \
     bash \
@@ -6,15 +6,20 @@ RUN apk add --no-cache \
     curl \
     git \
     make \
-    terraform \
     tree
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-RUN set -e && \
-    curl -sfL https://direnv.net/install.sh | bash && \
-    echo 'export PS1="\u@go-alpine:\w\$ "' > /root/.bashrc && \
-    echo 'alias ll="ls -lah"' >> /root/.bashrc && \
-    echo 'alias ma="make"' >> /root/.bashrc && \
-    direnv hook bash >> /root/.bashrc
-
+RUN set -e \
+    && mkdir -p /terraform-provider-katapult
 WORKDIR /terraform-provider-katapult
+
+COPY .mise.toml /terraform-provider-katapult
+RUN set -e \
+    && curl https://mise.run | sh \
+    && "$HOME/.local/bin/mise" install \
+    && echo 'export PS1="\u@go-alpine:\w\$ "' > /root/.bashrc \
+    && echo 'alias ll="ls -lah"' >> /root/.bashrc \
+    && echo 'alias ma="make"' >> /root/.bashrc \
+    && echo 'alias mi="mise"' >> /root/.bashrc \
+    && echo 'alias tf="terraform"' >> /root/.bashrc \
+    && echo 'eval "$(~/.local/bin/mise activate bash)"' >> ~/.bashrc
