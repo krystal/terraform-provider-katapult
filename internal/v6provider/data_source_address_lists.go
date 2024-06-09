@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	core "github.com/krystal/go-katapult/next/core"
 )
 
@@ -19,7 +18,7 @@ type (
 	}
 
 	AddressListsDataSourceModel struct {
-		AddressLists types.Set
+		AddressLists types.Set `tfsdk:"address_lists"`
 	}
 )
 
@@ -112,17 +111,27 @@ func (ds *AddressListsDataSource) Read(
 		}
 
 		addressLists = append(addressLists, res.JSON200.AddressLists...)
-		totalPages = *res.JSON200.Pagination.Total
+		totalPages = *res.JSON200.Pagination.TotalPages
 	}
 
-	addrListValues, diags := convertAddrListsToValues(addressLists)
+	listValueType := types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"id":   types.StringType,
+			"name": types.StringType,
+		},
+	}
+
+	addrListValues, diags := convertAddrListsToValues(
+		addressLists,
+		listValueType.AttrTypes,
+	)
 	if diags != nil {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
 
 	addrListValue, diags := types.SetValue(
-		types.ObjectType{},
+		listValueType,
 		addrListValues,
 	)
 	resp.Diagnostics.Append(diags...)
@@ -137,15 +146,13 @@ func (ds *AddressListsDataSource) Read(
 
 func convertAddrListsToValues(
 	lists []core.GetOrganizationAddressLists200ResponseAddressLists,
+	attrTypes map[string]attr.Type,
 ) ([]attr.Value, diag.Diagnostics) {
 	vals := make([]attr.Value, len(lists))
-	attributeTypes := map[string]attr.Type{
-		"id":   basetypes.StringType{},
-		"name": basetypes.StringType{},
-	}
+
 	for index, list := range lists {
 		listval, diags := types.ObjectValue(
-			attributeTypes,
+			attrTypes,
 			map[string]attr.Value{
 				"id":   types.StringPointerValue(list.Id),
 				"name": types.StringPointerValue(list.Name),
