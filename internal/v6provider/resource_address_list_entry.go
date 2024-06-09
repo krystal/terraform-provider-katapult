@@ -263,8 +263,6 @@ func (r *AddressListEntryResource) AddressListEntryRead(
 
 	entry := res.JSON200.AddressListEntry
 
-	spew.Dump(entry)
-
 	model.ID = types.StringPointerValue(entry.Id)
 	model.Name = types.StringPointerValue(entry.Name)
 	model.Address = types.StringPointerValue(entry.Address)
