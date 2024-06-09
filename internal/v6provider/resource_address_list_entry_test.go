@@ -12,9 +12,9 @@ import (
 
 func TestAccKatapultAddressListEntry_minimal(t *testing.T) {
 	tt := newTestTools(t)
-
-	listName := tt.ResourceName()
-	entryName := tt.ResourceName()
+	name := tt.ResourceName()
+	listName := name + "-list"
+	entryName := name + "-entry"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -59,8 +59,9 @@ func TestAccKatapultAddressListEntry_minimal(t *testing.T) {
 func TestAccKatapultAddressListEntry_update(t *testing.T) {
 	tt := newTestTools(t)
 
-	listName := tt.ResourceName()
-	entryName := tt.ResourceName()
+	name := tt.ResourceName()
+	listName := name + "-list"
+	entryName := name + "-entry"
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },

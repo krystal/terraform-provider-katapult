@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -200,8 +199,6 @@ func (r *AddressListEntryResource) Update(
 		resp.Diagnostics.AddError("Address List Entry Read Error", err.Error())
 		return
 	}
-
-	spew.Dump(plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }

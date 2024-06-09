@@ -263,6 +263,18 @@ func (k *KatapultProvider) DataSources(
 			return &IPDataSource{}
 		},
 		func() datasource.DataSource {
+			return &AddressListDataSource{}
+		},
+		func() datasource.DataSource {
+			return &AddressListsDataSource{}
+		},
+		func() datasource.DataSource {
+			return &AddressListEntryDataSource{}
+		},
+		func() datasource.DataSource {
+			return &AddressListEntriesDataSource{}
+		},
+		func() datasource.DataSource {
 			return &LoadBalancerDataSource{}
 		},
 		func() datasource.DataSource {
