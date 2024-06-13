@@ -10,7 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
-	"github.com/krystal/go-katapult/core"
+	core "github.com/krystal/go-katapult/next/core"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,36 +27,46 @@ func testSweepIPs(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()
 
-	var ips []*core.IPAddress
+	var ips []core.GetOrganizationIPAddresses200ResponseIPAddresses
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := m.Core.IPAddresses.List(
-			ctx, m.OrganizationRef,
-			&core.ListOptions{Page: pageNum},
-		)
+		res, err := m.Core.GetOrganizationIpAddressesWithResponse(ctx,
+			&core.GetOrganizationIpAddressesParams{
+				OrganizationSubDomain: &m.confOrganization,
+				Page:                  &pageNum,
+			})
 		if err != nil {
 			return err
 		}
+		if res.JSON200 == nil {
+			return fmt.Errorf("unexpected nil response")
+		}
 
-		totalPages = resp.Pagination.TotalPages
-		ips = append(ips, pageResult...)
+		totalPages = *res.JSON200.Pagination.TotalPages
+		ips = append(ips, res.JSON200.IpAddresses...)
 	}
 
 	for _, ip := range ips {
-		if ip.AllocationID != "" {
+		if ip.AllocationId != nil && *ip.AllocationId != "" {
 			m.Logger.Info(
 				"skipping IP address: has allocation",
-				"id", ip.ID,
+				"id", ip.Id,
 				"address", ip.Address,
-				"allocation_id", ip.AllocationID,
+				"allocation_id", ip.AllocationId,
 				"allocation_type", ip.AllocationType,
 			)
 
 			continue
 		}
 
-		m.Logger.Info("deleting IP address", "id", ip.ID, "address", ip.Address)
-		_, err := m.Core.IPAddresses.Delete(ctx, ip.Ref())
+		m.Logger.Info("deleting IP address", "id", ip.Id, "address", ip.Address)
+
+		_, err := m.Core.DeleteIpAddressWithResponse(ctx,
+			core.DeleteIpAddressJSONRequestBody{
+				IpAddress: core.IPAddressLookup{
+					Id: ip.Id,
+				},
+			})
 		if err != nil {
 			return err
 		}
@@ -67,11 +78,16 @@ func testSweepIPs(_ string) error {
 func TestAccKatapultIP_minimal(t *testing.T) {
 	tt := newTestTools(t)
 
-	network, _, err := tt.Meta.Core.DataCenters.DefaultNetwork(
-		tt.Ctx, tt.Meta.DataCenterRef,
-	)
-
+	res, err := tt.Meta.Core.GetDataCenterDefaultNetworkWithResponse(tt.Ctx,
+		&core.GetDataCenterDefaultNetworkParams{
+			DataCenterPermalink: &tt.Meta.confDataCenter,
+		})
 	require.NoError(t, err)
+	require.NotNil(t, res)
+	require.NotNil(t, res.JSON200)
+
+	network := res.JSON200.Network
+	require.NotNil(t, network.Id)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -84,7 +100,7 @@ func TestAccKatapultIP_minimal(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web"),
 					resource.TestCheckResourceAttr(
-						"katapult_ip.web", "network_id", network.ID,
+						"katapult_ip.web", "network_id", *network.Id,
 					),
 					resource.TestMatchResourceAttr(
 						"katapult_ip.web",
@@ -115,10 +131,14 @@ func TestAccKatapultIP_minimal(t *testing.T) {
 func TestAccKatapultIP_ipv4(t *testing.T) {
 	tt := newTestTools(t)
 
-	network, _, err := tt.Meta.Core.DataCenters.DefaultNetwork(
-		tt.Ctx, tt.Meta.DataCenterRef,
-	)
+	res, err := tt.Meta.Core.GetDataCenterDefaultNetworkWithResponse(tt.Ctx,
+		&core.GetDataCenterDefaultNetworkParams{
+			DataCenterPermalink: &tt.Meta.confDataCenter,
+		})
 	require.NoError(t, err)
+
+	network := res.JSON200.Network
+	require.NotNil(t, network.Id)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -134,7 +154,7 @@ func TestAccKatapultIP_ipv4(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web"),
 					resource.TestCheckResourceAttr(
-						"katapult_ip.web", "network_id", network.ID,
+						"katapult_ip.web", "network_id", *network.Id,
 					),
 					resource.TestMatchResourceAttr(
 						"katapult_ip.web",
@@ -165,10 +185,14 @@ func TestAccKatapultIP_ipv4(t *testing.T) {
 func TestAccKatapultIP_ipv6(t *testing.T) {
 	tt := newTestTools(t)
 
-	network, _, err := tt.Meta.Core.DataCenters.DefaultNetwork(
-		tt.Ctx, tt.Meta.DataCenterRef,
-	)
+	res, err := tt.Meta.Core.GetDataCenterDefaultNetworkWithResponse(tt.Ctx,
+		&core.GetDataCenterDefaultNetworkParams{
+			DataCenterPermalink: &tt.Meta.confDataCenter,
+		})
 	require.NoError(t, err)
+
+	network := res.JSON200.Network
+	require.NotNil(t, network.Id)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -184,7 +208,7 @@ func TestAccKatapultIP_ipv6(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web"),
 					resource.TestCheckResourceAttr(
-						"katapult_ip.web", "network_id", network.ID,
+						"katapult_ip.web", "network_id", *network.Id,
 					),
 					resource.TestMatchResourceAttr(
 						"katapult_ip.web",
@@ -348,10 +372,14 @@ func TestAccKatapultIP_label_without_vip(t *testing.T) {
 func TestAccKatapultIP_with_network_id(t *testing.T) {
 	tt := newTestTools(t)
 
-	network, _, err := tt.Meta.Core.DataCenters.DefaultNetwork(
-		tt.Ctx, tt.Meta.DataCenterRef,
-	)
+	res, err := tt.Meta.Core.GetDataCenterDefaultNetworkWithResponse(tt.Ctx,
+		&core.GetDataCenterDefaultNetworkParams{
+			DataCenterPermalink: &tt.Meta.confDataCenter,
+		})
 	require.NoError(t, err)
+
+	network := res.JSON200.Network
+	require.NotNil(t, network.Id)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -363,12 +391,12 @@ func TestAccKatapultIP_with_network_id(t *testing.T) {
 					resource "katapult_ip" "net" {
 					  network_id = "%s"
 					}`,
-					network.ID,
+					*network.Id,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultIPAttrs(tt, "katapult_ip.net"),
 					resource.TestCheckResourceAttr(
-						"katapult_ip.net", "network_id", network.ID,
+						"katapult_ip.net", "network_id", *network.Id,
 					),
 				),
 			},
@@ -471,13 +499,29 @@ func testAccCheckKatapultIPExists(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		ip, _, err := m.Core.IPAddresses.GetByID(tt.Ctx, rs.Primary.ID)
+		response, err := m.Core.GetIpAddressWithResponse(tt.Ctx,
+			&core.GetIpAddressParams{
+				IpAddressId: &rs.Primary.ID,
+			})
 		if err != nil {
 			return err
 		}
 
-		return resource.TestCheckResourceAttr(res, "id", ip.ID)(s)
+		ip := response.JSON200.IpAddress
+		if ip.Id == nil {
+			return fmt.Errorf("IP address not found: %s", rs.Primary.ID)
+		}
+
+		return resource.TestCheckResourceAttr(res, "id", *ip.Id)(s)
 	}
+}
+
+func defaultToEmpty[T any](v *T) *T {
+	if v == nil {
+		return new(T)
+	}
+
+	return v
 }
 
 func testAccCheckKatapultIPAttrs(
@@ -490,40 +534,45 @@ func testAccCheckKatapultIPAttrs(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		var err error
-		ip, _, err := tt.Meta.Core.IPAddresses.GetByID(
-			tt.Ctx, rs.Primary.ID,
-		)
+		response, err := tt.Meta.Core.GetIpAddressWithResponse(tt.Ctx,
+			&core.GetIpAddressParams{
+				IpAddressId: &rs.Primary.ID,
+			})
 		if err != nil {
 			return err
 		}
 
+		ip := response.JSON200.IpAddress
+		if ip.Id == nil {
+			return fmt.Errorf("IP address not found: %s", rs.Primary.ID)
+		}
+
 		tfs := []resource.TestCheckFunc{
-			resource.TestCheckResourceAttr(res, "id", ip.ID),
-			resource.TestCheckResourceAttr(res, "address", ip.Address),
+			resource.TestCheckResourceAttr(res, "id", *ip.Id),
+			resource.TestCheckResourceAttr(res, "address", *ip.Address),
 			resource.TestCheckResourceAttr(
-				res, "address_with_mask", ip.AddressWithMask,
+				res, "address_with_mask", *ip.AddressWithMask,
 			),
-			resource.TestCheckResourceAttr(res, "reverse_dns", ip.ReverseDNS),
+			resource.TestCheckResourceAttr(res, "reverse_dns", *ip.ReverseDns),
 			resource.TestCheckResourceAttr(
 				res,
 				"version",
-				strconv.FormatInt(flattenIPVersion(ip.Address), 10),
+				strconv.FormatInt(flattenIPVersion(*ip.Address), 10),
 			),
 			resource.TestCheckResourceAttr(
-				res, "vip", fmt.Sprintf("%t", ip.VIP),
+				res, "vip", fmt.Sprintf("%t", *ip.Vip),
 			),
 			resource.TestCheckResourceAttr(
-				res, "allocation_type", ip.AllocationType,
+				res, "allocation_type", *(defaultToEmpty(ip.AllocationType)),
 			),
 			resource.TestCheckResourceAttr(
-				res, "allocation_id", ip.AllocationID,
+				res, "allocation_id", *(defaultToEmpty(ip.AllocationId)),
 			),
 		}
 
 		if ip.Network != nil {
 			tfs = append(tfs, resource.TestCheckResourceAttr(
-				res, "network_id", ip.Network.ID,
+				res, "network_id", *ip.Network.Id,
 			))
 		}
 
@@ -542,11 +591,14 @@ func testAccCheckKatapultIPDestroy(
 				continue
 			}
 
-			ip, _, err := m.Core.IPAddresses.GetByID(tt.Ctx, rs.Primary.ID)
-			if err == nil && ip != nil {
+			response, err := m.Core.GetIpAddressWithResponse(tt.Ctx,
+				&core.GetIpAddressParams{
+					IpAddressId: &rs.Primary.ID,
+				})
+			if err == nil && response.JSON200 != nil {
 				return fmt.Errorf(
 					"katapult_ip %s (%s) was not destroyed",
-					rs.Primary.ID, ip.Address)
+					rs.Primary.ID, *response.JSON200.IpAddress.Address)
 			}
 		}
 

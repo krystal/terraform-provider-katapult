@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -9,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/krystal/go-katapult/core"
+	core "github.com/krystal/go-katapult/next/core"
 )
 
 type (
@@ -125,15 +126,23 @@ func (r *IPDataSource) Read(
 		return
 	}
 
-	var ip *core.IPAddress
-	var err error
+	var (
+		res *core.GetIpAddressResponse
+		err error
+	)
 
-	switch {
-	case data.ID.ValueString() != "":
-		ip, _, err = r.M.Core.IPAddresses.GetByID(ctx, data.ID.ValueString())
-	default:
-		ip, _, err = r.M.Core.IPAddresses.GetByAddress(ctx,
-			data.Address.ValueString())
+	if !data.ID.IsNull() {
+		res, err = r.M.Core.GetIpAddressWithResponse(ctx,
+			&core.GetIpAddressParams{
+				IpAddressId: data.ID.ValueStringPointer(),
+			},
+		)
+	} else if !data.Address.IsNull() {
+		res, err = r.M.Core.GetIpAddressWithResponse(ctx,
+			&core.GetIpAddressParams{
+				IpAddressAddress: data.Address.ValueStringPointer(),
+			},
+		)
 	}
 
 	if err != nil {
@@ -143,20 +152,40 @@ func (r *IPDataSource) Read(
 		)
 		return
 	}
-
-	if ip.Network != nil {
-		data.NetworkID = types.StringValue(ip.Network.ID)
+	if res.StatusCode() != http.StatusOK {
+		resp.Diagnostics.AddError(
+			"IP Error",
+			res.Status(),
+		)
+		return
 	}
 
-	data.ID = types.StringValue(ip.ID)
-	data.Address = types.StringValue(ip.Address)
-	data.AddressWithMask = types.StringValue(ip.AddressWithMask)
-	data.ReverseDNS = types.StringValue(ip.ReverseDNS)
-	data.Version = types.Int64Value(flattenIPVersion(ip.Address))
-	data.VIP = types.BoolValue(ip.VIP)
-	data.Label = types.StringValue(ip.Label)
-	data.AllocationType = types.StringValue(ip.AllocationType)
-	data.AllocationID = types.StringValue(ip.AllocationID)
+	ip := res.JSON200.IpAddress
+
+	if ip.Network != nil {
+		data.NetworkID = types.StringPointerValue(ip.Network.Id)
+	}
+
+	data.ID = types.StringPointerValue(ip.Id)
+	data.Address = types.StringPointerValue(ip.Address)
+	data.AddressWithMask = types.StringPointerValue(ip.AddressWithMask)
+	data.ReverseDNS = types.StringPointerValue(ip.ReverseDns)
+	if ip.Address != nil {
+		data.Version = types.Int64Value(flattenIPVersion(*ip.Address))
+	}
+	data.VIP = types.BoolPointerValue(ip.Vip)
+	data.Label = types.StringPointerValue(ip.Label)
+	if ip.AllocationType != nil {
+		data.AllocationType = types.StringPointerValue(ip.AllocationType)
+	} else {
+		data.AllocationType = types.StringValue("")
+	}
+
+	if ip.AllocationId != nil {
+		data.AllocationID = types.StringPointerValue(ip.AllocationId)
+	} else {
+		data.AllocationID = types.StringValue("")
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
