@@ -3,7 +3,6 @@ module github.com/krystal/terraform-provider-katapult
 go 1.21
 
 require (
-	github.com/davecgh/go-spew v1.1.1
 	github.com/dnaeon/go-vcr v1.1.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-hclog v1.6.2
@@ -27,6 +26,7 @@ require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/augurysys/timestamp v0.3.2 // indirect
 	github.com/cloudflare/circl v1.3.6 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deepmap/oapi-codegen/v2 v2.1.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
