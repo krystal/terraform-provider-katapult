@@ -13,25 +13,24 @@ import (
 )
 
 type (
-	AddressListEntriesDataSource struct {
+	GlobalAddressListsDataSource struct {
 		M *Meta
 	}
 
-	AddressListEntriesDataSourceModel struct {
-		AddressListID types.String `tfsdk:"address_list_id"`
-		Entries       types.Set    `tfsdk:"entries"`
+	GlobalAddressListsDataSourceModel struct {
+		AddressLists types.Set `tfsdk:"address_lists"`
 	}
 )
 
-func (ds *AddressListEntriesDataSource) Metadata(
+func (ds *GlobalAddressListsDataSource) Metadata(
 	_ context.Context,
 	req datasource.MetadataRequest,
 	resp *datasource.MetadataResponse,
 ) {
-	resp.TypeName = req.ProviderTypeName + "_address_list_entries"
+	resp.TypeName = req.ProviderTypeName + "_global_address_lists"
 }
 
-func (ds *AddressListEntriesDataSource) Configure(
+func (ds *GlobalAddressListsDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
 	resp *datasource.ConfigureResponse,
@@ -52,17 +51,14 @@ func (ds *AddressListEntriesDataSource) Configure(
 	ds.M = m
 }
 
-func (ds *AddressListEntriesDataSource) Schema(
+func (ds *GlobalAddressListsDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"address_list_id": schema.StringAttribute{
-				Required: true,
-			},
-			"entries": schema.SetNestedAttribute{
+			"address_lists": schema.SetNestedAttribute{
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -72,9 +68,6 @@ func (ds *AddressListEntriesDataSource) Schema(
 						"name": schema.StringAttribute{
 							Computed: true,
 						},
-						"address": schema.StringAttribute{
-							Computed: true,
-						},
 					},
 				},
 			},
@@ -82,57 +75,54 @@ func (ds *AddressListEntriesDataSource) Schema(
 	}
 }
 
-func (ds *AddressListEntriesDataSource) Read(
+func (ds *GlobalAddressListsDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,
 	resp *datasource.ReadResponse,
 ) {
-	var data AddressListEntriesDataSourceModel
+	var data GlobalAddressListsDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	entries := []core.AddressListEntry{}
+	addressLists := []core.GetAddressLists200ResponseAddressLists{}
 	totalPages := 2
 
-	for i := 0; i < totalPages; i++ {
-		res, err := ds.M.Core.GetAddressListEntriesWithResponse(ctx,
-			&core.GetAddressListEntriesParams{
-				AddressListId: data.AddressListID.ValueStringPointer(),
+	for i := 1; i < totalPages; i++ {
+		res, err := ds.M.Core.GetAddressListsWithResponse(ctx,
+			&core.GetAddressListsParams{
+				Page: &i,
 			})
 		if err != nil {
-			resp.Diagnostics.AddError(
-				"Address List Entries get by ID error",
-				err.Error())
+			resp.Diagnostics.AddError("Address Lists get error", err.Error())
 
 			return
 		}
 
 		if res.JSON200 == nil {
 			resp.Diagnostics.AddError(
-				"failed to get address list entries",
+				"failed to get address lists",
 				fmt.Sprintf("response code was %d", res.StatusCode()),
 			)
 
 			return
 		}
 
-		entries = append(entries, res.JSON200.AddressListEntries...)
+		addressLists = append(addressLists, res.JSON200.AddressLists...)
 		totalPages = *res.JSON200.Pagination.TotalPages
 	}
 
 	listValueType := types.ObjectType{
 		AttrTypes: map[string]attr.Type{
-			"id":      types.StringType,
-			"name":    types.StringType,
-			"address": types.StringType,
+			"id":   types.StringType,
+			"name": types.StringType,
 		},
 	}
 
-	entryListValues, diags := convertAddrListEntriesToValues(
-		entries,
+	addrListValues, diags := convertGlobalAddrListsToValues(
+		addressLists,
 		listValueType.AttrTypes,
 	)
 	if diags != nil {
@@ -140,41 +130,40 @@ func (ds *AddressListEntriesDataSource) Read(
 		return
 	}
 
-	entriesValue, diags := types.SetValue(
+	addrListValue, diags := types.SetValue(
 		listValueType,
-		entryListValues,
+		addrListValues,
 	)
-
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	data.Entries = entriesValue
+	data.AddressLists = addrListValue
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func convertAddrListEntriesToValues(
-	entries []core.AddressListEntry,
+func convertGlobalAddrListsToValues(
+	lists []core.GetAddressLists200ResponseAddressLists,
 	attrTypes map[string]attr.Type,
 ) ([]attr.Value, diag.Diagnostics) {
-	vals := make([]attr.Value, len(entries))
+	vals := make([]attr.Value, len(lists))
 
-	for index, entry := range entries {
-		entryval, diags := types.ObjectValue(
+	for index, list := range lists {
+		listval, diags := types.ObjectValue(
 			attrTypes,
 			map[string]attr.Value{
-				"id":      types.StringPointerValue(entry.Id),
-				"name":    types.StringPointerValue(entry.Name),
-				"address": types.StringPointerValue(entry.Address),
+				"id":   types.StringPointerValue(list.Id),
+				"name": types.StringPointerValue(list.Name),
 			},
 		)
+
 		if diags.HasError() {
 			return nil, diags
 		}
 
-		vals[index] = entryval
+		vals[index] = listval
 	}
 
 	return vals, nil

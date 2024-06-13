@@ -265,6 +265,9 @@ func (k *KatapultProvider) DataSources(
 		func() datasource.DataSource {
 			return &AddressListEntriesDataSource{}
 		},
+		func() datasource.DataSource {
+			return &GlobalAddressListsDataSource{}
+		},
 	}
 
 	if os.Getenv("TF_ACC") != "" {

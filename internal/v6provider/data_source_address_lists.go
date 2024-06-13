@@ -94,6 +94,7 @@ func (ds *AddressListsDataSource) Read(
 		res, err := ds.M.Core.GetOrganizationAddressListsWithResponse(ctx,
 			&core.GetOrganizationAddressListsParams{
 				OrganizationSubDomain: &ds.M.confOrganization,
+				Page:                  &i,
 			})
 		if err != nil {
 			resp.Diagnostics.AddError("Address Lists get error", err.Error())
