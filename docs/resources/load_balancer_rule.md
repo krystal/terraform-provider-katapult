@@ -57,7 +57,6 @@ resource "katapult_load_balancer_rule" "complete_rule" {
 - `destination_port` (Number)
 - `listen_port` (Number)
 - `load_balancer_id` (String)
-- `passthrough_ssl` (Boolean)
 - `protocol` (String)
 
 ### Optional
@@ -73,6 +72,7 @@ resource "katapult_load_balancer_rule" "complete_rule" {
 - `check_protocol` (String)
 - `check_rise` (Number)
 - `check_timeout` (Number)
+- `passthrough_ssl` (Boolean)
 - `proxy_protocol` (Boolean)
 
 ### Read-Only

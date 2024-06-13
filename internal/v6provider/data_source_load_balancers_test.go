@@ -31,35 +31,41 @@ func TestAccKatapultDataSourceLoadBalancers_minimal(t *testing.T) {
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultLoadBalancerExists(
+					testAccCheckKatapultLoadBalancerAttrs(
 						tt, "katapult_load_balancer.first",
 					),
-					testAccCheckKatapultLoadBalancerExists(
+					testAccCheckKatapultLoadBalancerAttrs(
 						tt, "katapult_load_balancer.second",
 					),
 				),
 			},
 			{
 				Config: undent.Stringf(`
-				resource "katapult_load_balancer" "first" {
-					name = "%s-m"
-				  }
+					resource "katapult_load_balancer" "first" {
+						name = "%s-m"
+					}
 
-				  resource "katapult_load_balancer" "second" {
-					  name = "%s-t"
-					  depends_on = [katapult_load_balancer.first]
-				  }
-				data "katapult_load_balancers" "src" {}
+					resource "katapult_load_balancer" "second" {
+						name = "%s-t"
+						depends_on = [katapult_load_balancer.first]
+					}
 
-				`,
+					data "katapult_load_balancers" "src" {}`,
 					name,
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(
+					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_load_balancers.src",
-						"load_balancers.#",
-						"2",
+						"load_balancers.*.id",
+						"katapult_load_balancer.first",
+						"id",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"data.katapult_load_balancers.src",
+						"load_balancers.*.id",
+						"katapult_load_balancer.second",
+						"id",
 					),
 				),
 			},

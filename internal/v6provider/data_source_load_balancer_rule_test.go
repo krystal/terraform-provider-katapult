@@ -29,35 +29,15 @@ func TestAccKatapultDataSourceLoadBalancerRule_minimal(t *testing.T) {
 						protocol = "HTTP"
 						passthrough_ssl = false
 					}
-					
+
 					data "katapult_load_balancer_rule" "src" {
 						id = katapult_load_balancer_rule.my_rule.id
 					}`,
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultLoadBalancerRuleExists(
+					testAccCheckKatapultLoadBalancerRuleAttrs(
 						tt, "data.katapult_load_balancer_rule.src",
-					),
-					resource.TestCheckResourceAttr(
-						"data.katapult_load_balancer_rule.src",
-						"destination_port",
-						"8080",
-					),
-					resource.TestCheckResourceAttr(
-						"data.katapult_load_balancer_rule.src",
-						"listen_port",
-						"80",
-					),
-					resource.TestCheckResourceAttr(
-						"data.katapult_load_balancer_rule.src",
-						"protocol",
-						"HTTP",
-					),
-					resource.TestCheckResourceAttr(
-						"data.katapult_load_balancer_rule.src",
-						"passthrough_ssl",
-						"false",
 					),
 				),
 			},

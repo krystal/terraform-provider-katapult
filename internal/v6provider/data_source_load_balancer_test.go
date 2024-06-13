@@ -37,7 +37,7 @@ func TestAccKatapultDataSourceLoadBalancer_minimal(t *testing.T) {
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultLoadBalancerExists(
+					testAccCheckKatapultLoadBalancerAttrs(
 						tt, "data.katapult_load_balancer.src",
 					),
 					resource.TestCheckResourceAttr(

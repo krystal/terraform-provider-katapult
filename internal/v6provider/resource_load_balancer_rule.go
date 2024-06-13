@@ -164,7 +164,9 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 			Default:  booldefault.StaticBool(false),
 		},
 		"passthrough_ssl": schema.BoolAttribute{
-			Required: true,
+			Optional: true,
+			Computed: true,
+			Default:  booldefault.StaticBool(false),
 		},
 		"check_enabled": schema.BoolAttribute{
 			Optional: true,
@@ -509,11 +511,11 @@ func (r *LoadBalancerRuleResource) LoadBalancerRuleRead(
 	model.CheckEnabled = types.BoolValue(lbr.CheckEnabled)
 	model.CheckFall = types.Int64Value(int64(lbr.CheckFall))
 	model.CheckInterval = types.Int64Value(int64(lbr.CheckInterval))
+	model.CheckHTTPStatuses = types.StringValue(string(lbr.CheckHTTPStatuses))
 	model.CheckPath = types.StringValue(lbr.CheckPath)
 	model.CheckProtocol = types.StringValue(string(lbr.CheckProtocol))
 	model.CheckRise = types.Int64Value(int64(lbr.CheckRise))
 	model.CheckTimeout = types.Int64Value(int64(lbr.CheckTimeout))
-	model.CheckHTTPStatuses = types.StringValue(string(lbr.CheckHTTPStatuses))
 
 	return nil
 }
@@ -553,6 +555,8 @@ func buildLoadBalancerRuleCreateArgs(
 		ListenPort:        int(r.ListenPort.ValueInt64()),
 		Protocol:          convertProtocol(r.Protocol.ValueString()),
 		ProxyProtocol:     r.ProxyProtocol.ValueBoolPointer(),
+		BackendSSL:        r.BackendSSL.ValueBoolPointer(),
+		PassthroughSSL:    r.PassthroughSSL.ValueBoolPointer(),
 		CheckEnabled:      r.CheckEnabled.ValueBoolPointer(),
 		CheckFall:         int(r.CheckFall.ValueInt64()),
 		CheckInterval:     int(r.CheckInterval.ValueInt64()),
@@ -561,8 +565,6 @@ func buildLoadBalancerRuleCreateArgs(
 		CheckRise:         int(r.CheckRise.ValueInt64()),
 		CheckTimeout:      int(r.CheckTimeout.ValueInt64()),
 		CheckHTTPStatuses: core.HTTPStatuses(r.CheckHTTPStatuses.ValueString()),
-		BackendSSL:        r.BackendSSL.ValueBoolPointer(),
-		PassthroughSSL:    r.PassthroughSSL.ValueBoolPointer(),
 	}
 
 	certs, diags := convertCertificateModelsToCertificateRefs(
@@ -605,6 +607,14 @@ func buildLoadBalancerRuleUpdateArgs(
 		args.ProxyProtocol = plan.ProxyProtocol.ValueBoolPointer()
 	}
 
+	if !plan.BackendSSL.Equal(state.BackendSSL) {
+		args.BackendSSL = plan.BackendSSL.ValueBoolPointer()
+	}
+
+	if !plan.PassthroughSSL.Equal(state.PassthroughSSL) {
+		args.PassthroughSSL = plan.PassthroughSSL.ValueBoolPointer()
+	}
+
 	if !plan.CheckEnabled.Equal(state.CheckEnabled) {
 		args.CheckEnabled = plan.CheckEnabled.ValueBoolPointer()
 	}
@@ -637,14 +647,6 @@ func buildLoadBalancerRuleUpdateArgs(
 		args.CheckHTTPStatuses = core.HTTPStatuses(
 			plan.CheckHTTPStatuses.ValueString(),
 		)
-	}
-
-	if !plan.BackendSSL.Equal(state.BackendSSL) {
-		args.BackendSSL = plan.BackendSSL.ValueBoolPointer()
-	}
-
-	if !plan.PassthroughSSL.Equal(state.PassthroughSSL) {
-		args.PassthroughSSL = plan.PassthroughSSL.ValueBoolPointer()
 	}
 
 	if !plan.CertificateIDs.Equal(state.CertificateIDs) {
