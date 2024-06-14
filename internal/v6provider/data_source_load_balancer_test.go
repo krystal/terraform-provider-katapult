@@ -5,10 +5,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/jimeh/undent"
-	"github.com/krystal/go-katapult/core"
 )
 
-func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
+func TestAccKatapultDataSourceLoadBalancer_minimal(t *testing.T) {
 	tt := newTestTools(t)
 
 	name := tt.ResourceName()
@@ -24,21 +23,25 @@ func TestAccKatapultDataSourceLoadBalancer_basic(t *testing.T) {
 					  name = "%s"
 					}
 
+					resource "katapult_load_balancer_rule" "my_rule" {
+						load_balancer_id = katapult_load_balancer.main.id
+						destination_port = 8080
+						listen_port = 80
+						protocol = "HTTP"
+						passthrough_ssl = false
+					}
+
 					data "katapult_load_balancer" "src" {
 					  id = katapult_load_balancer.main.id
 					}`,
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultLoadBalancerExists(
+					testAccCheckKatapultLoadBalancerAttrs(
 						tt, "data.katapult_load_balancer.src",
 					),
 					resource.TestCheckResourceAttr(
 						"data.katapult_load_balancer.src", "name", name,
-					),
-					resource.TestCheckResourceAttr(
-						"data.katapult_load_balancer.src", "resource_type",
-						string(core.VirtualMachinesResourceType),
 					),
 				),
 			},

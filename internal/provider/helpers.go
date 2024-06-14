@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
@@ -75,7 +75,7 @@ func waitForTrashObjectNotFound(
 	timeout time.Duration,
 	ref core.TrashObjectRef,
 ) error {
-	waiter := &resource.StateChangeConf{
+	waiter := &retry.StateChangeConf{
 		Pending: []string{"exists"},
 		Target:  []string{"not_found"},
 		Refresh: func() (interface{}, string, error) {
@@ -103,7 +103,7 @@ func waitForTaskCompletion(
 	timeout time.Duration,
 	task *core.Task,
 ) error {
-	taskWaiter := &resource.StateChangeConf{
+	taskWaiter := &retry.StateChangeConf{
 		Pending: []string{
 			string(core.TaskPending),
 			string(core.TaskRunning),
