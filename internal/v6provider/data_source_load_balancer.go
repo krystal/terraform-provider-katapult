@@ -15,14 +15,13 @@ type (
 	}
 
 	LoadBalancerDataSourceModel struct {
-		ID                  types.String `tfsdk:"id"`
-		Name                types.String `tfsdk:"name"`
-		ResourceType        types.String `tfsdk:"resource_type"`
-		VirtualMachine      types.List   `tfsdk:"virtual_machine"`
-		VirtualMachineGroup types.List   `tfsdk:"virtual_machine_group"`
-		Tag                 types.List   `tfsdk:"tag"`
-		IPAddress           types.String `tfsdk:"ip_address"`
-		HTTPSRedirect       types.Bool   `tfsdk:"https_redirect"`
+		ID                     types.String `tfsdk:"id"`
+		Name                   types.String `tfsdk:"name"`
+		VirtualMachineIDs      types.Set    `tfsdk:"virtual_machine_ids"`
+		VirtualMachineGroupIDs types.Set    `tfsdk:"virtual_machine_group_ids"`
+		TagIDs                 types.Set    `tfsdk:"tag_ids"`
+		IPAddress              types.String `tfsdk:"ip_address"`
+		HTTPSRedirect          types.Bool   `tfsdk:"https_redirect"`
 	}
 )
 
@@ -55,59 +54,42 @@ func (ds *LoadBalancerDataSource) Configure(
 	ds.M = m
 }
 
+func loadBalancerDataSourceSchemaAttrs() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
+		"id": schema.StringAttribute{
+			Required: true,
+		},
+		"name": schema.StringAttribute{
+			Computed: true,
+		},
+		"virtual_machine_ids": schema.SetAttribute{
+			Computed:    true,
+			ElementType: types.StringType,
+		},
+		"virtual_machine_group_ids": schema.SetAttribute{
+			Computed:    true,
+			ElementType: types.StringType,
+		},
+		"tag_ids": schema.SetAttribute{
+			Computed:    true,
+			ElementType: types.StringType,
+		},
+		"ip_address": schema.StringAttribute{
+			Computed: true,
+		},
+		"https_redirect": schema.BoolAttribute{
+			Computed: true,
+		},
+	}
+}
+
 func (ds *LoadBalancerDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Required: true,
-			},
-			"name": schema.StringAttribute{
-				Computed: true,
-			},
-			"resource_type": schema.StringAttribute{
-				Computed: true,
-			},
-			"virtual_machine": schema.ListNestedAttribute{
-				Computed: true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Computed: true,
-						},
-					},
-				},
-			},
-			"virtual_machine_group": schema.ListNestedAttribute{
-				Computed: true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Computed: true,
-						},
-					},
-				},
-			},
-			"tag": schema.ListNestedAttribute{
-				Computed: true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Computed: true,
-						},
-					},
-				},
-			},
-			"ip_address": schema.StringAttribute{
-				Computed: true,
-			},
-			"https_redirect": schema.BoolAttribute{
-				Computed: true,
-			},
-		},
+		Attributes: loadBalancerDataSourceSchemaAttrs(),
 	}
 }
 
@@ -130,21 +112,23 @@ func (ds *LoadBalancerDataSource) Read(
 	}
 
 	data.Name = types.StringValue(lb.Name)
-	data.ResourceType = types.StringValue(string(lb.ResourceType))
 	data.HTTPSRedirect = types.BoolValue(lb.HTTPSRedirect)
 	if lb.IPAddress != nil {
 		data.IPAddress = types.StringValue(lb.IPAddress.Address)
 	}
 
 	list := flattenLoadBalancerResourceIDs(lb.ResourceIDs)
+	data.VirtualMachineIDs = types.SetNull(types.StringType)
+	data.TagIDs = types.SetNull(types.StringType)
+	data.VirtualMachineGroupIDs = types.SetNull(types.StringType)
 
 	switch lb.ResourceType {
 	case core.VirtualMachinesResourceType:
-		data.VirtualMachine = list
+		data.VirtualMachineIDs = list
 	case core.VirtualMachineGroupsResourceType:
-		data.VirtualMachineGroup = list
+		data.VirtualMachineGroupIDs = list
 	case core.TagsResourceType:
-		data.Tag = list
+		data.TagIDs = list
 	}
 	data.ID = types.StringValue(lb.ID)
 

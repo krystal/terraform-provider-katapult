@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/krystal/go-katapult"
@@ -289,7 +289,7 @@ func waitForFileStorageVolumeToBeReady(
 	delay time.Duration,
 	ref core.FileStorageVolumeRef,
 ) (*core.FileStorageVolume, error) {
-	waiter := &resource.StateChangeConf{
+	waiter := &retry.StateChangeConf{
 		Pending: []string{
 			string(core.FileStorageVolumePending),
 			string(core.FileStorageVolumeConfiguring),

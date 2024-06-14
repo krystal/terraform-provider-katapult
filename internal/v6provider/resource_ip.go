@@ -162,7 +162,6 @@ func (r *IPResource) Create(
 		network, _, err = r.M.Core.DataCenters.DefaultNetwork(
 			ctx, r.M.DataCenterRef,
 		)
-
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Default Network Error",

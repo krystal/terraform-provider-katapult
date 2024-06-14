@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -22,14 +23,13 @@ type (
 	}
 
 	LoadBalancerResourceModel struct {
-		ID                  types.String `tfsdk:"id"`
-		Name                types.String `tfsdk:"name"`
-		ResourceType        types.String `tfsdk:"resource_type"`
-		VirtualMachine      types.List   `tfsdk:"virtual_machine"`
-		VirtualMachineGroup types.List   `tfsdk:"virtual_machine_group"`
-		Tag                 types.List   `tfsdk:"tag"`
-		IPAddress           types.String `tfsdk:"ip_address"`
-		HTTPSRedirect       types.Bool   `tfsdk:"https_redirect"`
+		ID                     types.String `tfsdk:"id"`
+		Name                   types.String `tfsdk:"name"`
+		VirtualMachineIDs      types.Set    `tfsdk:"virtual_machine_ids"`
+		VirtualMachineGroupIDs types.Set    `tfsdk:"virtual_machine_group_ids"`
+		TagIDs                 types.Set    `tfsdk:"tag_ids"`
+		IPAddress              types.String `tfsdk:"ip_address"`
+		HTTPSRedirect          types.Bool   `tfsdk:"https_redirect"`
 	}
 )
 
@@ -62,6 +62,26 @@ func (r *LoadBalancerResource) Configure(
 	r.M = meta
 }
 
+func LoadBalancerType() types.ObjectType {
+	return types.ObjectType{
+		AttrTypes: map[string]attr.Type{
+			"id":   types.StringType,
+			"name": types.StringType,
+			"virtual_machine_ids": types.SetType{
+				ElemType: types.StringType,
+			},
+			"virtual_machine_group_ids": types.SetType{
+				ElemType: types.StringType,
+			},
+			"tag_ids": types.SetType{
+				ElemType: types.StringType,
+			},
+			"ip_address":     types.StringType,
+			"https_redirect": types.BoolType,
+		},
+	}
+}
+
 func (r LoadBalancerResource) Schema(
 	_ context.Context,
 	_ resource.SchemaRequest,
@@ -73,68 +93,48 @@ func (r LoadBalancerResource) Schema(
 				Computed: true,
 			},
 			"name": schema.StringAttribute{
-				Computed: true,
-				Optional: true,
+				Required: true,
 			},
-			"resource_type": schema.StringAttribute{
-				Computed: true,
-			},
-			"virtual_machine": schema.ListNestedAttribute{
+			"virtual_machine_ids": schema.SetAttribute{
 				Optional: true,
 				Computed: true,
-				Validators: []validator.List{
-					listvalidator.ConflictsWith(
-						path.MatchRoot("tag"),
-						path.MatchRoot("virtual_machine_group"),
+				Validators: []validator.Set{
+					setvalidator.ConflictsWith(
+						path.MatchRoot("tag_ids"),
+						path.MatchRoot("virtual_machine_group_ids"),
 					),
 				},
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required: true,
-						},
-					},
-				},
+				ElementType: types.StringType,
 			},
-			"virtual_machine_group": schema.ListNestedAttribute{
+			"virtual_machine_group_ids": schema.SetAttribute{
 				Optional: true,
 				Computed: true,
-				Validators: []validator.List{
-					listvalidator.ConflictsWith(
-						path.MatchRoot("tag"),
-						path.MatchRoot("virtual_machine"),
+				Validators: []validator.Set{
+					setvalidator.ConflictsWith(
+						path.MatchRoot("tag_ids"),
+						path.MatchRoot("virtual_machine_ids"),
 					),
 				},
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required: true,
-						},
-					},
-				},
+				ElementType: types.StringType,
 			},
-			"tag": schema.ListNestedAttribute{
+			"tag_ids": schema.SetAttribute{
 				Optional: true,
 				Computed: true,
-				Validators: []validator.List{
-					listvalidator.ConflictsWith(
-						path.MatchRoot("virtual_machine"),
-						path.MatchRoot("virtual_machine_group"),
+				Validators: []validator.Set{
+					setvalidator.ConflictsWith(
+						path.MatchRoot("virtual_machine_ids"),
+						path.MatchRoot("virtual_machine_group_ids"),
 					),
 				},
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required: true,
-						},
-					},
-				},
+				ElementType: types.StringType,
 			},
 			"ip_address": schema.StringAttribute{
 				Computed: true,
 			},
 			"https_redirect": schema.BoolAttribute{
+				Optional: true,
 				Computed: true,
+				Default:  booldefault.StaticBool(false),
 			},
 		},
 	}
@@ -157,15 +157,17 @@ func (r *LoadBalancerResource) Create(
 	name := r.M.UseOrGenerateName(plan.Name.ValueString())
 
 	t, ids := extractLoadBalancerResourceTypeAndIDs(&plan)
-	if t == "" {
-		t = core.VirtualMachinesResourceType
-	}
 
 	args := &core.LoadBalancerCreateArguments{
-		Name:         name,
-		ResourceType: t,
-		ResourceIDs:  &ids,
-		DataCenter:   r.M.DataCenterRef,
+		Name:          name,
+		DataCenter:    r.M.DataCenterRef,
+		HTTPSRedirect: plan.HTTPSRedirect.ValueBoolPointer(),
+		ResourceType:  core.VirtualMachinesResourceType,
+	}
+
+	if len(ids) > 0 {
+		args.ResourceType = t
+		args.ResourceIDs = &ids
 	}
 
 	lb, _, err := r.M.Core.LoadBalancers.Create(
@@ -181,8 +183,7 @@ func (r *LoadBalancerResource) Create(
 		return
 	}
 
-	diags = resp.State.Set(ctx, plan)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
 func (r *LoadBalancerResource) Read(
@@ -241,9 +242,13 @@ func (r *LoadBalancerResource) Update(
 		args.Name = plan.Name.ValueString()
 	}
 
-	if !plan.VirtualMachine.Equal(state.VirtualMachine) ||
-		!plan.VirtualMachineGroup.Equal(state.VirtualMachineGroup) ||
-		!plan.Tag.Equal(state.Tag) {
+	if !plan.HTTPSRedirect.Equal(state.HTTPSRedirect) {
+		args.HTTPSRedirect = plan.HTTPSRedirect.ValueBoolPointer()
+	}
+
+	if !plan.VirtualMachineIDs.Equal(state.VirtualMachineIDs) ||
+		!plan.VirtualMachineGroupIDs.Equal(state.VirtualMachineGroupIDs) ||
+		!plan.TagIDs.Equal(state.TagIDs) {
 		t, ids := extractLoadBalancerResourceTypeAndIDs(&plan)
 		args.ResourceType = t
 		args.ResourceIDs = &ids
@@ -312,7 +317,6 @@ func (r *LoadBalancerResource) LoadBalancerRead(
 
 	model.ID = types.StringValue(id)
 	model.Name = types.StringValue(lb.Name)
-	model.ResourceType = types.StringValue(string(lb.ResourceType))
 	model.HTTPSRedirect = types.BoolValue(lb.HTTPSRedirect)
 	if lb.IPAddress != nil {
 		model.IPAddress = types.StringValue(lb.IPAddress.Address)
@@ -329,48 +333,32 @@ func populateLoadBalancerTargets(
 	ids []string,
 ) {
 	list := flattenLoadBalancerResourceIDs(ids)
-	model.VirtualMachine = types.ListNull(types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"id": types.StringType,
-		},
-	})
-	model.Tag = types.ListNull(types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"id": types.StringType,
-		},
-	})
-	model.VirtualMachineGroup = types.ListNull(types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"id": types.StringType,
-		},
-	})
+	model.VirtualMachineIDs = types.SetNull(types.StringType)
+	model.TagIDs = types.SetNull(types.StringType)
+	model.VirtualMachineGroupIDs = types.SetNull(types.StringType)
+
+	if len(ids) == 0 {
+		return
+	}
 
 	switch t {
 	case core.VirtualMachinesResourceType:
-		model.VirtualMachine = list
+		model.VirtualMachineIDs = list
 	case core.VirtualMachineGroupsResourceType:
-		model.VirtualMachineGroup = list
+		model.VirtualMachineGroupIDs = list
 	case core.TagsResourceType:
-		model.Tag = list
+		model.TagIDs = list
 	}
 }
 
-func flattenLoadBalancerResourceIDs(ids []string) types.List {
+func flattenLoadBalancerResourceIDs(ids []string) types.Set {
 	values := make([]attr.Value, len(ids))
 
 	for i, id := range ids {
-		values[i] = types.ObjectValueMust(map[string]attr.Type{
-			"id": types.StringType,
-		}, map[string]attr.Value{
-			"id": types.StringValue(id),
-		})
+		values[i] = types.StringValue(id)
 	}
 
-	return types.ListValueMust(types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"id": types.StringType,
-		},
-	}, values)
+	return types.SetValueMust(types.StringType, values)
 }
 
 func extractLoadBalancerResourceTypeAndIDs(
@@ -380,23 +368,23 @@ func extractLoadBalancerResourceTypeAndIDs(
 	var list []attr.Value
 	ids := []string{}
 
+	//nolint:lll
 	switch {
-	case !model.VirtualMachine.IsNull():
+	case !model.VirtualMachineIDs.IsNull() && len(model.VirtualMachineIDs.Elements()) > 0:
 		t = core.VirtualMachinesResourceType
-		list = model.VirtualMachine.Elements()
-	case !model.VirtualMachineGroup.IsNull():
+		list = model.VirtualMachineIDs.Elements()
+	case !model.VirtualMachineGroupIDs.IsNull() && len(model.VirtualMachineGroupIDs.Elements()) > 0:
 		t = core.VirtualMachineGroupsResourceType
-		list = model.VirtualMachineGroup.Elements()
-	case !model.Tag.IsNull():
+		list = model.VirtualMachineGroupIDs.Elements()
+	case !model.TagIDs.IsNull() && len(model.TagIDs.Elements()) > 0:
 		t = core.TagsResourceType
-		list = model.Tag.Elements()
+		list = model.TagIDs.Elements()
 	}
 
 	for _, item := range list {
-		i := item.(types.Object)
-		attrs := i.Attributes()
+		i := item.(types.String)
 
-		ids = append(ids, attrs["id"].(types.String).ValueString())
+		ids = append(ids, i.ValueString())
 	}
 
 	return t, ids
