@@ -527,7 +527,7 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
 						"check_protocol value must be one of: " +
-							`["HTTP" "HTTPS" "TCP"]`,
+							`["HTTP" "TCP"]`,
 					),
 				),
 			},
@@ -566,7 +566,7 @@ func testAccCheckKatapultLoadBalancerRuleExists(
 
 		// Expose ID if provided by caller.
 		if id != nil {
-			id = lbRes.JSON200.LoadBalancerRule.Id
+			*id = *lbRes.JSON200.LoadBalancerRule.Id
 		}
 
 		return resource.TestCheckResourceAttr(

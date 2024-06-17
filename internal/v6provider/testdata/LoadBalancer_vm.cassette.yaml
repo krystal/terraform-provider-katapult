@@ -5,11 +5,9 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/data_centers/_/default_network?data_center%5Bpermalink%5D=uk-lon-01
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/data_centers/:data_center/default_network?data_center%5Bpermalink%5D=uk-lon-01
     method: GET
   response:
     body: '{"network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"}}}'
@@ -27,7 +25,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:17:47 GMT
+      - Mon, 17 Jun 2024 18:29:28 GMT
       Etag:
       - W/"d60d47b2ba0b179327bb89a97b1c0e77"
       Strict-Transport-Security:
@@ -37,25 +35,22 @@ interactions:
       X-Ratelimit-Remaining:
       - "999"
       X-Request-Id:
-      - c290a1b4-0da1-4567-8997-76385b14f5b6
+      - 0084b915-82b1-4d56-8556-d407828a8a41
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: |
-      {"organization":{"sub_domain":"terraform-acc-test"},"network":{"id":"netw_gVRkZdSKczfNg34P"},"version":"ipv4"}
+    body: '{"network":{"id":"netw_gVRkZdSKczfNg34P"},"organization":{"sub_domain":"terraform-acc-test"},"version":"ipv4"}'
     form: {}
     headers:
-      Accept:
-      - application/json
       Content-Type:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/organizations/_/ip_addresses
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/organizations/:organization/ip_addresses
     method: POST
   response:
-    body: '{"ip_address":{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233","reverse_dns":"185-44-252-233.rdns.katapult.io","vip":false,"label":null,"address_with_mask":"185.44.252.233/22","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+    body: '{"ip_address":{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87","reverse_dns":"77-72-7-87.rdns.katapult.io","vip":false,"label":null,"address_with_mask":"77.72.7.87/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
       Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
       Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null}}'
     headers:
@@ -68,13 +63,13 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "546"
+      - "534"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:17:47 GMT
+      - Mon, 17 Jun 2024 18:29:28 GMT
       Etag:
-      - W/"48067371ad8f1b56ff0b87b4aaf5a02b"
+      - W/"7deffbc5d031bd15ac873ee998abd050"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -82,7 +77,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "998"
       X-Request-Id:
-      - 1041ed13-ee46-4094-8aac-71cf7706fd1a
+      - e32266c3-0c60-4cfb-9ba8-86d18951f478
     status: 200 OK
     code: 200
     duration: ""
@@ -90,14 +85,12 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_oRsfDfev4ZneO3hl
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/ip_addresses/:ip_address?ip_address%5Bid%5D=ip_P5X3poDrO6PDtrMc
     method: GET
   response:
-    body: '{"ip_address":{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233","reverse_dns":"185-44-252-233.rdns.katapult.io","vip":false,"label":null,"address_with_mask":"185.44.252.233/22","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+    body: '{"ip_address":{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87","reverse_dns":"77-72-7-87.rdns.katapult.io","vip":false,"label":null,"address_with_mask":"77.72.7.87/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
       Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
       Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
     headers:
@@ -110,13 +103,13 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "564"
+      - "552"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:17:47 GMT
+      - Mon, 17 Jun 2024 18:29:29 GMT
       Etag:
-      - W/"abebc420c18157e2c62ff93321d56098"
+      - W/"4e0e5046d5e74e80f5601ebee164ff58"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -124,7 +117,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "997"
       X-Request-Id:
-      - e6bdbbc6-6013-4063-bbc8-240241397f26
+      - 3d462ddf-c4c2-430f-8748-cf9a2bc434b2
     status: 200 OK
     code: 200
     duration: ""
@@ -135,11 +128,12 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_oRsfDfev4ZneO3hl
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_P5X3poDrO6PDtrMc
     method: GET
   response:
-    body: '{"ip_address":{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233","reverse_dns":"185-44-252-233.rdns.katapult.io","vip":false,"label":null,"address_with_mask":"185.44.252.233/22","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+    body: '{"ip_address":{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87","reverse_dns":"77-72-7-87.rdns.katapult.io","vip":false,"label":null,"address_with_mask":"77.72.7.87/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
       Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
       Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":null,"allocation_type":null},"allocation":null}'
     headers:
@@ -152,13 +146,13 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "564"
+      - "552"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:17:48 GMT
+      - Mon, 17 Jun 2024 18:29:29 GMT
       Etag:
-      - W/"abebc420c18157e2c62ff93321d56098"
+      - W/"4e0e5046d5e74e80f5601ebee164ff58"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -166,13 +160,13 @@ interactions:
       X-Ratelimit-Remaining:
       - "996"
       X-Request-Id:
-      - 8028ec9d-3164-445b-8d5b-d78a9cf524fe
+      - 34f34a1c-a3c1-490f-adae-5b5eb0f33265
     status: 200 OK
     code: 200
     duration: ""
 - request:
     body: |
-      {"organization":{"sub_domain":"terraform-acc-test"},"xml":"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VirtualMachineSpec><DataCenter by=\"permalink\">uk-lon-01</DataCenter><Resources><Package by=\"permalink\">rock-3</Package></Resources><DiskTemplate><DiskTemplate by=\"permalink\">templates/ubuntu-22-04</DiskTemplate><Option key=\"install_agent\">true</Option></DiskTemplate><NetworkInterfaces><NetworkInterface><Network>netw_gVRkZdSKczfNg34P</Network><IPAddressAllocation type=\"existing\"><IPAddress>ip_oRsfDfev4ZneO3hl</IPAddress></IPAddressAllocation></NetworkInterface></NetworkInterfaces><Hostname><Hostname>tf-yellow-bitter-skateboard</Hostname></Hostname><AuthorizedKeys><Users all=\"yes\"></Users><SSHKeys all=\"yes\"></SSHKeys></AuthorizedKeys></VirtualMachineSpec>"}
+      {"organization":{"sub_domain":"terraform-acc-test"},"xml":"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VirtualMachineSpec><DataCenter by=\"permalink\">uk-lon-01</DataCenter><Resources><Package by=\"permalink\">rock-3</Package></Resources><DiskTemplate><DiskTemplate by=\"permalink\">templates/ubuntu-22-04</DiskTemplate><Option key=\"install_agent\">true</Option></DiskTemplate><NetworkInterfaces><NetworkInterface><Network>netw_gVRkZdSKczfNg34P</Network><IPAddressAllocation type=\"existing\"><IPAddress>ip_P5X3poDrO6PDtrMc</IPAddress></IPAddressAllocation></NetworkInterface></NetworkInterfaces><Hostname><Hostname>tf-faithful-loud-banana</Hostname></Hostname><AuthorizedKeys><Users all=\"yes\"></Users><SSHKeys all=\"yes\"></SSHKeys></AuthorizedKeys></VirtualMachineSpec>"}
     form: {}
     headers:
       Accept:
@@ -180,11 +174,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
     url: https://api.katapult.io/core/v1/organizations/_/virtual_machines/build_from_spec
     method: POST
   response:
-    body: '{"task":{"id":"task_SzWVK5gFHIicWwrJ","name":"Build virtual machine","status":"pending"},"build":{"id":"vmbuild_SbRsN2n7SDTSgiAz","state":"pending"},"virtual_machine_build":{"id":"vmbuild_SbRsN2n7SDTSgiAz","state":"pending"},"hostname":"tf-yellow-bitter-skateboard"}'
+    body: '{"task":{"id":"task_Blq2J4cVKZ3qUMEQ","name":"Build virtual machine","status":"pending"},"build":{"id":"vmbuild_QKpt0uvK4dnH7M99","state":"pending"},"virtual_machine_build":{"id":"vmbuild_QKpt0uvK4dnH7M99","state":"pending"},"hostname":"tf-faithful-loud-banana"}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -195,13 +190,13 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "266"
+      - "262"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:17:48 GMT
+      - Mon, 17 Jun 2024 18:29:29 GMT
       Etag:
-      - W/"34a6f8518daa281c61ebb3afba0f8cd0"
+      - W/"a844a93691d0e605665b5d7cdba1d422"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -209,7 +204,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "995"
       X-Request-Id:
-      - 0bcce471-61a4-4395-a22c-df2fac857b09
+      - ab8f1881-802c-452e-bad9-eff21011242c
     status: 201 Created
     code: 201
     duration: ""
@@ -220,17 +215,18 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/builds/_?virtual_machine_build%5Bid%5D=vmbuild_SbRsN2n7SDTSgiAz
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/builds/_?virtual_machine_build%5Bid%5D=vmbuild_QKpt0uvK4dnH7M99
     method: GET
   response:
-    body: '{"virtual_machine_build":{"id":"vmbuild_SbRsN2n7SDTSgiAz","spec_xml":"<?xml
+    body: '{"virtual_machine_build":{"id":"vmbuild_QKpt0uvK4dnH7M99","spec_xml":"<?xml
       version=\"1.0\"?>\n<VirtualMachineSpec>\n  <DataCenter>loc_UUhPmoCbpic6UX0Y</DataCenter>\n  <Resources>\n    <Package
       by=\"permalink\">rock-3</Package>\n  </Resources>\n  <DiskTemplate>\n    <DiskTemplate
       by=\"permalink\">templates/ubuntu-22-04</DiskTemplate>\n    <Version by=\"number\">1</Version>\n    <Option
       key=\"install_agent\">true</Option>\n  </DiskTemplate>\n  <NetworkInterfaces>\n    <NetworkInterface>\n      <Network>netw_gVRkZdSKczfNg34P</Network>\n      <IPAddressAllocation
-      type=\"existing\">\n        <IPAddress by=\"address\">185.44.252.233</IPAddress>\n      </IPAddressAllocation>\n    </NetworkInterface>\n  </NetworkInterfaces>\n  <Hostname>\n    <Hostname>tf-yellow-bitter-skateboard</Hostname>\n  </Hostname>\n  <AuthorizedKeys
-      continuous_management=\"no\">\n    <Users all=\"yes\"/>\n    <SSHKeys all=\"yes\"/>\n  </AuthorizedKeys>\n</VirtualMachineSpec>\n","state":"building","virtual_machine":null,"created_at":1718299068}}'
+      type=\"existing\">\n        <IPAddress by=\"address\">77.72.7.87</IPAddress>\n      </IPAddressAllocation>\n    </NetworkInterface>\n  </NetworkInterfaces>\n  <Hostname>\n    <Hostname>tf-faithful-loud-banana</Hostname>\n  </Hostname>\n  <AuthorizedKeys
+      continuous_management=\"no\">\n    <Users all=\"yes\"/>\n    <SSHKeys all=\"yes\"/>\n  </AuthorizedKeys>\n</VirtualMachineSpec>\n","state":"building","virtual_machine":null,"created_at":1718648969}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -241,13 +237,13 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "1027"
+      - "1019"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:17:50 GMT
+      - Mon, 17 Jun 2024 18:29:31 GMT
       Etag:
-      - W/"05b1960892e2d0de38e777b4a880f3fc"
+      - W/"4c3854e565908b1091b395444433c189"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -255,7 +251,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "994"
       X-Request-Id:
-      - c9942d37-1398-4c01-9a93-81b0604830b4
+      - 64b870af-8f96-49bd-81b2-2917785d34be
     status: 200 OK
     code: 200
     duration: ""
@@ -266,17 +262,18 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/builds/_?virtual_machine_build%5Bid%5D=vmbuild_SbRsN2n7SDTSgiAz
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/builds/_?virtual_machine_build%5Bid%5D=vmbuild_QKpt0uvK4dnH7M99
     method: GET
   response:
-    body: '{"virtual_machine_build":{"id":"vmbuild_SbRsN2n7SDTSgiAz","spec_xml":"<?xml
+    body: '{"virtual_machine_build":{"id":"vmbuild_QKpt0uvK4dnH7M99","spec_xml":"<?xml
       version=\"1.0\"?>\n<VirtualMachineSpec>\n  <DataCenter>loc_UUhPmoCbpic6UX0Y</DataCenter>\n  <Resources>\n    <Package
       by=\"permalink\">rock-3</Package>\n  </Resources>\n  <DiskTemplate>\n    <DiskTemplate
       by=\"permalink\">templates/ubuntu-22-04</DiskTemplate>\n    <Version by=\"number\">1</Version>\n    <Option
       key=\"install_agent\">true</Option>\n  </DiskTemplate>\n  <NetworkInterfaces>\n    <NetworkInterface>\n      <Network>netw_gVRkZdSKczfNg34P</Network>\n      <IPAddressAllocation
-      type=\"existing\">\n        <IPAddress by=\"address\">185.44.252.233</IPAddress>\n      </IPAddressAllocation>\n    </NetworkInterface>\n  </NetworkInterfaces>\n  <Hostname>\n    <Hostname>tf-yellow-bitter-skateboard</Hostname>\n  </Hostname>\n  <AuthorizedKeys
-      continuous_management=\"no\">\n    <Users all=\"yes\"/>\n    <SSHKeys all=\"yes\"/>\n  </AuthorizedKeys>\n</VirtualMachineSpec>\n","state":"building","virtual_machine":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard","hostname":"tf-yellow-bitter-skateboard","fqdn":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","state":"stopped"},"created_at":1718299068}}'
+      type=\"existing\">\n        <IPAddress by=\"address\">77.72.7.87</IPAddress>\n      </IPAddressAllocation>\n    </NetworkInterface>\n  </NetworkInterfaces>\n  <Hostname>\n    <Hostname>tf-faithful-loud-banana</Hostname>\n  </Hostname>\n  <AuthorizedKeys
+      continuous_management=\"no\">\n    <Users all=\"yes\"/>\n    <SSHKeys all=\"yes\"/>\n  </AuthorizedKeys>\n</VirtualMachineSpec>\n","state":"building","virtual_machine":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana","hostname":"tf-faithful-loud-banana","fqdn":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","state":"stopped"},"created_at":1718648969}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -287,13 +284,13 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "1218"
+      - "1198"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:17:55 GMT
+      - Mon, 17 Jun 2024 18:29:36 GMT
       Etag:
-      - W/"dcb4c17b17facb70f5db9a58be3acad7"
+      - W/"2e7455a8c3883fe6dfb8988e0241ac49"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -301,7 +298,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "993"
       X-Request-Id:
-      - fa226115-59a1-4196-b9ab-a4b2c7b57e7e
+      - d9a68309-aa95-4b7c-9dda-833cead95e0b
     status: 200 OK
     code: 200
     duration: ""
@@ -312,17 +309,18 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/builds/_?virtual_machine_build%5Bid%5D=vmbuild_SbRsN2n7SDTSgiAz
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/builds/_?virtual_machine_build%5Bid%5D=vmbuild_QKpt0uvK4dnH7M99
     method: GET
   response:
-    body: '{"virtual_machine_build":{"id":"vmbuild_SbRsN2n7SDTSgiAz","spec_xml":"<?xml
+    body: '{"virtual_machine_build":{"id":"vmbuild_QKpt0uvK4dnH7M99","spec_xml":"<?xml
       version=\"1.0\"?>\n<VirtualMachineSpec>\n  <DataCenter>loc_UUhPmoCbpic6UX0Y</DataCenter>\n  <Resources>\n    <Package
       by=\"permalink\">rock-3</Package>\n  </Resources>\n  <DiskTemplate>\n    <DiskTemplate
       by=\"permalink\">templates/ubuntu-22-04</DiskTemplate>\n    <Version by=\"number\">1</Version>\n    <Option
       key=\"install_agent\">true</Option>\n  </DiskTemplate>\n  <NetworkInterfaces>\n    <NetworkInterface>\n      <Network>netw_gVRkZdSKczfNg34P</Network>\n      <IPAddressAllocation
-      type=\"existing\">\n        <IPAddress by=\"address\">185.44.252.233</IPAddress>\n      </IPAddressAllocation>\n    </NetworkInterface>\n  </NetworkInterfaces>\n  <Hostname>\n    <Hostname>tf-yellow-bitter-skateboard</Hostname>\n  </Hostname>\n  <AuthorizedKeys
-      continuous_management=\"no\">\n    <Users all=\"yes\"/>\n    <SSHKeys all=\"yes\"/>\n  </AuthorizedKeys>\n</VirtualMachineSpec>\n","state":"complete","virtual_machine":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard","hostname":"tf-yellow-bitter-skateboard","fqdn":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","state":"starting"},"created_at":1718299068}}'
+      type=\"existing\">\n        <IPAddress by=\"address\">77.72.7.87</IPAddress>\n      </IPAddressAllocation>\n    </NetworkInterface>\n  </NetworkInterfaces>\n  <Hostname>\n    <Hostname>tf-faithful-loud-banana</Hostname>\n  </Hostname>\n  <AuthorizedKeys
+      continuous_management=\"no\">\n    <Users all=\"yes\"/>\n    <SSHKeys all=\"yes\"/>\n  </AuthorizedKeys>\n</VirtualMachineSpec>\n","state":"complete","virtual_machine":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana","hostname":"tf-faithful-loud-banana","fqdn":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","state":"starting"},"created_at":1718648969}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -333,344 +331,13 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "1219"
+      - "1199"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:05 GMT
+      - Mon, 17 Jun 2024 18:29:46 GMT
       Etag:
-      - W/"306205454cf6fea57c0651d2698fb019"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "999"
-      X-Request-Id:
-      - 16d81748-5fdc-4f9c-9891-568dd95eceba
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      Accept:
-      - application/json
-      User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_KsORAMDtyf7nqoYk
-    method: GET
-  response:
-    body: '{"virtual_machine":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard","hostname":"tf-yellow-bitter-skateboard","fqdn":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","description":null,"created_at":1718299070,"initial_root_password":"OCGD5wkKfddn4nZz","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
-      Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
-      Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
-      Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233","reverse_dns":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.44.252.233/22","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
-      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_KsORAMDtyf7nqoYk","allocation_type":"VirtualMachine"}]}}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "2282"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 13 Jun 2024 17:18:07 GMT
-      Etag:
-      - W/"76785d171673499d419e5ac6171dd918"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "998"
-      X-Request-Id:
-      - e6ed3728-f895-4354-8972-4fa80491752f
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      Accept:
-      - application/json
-      User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_KsORAMDtyf7nqoYk
-    method: GET
-  response:
-    body: '{"virtual_machine":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard","hostname":"tf-yellow-bitter-skateboard","fqdn":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","description":null,"created_at":1718299070,"initial_root_password":"OCGD5wkKfddn4nZz","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
-      Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
-      Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
-      Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233","reverse_dns":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.44.252.233/22","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
-      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_KsORAMDtyf7nqoYk","allocation_type":"VirtualMachine"}]}}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "2282"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 13 Jun 2024 17:18:07 GMT
-      Etag:
-      - W/"76785d171673499d419e5ac6171dd918"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "997"
-      X-Request-Id:
-      - c1f31ac0-61fb-486c-b299-880c05d37da3
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      Accept:
-      - application/json
-      User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_/network_interfaces?page=1&per_page=1&virtual_machine%5Bid%5D=vm_KsORAMDtyf7nqoYk
-    method: GET
-  response:
-    body: '{"pagination":{"current_page":1,"total_pages":1,"total":1,"per_page":1,"large_set":false},"virtual_machine_network_interfaces":[{"id":"vmnet_aRczOjo3k2C5Zueg","name":"Public
-      Network on tf-yellow-bitter-skateboard","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
-      Network"},"ip_addresses":[{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233"}]}]}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "354"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 13 Jun 2024 17:18:07 GMT
-      Etag:
-      - W/"2e0936bdae09439c6f941dc4d62c600a"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "996"
-      X-Request-Id:
-      - 19320c21-d9d1-43a6-b97e-e2db4656b2a0
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      Accept:
-      - application/json
-      User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machine_network_interfaces/_?virtual_machine_network_interface%5Bid%5D=vmnet_aRczOjo3k2C5Zueg
-    method: GET
-  response:
-    body: '{"virtual_machine_network_interface":{"id":"vmnet_aRczOjo3k2C5Zueg","virtual_machine":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard"},"name":"Public
-      Network on tf-yellow-bitter-skateboard","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
-      Network"},"mac_address":"3a:d3:90:26:fa:b2","state":"attached","ip_addresses":[{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233"}],"speed_profile":{"id":"nsp_FKZSFo5xhn9Pfr79","name":"10Gbps","permalink":"10gbps"}}}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "482"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 13 Jun 2024 17:18:07 GMT
-      Etag:
-      - W/"3980ce3e174ac9e4abcfb1c8811c55ef"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "995"
-      X-Request-Id:
-      - fa785718-3601-48e2-b5b0-88648f0a2672
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: |
-      {"organization":{"sub_domain":"terraform-acc-test"},"properties":{"data_center":{"permalink":"uk-lon-01"},"name":"tf-acc-test-vm-69VkwGCOlKyr","resource_type":"virtual_machines","resource_ids":["vm_KsORAMDtyf7nqoYk"],"https_redirect":false}}
-    form: {}
-    headers:
-      Accept:
-      - application/json
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/organizations/_/load_balancers
-    method: POST
-  response:
-    body: '{"load_balancer":{"id":"lb_WPmOiHoJHi80nbWq","name":"tf-acc-test-vm-69VkwGCOlKyr","api_reference":null,"resource_type":"virtual_machines","resources":[{"type":"VirtualMachine","value":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard","hostname":"tf-yellow-bitter-skateboard","fqdn":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","description":null,"created_at":1718299070,"initial_root_password":"OCGD5wkKfddn4nZz","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
-      Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
-      Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
-      Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233","reverse_dns":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.44.252.233/22","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
-      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_KsORAMDtyf7nqoYk","allocation_type":"VirtualMachine"}]}}],"resource_ids":["vm_KsORAMDtyf7nqoYk"],"ip_address":{"id":"ip_vWMvbd1jLwt3ja1M","address":"185.44.254.103"},"https_redirect":false,"backend_certificate":"-----BEGIN
-      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfV1BtT2lIb0pIaTgwbmJXcS5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjEzMTcxODA5WhgPMjA3NDA2MTMxNzE4MDlaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9XUG1PaUhvSkhpODBuYldxLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBALEPHIHBueS5f3uYiyx+p6hwKA2brE2qGMmy\nbhtpof5Qa8t2Kclg+Helr4aSC3SzE44NBpIcuzLcdF+2l8/ON83pmGBS+VOBV9q/\n9ljnCk82Z/2CZbj5M18M7g0tCO9NHe4JW6qM0Vq+LKwv875WSub3pf3O6x/F6KZc\nnSJ0GV94p9V+YZ9NfTqCBUYz9sj4L1rkgFKxa1ue5ze+fzd1fCflKRhhYKCqQKuM\nn1HLu9anClVzg6PgYNbmJFnykhnx7vcnrRRqE0YzmZkWvenbYmiUTZQyrmO5Wq+S\n8OQlMsbHLuRZlbo6WKOYAQaFLR315n6uKGhfrypPDgw2OR+BRE58uVKzNc8geQXW\novY2sRrHigDKq0o9t/me5PlWssM0jpYgb5W5f4Wvh5jzVuH+6dIRCj7m9yzqcLPz\nSr3A6HIMhXwoNApE9MVj0ctdCxzjy2Y+ORv2THW/RXZ6PIMxy4AR+dbFYdnsf6K9\nKtG3pbkH1rkmhUgsaxOPW8cFEBVgMaSBskJo2TV5yi6cPfvfRF3EE5YmjxXNT7VK\nTKnIMDg0Qno8TH5UmDZe0ZSudtjCivgQtL0Ddlz0obv9QfrMXa72NIPAWGDW9b1I\n81nMUjoNQ2o+eUfCNAzHlMHEpNP8Rrlz5crWq0uC5y4Ehrv+gWqnmMaSk8hy1f7F\nPnYM1CilAgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSs\nxZdqakh7+cWpSaYTlmVWtyDgRTATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9XUG1PaUhvSkhpODBuYldxLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFKzFl2pqSHv5xalJphOWZVa3IOBF\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9XUG1PaUhvSkhpODBuYldxLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAEQhvp0uoj+X9\ngQbbhO2fQ9gIf2iR6svq6mwaL+IZ1zLl8Lz+RqtHh8a5r5rL7AjWYA4foukm/WQH\nkP3CC0vnAW/vJn1r9aCbC5HSGYnGXf10RxvgiHr73tY2FeclvfWVdyfTOqa+I581\nz89CCP5JMpJ8hsDnvd/XDWyjNkhukoQkKpprJeIzAMrA/3yBSTvT5YqYGQpX3cGM\nvDBzJ8aLdFI0j9mfoSELnJOA+7cwxcFJsOap14DIBP45vDO/vsdCTIqQUFpT3qPO\niE5c1cn1sZs9WMfRPFYULnldCyxlcJwZg9sTblEhdD0MNEQqLCSuOctpl9wIGmCW\nIxHhy93fWGeJk/QASvPmBqE3V5zEYMGM2Y3gXP7SCQB7bbe3w5QrY3xHIDseBf6R\nwRqSg//NjxB7YljSBdKVhezOTcYB4c+qFt8fZFBC24IF+aKrHLwYZKlWA4701wm6\nZRELefa20djifeDOU5zmdvE0Xtl6RUKVYhqVbJn3LMWv+jdb1WrjCx8HlYO3HgDY\n2djo2sSd/dkxsr1FblnjyxbznzOxAU1JymTHMgHSSvx7y44LgExEshPM5C/mxCJD\n1B+NsuEBOMxYOkHItOxIwizMV8JW0STalaLvzUGok7qLqGXqVb7/FLgh2Wu++INB\nNV6BGm+w8z0/RmrZnxDhtUt2yiCz4X4=\n-----END
-      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
-      RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[{"virtual_machine_id":"vm_KsORAMDtyf7nqoYk","weight":128}],"standby_vms":[]}}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "8657"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 13 Jun 2024 17:18:10 GMT
-      Etag:
-      - W/"c5be03f2e9bde025e82e6440b6774586"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "994"
-      X-Request-Id:
-      - 14dd2394-3d0e-49b2-803a-e278fafb86b6
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      Accept:
-      - application/json
-      User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_WPmOiHoJHi80nbWq
-    method: GET
-  response:
-    body: '{"load_balancer":{"id":"lb_WPmOiHoJHi80nbWq","name":"tf-acc-test-vm-69VkwGCOlKyr","api_reference":null,"resource_type":"virtual_machines","resources":[{"type":"VirtualMachine","value":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard","hostname":"tf-yellow-bitter-skateboard","fqdn":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","description":null,"created_at":1718299070,"initial_root_password":"OCGD5wkKfddn4nZz","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
-      Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
-      Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
-      Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233","reverse_dns":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.44.252.233/22","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
-      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_KsORAMDtyf7nqoYk","allocation_type":"VirtualMachine"}]}}],"resource_ids":["vm_KsORAMDtyf7nqoYk"],"ip_address":{"id":"ip_vWMvbd1jLwt3ja1M","address":"185.44.254.103"},"https_redirect":false,"backend_certificate":"-----BEGIN
-      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfV1BtT2lIb0pIaTgwbmJXcS5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjEzMTcxODA5WhgPMjA3NDA2MTMxNzE4MDlaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9XUG1PaUhvSkhpODBuYldxLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBALEPHIHBueS5f3uYiyx+p6hwKA2brE2qGMmy\nbhtpof5Qa8t2Kclg+Helr4aSC3SzE44NBpIcuzLcdF+2l8/ON83pmGBS+VOBV9q/\n9ljnCk82Z/2CZbj5M18M7g0tCO9NHe4JW6qM0Vq+LKwv875WSub3pf3O6x/F6KZc\nnSJ0GV94p9V+YZ9NfTqCBUYz9sj4L1rkgFKxa1ue5ze+fzd1fCflKRhhYKCqQKuM\nn1HLu9anClVzg6PgYNbmJFnykhnx7vcnrRRqE0YzmZkWvenbYmiUTZQyrmO5Wq+S\n8OQlMsbHLuRZlbo6WKOYAQaFLR315n6uKGhfrypPDgw2OR+BRE58uVKzNc8geQXW\novY2sRrHigDKq0o9t/me5PlWssM0jpYgb5W5f4Wvh5jzVuH+6dIRCj7m9yzqcLPz\nSr3A6HIMhXwoNApE9MVj0ctdCxzjy2Y+ORv2THW/RXZ6PIMxy4AR+dbFYdnsf6K9\nKtG3pbkH1rkmhUgsaxOPW8cFEBVgMaSBskJo2TV5yi6cPfvfRF3EE5YmjxXNT7VK\nTKnIMDg0Qno8TH5UmDZe0ZSudtjCivgQtL0Ddlz0obv9QfrMXa72NIPAWGDW9b1I\n81nMUjoNQ2o+eUfCNAzHlMHEpNP8Rrlz5crWq0uC5y4Ehrv+gWqnmMaSk8hy1f7F\nPnYM1CilAgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSs\nxZdqakh7+cWpSaYTlmVWtyDgRTATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9XUG1PaUhvSkhpODBuYldxLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFKzFl2pqSHv5xalJphOWZVa3IOBF\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9XUG1PaUhvSkhpODBuYldxLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAEQhvp0uoj+X9\ngQbbhO2fQ9gIf2iR6svq6mwaL+IZ1zLl8Lz+RqtHh8a5r5rL7AjWYA4foukm/WQH\nkP3CC0vnAW/vJn1r9aCbC5HSGYnGXf10RxvgiHr73tY2FeclvfWVdyfTOqa+I581\nz89CCP5JMpJ8hsDnvd/XDWyjNkhukoQkKpprJeIzAMrA/3yBSTvT5YqYGQpX3cGM\nvDBzJ8aLdFI0j9mfoSELnJOA+7cwxcFJsOap14DIBP45vDO/vsdCTIqQUFpT3qPO\niE5c1cn1sZs9WMfRPFYULnldCyxlcJwZg9sTblEhdD0MNEQqLCSuOctpl9wIGmCW\nIxHhy93fWGeJk/QASvPmBqE3V5zEYMGM2Y3gXP7SCQB7bbe3w5QrY3xHIDseBf6R\nwRqSg//NjxB7YljSBdKVhezOTcYB4c+qFt8fZFBC24IF+aKrHLwYZKlWA4701wm6\nZRELefa20djifeDOU5zmdvE0Xtl6RUKVYhqVbJn3LMWv+jdb1WrjCx8HlYO3HgDY\n2djo2sSd/dkxsr1FblnjyxbznzOxAU1JymTHMgHSSvx7y44LgExEshPM5C/mxCJD\n1B+NsuEBOMxYOkHItOxIwizMV8JW0STalaLvzUGok7qLqGXqVb7/FLgh2Wu++INB\nNV6BGm+w8z0/RmrZnxDhtUt2yiCz4X4=\n-----END
-      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
-      RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[{"virtual_machine_id":"vm_KsORAMDtyf7nqoYk","weight":128}],"standby_vms":[]}}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "8657"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 13 Jun 2024 17:18:10 GMT
-      Etag:
-      - W/"c5be03f2e9bde025e82e6440b6774586"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "993"
-      X-Request-Id:
-      - 4578e9e9-7eef-436f-9f73-7fccd08cd6e5
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      Accept:
-      - application/json
-      User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_WPmOiHoJHi80nbWq
-    method: GET
-  response:
-    body: '{"load_balancer":{"id":"lb_WPmOiHoJHi80nbWq","name":"tf-acc-test-vm-69VkwGCOlKyr","api_reference":null,"resource_type":"virtual_machines","resources":[{"type":"VirtualMachine","value":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard","hostname":"tf-yellow-bitter-skateboard","fqdn":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","description":null,"created_at":1718299070,"initial_root_password":"OCGD5wkKfddn4nZz","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
-      Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
-      Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
-      Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233","reverse_dns":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.44.252.233/22","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
-      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_KsORAMDtyf7nqoYk","allocation_type":"VirtualMachine"}]}}],"resource_ids":["vm_KsORAMDtyf7nqoYk"],"ip_address":{"id":"ip_vWMvbd1jLwt3ja1M","address":"185.44.254.103"},"https_redirect":false,"backend_certificate":"-----BEGIN
-      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfV1BtT2lIb0pIaTgwbmJXcS5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjEzMTcxODA5WhgPMjA3NDA2MTMxNzE4MDlaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9XUG1PaUhvSkhpODBuYldxLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBALEPHIHBueS5f3uYiyx+p6hwKA2brE2qGMmy\nbhtpof5Qa8t2Kclg+Helr4aSC3SzE44NBpIcuzLcdF+2l8/ON83pmGBS+VOBV9q/\n9ljnCk82Z/2CZbj5M18M7g0tCO9NHe4JW6qM0Vq+LKwv875WSub3pf3O6x/F6KZc\nnSJ0GV94p9V+YZ9NfTqCBUYz9sj4L1rkgFKxa1ue5ze+fzd1fCflKRhhYKCqQKuM\nn1HLu9anClVzg6PgYNbmJFnykhnx7vcnrRRqE0YzmZkWvenbYmiUTZQyrmO5Wq+S\n8OQlMsbHLuRZlbo6WKOYAQaFLR315n6uKGhfrypPDgw2OR+BRE58uVKzNc8geQXW\novY2sRrHigDKq0o9t/me5PlWssM0jpYgb5W5f4Wvh5jzVuH+6dIRCj7m9yzqcLPz\nSr3A6HIMhXwoNApE9MVj0ctdCxzjy2Y+ORv2THW/RXZ6PIMxy4AR+dbFYdnsf6K9\nKtG3pbkH1rkmhUgsaxOPW8cFEBVgMaSBskJo2TV5yi6cPfvfRF3EE5YmjxXNT7VK\nTKnIMDg0Qno8TH5UmDZe0ZSudtjCivgQtL0Ddlz0obv9QfrMXa72NIPAWGDW9b1I\n81nMUjoNQ2o+eUfCNAzHlMHEpNP8Rrlz5crWq0uC5y4Ehrv+gWqnmMaSk8hy1f7F\nPnYM1CilAgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSs\nxZdqakh7+cWpSaYTlmVWtyDgRTATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9XUG1PaUhvSkhpODBuYldxLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFKzFl2pqSHv5xalJphOWZVa3IOBF\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9XUG1PaUhvSkhpODBuYldxLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAEQhvp0uoj+X9\ngQbbhO2fQ9gIf2iR6svq6mwaL+IZ1zLl8Lz+RqtHh8a5r5rL7AjWYA4foukm/WQH\nkP3CC0vnAW/vJn1r9aCbC5HSGYnGXf10RxvgiHr73tY2FeclvfWVdyfTOqa+I581\nz89CCP5JMpJ8hsDnvd/XDWyjNkhukoQkKpprJeIzAMrA/3yBSTvT5YqYGQpX3cGM\nvDBzJ8aLdFI0j9mfoSELnJOA+7cwxcFJsOap14DIBP45vDO/vsdCTIqQUFpT3qPO\niE5c1cn1sZs9WMfRPFYULnldCyxlcJwZg9sTblEhdD0MNEQqLCSuOctpl9wIGmCW\nIxHhy93fWGeJk/QASvPmBqE3V5zEYMGM2Y3gXP7SCQB7bbe3w5QrY3xHIDseBf6R\nwRqSg//NjxB7YljSBdKVhezOTcYB4c+qFt8fZFBC24IF+aKrHLwYZKlWA4701wm6\nZRELefa20djifeDOU5zmdvE0Xtl6RUKVYhqVbJn3LMWv+jdb1WrjCx8HlYO3HgDY\n2djo2sSd/dkxsr1FblnjyxbznzOxAU1JymTHMgHSSvx7y44LgExEshPM5C/mxCJD\n1B+NsuEBOMxYOkHItOxIwizMV8JW0STalaLvzUGok7qLqGXqVb7/FLgh2Wu++INB\nNV6BGm+w8z0/RmrZnxDhtUt2yiCz4X4=\n-----END
-      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
-      RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[{"virtual_machine_id":"vm_KsORAMDtyf7nqoYk","weight":128}],"standby_vms":[]}}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "8657"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 13 Jun 2024 17:18:10 GMT
-      Etag:
-      - W/"c5be03f2e9bde025e82e6440b6774586"
+      - W/"ddd8a730c76dae029a81ecc4fe0cd0bd"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -678,7 +345,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "992"
       X-Request-Id:
-      - dece2d62-bcdd-4c41-ba43-0357916010cf
+      - 0199de19-8598-49ad-9603-b13618afd2b4
     status: 200 OK
     code: 200
     duration: ""
@@ -689,13 +356,19 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_oRsfDfev4ZneO3hl
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_pKjpjbgsQJTNMyF2
     method: GET
   response:
-    body: '{"ip_address":{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233","reverse_dns":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.44.252.233/22","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+    body: '{"virtual_machine":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana","hostname":"tf-faithful-loud-banana","fqdn":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","description":null,"created_at":1718648971,"initial_root_password":"Fp1Bum3Url9w9RxO","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
+      Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
+      Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
+      Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87","reverse_dns":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"77.72.7.87/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
       Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_KsORAMDtyf7nqoYk","allocation_type":"VirtualMachine"},"allocation":{"type":"VirtualMachine","value":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard"}}}'
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_pKjpjbgsQJTNMyF2","allocation_type":"VirtualMachine"}]}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -706,13 +379,13 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "718"
+      - "2258"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:10 GMT
+      - Mon, 17 Jun 2024 18:29:48 GMT
       Etag:
-      - W/"fbb8367be5ad13b7f5b80d5c9011de07"
+      - W/"568093c62e81af942295eeedecf47523"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -720,7 +393,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "991"
       X-Request-Id:
-      - a655b0d4-a7b6-483d-bdb2-705c00ab9739
+      - 494315fc-047f-490c-b9fd-055051ff37d7
     status: 200 OK
     code: 200
     duration: ""
@@ -731,18 +404,19 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_KsORAMDtyf7nqoYk
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_pKjpjbgsQJTNMyF2
     method: GET
   response:
-    body: '{"virtual_machine":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard","hostname":"tf-yellow-bitter-skateboard","fqdn":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","description":null,"created_at":1718299070,"initial_root_password":"OCGD5wkKfddn4nZz","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+    body: '{"virtual_machine":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana","hostname":"tf-faithful-loud-banana","fqdn":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","description":null,"created_at":1718648971,"initial_root_password":"Fp1Bum3Url9w9RxO","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
       Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
       Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
       Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
       Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233","reverse_dns":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.44.252.233/22","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87","reverse_dns":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"77.72.7.87/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
       Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_KsORAMDtyf7nqoYk","allocation_type":"VirtualMachine"}]}}'
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_pKjpjbgsQJTNMyF2","allocation_type":"VirtualMachine"}]}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -753,13 +427,13 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "2282"
+      - "2258"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:10 GMT
+      - Mon, 17 Jun 2024 18:29:49 GMT
       Etag:
-      - W/"76785d171673499d419e5ac6171dd918"
+      - W/"568093c62e81af942295eeedecf47523"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -767,7 +441,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "990"
       X-Request-Id:
-      - 0986b457-ebb9-42df-a9b2-a166c19d340f
+      - bff9e9ea-89cf-4e9d-9894-b5c6b44d174e
     status: 200 OK
     code: 200
     duration: ""
@@ -778,13 +452,14 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_/network_interfaces?page=1&per_page=1&virtual_machine%5Bid%5D=vm_KsORAMDtyf7nqoYk
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_/network_interfaces?page=1&per_page=1&virtual_machine%5Bid%5D=vm_pKjpjbgsQJTNMyF2
     method: GET
   response:
-    body: '{"pagination":{"current_page":1,"total_pages":1,"total":1,"per_page":1,"large_set":false},"virtual_machine_network_interfaces":[{"id":"vmnet_aRczOjo3k2C5Zueg","name":"Public
-      Network on tf-yellow-bitter-skateboard","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
-      Network"},"ip_addresses":[{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233"}]}]}'
+    body: '{"pagination":{"current_page":1,"total_pages":1,"total":1,"per_page":1,"large_set":false},"virtual_machine_network_interfaces":[{"id":"vmnet_a3FXcfFhZkaIANNW","name":"Public
+      Network on tf-faithful-loud-banana","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network"},"ip_addresses":[{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87"}]}]}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -795,13 +470,13 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "354"
+      - "346"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:10 GMT
+      - Mon, 17 Jun 2024 18:29:49 GMT
       Etag:
-      - W/"2e0936bdae09439c6f941dc4d62c600a"
+      - W/"c6fba77f531b04de08b436c17523ee87"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -809,7 +484,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "989"
       X-Request-Id:
-      - 585bcebd-b4ce-4177-9042-3b3c026b406c
+      - 06a48070-a3b4-45cc-92ca-fc1dbabdc3d8
     status: 200 OK
     code: 200
     duration: ""
@@ -820,13 +495,14 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machine_network_interfaces/_?virtual_machine_network_interface%5Bid%5D=vmnet_aRczOjo3k2C5Zueg
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machine_network_interfaces/_?virtual_machine_network_interface%5Bid%5D=vmnet_a3FXcfFhZkaIANNW
     method: GET
   response:
-    body: '{"virtual_machine_network_interface":{"id":"vmnet_aRczOjo3k2C5Zueg","virtual_machine":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard"},"name":"Public
-      Network on tf-yellow-bitter-skateboard","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
-      Network"},"mac_address":"3a:d3:90:26:fa:b2","state":"attached","ip_addresses":[{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233"}],"speed_profile":{"id":"nsp_FKZSFo5xhn9Pfr79","name":"10Gbps","permalink":"10gbps"}}}'
+    body: '{"virtual_machine_network_interface":{"id":"vmnet_a3FXcfFhZkaIANNW","virtual_machine":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana"},"name":"Public
+      Network on tf-faithful-loud-banana","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network"},"mac_address":"3a:e0:0d:48:c4:45","state":"attached","ip_addresses":[{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87"}],"speed_profile":{"id":"nsp_FKZSFo5xhn9Pfr79","name":"10Gbps","permalink":"10gbps"}}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -837,13 +513,13 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "482"
+      - "470"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:10 GMT
+      - Mon, 17 Jun 2024 18:29:49 GMT
       Etag:
-      - W/"3980ce3e174ac9e4abcfb1c8811c55ef"
+      - W/"0d146d19587273edfe871c5c356740a9"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -851,32 +527,32 @@ interactions:
       X-Ratelimit-Remaining:
       - "988"
       X-Request-Id:
-      - cff093e3-1993-4f8e-845c-d8e62ef57487
+      - 98734ba7-6d0e-46db-a485-bb272a55e132
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: ""
+    body: '{"organization":{"sub_domain":"terraform-acc-test"},"properties":{"data_center":{"permalink":"uk-lon-01"},"https_redirect":false,"name":"tf-acc-test-vm-t5RE5uirewxv","resource_ids":["vm_pKjpjbgsQJTNMyF2"],"resource_type":"virtual_machines"}}'
     form: {}
     headers:
-      Accept:
+      Content-Type:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_WPmOiHoJHi80nbWq
-    method: GET
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/organizations/:organization/load_balancers
+    method: POST
   response:
-    body: '{"load_balancer":{"id":"lb_WPmOiHoJHi80nbWq","name":"tf-acc-test-vm-69VkwGCOlKyr","api_reference":null,"resource_type":"virtual_machines","resources":[{"type":"VirtualMachine","value":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard","hostname":"tf-yellow-bitter-skateboard","fqdn":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","description":null,"created_at":1718299070,"initial_root_password":"OCGD5wkKfddn4nZz","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+    body: '{"load_balancer":{"id":"lb_ju18e1lWRj0Plppb","name":"tf-acc-test-vm-t5RE5uirewxv","api_reference":null,"resource_type":"virtual_machines","resources":[{"type":"VirtualMachine","value":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana","hostname":"tf-faithful-loud-banana","fqdn":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","description":null,"created_at":1718648971,"initial_root_password":"Fp1Bum3Url9w9RxO","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
       Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
       Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
       Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
       Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233","reverse_dns":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.44.252.233/22","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87","reverse_dns":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"77.72.7.87/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
       Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_KsORAMDtyf7nqoYk","allocation_type":"VirtualMachine"}]}}],"resource_ids":["vm_KsORAMDtyf7nqoYk"],"ip_address":{"id":"ip_vWMvbd1jLwt3ja1M","address":"185.44.254.103"},"https_redirect":false,"backend_certificate":"-----BEGIN
-      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfV1BtT2lIb0pIaTgwbmJXcS5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjEzMTcxODA5WhgPMjA3NDA2MTMxNzE4MDlaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9XUG1PaUhvSkhpODBuYldxLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBALEPHIHBueS5f3uYiyx+p6hwKA2brE2qGMmy\nbhtpof5Qa8t2Kclg+Helr4aSC3SzE44NBpIcuzLcdF+2l8/ON83pmGBS+VOBV9q/\n9ljnCk82Z/2CZbj5M18M7g0tCO9NHe4JW6qM0Vq+LKwv875WSub3pf3O6x/F6KZc\nnSJ0GV94p9V+YZ9NfTqCBUYz9sj4L1rkgFKxa1ue5ze+fzd1fCflKRhhYKCqQKuM\nn1HLu9anClVzg6PgYNbmJFnykhnx7vcnrRRqE0YzmZkWvenbYmiUTZQyrmO5Wq+S\n8OQlMsbHLuRZlbo6WKOYAQaFLR315n6uKGhfrypPDgw2OR+BRE58uVKzNc8geQXW\novY2sRrHigDKq0o9t/me5PlWssM0jpYgb5W5f4Wvh5jzVuH+6dIRCj7m9yzqcLPz\nSr3A6HIMhXwoNApE9MVj0ctdCxzjy2Y+ORv2THW/RXZ6PIMxy4AR+dbFYdnsf6K9\nKtG3pbkH1rkmhUgsaxOPW8cFEBVgMaSBskJo2TV5yi6cPfvfRF3EE5YmjxXNT7VK\nTKnIMDg0Qno8TH5UmDZe0ZSudtjCivgQtL0Ddlz0obv9QfrMXa72NIPAWGDW9b1I\n81nMUjoNQ2o+eUfCNAzHlMHEpNP8Rrlz5crWq0uC5y4Ehrv+gWqnmMaSk8hy1f7F\nPnYM1CilAgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSs\nxZdqakh7+cWpSaYTlmVWtyDgRTATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9XUG1PaUhvSkhpODBuYldxLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFKzFl2pqSHv5xalJphOWZVa3IOBF\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9XUG1PaUhvSkhpODBuYldxLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAEQhvp0uoj+X9\ngQbbhO2fQ9gIf2iR6svq6mwaL+IZ1zLl8Lz+RqtHh8a5r5rL7AjWYA4foukm/WQH\nkP3CC0vnAW/vJn1r9aCbC5HSGYnGXf10RxvgiHr73tY2FeclvfWVdyfTOqa+I581\nz89CCP5JMpJ8hsDnvd/XDWyjNkhukoQkKpprJeIzAMrA/3yBSTvT5YqYGQpX3cGM\nvDBzJ8aLdFI0j9mfoSELnJOA+7cwxcFJsOap14DIBP45vDO/vsdCTIqQUFpT3qPO\niE5c1cn1sZs9WMfRPFYULnldCyxlcJwZg9sTblEhdD0MNEQqLCSuOctpl9wIGmCW\nIxHhy93fWGeJk/QASvPmBqE3V5zEYMGM2Y3gXP7SCQB7bbe3w5QrY3xHIDseBf6R\nwRqSg//NjxB7YljSBdKVhezOTcYB4c+qFt8fZFBC24IF+aKrHLwYZKlWA4701wm6\nZRELefa20djifeDOU5zmdvE0Xtl6RUKVYhqVbJn3LMWv+jdb1WrjCx8HlYO3HgDY\n2djo2sSd/dkxsr1FblnjyxbznzOxAU1JymTHMgHSSvx7y44LgExEshPM5C/mxCJD\n1B+NsuEBOMxYOkHItOxIwizMV8JW0STalaLvzUGok7qLqGXqVb7/FLgh2Wu++INB\nNV6BGm+w8z0/RmrZnxDhtUt2yiCz4X4=\n-----END
-      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
-      RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[{"virtual_machine_id":"vm_KsORAMDtyf7nqoYk","weight":128}],"standby_vms":[]}}'
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_pKjpjbgsQJTNMyF2","allocation_type":"VirtualMachine"}]}}],"resource_ids":["vm_pKjpjbgsQJTNMyF2"],"ip_address":{"id":"ip_APRVnJaeFsDJiG3A","address":"77.72.7.141"},"https_redirect":false,"backend_certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfanUxOGUxbFdSajBQbHBwYi5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE3MTgyOTUxWhgPMjA3NDA2MTcxODI5NTFaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9qdTE4ZTFsV1JqMFBscHBiLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAOIYje3WRP9j8nbjmQQKIG2K/sZ8Rht8V65d\n8Exz0RdGFrIteuof5D32lmIsKAOmL/xH1kxwonCKCoUrj2eBrOFvnJWs1wM919TJ\nF130JveHYrG+qvKQKPmAfqVYquESYxzNVzN55Z5O2XFygDN1QF7ENzG5hA73tgif\n2WWtoBJlhkOWBg3Oy0rZVf3PZ1EjhL6M0FeCPJkLEwdS8OuDWVk0G72Q+AZ34+Bx\nTp+Ph3XIpCFMEJhXzp3Dd5d3UNLQ6aC93qW0Aer/r+9mhvQX5b4T6ztaxXO0Z1bS\nEQp5pikPTrAUdHg+Zknm8TZbk4vFXskhQzcQjaPKcznpdX8X6kXh5/L4l9k7AfTX\n6GsW5aL0FQSFinpnWbpwfp8TfL0SLLmWosBNuojdVcn3mFQtn3bm0hT95KICzE9I\nalw0qRYUPvyDeksnLkzXOgS4dNAt7D2rGXfmuMcjAMtQ8nd1gbcbNO8WAmTaGwyK\nibHj+2vQLT/MYigP3n1fA1YSsyyuOm4ZKuwU40ejVve2ZruNimVZzpandDAVF95C\nVtUghAycPg0mF3tvRKl55htjfEYAEXByBeArwojQa+Mi8ZkmjlO1BZ3McWnopRXX\nvGFOuk5Ht2JWiZHldKYn7NtZBL+WCq8FPteswaztqInhJGhlMVwRYr0cNK6OvDOz\nKWwjxsf9AgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTO\nQYObfxgHRDaJWZ0BQKNHmVjF/jATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9qdTE4ZTFsV1JqMFBscHBiLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFM5Bg5t/GAdENolZnQFAo0eZWMX+\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9qdTE4ZTFsV1JqMFBscHBiLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAFRzGOJ2HidfS\n1DFoxut/1OYQsuQz4vY5u3eR+28HnlJuL9iwt+7GioPmHH0IRCZVsdYhmK9/Enln\nvLIu4RcXSBxTtUM8JNuCjH9Fj/OntV+ukrE5eAA521prIHXw496EdLWw23onBsSV\nwmrVomLDJqpUGd8Tvcq/q3osgiycW7HCBthPNSn9lAycDkPzzEIhmq1jjT+h+kL7\nsUKEprZA90H6zfIYTdv8W5H+jVMZcmChbiG1XmSko3DxLd6QZqzV6rFlBwSkmp7p\nawy2LI+Jk0fx+A+qVoy6YXDAwex1J9taW0q7Om04LYxZsr3VMSwwWqgX1YMOwYWG\nT4/n8ApK8gfKOOEjQVNs1omiN5kTi8y2hBBpxTmblcN68FsgqDkCQ2s766qEbmH9\nftiA+Y+g/pNJFvIX3xOH13rlFgt+sPZHr24M7aNu8OOpYy5mWd0sDTisnCGvMxHi\nFp0/NZOmdmFIGGZo/I9R2lEDPxeJKI83n2atArwPe9hRB5tvQAUZbpL/zI1jyuS4\n0Kb0H/ZeJSrcI4h4vFg1gXVQUjITQIpqQsLRjndTOJqp3pntPv7htDZYngdV+uGG\nWlsKhJf1g+guPokDsZ0U9z/NFkKJ4uh0PW3woDTut3EJ2XuwYTkbfo+o7JllOXPl\naBqDYBg9VnXgtL8cGv5egyVHopXhpcI=\n-----END
+      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
+      RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[{"virtual_machine_id":"vm_pKjpjbgsQJTNMyF2","weight":128}],"standby_vms":[]}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -887,13 +563,13 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "8657"
+      - "8630"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:10 GMT
+      - Mon, 17 Jun 2024 18:29:51 GMT
       Etag:
-      - W/"c5be03f2e9bde025e82e6440b6774586"
+      - W/"10cda4a58a494ff5d134b5de72b2d6c7"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -901,7 +577,143 @@ interactions:
       X-Ratelimit-Remaining:
       - "987"
       X-Request-Id:
-      - c1960bd2-7a7f-4a53-aadf-71dd7c0fd129
+      - f7677f77-512a-4ab3-8d06-4970b893099e
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_ju18e1lWRj0Plppb
+    method: GET
+  response:
+    body: '{"load_balancer":{"id":"lb_ju18e1lWRj0Plppb","name":"tf-acc-test-vm-t5RE5uirewxv","api_reference":null,"resource_type":"virtual_machines","resources":[{"type":"VirtualMachine","value":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana","hostname":"tf-faithful-loud-banana","fqdn":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","description":null,"created_at":1718648971,"initial_root_password":"Fp1Bum3Url9w9RxO","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
+      Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
+      Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
+      Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87","reverse_dns":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"77.72.7.87/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_pKjpjbgsQJTNMyF2","allocation_type":"VirtualMachine"}]}}],"resource_ids":["vm_pKjpjbgsQJTNMyF2"],"ip_address":{"id":"ip_APRVnJaeFsDJiG3A","address":"77.72.7.141"},"https_redirect":false,"backend_certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfanUxOGUxbFdSajBQbHBwYi5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE3MTgyOTUxWhgPMjA3NDA2MTcxODI5NTFaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9qdTE4ZTFsV1JqMFBscHBiLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAOIYje3WRP9j8nbjmQQKIG2K/sZ8Rht8V65d\n8Exz0RdGFrIteuof5D32lmIsKAOmL/xH1kxwonCKCoUrj2eBrOFvnJWs1wM919TJ\nF130JveHYrG+qvKQKPmAfqVYquESYxzNVzN55Z5O2XFygDN1QF7ENzG5hA73tgif\n2WWtoBJlhkOWBg3Oy0rZVf3PZ1EjhL6M0FeCPJkLEwdS8OuDWVk0G72Q+AZ34+Bx\nTp+Ph3XIpCFMEJhXzp3Dd5d3UNLQ6aC93qW0Aer/r+9mhvQX5b4T6ztaxXO0Z1bS\nEQp5pikPTrAUdHg+Zknm8TZbk4vFXskhQzcQjaPKcznpdX8X6kXh5/L4l9k7AfTX\n6GsW5aL0FQSFinpnWbpwfp8TfL0SLLmWosBNuojdVcn3mFQtn3bm0hT95KICzE9I\nalw0qRYUPvyDeksnLkzXOgS4dNAt7D2rGXfmuMcjAMtQ8nd1gbcbNO8WAmTaGwyK\nibHj+2vQLT/MYigP3n1fA1YSsyyuOm4ZKuwU40ejVve2ZruNimVZzpandDAVF95C\nVtUghAycPg0mF3tvRKl55htjfEYAEXByBeArwojQa+Mi8ZkmjlO1BZ3McWnopRXX\nvGFOuk5Ht2JWiZHldKYn7NtZBL+WCq8FPteswaztqInhJGhlMVwRYr0cNK6OvDOz\nKWwjxsf9AgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTO\nQYObfxgHRDaJWZ0BQKNHmVjF/jATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9qdTE4ZTFsV1JqMFBscHBiLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFM5Bg5t/GAdENolZnQFAo0eZWMX+\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9qdTE4ZTFsV1JqMFBscHBiLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAFRzGOJ2HidfS\n1DFoxut/1OYQsuQz4vY5u3eR+28HnlJuL9iwt+7GioPmHH0IRCZVsdYhmK9/Enln\nvLIu4RcXSBxTtUM8JNuCjH9Fj/OntV+ukrE5eAA521prIHXw496EdLWw23onBsSV\nwmrVomLDJqpUGd8Tvcq/q3osgiycW7HCBthPNSn9lAycDkPzzEIhmq1jjT+h+kL7\nsUKEprZA90H6zfIYTdv8W5H+jVMZcmChbiG1XmSko3DxLd6QZqzV6rFlBwSkmp7p\nawy2LI+Jk0fx+A+qVoy6YXDAwex1J9taW0q7Om04LYxZsr3VMSwwWqgX1YMOwYWG\nT4/n8ApK8gfKOOEjQVNs1omiN5kTi8y2hBBpxTmblcN68FsgqDkCQ2s766qEbmH9\nftiA+Y+g/pNJFvIX3xOH13rlFgt+sPZHr24M7aNu8OOpYy5mWd0sDTisnCGvMxHi\nFp0/NZOmdmFIGGZo/I9R2lEDPxeJKI83n2atArwPe9hRB5tvQAUZbpL/zI1jyuS4\n0Kb0H/ZeJSrcI4h4vFg1gXVQUjITQIpqQsLRjndTOJqp3pntPv7htDZYngdV+uGG\nWlsKhJf1g+guPokDsZ0U9z/NFkKJ4uh0PW3woDTut3EJ2XuwYTkbfo+o7JllOXPl\naBqDYBg9VnXgtL8cGv5egyVHopXhpcI=\n-----END
+      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
+      RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[{"virtual_machine_id":"vm_pKjpjbgsQJTNMyF2","weight":128}],"standby_vms":[]}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "8630"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 17 Jun 2024 18:29:51 GMT
+      Etag:
+      - W/"10cda4a58a494ff5d134b5de72b2d6c7"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "986"
+      X-Request-Id:
+      - 20dcdb65-08af-46df-b7eb-5e2745735413
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_ju18e1lWRj0Plppb
+    method: GET
+  response:
+    body: '{"load_balancer":{"id":"lb_ju18e1lWRj0Plppb","name":"tf-acc-test-vm-t5RE5uirewxv","api_reference":null,"resource_type":"virtual_machines","resources":[{"type":"VirtualMachine","value":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana","hostname":"tf-faithful-loud-banana","fqdn":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","description":null,"created_at":1718648971,"initial_root_password":"Fp1Bum3Url9w9RxO","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
+      Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
+      Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
+      Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87","reverse_dns":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"77.72.7.87/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_pKjpjbgsQJTNMyF2","allocation_type":"VirtualMachine"}]}}],"resource_ids":["vm_pKjpjbgsQJTNMyF2"],"ip_address":{"id":"ip_APRVnJaeFsDJiG3A","address":"77.72.7.141"},"https_redirect":false,"backend_certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfanUxOGUxbFdSajBQbHBwYi5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE3MTgyOTUxWhgPMjA3NDA2MTcxODI5NTFaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9qdTE4ZTFsV1JqMFBscHBiLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAOIYje3WRP9j8nbjmQQKIG2K/sZ8Rht8V65d\n8Exz0RdGFrIteuof5D32lmIsKAOmL/xH1kxwonCKCoUrj2eBrOFvnJWs1wM919TJ\nF130JveHYrG+qvKQKPmAfqVYquESYxzNVzN55Z5O2XFygDN1QF7ENzG5hA73tgif\n2WWtoBJlhkOWBg3Oy0rZVf3PZ1EjhL6M0FeCPJkLEwdS8OuDWVk0G72Q+AZ34+Bx\nTp+Ph3XIpCFMEJhXzp3Dd5d3UNLQ6aC93qW0Aer/r+9mhvQX5b4T6ztaxXO0Z1bS\nEQp5pikPTrAUdHg+Zknm8TZbk4vFXskhQzcQjaPKcznpdX8X6kXh5/L4l9k7AfTX\n6GsW5aL0FQSFinpnWbpwfp8TfL0SLLmWosBNuojdVcn3mFQtn3bm0hT95KICzE9I\nalw0qRYUPvyDeksnLkzXOgS4dNAt7D2rGXfmuMcjAMtQ8nd1gbcbNO8WAmTaGwyK\nibHj+2vQLT/MYigP3n1fA1YSsyyuOm4ZKuwU40ejVve2ZruNimVZzpandDAVF95C\nVtUghAycPg0mF3tvRKl55htjfEYAEXByBeArwojQa+Mi8ZkmjlO1BZ3McWnopRXX\nvGFOuk5Ht2JWiZHldKYn7NtZBL+WCq8FPteswaztqInhJGhlMVwRYr0cNK6OvDOz\nKWwjxsf9AgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTO\nQYObfxgHRDaJWZ0BQKNHmVjF/jATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9qdTE4ZTFsV1JqMFBscHBiLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFM5Bg5t/GAdENolZnQFAo0eZWMX+\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9qdTE4ZTFsV1JqMFBscHBiLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAFRzGOJ2HidfS\n1DFoxut/1OYQsuQz4vY5u3eR+28HnlJuL9iwt+7GioPmHH0IRCZVsdYhmK9/Enln\nvLIu4RcXSBxTtUM8JNuCjH9Fj/OntV+ukrE5eAA521prIHXw496EdLWw23onBsSV\nwmrVomLDJqpUGd8Tvcq/q3osgiycW7HCBthPNSn9lAycDkPzzEIhmq1jjT+h+kL7\nsUKEprZA90H6zfIYTdv8W5H+jVMZcmChbiG1XmSko3DxLd6QZqzV6rFlBwSkmp7p\nawy2LI+Jk0fx+A+qVoy6YXDAwex1J9taW0q7Om04LYxZsr3VMSwwWqgX1YMOwYWG\nT4/n8ApK8gfKOOEjQVNs1omiN5kTi8y2hBBpxTmblcN68FsgqDkCQ2s766qEbmH9\nftiA+Y+g/pNJFvIX3xOH13rlFgt+sPZHr24M7aNu8OOpYy5mWd0sDTisnCGvMxHi\nFp0/NZOmdmFIGGZo/I9R2lEDPxeJKI83n2atArwPe9hRB5tvQAUZbpL/zI1jyuS4\n0Kb0H/ZeJSrcI4h4vFg1gXVQUjITQIpqQsLRjndTOJqp3pntPv7htDZYngdV+uGG\nWlsKhJf1g+guPokDsZ0U9z/NFkKJ4uh0PW3woDTut3EJ2XuwYTkbfo+o7JllOXPl\naBqDYBg9VnXgtL8cGv5egyVHopXhpcI=\n-----END
+      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
+      RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[{"virtual_machine_id":"vm_pKjpjbgsQJTNMyF2","weight":128}],"standby_vms":[]}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "8630"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 17 Jun 2024 18:29:51 GMT
+      Etag:
+      - W/"10cda4a58a494ff5d134b5de72b2d6c7"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "985"
+      X-Request-Id:
+      - c34edecd-accf-48b9-9a33-f9e0f316985a
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/ip_addresses/:ip_address?ip_address%5Bid%5D=ip_P5X3poDrO6PDtrMc
+    method: GET
+  response:
+    body: '{"ip_address":{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87","reverse_dns":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"77.72.7.87/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_pKjpjbgsQJTNMyF2","allocation_type":"VirtualMachine"},"allocation":{"type":"VirtualMachine","value":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana"}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "702"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 17 Jun 2024 18:29:52 GMT
+      Etag:
+      - W/"9ec9ddd27b196785331b553521dd3dd3"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "984"
+      X-Request-Id:
+      - e98fff79-3d3f-49fa-bafc-bd37fc3135e6
     status: 200 OK
     code: 200
     duration: ""
@@ -912,11 +724,193 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_WPmOiHoJHi80nbWq
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_pKjpjbgsQJTNMyF2
+    method: GET
+  response:
+    body: '{"virtual_machine":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana","hostname":"tf-faithful-loud-banana","fqdn":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","description":null,"created_at":1718648971,"initial_root_password":"Fp1Bum3Url9w9RxO","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
+      Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
+      Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
+      Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87","reverse_dns":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"77.72.7.87/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_pKjpjbgsQJTNMyF2","allocation_type":"VirtualMachine"}]}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "2258"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 17 Jun 2024 18:29:52 GMT
+      Etag:
+      - W/"568093c62e81af942295eeedecf47523"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "983"
+      X-Request-Id:
+      - a31a8714-b17a-4305-bc91-2257c52e4019
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_/network_interfaces?page=1&per_page=1&virtual_machine%5Bid%5D=vm_pKjpjbgsQJTNMyF2
+    method: GET
+  response:
+    body: '{"pagination":{"current_page":1,"total_pages":1,"total":1,"per_page":1,"large_set":false},"virtual_machine_network_interfaces":[{"id":"vmnet_a3FXcfFhZkaIANNW","name":"Public
+      Network on tf-faithful-loud-banana","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network"},"ip_addresses":[{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87"}]}]}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "346"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 17 Jun 2024 18:29:52 GMT
+      Etag:
+      - W/"c6fba77f531b04de08b436c17523ee87"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "982"
+      X-Request-Id:
+      - 025c0206-1a9f-4c3a-bb57-1b73ae3c0748
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      User-Agent:
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machine_network_interfaces/_?virtual_machine_network_interface%5Bid%5D=vmnet_a3FXcfFhZkaIANNW
+    method: GET
+  response:
+    body: '{"virtual_machine_network_interface":{"id":"vmnet_a3FXcfFhZkaIANNW","virtual_machine":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana"},"name":"Public
+      Network on tf-faithful-loud-banana","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network"},"mac_address":"3a:e0:0d:48:c4:45","state":"attached","ip_addresses":[{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87"}],"speed_profile":{"id":"nsp_FKZSFo5xhn9Pfr79","name":"10Gbps","permalink":"10gbps"}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "470"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 17 Jun 2024 18:29:52 GMT
+      Etag:
+      - W/"0d146d19587273edfe871c5c356740a9"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "981"
+      X-Request-Id:
+      - 70fbee80-ade6-47cc-9f2d-eaf82a72225b
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_ju18e1lWRj0Plppb
+    method: GET
+  response:
+    body: '{"load_balancer":{"id":"lb_ju18e1lWRj0Plppb","name":"tf-acc-test-vm-t5RE5uirewxv","api_reference":null,"resource_type":"virtual_machines","resources":[{"type":"VirtualMachine","value":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana","hostname":"tf-faithful-loud-banana","fqdn":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","description":null,"created_at":1718648971,"initial_root_password":"Fp1Bum3Url9w9RxO","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
+      Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
+      Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
+      Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87","reverse_dns":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"77.72.7.87/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_pKjpjbgsQJTNMyF2","allocation_type":"VirtualMachine"}]}}],"resource_ids":["vm_pKjpjbgsQJTNMyF2"],"ip_address":{"id":"ip_APRVnJaeFsDJiG3A","address":"77.72.7.141"},"https_redirect":false,"backend_certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfanUxOGUxbFdSajBQbHBwYi5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE3MTgyOTUxWhgPMjA3NDA2MTcxODI5NTFaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9qdTE4ZTFsV1JqMFBscHBiLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAOIYje3WRP9j8nbjmQQKIG2K/sZ8Rht8V65d\n8Exz0RdGFrIteuof5D32lmIsKAOmL/xH1kxwonCKCoUrj2eBrOFvnJWs1wM919TJ\nF130JveHYrG+qvKQKPmAfqVYquESYxzNVzN55Z5O2XFygDN1QF7ENzG5hA73tgif\n2WWtoBJlhkOWBg3Oy0rZVf3PZ1EjhL6M0FeCPJkLEwdS8OuDWVk0G72Q+AZ34+Bx\nTp+Ph3XIpCFMEJhXzp3Dd5d3UNLQ6aC93qW0Aer/r+9mhvQX5b4T6ztaxXO0Z1bS\nEQp5pikPTrAUdHg+Zknm8TZbk4vFXskhQzcQjaPKcznpdX8X6kXh5/L4l9k7AfTX\n6GsW5aL0FQSFinpnWbpwfp8TfL0SLLmWosBNuojdVcn3mFQtn3bm0hT95KICzE9I\nalw0qRYUPvyDeksnLkzXOgS4dNAt7D2rGXfmuMcjAMtQ8nd1gbcbNO8WAmTaGwyK\nibHj+2vQLT/MYigP3n1fA1YSsyyuOm4ZKuwU40ejVve2ZruNimVZzpandDAVF95C\nVtUghAycPg0mF3tvRKl55htjfEYAEXByBeArwojQa+Mi8ZkmjlO1BZ3McWnopRXX\nvGFOuk5Ht2JWiZHldKYn7NtZBL+WCq8FPteswaztqInhJGhlMVwRYr0cNK6OvDOz\nKWwjxsf9AgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTO\nQYObfxgHRDaJWZ0BQKNHmVjF/jATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9qdTE4ZTFsV1JqMFBscHBiLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFM5Bg5t/GAdENolZnQFAo0eZWMX+\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9qdTE4ZTFsV1JqMFBscHBiLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAFRzGOJ2HidfS\n1DFoxut/1OYQsuQz4vY5u3eR+28HnlJuL9iwt+7GioPmHH0IRCZVsdYhmK9/Enln\nvLIu4RcXSBxTtUM8JNuCjH9Fj/OntV+ukrE5eAA521prIHXw496EdLWw23onBsSV\nwmrVomLDJqpUGd8Tvcq/q3osgiycW7HCBthPNSn9lAycDkPzzEIhmq1jjT+h+kL7\nsUKEprZA90H6zfIYTdv8W5H+jVMZcmChbiG1XmSko3DxLd6QZqzV6rFlBwSkmp7p\nawy2LI+Jk0fx+A+qVoy6YXDAwex1J9taW0q7Om04LYxZsr3VMSwwWqgX1YMOwYWG\nT4/n8ApK8gfKOOEjQVNs1omiN5kTi8y2hBBpxTmblcN68FsgqDkCQ2s766qEbmH9\nftiA+Y+g/pNJFvIX3xOH13rlFgt+sPZHr24M7aNu8OOpYy5mWd0sDTisnCGvMxHi\nFp0/NZOmdmFIGGZo/I9R2lEDPxeJKI83n2atArwPe9hRB5tvQAUZbpL/zI1jyuS4\n0Kb0H/ZeJSrcI4h4vFg1gXVQUjITQIpqQsLRjndTOJqp3pntPv7htDZYngdV+uGG\nWlsKhJf1g+guPokDsZ0U9z/NFkKJ4uh0PW3woDTut3EJ2XuwYTkbfo+o7JllOXPl\naBqDYBg9VnXgtL8cGv5egyVHopXhpcI=\n-----END
+      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
+      RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[{"virtual_machine_id":"vm_pKjpjbgsQJTNMyF2","weight":128}],"standby_vms":[]}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "8630"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 17 Jun 2024 18:29:52 GMT
+      Etag:
+      - W/"10cda4a58a494ff5d134b5de72b2d6c7"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "980"
+      X-Request-Id:
+      - 567e69f7-2faa-481e-8dd1-017b41717c52
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"load_balancer":{"id":"lb_ju18e1lWRj0Plppb"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer
     method: DELETE
   response:
-    body: '{"load_balancer":{"id":"lb_WPmOiHoJHi80nbWq","name":"tf-acc-test-vm-69VkwGCOlKyr","api_reference":null}}'
+    body: '{"load_balancer":{"id":"lb_ju18e1lWRj0Plppb","name":"tf-acc-test-vm-t5RE5uirewxv","api_reference":null}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -931,17 +925,17 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:11 GMT
+      - Mon, 17 Jun 2024 18:29:53 GMT
       Etag:
-      - W/"74ad5a08a6cfb283512a1211d89e6aa6"
+      - W/"463ca6460d820503ae5927944f3128da"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "986"
+      - "979"
       X-Request-Id:
-      - 6118db47-09ce-4ad8-85c9-9c53d3c5e14e
+      - 29e9624d-1ef8-421d-a5f6-d124f2ab510e
     status: 200 OK
     code: 200
     duration: ""
@@ -952,18 +946,19 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_KsORAMDtyf7nqoYk
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_pKjpjbgsQJTNMyF2
     method: GET
   response:
-    body: '{"virtual_machine":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard","hostname":"tf-yellow-bitter-skateboard","fqdn":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","description":null,"created_at":1718299070,"initial_root_password":"OCGD5wkKfddn4nZz","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+    body: '{"virtual_machine":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana","hostname":"tf-faithful-loud-banana","fqdn":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","description":null,"created_at":1718648971,"initial_root_password":"Fp1Bum3Url9w9RxO","state":"started","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
       Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
       Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
       Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
       Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233","reverse_dns":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.44.252.233/22","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87","reverse_dns":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"77.72.7.87/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
       Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_KsORAMDtyf7nqoYk","allocation_type":"VirtualMachine"}]}}'
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_pKjpjbgsQJTNMyF2","allocation_type":"VirtualMachine"}]}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -974,21 +969,21 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "2282"
+      - "2258"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:11 GMT
+      - Mon, 17 Jun 2024 18:29:53 GMT
       Etag:
-      - W/"76785d171673499d419e5ac6171dd918"
+      - W/"568093c62e81af942295eeedecf47523"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "985"
+      - "978"
       X-Request-Id:
-      - adea59bf-f8c6-4220-8ed9-10b1ea4cf16e
+      - 13a52a42-6e9b-4b26-be88-e9c2ea0e8566
     status: 200 OK
     code: 200
     duration: ""
@@ -999,11 +994,12 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_/stop?virtual_machine%5Bid%5D=vm_KsORAMDtyf7nqoYk
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_/stop?virtual_machine%5Bid%5D=vm_pKjpjbgsQJTNMyF2
     method: POST
   response:
-    body: '{"task":{"id":"task_k9PCKewqVvYFqCuR","name":"Stop virtual machine","status":"pending"}}'
+    body: '{"task":{"id":"task_p2c87DehnXMGVxPc","name":"Stop virtual machine","status":"pending"}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -1018,17 +1014,17 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:11 GMT
+      - Mon, 17 Jun 2024 18:29:53 GMT
       Etag:
-      - W/"61c34c384f3ca9ac5da0ba42a3bfaa5e"
+      - W/"d39d3dc88cf2d6b1ccffe55f99f359ba"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "984"
+      - "977"
       X-Request-Id:
-      - d85fb7dd-e669-4526-a801-fb3e40a140ee
+      - 4d4fa991-8736-4cc2-a6b9-025ba68ece16
     status: 200 OK
     code: 200
     duration: ""
@@ -1039,11 +1035,12 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/tasks/task_k9PCKewqVvYFqCuR
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/tasks/task_p2c87DehnXMGVxPc
     method: GET
   response:
-    body: '{"task":{"id":"task_k9PCKewqVvYFqCuR","name":"Stop virtual machine","status":"pending","created_at":1718299091,"started_at":null,"finished_at":null,"progress":0}}'
+    body: '{"task":{"id":"task_p2c87DehnXMGVxPc","name":"Stop virtual machine","status":"running","created_at":1718648993,"started_at":1718648993,"finished_at":null,"progress":5}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -1054,21 +1051,21 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "162"
+      - "168"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:12 GMT
+      - Mon, 17 Jun 2024 18:29:54 GMT
       Etag:
-      - W/"89a950849392b5f9cb901c9419019948"
+      - W/"07f52650306ff13032d7aa70ccf980e2"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "983"
+      - "976"
       X-Request-Id:
-      - 0d5ccd79-72c1-4ac0-b7c9-6adbb52a073f
+      - 560868ec-013f-4c50-aa43-53bf44c5d3f5
     status: 200 OK
     code: 200
     duration: ""
@@ -1079,91 +1076,12 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/tasks/task_k9PCKewqVvYFqCuR
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/tasks/task_p2c87DehnXMGVxPc
     method: GET
   response:
-    body: '{"task":{"id":"task_k9PCKewqVvYFqCuR","name":"Stop virtual machine","status":"pending","created_at":1718299091,"started_at":null,"finished_at":null,"progress":0}}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "162"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 13 Jun 2024 17:18:17 GMT
-      Etag:
-      - W/"89a950849392b5f9cb901c9419019948"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "982"
-      X-Request-Id:
-      - 66e2c8c8-2ab0-4f26-b599-f8d4d4f3185e
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      Accept:
-      - application/json
-      User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/tasks/task_k9PCKewqVvYFqCuR
-    method: GET
-  response:
-    body: '{"task":{"id":"task_k9PCKewqVvYFqCuR","name":"Stop virtual machine","status":"pending","created_at":1718299091,"started_at":null,"finished_at":null,"progress":0}}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "162"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 13 Jun 2024 17:18:27 GMT
-      Etag:
-      - W/"89a950849392b5f9cb901c9419019948"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "981"
-      X-Request-Id:
-      - 0ecd3245-0d3f-49db-9621-644b648a77fd
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      Accept:
-      - application/json
-      User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/tasks/task_k9PCKewqVvYFqCuR
-    method: GET
-  response:
-    body: '{"task":{"id":"task_k9PCKewqVvYFqCuR","name":"Stop virtual machine","status":"completed","created_at":1718299091,"started_at":1718299107,"finished_at":1718299109,"progress":100}}'
+    body: '{"task":{"id":"task_p2c87DehnXMGVxPc","name":"Stop virtual machine","status":"completed","created_at":1718648993,"started_at":1718648993,"finished_at":1718648994,"progress":100}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -1178,17 +1096,17 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:37 GMT
+      - Mon, 17 Jun 2024 18:29:59 GMT
       Etag:
-      - W/"533ccb327cbbbc82d9c1a7896507a5d7"
+      - W/"4648781ab6197b44b49a6113f563b257"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "980"
+      - "975"
       X-Request-Id:
-      - 984fcfae-e2b1-42d9-b01a-61f97ae0ff4c
+      - 1dfe24ae-9ba8-45d7-9ad7-8168e58ad353
     status: 200 OK
     code: 200
     duration: ""
@@ -1199,18 +1117,19 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_KsORAMDtyf7nqoYk
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_pKjpjbgsQJTNMyF2
     method: GET
   response:
-    body: '{"virtual_machine":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard","hostname":"tf-yellow-bitter-skateboard","fqdn":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","description":null,"created_at":1718299070,"initial_root_password":"OCGD5wkKfddn4nZz","state":"stopped","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+    body: '{"virtual_machine":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana","hostname":"tf-faithful-loud-banana","fqdn":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","description":null,"created_at":1718648971,"initial_root_password":"Fp1Bum3Url9w9RxO","state":"stopped","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
       Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
       Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
       Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
       Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233","reverse_dns":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.44.252.233/22","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87","reverse_dns":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"77.72.7.87/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
       Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_KsORAMDtyf7nqoYk","allocation_type":"VirtualMachine"}]}}'
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_pKjpjbgsQJTNMyF2","allocation_type":"VirtualMachine"}]}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -1221,21 +1140,21 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "2282"
+      - "2258"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:38 GMT
+      - Mon, 17 Jun 2024 18:30:00 GMT
       Etag:
-      - W/"6a148b7e174a0a2aecd6661c824651e6"
+      - W/"c58cd4409b8eed362244c499d12f88fd"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "979"
+      - "999"
       X-Request-Id:
-      - 960d75b1-dda1-46ed-9ac7-f9214a7e590a
+      - b9fccbd6-3906-4ab6-b869-d3f635717d31
     status: 200 OK
     code: 200
     duration: ""
@@ -1246,18 +1165,19 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_KsORAMDtyf7nqoYk
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/virtual_machines/_?virtual_machine%5Bid%5D=vm_pKjpjbgsQJTNMyF2
     method: DELETE
   response:
-    body: '{"trash_object":{"id":"trsh_LQiI8xRx5ZGNgQ2A","keep_until":1718471918,"object_id":"vm_KsORAMDtyf7nqoYk","object_type":"VirtualMachine"},"virtual_machine":{"id":"vm_KsORAMDtyf7nqoYk","name":"tf-yellow-bitter-skateboard","hostname":"tf-yellow-bitter-skateboard","fqdn":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","description":null,"created_at":1718299070,"initial_root_password":"OCGD5wkKfddn4nZz","state":"stopped","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+    body: '{"trash_object":{"id":"trsh_I3YNWgMPYUkVUBpF","keep_until":1718821800,"object_id":"vm_pKjpjbgsQJTNMyF2","object_type":"VirtualMachine"},"virtual_machine":{"id":"vm_pKjpjbgsQJTNMyF2","name":"tf-faithful-loud-banana","hostname":"tf-faithful-loud-banana","fqdn":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","description":null,"created_at":1718648971,"initial_root_password":"Fp1Bum3Url9w9RxO","state":"stopped","zone":{"id":"zone_7Uuz6wzE17ZShh8f","name":"LON-1","permalink":"lon-zone-1","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
       Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"organization":{"id":"org_eodfyqFF3YWb2OFC","name":"terraform-acc-test","sub_domain":"terraform-acc-test","infrastructure_domain":"terraform-acc-test.katapult.cloud","created_at":1605785692,"suspended":false,"managed":false,"billing_name":"terraform-acc-test","address1":"42
       Barren Fields","address2":"Oxygen Farm","address3":"Seed Colony 1","address4":"Landing
       Site","postcode":"ZZ9 1LS","vat_number":null,"phone_number":null,"currency":{"id":"cur_zShCGgjgBz4EbnX1","name":"British
       Pound","iso_code":"GBP","symbol":"£"},"country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_oRsfDfev4ZneO3hl","address":"185.44.252.233","reverse_dns":"tf-yellow-bitter-skateboard.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"185.44.252.233/22","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false},"country_state":null},"group":null,"package":{"id":"vmpkg_Eh5LYVKScVHpj7sM","name":"ROCK-3","permalink":"rock-3","cpu_cores":1,"ipv4_addresses":1,"memory_in_gb":3,"storage_in_gb":25,"monthly_bandwidth_allowance_in_gb":2048,"privacy":"public","icon":null,"use_dedicated_cpus":false},"attached_iso":null,"memory_in_gb":3,"cpu_cores":1,"use_dedicated_cpus":false,"gpu_type":null,"gpus":[],"tags":[],"tag_names":[],"ip_addresses":[{"id":"ip_P5X3poDrO6PDtrMc","address":"77.72.7.87","reverse_dns":"tf-faithful-loud-banana.terraform-acc-test.katapult.cloud","vip":false,"label":null,"address_with_mask":"77.72.7.87/24","network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public
       Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
-      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_KsORAMDtyf7nqoYk","allocation_type":"VirtualMachine"}]}}'
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}},"allocation_id":"vm_pKjpjbgsQJTNMyF2","allocation_type":"VirtualMachine"}]}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -1268,21 +1188,21 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "2417"
+      - "2393"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:38 GMT
+      - Mon, 17 Jun 2024 18:30:00 GMT
       Etag:
-      - W/"51ca1c8acb83ad552569bfb9d2df40ad"
+      - W/"f28a7a01cd510468ec041b88a1cdeea8"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "978"
+      - "998"
       X-Request-Id:
-      - f7b230bc-877e-4353-aa60-24693d9ceef4
+      - 2dde8961-f3ac-4d1b-a5ef-1924fec8e6a4
     status: 200 OK
     code: 200
     duration: ""
@@ -1293,8 +1213,9 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/ip_addresses/_/unallocate?ip_address%5Bid%5D=ip_oRsfDfev4ZneO3hl
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/ip_addresses/_/unallocate?ip_address%5Bid%5D=ip_P5X3poDrO6PDtrMc
     method: POST
   response:
     body: '{}'
@@ -1312,7 +1233,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:39 GMT
+      - Mon, 17 Jun 2024 18:30:01 GMT
       Etag:
       - W/"44136fa355b3678a1146ad16f7e8649e"
       Strict-Transport-Security:
@@ -1320,9 +1241,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "977"
+      - "997"
       X-Request-Id:
-      - 102afc04-3170-4e5e-9df7-3aa95cd517a2
+      - fd0fc827-4e80-4030-b79c-34f1b2d80562
     status: 200 OK
     code: 200
     duration: ""
@@ -1333,11 +1254,12 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/trash_objects/_?trash_object%5Bobject_id%5D=vm_KsORAMDtyf7nqoYk
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/trash_objects/_?trash_object%5Bobject_id%5D=vm_pKjpjbgsQJTNMyF2
     method: DELETE
   response:
-    body: '{"task":{"id":"task_Jf6HHd0ks4NJyDJ3","name":"Purge items from trash","status":"pending","created_at":1718299119,"started_at":null,"finished_at":null,"progress":0}}'
+    body: '{"task":{"id":"task_bVVO7FwGgsRn2YLf","name":"Purge items from trash","status":"pending","created_at":1718649001,"started_at":null,"finished_at":null,"progress":0}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -1352,17 +1274,17 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:39 GMT
+      - Mon, 17 Jun 2024 18:30:01 GMT
       Etag:
-      - W/"adbe7dfc5cf874e83b732ff735a454e8"
+      - W/"6e472e1619004858e8d0c00acd12e5d5"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "976"
+      - "996"
       X-Request-Id:
-      - 71a217d6-656d-4661-a4f2-ced11dfd0516
+      - b4dd680f-7be5-4902-89a5-e31282477e12
     status: 200 OK
     code: 200
     duration: ""
@@ -1373,11 +1295,12 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/trash_objects/_?trash_object%5Bobject_id%5D=vm_KsORAMDtyf7nqoYk
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/trash_objects/_?trash_object%5Bobject_id%5D=vm_pKjpjbgsQJTNMyF2
     method: GET
   response:
-    body: '{"trash_object":{"id":"trsh_LQiI8xRx5ZGNgQ2A","keep_until":1718471918,"object_id":"vm_KsORAMDtyf7nqoYk","object_type":"VirtualMachine"}}'
+    body: '{"trash_object":{"id":"trsh_I3YNWgMPYUkVUBpF","keep_until":1718821800,"object_id":"vm_pKjpjbgsQJTNMyF2","object_type":"VirtualMachine"}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -1392,17 +1315,17 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:40 GMT
+      - Mon, 17 Jun 2024 18:30:02 GMT
       Etag:
-      - W/"7379678268eb4dba98dda0663edb4ec2"
+      - W/"d2da4de2fb7862d8ad33f216011d6a7a"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "975"
+      - "995"
       X-Request-Id:
-      - 319e593f-2a76-4053-964f-0204bd708053
+      - c8bd5f33-5597-495f-8890-3d79028419dc
     status: 200 OK
     code: 200
     duration: ""
@@ -1413,8 +1336,9 @@ interactions:
       Accept:
       - application/json
       User-Agent:
-      - Terraform/1.8.5 (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0 terraform-provider-katapult/0.0.999
-    url: https://api.katapult.io/core/v1/trash_objects/_?trash_object%5Bobject_id%5D=vm_KsORAMDtyf7nqoYk
+      - Terraform/1.7.0-dev (+https://www.terraform.io) Terraform-Plugin-SDK/2.31.0
+        terraform-provider-katapult/0.0.999
+    url: https://api.katapult.io/core/v1/trash_objects/_?trash_object%5Bobject_id%5D=vm_pKjpjbgsQJTNMyF2
     method: GET
   response:
     body: '{"error":{"code":"trash_object_not_found","description":"No trash object
@@ -1433,7 +1357,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:45 GMT
+      - Mon, 17 Jun 2024 18:30:07 GMT
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Api-Schema:
@@ -1441,21 +1365,21 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "974"
+      - "994"
       X-Request-Id:
-      - 75db884d-a749-4f7c-9064-d27b7ef75e55
+      - cb04229d-bfb0-4385-ab1b-5d34e9c11765
     status: 404 Not Found
     code: 404
     duration: ""
 - request:
-    body: ""
+    body: '{"ip_address":{"id":"ip_P5X3poDrO6PDtrMc"}}'
     form: {}
     headers:
-      Accept:
+      Content-Type:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/ip_addresses/_?ip_address%5Bid%5D=ip_oRsfDfev4ZneO3hl
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/ip_addresses/:ip_address
     method: DELETE
   response:
     body: '{}'
@@ -1473,7 +1397,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:45 GMT
+      - Mon, 17 Jun 2024 18:30:08 GMT
       Etag:
       - W/"44136fa355b3678a1146ad16f7e8649e"
       Strict-Transport-Security:
@@ -1481,9 +1405,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "973"
+      - "993"
       X-Request-Id:
-      - 84006dd0-267b-42bf-a530-0826b3109924
+      - 669cd049-2e26-4221-81f4-70ca7ee1c2a7
     status: 200 OK
     code: 200
     duration: ""
@@ -1491,11 +1415,9 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_WPmOiHoJHi80nbWq
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_ju18e1lWRj0Plppb
     method: GET
   response:
     body: '{"error":{"code":"load_balancer_not_found","description":"No load balancer
@@ -1514,7 +1436,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 17:18:46 GMT
+      - Mon, 17 Jun 2024 18:30:08 GMT
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Api-Schema:
@@ -1522,9 +1444,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "972"
+      - "992"
       X-Request-Id:
-      - 9197158e-0c4f-414b-8e29-704887ad3dcd
+      - 4700a0fd-90a8-466e-96f2-fc4f5359d6a6
     status: 404 Not Found
     code: 404
     duration: ""

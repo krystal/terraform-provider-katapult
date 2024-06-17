@@ -165,9 +165,10 @@ func (r *LoadBalancerResource) Create(
 			SubDomain: &r.M.confOrganization,
 		},
 		Properties: core.LoadBalancerArguments{
-			Name:         &name,
-			ResourceType: &t,
-			ResourceIds:  &ids,
+			Name:          &name,
+			ResourceType:  &t,
+			ResourceIds:   &ids,
+			HttpsRedirect: plan.HTTPSRedirect.ValueBoolPointer(),
 			DataCenter: &core.DataCenterLookup{
 				Permalink: &r.M.confDataCenter,
 			},
@@ -274,12 +275,24 @@ func (r *LoadBalancerResource) Update(
 		t, ids := extractLoadBalancerResourceTypeAndIDs(&plan)
 		args.Properties.ResourceType = &t
 		args.Properties.ResourceIds = &ids
+	} else {
+		t, ids := extractLoadBalancerResourceTypeAndIDs(&state)
+		args.Properties.ResourceType = &t
+		args.Properties.ResourceIds = &ids
 	}
 
-	// _, _, err := r.M.Core.LoadBalancers.Update(ctx, lbLookup, args)
-	_, err := r.M.Core.PatchLoadBalancerWithResponse(ctx, args)
+	res, err := r.M.Core.PatchLoadBalancerWithResponse(ctx, args)
 	if err != nil {
 		resp.Diagnostics.AddError("Load Balancer Update Error", err.Error())
+		return
+	}
+
+	if res.JSON200 == nil {
+		resp.Diagnostics.AddError(
+			"Load Balancer Update Error",
+			"unexpected status code from API",
+		)
+
 		return
 	}
 
@@ -396,7 +409,7 @@ func flattenLoadBalancerResourceIDs(ids []string) types.Set {
 func extractLoadBalancerResourceTypeAndIDs(
 	model *LoadBalancerResourceModel,
 ) (core.LoadBalancerResourceTypesEnum, []string) {
-	var t core.LoadBalancerResourceTypesEnum
+	var t core.LoadBalancerResourceTypesEnum = core.VirtualMachines
 	var list []attr.Value
 	ids := []string{}
 
