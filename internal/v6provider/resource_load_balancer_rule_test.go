@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
+	"github.com/krystal/go-katapult/next/core"
 )
 
 // Test with minimal required configuration.
@@ -551,19 +552,28 @@ func testAccCheckKatapultLoadBalancerRuleExists(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		lbr, _, err := m.Core.LoadBalancerRules.GetByID(
-			tt.Ctx, rs.Primary.ID,
-		)
+		lbRes, err := m.Core.
+			GetLoadBalancersRulesLoadBalancerRuleWithResponse(tt.Ctx,
+				&core.GetLoadBalancersRulesLoadBalancerRuleParams{
+					LoadBalancerRuleId: &rs.Primary.ID,
+				})
 		if err != nil {
 			return err
+		}
+		if lbRes.JSON200 == nil {
+			return fmt.Errorf("load balancer rule not found: %s", rs.Primary.ID)
 		}
 
 		// Expose ID if provided by caller.
 		if id != nil {
-			*id = lbr.ID
+			id = lbRes.JSON200.LoadBalancerRule.Id
 		}
 
-		return resource.TestCheckResourceAttr(res, "id", lbr.ID)(s)
+		return resource.TestCheckResourceAttr(
+			res,
+			"id",
+			*lbRes.JSON200.LoadBalancerRule.Id,
+		)(s)
 	}
 }
 
@@ -579,71 +589,79 @@ func testAccCheckKatapultLoadBalancerRuleAttrs(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		lbr, _, err := m.Core.LoadBalancerRules.GetByID(
-			tt.Ctx, rs.Primary.ID,
-		)
+		lbRes, err := m.Core.
+			GetLoadBalancersRulesLoadBalancerRuleWithResponse(tt.Ctx,
+				&core.GetLoadBalancersRulesLoadBalancerRuleParams{
+					LoadBalancerRuleId: &rs.Primary.ID,
+				})
 		if err != nil {
 			return err
 		}
 
+		if lbRes.JSON200 == nil {
+			return fmt.Errorf("load balancer rule not found: %s", rs.Primary.ID)
+		}
+
+		lbr := lbRes.JSON200.LoadBalancerRule
+
 		tfs := []resource.TestCheckFunc{
 			resource.TestCheckResourceAttr(
-				res, "id", lbr.ID,
+				res, "id", *lbr.Id,
 			),
 			resource.TestCheckResourceAttr(
-				res, "load_balancer_id", lbr.LoadBalancer.ID,
+				res, "load_balancer_id", *lbr.LoadBalancer.Id,
 			),
 			resource.TestCheckResourceAttr(
-				res, "destination_port", strconv.Itoa(lbr.DestinationPort),
+				res, "destination_port", strconv.Itoa(*lbr.DestinationPort),
 			),
 			resource.TestCheckResourceAttr(
-				res, "listen_port", strconv.Itoa(lbr.ListenPort),
+				res, "listen_port", strconv.Itoa(*lbr.ListenPort),
 			),
 			resource.TestCheckResourceAttr(
-				res, "protocol", string(lbr.Protocol),
+				res, "protocol", string(*lbr.Protocol),
 			),
 			resource.TestCheckResourceAttr(
-				res, "certificate_ids.#", strconv.Itoa(len(lbr.Certificates)),
+				res, "certificate_ids.#", strconv.Itoa(len(*lbr.Certificates)),
 			),
 			resource.TestCheckResourceAttr(
-				res, "proxy_protocol", strconv.FormatBool(lbr.ProxyProtocol),
+				res, "proxy_protocol", strconv.FormatBool(*lbr.ProxyProtocol),
 			),
 			resource.TestCheckResourceAttr(
-				res, "backend_ssl", strconv.FormatBool(lbr.BackendSSL),
+				res, "backend_ssl", strconv.FormatBool(*lbr.BackendSsl),
 			),
 			resource.TestCheckResourceAttr(
-				res, "passthrough_ssl", strconv.FormatBool(lbr.PassthroughSSL),
+				res, "passthrough_ssl", strconv.FormatBool(*lbr.PassthroughSsl),
 			),
 			resource.TestCheckResourceAttr(
-				res, "check_enabled", strconv.FormatBool(lbr.CheckEnabled),
+				res, "check_enabled", strconv.FormatBool(*lbr.CheckEnabled),
 			),
 			resource.TestCheckResourceAttr(
-				res, "check_fall", strconv.Itoa(lbr.CheckFall),
+				res, "check_fall", strconv.Itoa(*lbr.CheckFall),
 			),
 			resource.TestCheckResourceAttr(
-				res, "check_interval", strconv.Itoa(lbr.CheckInterval),
+				res, "check_interval", strconv.Itoa(*lbr.CheckInterval),
 			),
 			resource.TestCheckResourceAttr(
-				res, "check_http_statuses", string(lbr.CheckHTTPStatuses),
+				res, "check_http_statuses", string(*lbr.CheckHttpStatuses),
 			),
 			resource.TestCheckResourceAttr(
-				res, "check_path", lbr.CheckPath,
+				res, "check_path", *lbr.CheckPath,
 			),
 			resource.TestCheckResourceAttr(
-				res, "check_protocol", string(lbr.CheckProtocol),
+				res, "check_protocol", string(*lbr.CheckProtocol),
 			),
 			resource.TestCheckResourceAttr(
-				res, "check_rise", strconv.Itoa(lbr.CheckRise),
+				res, "check_rise", strconv.Itoa(*lbr.CheckRise),
 			),
 			resource.TestCheckResourceAttr(
-				res, "check_timeout", strconv.Itoa(lbr.CheckTimeout),
+				res, "check_timeout", strconv.Itoa(*lbr.CheckTimeout),
 			),
 		}
 
-		for _, cert := range lbr.Certificates {
+		for _, cert := range *lbr.Certificates {
 			tfs = append(tfs,
 				resource.TestCheckTypeSetElemAttr(
-					res, "certificate_ids.*", cert.ID,
+					res, "certificate_ids.*", *cert.Id,
 				),
 			)
 		}

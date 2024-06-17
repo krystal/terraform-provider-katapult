@@ -125,7 +125,6 @@ func (ds *LoadBalancerDataSource) Read(
 	data.TagIDs = types.SetNull(types.StringType)
 	data.VirtualMachineGroupIDs = types.SetNull(types.StringType)
 	if lb.ResourceIds != nil {
-
 		list := flattenLoadBalancerResourceIDs(*lb.ResourceIds)
 
 		switch *lb.ResourceType {
