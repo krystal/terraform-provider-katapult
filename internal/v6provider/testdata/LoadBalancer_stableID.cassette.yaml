@@ -2,22 +2,19 @@
 version: 1
 interactions:
 - request:
-    body: |
-      {"organization":{"sub_domain":"terraform-acc-test"},"properties":{"data_center":{"permalink":"uk-lon-01"},"name":"tf-acc-test-stableID-XcxA0Uq7odbt","resource_type":"virtual_machines","https_redirect":false}}
+    body: '{"organization":{"sub_domain":"terraform-acc-test"},"properties":{"data_center":{"permalink":"uk-lon-01"},"https_redirect":false,"name":"tf-acc-test-stableID-uSyGeBjKaMej","resource_ids":[],"resource_type":"virtual_machines"}}'
     form: {}
     headers:
-      Accept:
-      - application/json
       Content-Type:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/organizations/_/load_balancers
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/organizations/:organization/load_balancers
     method: POST
   response:
-    body: '{"load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":false,"backend_certificate":"-----BEGIN
-      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfYUdPWHFYYTlRakt4WFJxQS5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTA1MjM3WhgPMjA3NDA2MTkxMDUyMzdaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAMEVOmCQpS06MPabs/Hk+dEJfnFLgWYOHo9w\n+zmWKp1nEOd9oKnSGohKg6GdyIfFsqwlG3s+pcI6jFEDZDDIu7fXadvtFppbh3+M\nbVp3fiMuM0dwNVh8zZVkp9AQVeSRZnL3wO5ZTmHZYp4nCKcHpjWGJx87rr4xF8ws\n0JC3qZTzOrhsGbSzyGm+JJI1VgIJZTzAaM/Jomx9r4d7/o5JZ653hy1SoXaLEc2Z\nNUDQLz/p0hyE6tB2W2NUCvRy2vyTotVvMfLA/wzH8k5mq5xoEQx8hg4N/7M9f3u6\na3o/CzI7hnhEyE4NCXXctJd2UvgTMpF4zXUWCGuyI0MO9tJwcNIvNNO//yvKDVXM\ngzZcqpRWvkT2Z2nzHQx7R6vw/YdLS3GOU4eJJA+ljLNQwk5AAcuuOpKf5c/oF5LL\nMD2r8O9VTJJRnvG8zOUCiIwPmfd+QBZ6O4zrLbshE2XLQXOgY8VpF4VeuSSLazUL\nKjTUvLy7btdqPio0qJWR+E1o2TM7pg5hg77/vnEEje9fnC0ZKRtv82uALGi729nz\nHLwc1XbNoZHwTfZ5nyoxAJzXzoRW8ucpSqAoDLHpt54GhuLkNy/vp5UOVBCigHd6\nxzTfwiAUE6bTQWJ/f/dzlTO3SmsME4j6anpt05/WOaqMXsKEF2I3vxJYyrntF2r7\nW2AJHTf1AgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRh\nURW5bFUKsCemgLw0WdG9VQsTjTATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFGFRFblsVQqwJ6aAvDRZ0b1VCxON\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAiHW6DJwsQfU/\n5DZt2sLDMBo8kydnU7cjoyLvB4PC2smHf7FYh/nLBIEoZArreULe2953F9CRhP08\n6KtBbfl4xel5AjOwc3oRmOWdfHpYk5R4IjQrYdEXN0RYlZbw/uT1mOQ5m1E4Ya21\nsrLbBwnQZWFLp1U6nOK2CfT61Jk8wY1sEpnWW7Ga1fhheB+hmM+e4gk0UShldKsI\n0e3xAr7lcfpgoKCqRZBdbxzOo6rroiCk7IrMAkNLvNLAr3duprza4MmiH8wR1n86\nzrMhaRe+CkEucokCBt+Q0v3RgbNv7K7TLVA4tegjjhpw/xSuLKJ6D9BnITXKz0nc\nAN8uNY3buO5PGZQOQNMpTJiS+ejlHuELxWrYY+AU8R7dziqzLrd6hhdIuUGJ4VUW\nmiuYjfMxnBlEU1PjF1JiCIOtGSGVGNpfv7amPZTOTJWlc4ELFY9zXysE2bQpy9de\nkJOHDTPPVyIN6iZ2I2xiXx2gjaYrQMGo5RNdCHukxEOsgC2q4VgnXf3OoWGSCkjP\nfMs4vTgNTOENfAbVIPdkwAnH5FLP8MNXfyP+lQxsb6icExkZuCPwwejB9rMc4A1X\nMrofgaCRrqcv3jLrgzrLqeJUvWuWWQhbllng2CHCiSClqZNe3C45YO7y1+vMr/C/\ngI/BxIu5UNSCgh7p8v/nZ1otrB+g6lo=\n-----END
-      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
+    body: '{"load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":false,"backend_certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfblpRVjNuV1FEekVQSkd2MC5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTIwNzA1WhgPMjA3NDA2MTkxMjA3MDVaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAM+mV6pG7xy4NugCi8nxFqceQnFvkOFnwIAg\nPdb6IPFOZ6XQ9g4+5/8keKYO0We/V/kx8RxuBI3SzwLRt8oXPKIjdlZOsgk4NDEx\nbiWYi0kuWFAVYPTyfH6gPjzWDoc92nsjnX+UQ4gfkCVbSQbc78yq3bICTJ2wh5Aq\nbqz6CIv0iSb8fDdeWsOSsHtpDDvM5SOnVktD5tfyprcmF+J4Q3Y0bEDe2tdY6KpU\nk7Y7HUDp3b/FnAhPSO4ldOJJQwWQS2leXSB5/rFLELqAbHVCtwP6ObMGJNqGG46A\nqN5U96F04l8RGvVWkf+Jepy2bcm0ItIGsHh/xahejgqVxOxrZqcbHQD+NZI5uD0j\nglJl2lZ8kdCTc1jbPYmY64HfilExWlyuAmLT3Yl39kkErcWcrlGQliyyZnFTJJit\nUzVgFxwzEAfJD13KwYY0Hl1Kka9nHCt8dNRit+6RZBZiJidLHtzn0duC5ZpNwx3y\nGyGoiYxk/vcaii6goT0nivkYTw5RI+52JFT916yI0gv6SX0RNVd4rVQlsbtQcT31\nb+TjBhYoJTgqULJ5AOJd21KecXsfMkwTz2oVv1vF3FwjFHhHT70dxZz3xxBMpbe2\nko9feHB/2b2gxI63QiK1TU4X9WwGajOYLd0ABaYn5KeSdRwK/5yUI4h7iwUzkZbs\nnvdGdwsXAgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQe\nXAY7U4+HnRudhkGAOH7Jy9XJszATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFB5cBjtTj4edG52GQYA4fsnL1cmz\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAhc4xkU7pGPp2\nfBWaNUBeAstAZYJxJEtCZnQ9tufyyc9mxm0dINOcw8fkLEJe9MkEestgvwIZHLJX\nqNQ6EtSwf6gfyZ/Yb/OPw2HDuRsBWKoFCDrxEv33Ld86GP6nGVE4x5CXjIDAJD0G\nPZA/fX2QPCDDmrDjTUya+6PndzpwZgXkQ/rA/J1+Qr1CQcVwghyswmMZLqDAK7RH\ns9abWS39sZHRAq7+cTnDZlvJU60aJo3xr33xZYzgxWqPNfuuAbzDX72C5lVNwKJ5\nCCLNr/ryEUKTeNRLIImjke84VSZkXulu/tS1M0ywZfVAa5aAs5Jqx6wuaLw7n8Rh\nLNrgWIPQ61h/eYwvOAFvVHN+FT2C1WCEqCAM3V8aXsiAOOZBnaR+13b5tlTLsR/J\nj7epXFllIvxwTg+AjvYgs6k06rIRj551HhoWbO6zromiEp4RlLAJl3KVhvGRS5vC\nc5Iw1gv7r0sEGfggeITOjnDLzwbwpm6UthApZu41OSZbHdtCCa2P9Govj8uuYu41\nvmrdX6QQyDacvb7x/QWroUtAlfM5ZbwnwbwIJ6GEZuKXbjW90/x7ZeBII5lr0cqt\nfAz08bM2HFg/jvRlq+yXCoIJwReBPnnVgL5lJrRiWisEYe6iFwkyUqAvTqM5GF6G\nVw1edlTqNU82tS5hIIYpoWbU2JlxQUU=\n-----END
+      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
       RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[],"standby_vms":[]}}'
     headers:
       Access-Control-Allow-Headers:
@@ -33,9 +30,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:37 GMT
+      - Wed, 19 Jun 2024 12:07:05 GMT
       Etag:
-      - W/"684b09a7a5a356eb01e67a8b3fd06acd"
+      - W/"f183b57d697ffaf9fbeceedf1291b8a4"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -43,7 +40,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "999"
       X-Request-Id:
-      - 324526a1-2897-4176-8104-47265d7fae37
+      - 577dc9cc-4f8f-4f9a-aaa6-433f2ddc7f31
     status: 200 OK
     code: 200
     duration: ""
@@ -51,16 +48,14 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_aGOXqXa9QjKxXRqA
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_nZQV3nWQDzEPJGv0
     method: GET
   response:
-    body: '{"load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":false,"backend_certificate":"-----BEGIN
-      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfYUdPWHFYYTlRakt4WFJxQS5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTA1MjM3WhgPMjA3NDA2MTkxMDUyMzdaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAMEVOmCQpS06MPabs/Hk+dEJfnFLgWYOHo9w\n+zmWKp1nEOd9oKnSGohKg6GdyIfFsqwlG3s+pcI6jFEDZDDIu7fXadvtFppbh3+M\nbVp3fiMuM0dwNVh8zZVkp9AQVeSRZnL3wO5ZTmHZYp4nCKcHpjWGJx87rr4xF8ws\n0JC3qZTzOrhsGbSzyGm+JJI1VgIJZTzAaM/Jomx9r4d7/o5JZ653hy1SoXaLEc2Z\nNUDQLz/p0hyE6tB2W2NUCvRy2vyTotVvMfLA/wzH8k5mq5xoEQx8hg4N/7M9f3u6\na3o/CzI7hnhEyE4NCXXctJd2UvgTMpF4zXUWCGuyI0MO9tJwcNIvNNO//yvKDVXM\ngzZcqpRWvkT2Z2nzHQx7R6vw/YdLS3GOU4eJJA+ljLNQwk5AAcuuOpKf5c/oF5LL\nMD2r8O9VTJJRnvG8zOUCiIwPmfd+QBZ6O4zrLbshE2XLQXOgY8VpF4VeuSSLazUL\nKjTUvLy7btdqPio0qJWR+E1o2TM7pg5hg77/vnEEje9fnC0ZKRtv82uALGi729nz\nHLwc1XbNoZHwTfZ5nyoxAJzXzoRW8ucpSqAoDLHpt54GhuLkNy/vp5UOVBCigHd6\nxzTfwiAUE6bTQWJ/f/dzlTO3SmsME4j6anpt05/WOaqMXsKEF2I3vxJYyrntF2r7\nW2AJHTf1AgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRh\nURW5bFUKsCemgLw0WdG9VQsTjTATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFGFRFblsVQqwJ6aAvDRZ0b1VCxON\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAiHW6DJwsQfU/\n5DZt2sLDMBo8kydnU7cjoyLvB4PC2smHf7FYh/nLBIEoZArreULe2953F9CRhP08\n6KtBbfl4xel5AjOwc3oRmOWdfHpYk5R4IjQrYdEXN0RYlZbw/uT1mOQ5m1E4Ya21\nsrLbBwnQZWFLp1U6nOK2CfT61Jk8wY1sEpnWW7Ga1fhheB+hmM+e4gk0UShldKsI\n0e3xAr7lcfpgoKCqRZBdbxzOo6rroiCk7IrMAkNLvNLAr3duprza4MmiH8wR1n86\nzrMhaRe+CkEucokCBt+Q0v3RgbNv7K7TLVA4tegjjhpw/xSuLKJ6D9BnITXKz0nc\nAN8uNY3buO5PGZQOQNMpTJiS+ejlHuELxWrYY+AU8R7dziqzLrd6hhdIuUGJ4VUW\nmiuYjfMxnBlEU1PjF1JiCIOtGSGVGNpfv7amPZTOTJWlc4ELFY9zXysE2bQpy9de\nkJOHDTPPVyIN6iZ2I2xiXx2gjaYrQMGo5RNdCHukxEOsgC2q4VgnXf3OoWGSCkjP\nfMs4vTgNTOENfAbVIPdkwAnH5FLP8MNXfyP+lQxsb6icExkZuCPwwejB9rMc4A1X\nMrofgaCRrqcv3jLrgzrLqeJUvWuWWQhbllng2CHCiSClqZNe3C45YO7y1+vMr/C/\ngI/BxIu5UNSCgh7p8v/nZ1otrB+g6lo=\n-----END
-      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
+    body: '{"load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":false,"backend_certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfblpRVjNuV1FEekVQSkd2MC5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTIwNzA1WhgPMjA3NDA2MTkxMjA3MDVaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAM+mV6pG7xy4NugCi8nxFqceQnFvkOFnwIAg\nPdb6IPFOZ6XQ9g4+5/8keKYO0We/V/kx8RxuBI3SzwLRt8oXPKIjdlZOsgk4NDEx\nbiWYi0kuWFAVYPTyfH6gPjzWDoc92nsjnX+UQ4gfkCVbSQbc78yq3bICTJ2wh5Aq\nbqz6CIv0iSb8fDdeWsOSsHtpDDvM5SOnVktD5tfyprcmF+J4Q3Y0bEDe2tdY6KpU\nk7Y7HUDp3b/FnAhPSO4ldOJJQwWQS2leXSB5/rFLELqAbHVCtwP6ObMGJNqGG46A\nqN5U96F04l8RGvVWkf+Jepy2bcm0ItIGsHh/xahejgqVxOxrZqcbHQD+NZI5uD0j\nglJl2lZ8kdCTc1jbPYmY64HfilExWlyuAmLT3Yl39kkErcWcrlGQliyyZnFTJJit\nUzVgFxwzEAfJD13KwYY0Hl1Kka9nHCt8dNRit+6RZBZiJidLHtzn0duC5ZpNwx3y\nGyGoiYxk/vcaii6goT0nivkYTw5RI+52JFT916yI0gv6SX0RNVd4rVQlsbtQcT31\nb+TjBhYoJTgqULJ5AOJd21KecXsfMkwTz2oVv1vF3FwjFHhHT70dxZz3xxBMpbe2\nko9feHB/2b2gxI63QiK1TU4X9WwGajOYLd0ABaYn5KeSdRwK/5yUI4h7iwUzkZbs\nnvdGdwsXAgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQe\nXAY7U4+HnRudhkGAOH7Jy9XJszATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFB5cBjtTj4edG52GQYA4fsnL1cmz\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAhc4xkU7pGPp2\nfBWaNUBeAstAZYJxJEtCZnQ9tufyyc9mxm0dINOcw8fkLEJe9MkEestgvwIZHLJX\nqNQ6EtSwf6gfyZ/Yb/OPw2HDuRsBWKoFCDrxEv33Ld86GP6nGVE4x5CXjIDAJD0G\nPZA/fX2QPCDDmrDjTUya+6PndzpwZgXkQ/rA/J1+Qr1CQcVwghyswmMZLqDAK7RH\ns9abWS39sZHRAq7+cTnDZlvJU60aJo3xr33xZYzgxWqPNfuuAbzDX72C5lVNwKJ5\nCCLNr/ryEUKTeNRLIImjke84VSZkXulu/tS1M0ywZfVAa5aAs5Jqx6wuaLw7n8Rh\nLNrgWIPQ61h/eYwvOAFvVHN+FT2C1WCEqCAM3V8aXsiAOOZBnaR+13b5tlTLsR/J\nj7epXFllIvxwTg+AjvYgs6k06rIRj551HhoWbO6zromiEp4RlLAJl3KVhvGRS5vC\nc5Iw1gv7r0sEGfggeITOjnDLzwbwpm6UthApZu41OSZbHdtCCa2P9Govj8uuYu41\nvmrdX6QQyDacvb7x/QWroUtAlfM5ZbwnwbwIJ6GEZuKXbjW90/x7ZeBII5lr0cqt\nfAz08bM2HFg/jvRlq+yXCoIJwReBPnnVgL5lJrRiWisEYe6iFwkyUqAvTqM5GF6G\nVw1edlTqNU82tS5hIIYpoWbU2JlxQUU=\n-----END
+      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
       RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[],"standby_vms":[]}}'
     headers:
       Access-Control-Allow-Headers:
@@ -76,9 +71,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:37 GMT
+      - Wed, 19 Jun 2024 12:07:05 GMT
       Etag:
-      - W/"684b09a7a5a356eb01e67a8b3fd06acd"
+      - W/"f183b57d697ffaf9fbeceedf1291b8a4"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -86,25 +81,22 @@ interactions:
       X-Ratelimit-Remaining:
       - "998"
       X-Request-Id:
-      - af3a300f-b30a-4cc8-bd2f-64263534b339
+      - 363c9ff6-a994-4ea1-b873-ab3f94a57f1c
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: |
-      {"properties":{"algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"backend_ssl":false,"passthrough_ssl":false,"certificates":[],"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2"}}
+    body: '{"load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0"},"properties":{"algorithm":"round_robin","backend_ssl":false,"certificates":[],"check_enabled":false,"check_fall":2,"check_http_statuses":"2","check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"destination_port":8443,"listen_port":443,"passthrough_ssl":false,"protocol":"HTTPS","proxy_protocol":false}}'
     form: {}
     headers:
-      Accept:
-      - application/json
       Content-Type:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/lb_aGOXqXa9QjKxXRqA/rules
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer/rules
     method: POST
   response:
-    body: '{"load_balancer_rule":{"id":"lbrule_pDeK8LxDowScIGmm","algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2","load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt"}}}'
+    body: '{"load_balancer_rule":{"id":"lbrule_0KlDwqlWmxxWLoTY","algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2","load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej"}}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -119,9 +111,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:37 GMT
+      - Wed, 19 Jun 2024 12:07:05 GMT
       Etag:
-      - W/"6cc2d892109f21341f174ea2f7beef3a"
+      - W/"8066f691654949e57093f0ae58e157b4"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -129,7 +121,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "997"
       X-Request-Id:
-      - 8195672d-0e5b-4c40-9035-b39e348848f1
+      - 52e905c2-f28f-49a9-b8cd-ada7a9039d66
     status: 200 OK
     code: 200
     duration: ""
@@ -137,14 +129,12 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/rules/_?load_balancer_rule%5Bid%5D=lbrule_pDeK8LxDowScIGmm
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/rules/:load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_0KlDwqlWmxxWLoTY
     method: GET
   response:
-    body: '{"load_balancer_rule":{"id":"lbrule_pDeK8LxDowScIGmm","algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2","load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt"}}}'
+    body: '{"load_balancer_rule":{"id":"lbrule_0KlDwqlWmxxWLoTY","algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2","load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej"}}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -159,9 +149,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:37 GMT
+      - Wed, 19 Jun 2024 12:07:06 GMT
       Etag:
-      - W/"6cc2d892109f21341f174ea2f7beef3a"
+      - W/"8066f691654949e57093f0ae58e157b4"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -169,7 +159,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "996"
       X-Request-Id:
-      - c0b03982-3cc6-4253-9dbe-4a47e0096f87
+      - b656bfa0-a272-4007-ad9d-8b5bdd59db23
     status: 200 OK
     code: 200
     duration: ""
@@ -177,16 +167,14 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_aGOXqXa9QjKxXRqA
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_nZQV3nWQDzEPJGv0
     method: GET
   response:
-    body: '{"load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":false,"backend_certificate":"-----BEGIN
-      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfYUdPWHFYYTlRakt4WFJxQS5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTA1MjM3WhgPMjA3NDA2MTkxMDUyMzdaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAMEVOmCQpS06MPabs/Hk+dEJfnFLgWYOHo9w\n+zmWKp1nEOd9oKnSGohKg6GdyIfFsqwlG3s+pcI6jFEDZDDIu7fXadvtFppbh3+M\nbVp3fiMuM0dwNVh8zZVkp9AQVeSRZnL3wO5ZTmHZYp4nCKcHpjWGJx87rr4xF8ws\n0JC3qZTzOrhsGbSzyGm+JJI1VgIJZTzAaM/Jomx9r4d7/o5JZ653hy1SoXaLEc2Z\nNUDQLz/p0hyE6tB2W2NUCvRy2vyTotVvMfLA/wzH8k5mq5xoEQx8hg4N/7M9f3u6\na3o/CzI7hnhEyE4NCXXctJd2UvgTMpF4zXUWCGuyI0MO9tJwcNIvNNO//yvKDVXM\ngzZcqpRWvkT2Z2nzHQx7R6vw/YdLS3GOU4eJJA+ljLNQwk5AAcuuOpKf5c/oF5LL\nMD2r8O9VTJJRnvG8zOUCiIwPmfd+QBZ6O4zrLbshE2XLQXOgY8VpF4VeuSSLazUL\nKjTUvLy7btdqPio0qJWR+E1o2TM7pg5hg77/vnEEje9fnC0ZKRtv82uALGi729nz\nHLwc1XbNoZHwTfZ5nyoxAJzXzoRW8ucpSqAoDLHpt54GhuLkNy/vp5UOVBCigHd6\nxzTfwiAUE6bTQWJ/f/dzlTO3SmsME4j6anpt05/WOaqMXsKEF2I3vxJYyrntF2r7\nW2AJHTf1AgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRh\nURW5bFUKsCemgLw0WdG9VQsTjTATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFGFRFblsVQqwJ6aAvDRZ0b1VCxON\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAiHW6DJwsQfU/\n5DZt2sLDMBo8kydnU7cjoyLvB4PC2smHf7FYh/nLBIEoZArreULe2953F9CRhP08\n6KtBbfl4xel5AjOwc3oRmOWdfHpYk5R4IjQrYdEXN0RYlZbw/uT1mOQ5m1E4Ya21\nsrLbBwnQZWFLp1U6nOK2CfT61Jk8wY1sEpnWW7Ga1fhheB+hmM+e4gk0UShldKsI\n0e3xAr7lcfpgoKCqRZBdbxzOo6rroiCk7IrMAkNLvNLAr3duprza4MmiH8wR1n86\nzrMhaRe+CkEucokCBt+Q0v3RgbNv7K7TLVA4tegjjhpw/xSuLKJ6D9BnITXKz0nc\nAN8uNY3buO5PGZQOQNMpTJiS+ejlHuELxWrYY+AU8R7dziqzLrd6hhdIuUGJ4VUW\nmiuYjfMxnBlEU1PjF1JiCIOtGSGVGNpfv7amPZTOTJWlc4ELFY9zXysE2bQpy9de\nkJOHDTPPVyIN6iZ2I2xiXx2gjaYrQMGo5RNdCHukxEOsgC2q4VgnXf3OoWGSCkjP\nfMs4vTgNTOENfAbVIPdkwAnH5FLP8MNXfyP+lQxsb6icExkZuCPwwejB9rMc4A1X\nMrofgaCRrqcv3jLrgzrLqeJUvWuWWQhbllng2CHCiSClqZNe3C45YO7y1+vMr/C/\ngI/BxIu5UNSCgh7p8v/nZ1otrB+g6lo=\n-----END
-      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
+    body: '{"load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":false,"backend_certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfblpRVjNuV1FEekVQSkd2MC5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTIwNzA1WhgPMjA3NDA2MTkxMjA3MDVaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAM+mV6pG7xy4NugCi8nxFqceQnFvkOFnwIAg\nPdb6IPFOZ6XQ9g4+5/8keKYO0We/V/kx8RxuBI3SzwLRt8oXPKIjdlZOsgk4NDEx\nbiWYi0kuWFAVYPTyfH6gPjzWDoc92nsjnX+UQ4gfkCVbSQbc78yq3bICTJ2wh5Aq\nbqz6CIv0iSb8fDdeWsOSsHtpDDvM5SOnVktD5tfyprcmF+J4Q3Y0bEDe2tdY6KpU\nk7Y7HUDp3b/FnAhPSO4ldOJJQwWQS2leXSB5/rFLELqAbHVCtwP6ObMGJNqGG46A\nqN5U96F04l8RGvVWkf+Jepy2bcm0ItIGsHh/xahejgqVxOxrZqcbHQD+NZI5uD0j\nglJl2lZ8kdCTc1jbPYmY64HfilExWlyuAmLT3Yl39kkErcWcrlGQliyyZnFTJJit\nUzVgFxwzEAfJD13KwYY0Hl1Kka9nHCt8dNRit+6RZBZiJidLHtzn0duC5ZpNwx3y\nGyGoiYxk/vcaii6goT0nivkYTw5RI+52JFT916yI0gv6SX0RNVd4rVQlsbtQcT31\nb+TjBhYoJTgqULJ5AOJd21KecXsfMkwTz2oVv1vF3FwjFHhHT70dxZz3xxBMpbe2\nko9feHB/2b2gxI63QiK1TU4X9WwGajOYLd0ABaYn5KeSdRwK/5yUI4h7iwUzkZbs\nnvdGdwsXAgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQe\nXAY7U4+HnRudhkGAOH7Jy9XJszATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFB5cBjtTj4edG52GQYA4fsnL1cmz\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAhc4xkU7pGPp2\nfBWaNUBeAstAZYJxJEtCZnQ9tufyyc9mxm0dINOcw8fkLEJe9MkEestgvwIZHLJX\nqNQ6EtSwf6gfyZ/Yb/OPw2HDuRsBWKoFCDrxEv33Ld86GP6nGVE4x5CXjIDAJD0G\nPZA/fX2QPCDDmrDjTUya+6PndzpwZgXkQ/rA/J1+Qr1CQcVwghyswmMZLqDAK7RH\ns9abWS39sZHRAq7+cTnDZlvJU60aJo3xr33xZYzgxWqPNfuuAbzDX72C5lVNwKJ5\nCCLNr/ryEUKTeNRLIImjke84VSZkXulu/tS1M0ywZfVAa5aAs5Jqx6wuaLw7n8Rh\nLNrgWIPQ61h/eYwvOAFvVHN+FT2C1WCEqCAM3V8aXsiAOOZBnaR+13b5tlTLsR/J\nj7epXFllIvxwTg+AjvYgs6k06rIRj551HhoWbO6zromiEp4RlLAJl3KVhvGRS5vC\nc5Iw1gv7r0sEGfggeITOjnDLzwbwpm6UthApZu41OSZbHdtCCa2P9Govj8uuYu41\nvmrdX6QQyDacvb7x/QWroUtAlfM5ZbwnwbwIJ6GEZuKXbjW90/x7ZeBII5lr0cqt\nfAz08bM2HFg/jvRlq+yXCoIJwReBPnnVgL5lJrRiWisEYe6iFwkyUqAvTqM5GF6G\nVw1edlTqNU82tS5hIIYpoWbU2JlxQUU=\n-----END
+      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
       RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[],"standby_vms":[]}}'
     headers:
       Access-Control-Allow-Headers:
@@ -202,9 +190,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:37 GMT
+      - Wed, 19 Jun 2024 12:07:06 GMT
       Etag:
-      - W/"684b09a7a5a356eb01e67a8b3fd06acd"
+      - W/"f183b57d697ffaf9fbeceedf1291b8a4"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -212,7 +200,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "995"
       X-Request-Id:
-      - 52791f36-e897-4493-85be-4698d6b00127
+      - 3a700885-e8c8-4213-8150-6c0cabdd598f
     status: 200 OK
     code: 200
     duration: ""
@@ -220,14 +208,12 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/rules/_?load_balancer_rule%5Bid%5D=lbrule_pDeK8LxDowScIGmm
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/rules/:load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_0KlDwqlWmxxWLoTY
     method: GET
   response:
-    body: '{"load_balancer_rule":{"id":"lbrule_pDeK8LxDowScIGmm","algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2","load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt"}}}'
+    body: '{"load_balancer_rule":{"id":"lbrule_0KlDwqlWmxxWLoTY","algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2","load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej"}}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -242,9 +228,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:37 GMT
+      - Wed, 19 Jun 2024 12:07:06 GMT
       Etag:
-      - W/"6cc2d892109f21341f174ea2f7beef3a"
+      - W/"8066f691654949e57093f0ae58e157b4"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -252,7 +238,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "994"
       X-Request-Id:
-      - c9490a52-5110-4dc0-abf4-9a6a10a39b5e
+      - 5274f2be-ab35-45fb-b9ff-03047135bce9
     status: 200 OK
     code: 200
     duration: ""
@@ -260,16 +246,14 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_aGOXqXa9QjKxXRqA
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_nZQV3nWQDzEPJGv0
     method: GET
   response:
-    body: '{"load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":false,"backend_certificate":"-----BEGIN
-      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfYUdPWHFYYTlRakt4WFJxQS5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTA1MjM3WhgPMjA3NDA2MTkxMDUyMzdaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAMEVOmCQpS06MPabs/Hk+dEJfnFLgWYOHo9w\n+zmWKp1nEOd9oKnSGohKg6GdyIfFsqwlG3s+pcI6jFEDZDDIu7fXadvtFppbh3+M\nbVp3fiMuM0dwNVh8zZVkp9AQVeSRZnL3wO5ZTmHZYp4nCKcHpjWGJx87rr4xF8ws\n0JC3qZTzOrhsGbSzyGm+JJI1VgIJZTzAaM/Jomx9r4d7/o5JZ653hy1SoXaLEc2Z\nNUDQLz/p0hyE6tB2W2NUCvRy2vyTotVvMfLA/wzH8k5mq5xoEQx8hg4N/7M9f3u6\na3o/CzI7hnhEyE4NCXXctJd2UvgTMpF4zXUWCGuyI0MO9tJwcNIvNNO//yvKDVXM\ngzZcqpRWvkT2Z2nzHQx7R6vw/YdLS3GOU4eJJA+ljLNQwk5AAcuuOpKf5c/oF5LL\nMD2r8O9VTJJRnvG8zOUCiIwPmfd+QBZ6O4zrLbshE2XLQXOgY8VpF4VeuSSLazUL\nKjTUvLy7btdqPio0qJWR+E1o2TM7pg5hg77/vnEEje9fnC0ZKRtv82uALGi729nz\nHLwc1XbNoZHwTfZ5nyoxAJzXzoRW8ucpSqAoDLHpt54GhuLkNy/vp5UOVBCigHd6\nxzTfwiAUE6bTQWJ/f/dzlTO3SmsME4j6anpt05/WOaqMXsKEF2I3vxJYyrntF2r7\nW2AJHTf1AgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRh\nURW5bFUKsCemgLw0WdG9VQsTjTATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFGFRFblsVQqwJ6aAvDRZ0b1VCxON\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAiHW6DJwsQfU/\n5DZt2sLDMBo8kydnU7cjoyLvB4PC2smHf7FYh/nLBIEoZArreULe2953F9CRhP08\n6KtBbfl4xel5AjOwc3oRmOWdfHpYk5R4IjQrYdEXN0RYlZbw/uT1mOQ5m1E4Ya21\nsrLbBwnQZWFLp1U6nOK2CfT61Jk8wY1sEpnWW7Ga1fhheB+hmM+e4gk0UShldKsI\n0e3xAr7lcfpgoKCqRZBdbxzOo6rroiCk7IrMAkNLvNLAr3duprza4MmiH8wR1n86\nzrMhaRe+CkEucokCBt+Q0v3RgbNv7K7TLVA4tegjjhpw/xSuLKJ6D9BnITXKz0nc\nAN8uNY3buO5PGZQOQNMpTJiS+ejlHuELxWrYY+AU8R7dziqzLrd6hhdIuUGJ4VUW\nmiuYjfMxnBlEU1PjF1JiCIOtGSGVGNpfv7amPZTOTJWlc4ELFY9zXysE2bQpy9de\nkJOHDTPPVyIN6iZ2I2xiXx2gjaYrQMGo5RNdCHukxEOsgC2q4VgnXf3OoWGSCkjP\nfMs4vTgNTOENfAbVIPdkwAnH5FLP8MNXfyP+lQxsb6icExkZuCPwwejB9rMc4A1X\nMrofgaCRrqcv3jLrgzrLqeJUvWuWWQhbllng2CHCiSClqZNe3C45YO7y1+vMr/C/\ngI/BxIu5UNSCgh7p8v/nZ1otrB+g6lo=\n-----END
-      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
+    body: '{"load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":false,"backend_certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfblpRVjNuV1FEekVQSkd2MC5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTIwNzA1WhgPMjA3NDA2MTkxMjA3MDVaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAM+mV6pG7xy4NugCi8nxFqceQnFvkOFnwIAg\nPdb6IPFOZ6XQ9g4+5/8keKYO0We/V/kx8RxuBI3SzwLRt8oXPKIjdlZOsgk4NDEx\nbiWYi0kuWFAVYPTyfH6gPjzWDoc92nsjnX+UQ4gfkCVbSQbc78yq3bICTJ2wh5Aq\nbqz6CIv0iSb8fDdeWsOSsHtpDDvM5SOnVktD5tfyprcmF+J4Q3Y0bEDe2tdY6KpU\nk7Y7HUDp3b/FnAhPSO4ldOJJQwWQS2leXSB5/rFLELqAbHVCtwP6ObMGJNqGG46A\nqN5U96F04l8RGvVWkf+Jepy2bcm0ItIGsHh/xahejgqVxOxrZqcbHQD+NZI5uD0j\nglJl2lZ8kdCTc1jbPYmY64HfilExWlyuAmLT3Yl39kkErcWcrlGQliyyZnFTJJit\nUzVgFxwzEAfJD13KwYY0Hl1Kka9nHCt8dNRit+6RZBZiJidLHtzn0duC5ZpNwx3y\nGyGoiYxk/vcaii6goT0nivkYTw5RI+52JFT916yI0gv6SX0RNVd4rVQlsbtQcT31\nb+TjBhYoJTgqULJ5AOJd21KecXsfMkwTz2oVv1vF3FwjFHhHT70dxZz3xxBMpbe2\nko9feHB/2b2gxI63QiK1TU4X9WwGajOYLd0ABaYn5KeSdRwK/5yUI4h7iwUzkZbs\nnvdGdwsXAgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQe\nXAY7U4+HnRudhkGAOH7Jy9XJszATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFB5cBjtTj4edG52GQYA4fsnL1cmz\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAhc4xkU7pGPp2\nfBWaNUBeAstAZYJxJEtCZnQ9tufyyc9mxm0dINOcw8fkLEJe9MkEestgvwIZHLJX\nqNQ6EtSwf6gfyZ/Yb/OPw2HDuRsBWKoFCDrxEv33Ld86GP6nGVE4x5CXjIDAJD0G\nPZA/fX2QPCDDmrDjTUya+6PndzpwZgXkQ/rA/J1+Qr1CQcVwghyswmMZLqDAK7RH\ns9abWS39sZHRAq7+cTnDZlvJU60aJo3xr33xZYzgxWqPNfuuAbzDX72C5lVNwKJ5\nCCLNr/ryEUKTeNRLIImjke84VSZkXulu/tS1M0ywZfVAa5aAs5Jqx6wuaLw7n8Rh\nLNrgWIPQ61h/eYwvOAFvVHN+FT2C1WCEqCAM3V8aXsiAOOZBnaR+13b5tlTLsR/J\nj7epXFllIvxwTg+AjvYgs6k06rIRj551HhoWbO6zromiEp4RlLAJl3KVhvGRS5vC\nc5Iw1gv7r0sEGfggeITOjnDLzwbwpm6UthApZu41OSZbHdtCCa2P9Govj8uuYu41\nvmrdX6QQyDacvb7x/QWroUtAlfM5ZbwnwbwIJ6GEZuKXbjW90/x7ZeBII5lr0cqt\nfAz08bM2HFg/jvRlq+yXCoIJwReBPnnVgL5lJrRiWisEYe6iFwkyUqAvTqM5GF6G\nVw1edlTqNU82tS5hIIYpoWbU2JlxQUU=\n-----END
+      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
       RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[],"standby_vms":[]}}'
     headers:
       Access-Control-Allow-Headers:
@@ -285,9 +269,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:37 GMT
+      - Wed, 19 Jun 2024 12:07:06 GMT
       Etag:
-      - W/"684b09a7a5a356eb01e67a8b3fd06acd"
+      - W/"f183b57d697ffaf9fbeceedf1291b8a4"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -295,7 +279,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "993"
       X-Request-Id:
-      - cf4f1690-7b92-4b83-9d13-8fab90ee343d
+      - bc88a557-6854-4d90-b914-c4bedafca6a9
     status: 200 OK
     code: 200
     duration: ""
@@ -303,14 +287,12 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/rules/_?load_balancer_rule%5Bid%5D=lbrule_pDeK8LxDowScIGmm
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/rules/:load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_0KlDwqlWmxxWLoTY
     method: GET
   response:
-    body: '{"load_balancer_rule":{"id":"lbrule_pDeK8LxDowScIGmm","algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2","load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt"}}}'
+    body: '{"load_balancer_rule":{"id":"lbrule_0KlDwqlWmxxWLoTY","algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2","load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej"}}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -325,9 +307,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:37 GMT
+      - Wed, 19 Jun 2024 12:07:06 GMT
       Etag:
-      - W/"6cc2d892109f21341f174ea2f7beef3a"
+      - W/"8066f691654949e57093f0ae58e157b4"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -335,7 +317,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "992"
       X-Request-Id:
-      - d89344b6-f008-4b7e-98bc-d7962b008728
+      - 579be7b5-a9fb-4197-8d14-4f7e50610cd6
     status: 200 OK
     code: 200
     duration: ""
@@ -343,16 +325,14 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_aGOXqXa9QjKxXRqA
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_nZQV3nWQDzEPJGv0
     method: GET
   response:
-    body: '{"load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":false,"backend_certificate":"-----BEGIN
-      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfYUdPWHFYYTlRakt4WFJxQS5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTA1MjM3WhgPMjA3NDA2MTkxMDUyMzdaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAMEVOmCQpS06MPabs/Hk+dEJfnFLgWYOHo9w\n+zmWKp1nEOd9oKnSGohKg6GdyIfFsqwlG3s+pcI6jFEDZDDIu7fXadvtFppbh3+M\nbVp3fiMuM0dwNVh8zZVkp9AQVeSRZnL3wO5ZTmHZYp4nCKcHpjWGJx87rr4xF8ws\n0JC3qZTzOrhsGbSzyGm+JJI1VgIJZTzAaM/Jomx9r4d7/o5JZ653hy1SoXaLEc2Z\nNUDQLz/p0hyE6tB2W2NUCvRy2vyTotVvMfLA/wzH8k5mq5xoEQx8hg4N/7M9f3u6\na3o/CzI7hnhEyE4NCXXctJd2UvgTMpF4zXUWCGuyI0MO9tJwcNIvNNO//yvKDVXM\ngzZcqpRWvkT2Z2nzHQx7R6vw/YdLS3GOU4eJJA+ljLNQwk5AAcuuOpKf5c/oF5LL\nMD2r8O9VTJJRnvG8zOUCiIwPmfd+QBZ6O4zrLbshE2XLQXOgY8VpF4VeuSSLazUL\nKjTUvLy7btdqPio0qJWR+E1o2TM7pg5hg77/vnEEje9fnC0ZKRtv82uALGi729nz\nHLwc1XbNoZHwTfZ5nyoxAJzXzoRW8ucpSqAoDLHpt54GhuLkNy/vp5UOVBCigHd6\nxzTfwiAUE6bTQWJ/f/dzlTO3SmsME4j6anpt05/WOaqMXsKEF2I3vxJYyrntF2r7\nW2AJHTf1AgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRh\nURW5bFUKsCemgLw0WdG9VQsTjTATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFGFRFblsVQqwJ6aAvDRZ0b1VCxON\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAiHW6DJwsQfU/\n5DZt2sLDMBo8kydnU7cjoyLvB4PC2smHf7FYh/nLBIEoZArreULe2953F9CRhP08\n6KtBbfl4xel5AjOwc3oRmOWdfHpYk5R4IjQrYdEXN0RYlZbw/uT1mOQ5m1E4Ya21\nsrLbBwnQZWFLp1U6nOK2CfT61Jk8wY1sEpnWW7Ga1fhheB+hmM+e4gk0UShldKsI\n0e3xAr7lcfpgoKCqRZBdbxzOo6rroiCk7IrMAkNLvNLAr3duprza4MmiH8wR1n86\nzrMhaRe+CkEucokCBt+Q0v3RgbNv7K7TLVA4tegjjhpw/xSuLKJ6D9BnITXKz0nc\nAN8uNY3buO5PGZQOQNMpTJiS+ejlHuELxWrYY+AU8R7dziqzLrd6hhdIuUGJ4VUW\nmiuYjfMxnBlEU1PjF1JiCIOtGSGVGNpfv7amPZTOTJWlc4ELFY9zXysE2bQpy9de\nkJOHDTPPVyIN6iZ2I2xiXx2gjaYrQMGo5RNdCHukxEOsgC2q4VgnXf3OoWGSCkjP\nfMs4vTgNTOENfAbVIPdkwAnH5FLP8MNXfyP+lQxsb6icExkZuCPwwejB9rMc4A1X\nMrofgaCRrqcv3jLrgzrLqeJUvWuWWQhbllng2CHCiSClqZNe3C45YO7y1+vMr/C/\ngI/BxIu5UNSCgh7p8v/nZ1otrB+g6lo=\n-----END
-      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
+    body: '{"load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":false,"backend_certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfblpRVjNuV1FEekVQSkd2MC5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTIwNzA1WhgPMjA3NDA2MTkxMjA3MDVaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAM+mV6pG7xy4NugCi8nxFqceQnFvkOFnwIAg\nPdb6IPFOZ6XQ9g4+5/8keKYO0We/V/kx8RxuBI3SzwLRt8oXPKIjdlZOsgk4NDEx\nbiWYi0kuWFAVYPTyfH6gPjzWDoc92nsjnX+UQ4gfkCVbSQbc78yq3bICTJ2wh5Aq\nbqz6CIv0iSb8fDdeWsOSsHtpDDvM5SOnVktD5tfyprcmF+J4Q3Y0bEDe2tdY6KpU\nk7Y7HUDp3b/FnAhPSO4ldOJJQwWQS2leXSB5/rFLELqAbHVCtwP6ObMGJNqGG46A\nqN5U96F04l8RGvVWkf+Jepy2bcm0ItIGsHh/xahejgqVxOxrZqcbHQD+NZI5uD0j\nglJl2lZ8kdCTc1jbPYmY64HfilExWlyuAmLT3Yl39kkErcWcrlGQliyyZnFTJJit\nUzVgFxwzEAfJD13KwYY0Hl1Kka9nHCt8dNRit+6RZBZiJidLHtzn0duC5ZpNwx3y\nGyGoiYxk/vcaii6goT0nivkYTw5RI+52JFT916yI0gv6SX0RNVd4rVQlsbtQcT31\nb+TjBhYoJTgqULJ5AOJd21KecXsfMkwTz2oVv1vF3FwjFHhHT70dxZz3xxBMpbe2\nko9feHB/2b2gxI63QiK1TU4X9WwGajOYLd0ABaYn5KeSdRwK/5yUI4h7iwUzkZbs\nnvdGdwsXAgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQe\nXAY7U4+HnRudhkGAOH7Jy9XJszATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFB5cBjtTj4edG52GQYA4fsnL1cmz\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAhc4xkU7pGPp2\nfBWaNUBeAstAZYJxJEtCZnQ9tufyyc9mxm0dINOcw8fkLEJe9MkEestgvwIZHLJX\nqNQ6EtSwf6gfyZ/Yb/OPw2HDuRsBWKoFCDrxEv33Ld86GP6nGVE4x5CXjIDAJD0G\nPZA/fX2QPCDDmrDjTUya+6PndzpwZgXkQ/rA/J1+Qr1CQcVwghyswmMZLqDAK7RH\ns9abWS39sZHRAq7+cTnDZlvJU60aJo3xr33xZYzgxWqPNfuuAbzDX72C5lVNwKJ5\nCCLNr/ryEUKTeNRLIImjke84VSZkXulu/tS1M0ywZfVAa5aAs5Jqx6wuaLw7n8Rh\nLNrgWIPQ61h/eYwvOAFvVHN+FT2C1WCEqCAM3V8aXsiAOOZBnaR+13b5tlTLsR/J\nj7epXFllIvxwTg+AjvYgs6k06rIRj551HhoWbO6zromiEp4RlLAJl3KVhvGRS5vC\nc5Iw1gv7r0sEGfggeITOjnDLzwbwpm6UthApZu41OSZbHdtCCa2P9Govj8uuYu41\nvmrdX6QQyDacvb7x/QWroUtAlfM5ZbwnwbwIJ6GEZuKXbjW90/x7ZeBII5lr0cqt\nfAz08bM2HFg/jvRlq+yXCoIJwReBPnnVgL5lJrRiWisEYe6iFwkyUqAvTqM5GF6G\nVw1edlTqNU82tS5hIIYpoWbU2JlxQUU=\n-----END
+      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
       RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[],"standby_vms":[]}}'
     headers:
       Access-Control-Allow-Headers:
@@ -368,9 +348,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:38 GMT
+      - Wed, 19 Jun 2024 12:07:06 GMT
       Etag:
-      - W/"684b09a7a5a356eb01e67a8b3fd06acd"
+      - W/"f183b57d697ffaf9fbeceedf1291b8a4"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -378,7 +358,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "991"
       X-Request-Id:
-      - 0f9710ef-3dfc-40ff-9c9b-3f24af1ca13f
+      - a8943800-6218-4597-9d29-04bff644ce2f
     status: 200 OK
     code: 200
     duration: ""
@@ -386,14 +366,12 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/rules/_?load_balancer_rule%5Bid%5D=lbrule_pDeK8LxDowScIGmm
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/rules/:load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_0KlDwqlWmxxWLoTY
     method: GET
   response:
-    body: '{"load_balancer_rule":{"id":"lbrule_pDeK8LxDowScIGmm","algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2","load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt"}}}'
+    body: '{"load_balancer_rule":{"id":"lbrule_0KlDwqlWmxxWLoTY","algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2","load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej"}}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -408,9 +386,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:38 GMT
+      - Wed, 19 Jun 2024 12:07:07 GMT
       Etag:
-      - W/"6cc2d892109f21341f174ea2f7beef3a"
+      - W/"8066f691654949e57093f0ae58e157b4"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -418,27 +396,24 @@ interactions:
       X-Ratelimit-Remaining:
       - "990"
       X-Request-Id:
-      - 84cea594-2c49-4416-9a5a-54aba7637aea
+      - 67d0a72b-272a-4905-89ef-7bfbc2b83648
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: |
-      {"load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA"},"properties":{"resource_ids":[],"https_redirect":true}}
+    body: '{"load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0"},"properties":{"https_redirect":true,"resource_ids":[],"resource_type":"virtual_machines"}}'
     form: {}
     headers:
-      Accept:
-      - application/json
       Content-Type:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer
     method: PATCH
   response:
-    body: '{"load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":true,"backend_certificate":"-----BEGIN
-      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfYUdPWHFYYTlRakt4WFJxQS5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTA1MjM3WhgPMjA3NDA2MTkxMDUyMzdaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAMEVOmCQpS06MPabs/Hk+dEJfnFLgWYOHo9w\n+zmWKp1nEOd9oKnSGohKg6GdyIfFsqwlG3s+pcI6jFEDZDDIu7fXadvtFppbh3+M\nbVp3fiMuM0dwNVh8zZVkp9AQVeSRZnL3wO5ZTmHZYp4nCKcHpjWGJx87rr4xF8ws\n0JC3qZTzOrhsGbSzyGm+JJI1VgIJZTzAaM/Jomx9r4d7/o5JZ653hy1SoXaLEc2Z\nNUDQLz/p0hyE6tB2W2NUCvRy2vyTotVvMfLA/wzH8k5mq5xoEQx8hg4N/7M9f3u6\na3o/CzI7hnhEyE4NCXXctJd2UvgTMpF4zXUWCGuyI0MO9tJwcNIvNNO//yvKDVXM\ngzZcqpRWvkT2Z2nzHQx7R6vw/YdLS3GOU4eJJA+ljLNQwk5AAcuuOpKf5c/oF5LL\nMD2r8O9VTJJRnvG8zOUCiIwPmfd+QBZ6O4zrLbshE2XLQXOgY8VpF4VeuSSLazUL\nKjTUvLy7btdqPio0qJWR+E1o2TM7pg5hg77/vnEEje9fnC0ZKRtv82uALGi729nz\nHLwc1XbNoZHwTfZ5nyoxAJzXzoRW8ucpSqAoDLHpt54GhuLkNy/vp5UOVBCigHd6\nxzTfwiAUE6bTQWJ/f/dzlTO3SmsME4j6anpt05/WOaqMXsKEF2I3vxJYyrntF2r7\nW2AJHTf1AgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRh\nURW5bFUKsCemgLw0WdG9VQsTjTATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFGFRFblsVQqwJ6aAvDRZ0b1VCxON\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAiHW6DJwsQfU/\n5DZt2sLDMBo8kydnU7cjoyLvB4PC2smHf7FYh/nLBIEoZArreULe2953F9CRhP08\n6KtBbfl4xel5AjOwc3oRmOWdfHpYk5R4IjQrYdEXN0RYlZbw/uT1mOQ5m1E4Ya21\nsrLbBwnQZWFLp1U6nOK2CfT61Jk8wY1sEpnWW7Ga1fhheB+hmM+e4gk0UShldKsI\n0e3xAr7lcfpgoKCqRZBdbxzOo6rroiCk7IrMAkNLvNLAr3duprza4MmiH8wR1n86\nzrMhaRe+CkEucokCBt+Q0v3RgbNv7K7TLVA4tegjjhpw/xSuLKJ6D9BnITXKz0nc\nAN8uNY3buO5PGZQOQNMpTJiS+ejlHuELxWrYY+AU8R7dziqzLrd6hhdIuUGJ4VUW\nmiuYjfMxnBlEU1PjF1JiCIOtGSGVGNpfv7amPZTOTJWlc4ELFY9zXysE2bQpy9de\nkJOHDTPPVyIN6iZ2I2xiXx2gjaYrQMGo5RNdCHukxEOsgC2q4VgnXf3OoWGSCkjP\nfMs4vTgNTOENfAbVIPdkwAnH5FLP8MNXfyP+lQxsb6icExkZuCPwwejB9rMc4A1X\nMrofgaCRrqcv3jLrgzrLqeJUvWuWWQhbllng2CHCiSClqZNe3C45YO7y1+vMr/C/\ngI/BxIu5UNSCgh7p8v/nZ1otrB+g6lo=\n-----END
-      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
+    body: '{"load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":true,"backend_certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfblpRVjNuV1FEekVQSkd2MC5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTIwNzA1WhgPMjA3NDA2MTkxMjA3MDVaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAM+mV6pG7xy4NugCi8nxFqceQnFvkOFnwIAg\nPdb6IPFOZ6XQ9g4+5/8keKYO0We/V/kx8RxuBI3SzwLRt8oXPKIjdlZOsgk4NDEx\nbiWYi0kuWFAVYPTyfH6gPjzWDoc92nsjnX+UQ4gfkCVbSQbc78yq3bICTJ2wh5Aq\nbqz6CIv0iSb8fDdeWsOSsHtpDDvM5SOnVktD5tfyprcmF+J4Q3Y0bEDe2tdY6KpU\nk7Y7HUDp3b/FnAhPSO4ldOJJQwWQS2leXSB5/rFLELqAbHVCtwP6ObMGJNqGG46A\nqN5U96F04l8RGvVWkf+Jepy2bcm0ItIGsHh/xahejgqVxOxrZqcbHQD+NZI5uD0j\nglJl2lZ8kdCTc1jbPYmY64HfilExWlyuAmLT3Yl39kkErcWcrlGQliyyZnFTJJit\nUzVgFxwzEAfJD13KwYY0Hl1Kka9nHCt8dNRit+6RZBZiJidLHtzn0duC5ZpNwx3y\nGyGoiYxk/vcaii6goT0nivkYTw5RI+52JFT916yI0gv6SX0RNVd4rVQlsbtQcT31\nb+TjBhYoJTgqULJ5AOJd21KecXsfMkwTz2oVv1vF3FwjFHhHT70dxZz3xxBMpbe2\nko9feHB/2b2gxI63QiK1TU4X9WwGajOYLd0ABaYn5KeSdRwK/5yUI4h7iwUzkZbs\nnvdGdwsXAgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQe\nXAY7U4+HnRudhkGAOH7Jy9XJszATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFB5cBjtTj4edG52GQYA4fsnL1cmz\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAhc4xkU7pGPp2\nfBWaNUBeAstAZYJxJEtCZnQ9tufyyc9mxm0dINOcw8fkLEJe9MkEestgvwIZHLJX\nqNQ6EtSwf6gfyZ/Yb/OPw2HDuRsBWKoFCDrxEv33Ld86GP6nGVE4x5CXjIDAJD0G\nPZA/fX2QPCDDmrDjTUya+6PndzpwZgXkQ/rA/J1+Qr1CQcVwghyswmMZLqDAK7RH\ns9abWS39sZHRAq7+cTnDZlvJU60aJo3xr33xZYzgxWqPNfuuAbzDX72C5lVNwKJ5\nCCLNr/ryEUKTeNRLIImjke84VSZkXulu/tS1M0ywZfVAa5aAs5Jqx6wuaLw7n8Rh\nLNrgWIPQ61h/eYwvOAFvVHN+FT2C1WCEqCAM3V8aXsiAOOZBnaR+13b5tlTLsR/J\nj7epXFllIvxwTg+AjvYgs6k06rIRj551HhoWbO6zromiEp4RlLAJl3KVhvGRS5vC\nc5Iw1gv7r0sEGfggeITOjnDLzwbwpm6UthApZu41OSZbHdtCCa2P9Govj8uuYu41\nvmrdX6QQyDacvb7x/QWroUtAlfM5ZbwnwbwIJ6GEZuKXbjW90/x7ZeBII5lr0cqt\nfAz08bM2HFg/jvRlq+yXCoIJwReBPnnVgL5lJrRiWisEYe6iFwkyUqAvTqM5GF6G\nVw1edlTqNU82tS5hIIYpoWbU2JlxQUU=\n-----END
+      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
       RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[],"standby_vms":[]}}'
     headers:
       Access-Control-Allow-Headers:
@@ -454,9 +429,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:38 GMT
+      - Wed, 19 Jun 2024 12:07:07 GMT
       Etag:
-      - W/"942f8731945efb172bec4704366d5bdc"
+      - W/"d022c58ffef3d6ec79a584b8f41f9d45"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -464,7 +439,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "989"
       X-Request-Id:
-      - 20245370-d5e0-47b5-99aa-75e4d3eb9ed3
+      - 6aba0177-2645-4d47-8b50-7b88f57074c8
     status: 200 OK
     code: 200
     duration: ""
@@ -472,16 +447,14 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_aGOXqXa9QjKxXRqA
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_nZQV3nWQDzEPJGv0
     method: GET
   response:
-    body: '{"load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":true,"backend_certificate":"-----BEGIN
-      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfYUdPWHFYYTlRakt4WFJxQS5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTA1MjM3WhgPMjA3NDA2MTkxMDUyMzdaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAMEVOmCQpS06MPabs/Hk+dEJfnFLgWYOHo9w\n+zmWKp1nEOd9oKnSGohKg6GdyIfFsqwlG3s+pcI6jFEDZDDIu7fXadvtFppbh3+M\nbVp3fiMuM0dwNVh8zZVkp9AQVeSRZnL3wO5ZTmHZYp4nCKcHpjWGJx87rr4xF8ws\n0JC3qZTzOrhsGbSzyGm+JJI1VgIJZTzAaM/Jomx9r4d7/o5JZ653hy1SoXaLEc2Z\nNUDQLz/p0hyE6tB2W2NUCvRy2vyTotVvMfLA/wzH8k5mq5xoEQx8hg4N/7M9f3u6\na3o/CzI7hnhEyE4NCXXctJd2UvgTMpF4zXUWCGuyI0MO9tJwcNIvNNO//yvKDVXM\ngzZcqpRWvkT2Z2nzHQx7R6vw/YdLS3GOU4eJJA+ljLNQwk5AAcuuOpKf5c/oF5LL\nMD2r8O9VTJJRnvG8zOUCiIwPmfd+QBZ6O4zrLbshE2XLQXOgY8VpF4VeuSSLazUL\nKjTUvLy7btdqPio0qJWR+E1o2TM7pg5hg77/vnEEje9fnC0ZKRtv82uALGi729nz\nHLwc1XbNoZHwTfZ5nyoxAJzXzoRW8ucpSqAoDLHpt54GhuLkNy/vp5UOVBCigHd6\nxzTfwiAUE6bTQWJ/f/dzlTO3SmsME4j6anpt05/WOaqMXsKEF2I3vxJYyrntF2r7\nW2AJHTf1AgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRh\nURW5bFUKsCemgLw0WdG9VQsTjTATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFGFRFblsVQqwJ6aAvDRZ0b1VCxON\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAiHW6DJwsQfU/\n5DZt2sLDMBo8kydnU7cjoyLvB4PC2smHf7FYh/nLBIEoZArreULe2953F9CRhP08\n6KtBbfl4xel5AjOwc3oRmOWdfHpYk5R4IjQrYdEXN0RYlZbw/uT1mOQ5m1E4Ya21\nsrLbBwnQZWFLp1U6nOK2CfT61Jk8wY1sEpnWW7Ga1fhheB+hmM+e4gk0UShldKsI\n0e3xAr7lcfpgoKCqRZBdbxzOo6rroiCk7IrMAkNLvNLAr3duprza4MmiH8wR1n86\nzrMhaRe+CkEucokCBt+Q0v3RgbNv7K7TLVA4tegjjhpw/xSuLKJ6D9BnITXKz0nc\nAN8uNY3buO5PGZQOQNMpTJiS+ejlHuELxWrYY+AU8R7dziqzLrd6hhdIuUGJ4VUW\nmiuYjfMxnBlEU1PjF1JiCIOtGSGVGNpfv7amPZTOTJWlc4ELFY9zXysE2bQpy9de\nkJOHDTPPVyIN6iZ2I2xiXx2gjaYrQMGo5RNdCHukxEOsgC2q4VgnXf3OoWGSCkjP\nfMs4vTgNTOENfAbVIPdkwAnH5FLP8MNXfyP+lQxsb6icExkZuCPwwejB9rMc4A1X\nMrofgaCRrqcv3jLrgzrLqeJUvWuWWQhbllng2CHCiSClqZNe3C45YO7y1+vMr/C/\ngI/BxIu5UNSCgh7p8v/nZ1otrB+g6lo=\n-----END
-      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\nMIIJKQIBAAKCAgEAwRU6YJClLTow9puz8eT50Ql+cUuBZg4ej3D7OZYqnWcQ532g\nqdIaiEqDoZ3Ih8WyrCUbez6lwjqMUQNkMMi7t9dp2+0WmluHf4xtWnd+Iy4zR3A1\nWHzNlWSn0BBV5JFmcvfA7llOYdlinicIpwemNYYnHzuuvjEXzCzQkLeplPM6uGwZ\ntLPIab4kkjVWAgllPMBoz8mibH2vh3v+jklnrneHLVKhdosRzZk1QNAvP+nSHITq\n0HZbY1QK9HLa/JOi1W8x8sD/DMfyTmarnGgRDHyGDg3/sz1/e7prej8LMjuGeETI\nTg0Jddy0l3ZS+BMykXjNdRYIa7IjQw720nBw0i8007//K8oNVcyDNlyqlFa+RPZn\nafMdDHtHq/D9h0tLcY5Th4kkD6WMs1DCTkABy646kp/lz+gXksswPavw71VMklGe\n8bzM5QKIjA+Z935AFno7jOstuyETZctBc6BjxWkXhV65JItrNQsqNNS8vLtu12o+\nKjSolZH4TWjZMzumDmGDvv++cQSN71+cLRkpG2/za4AsaLvb2fMcvBzVds2hkfBN\n9nmfKjEAnNfOhFby5ylKoCgMsem3ngaG4uQ3L++nlQ5UEKKAd3rHNN/CIBQTptNB\nYn9/93OVM7dKawwTiPpqem3Tn9Y5qoxewoQXYje/EljKue0XavtbYAkdN/UCAwEA\nAQKCAgAEemmQM8qg8eiQz6uswJLKtl2oYwftRgaPbR9mhoUWgX1y4QcI6UaUQqYq\n6W3tODicpX+trBZMGu+GMX3xY7Z23RgncahEjDroSml+36adSkUGMyQJmVtrS5pY\nyQg09OpbYEOpQ4j92/zdjio1NYg1VZcysj+rSZgztBZiROA6BCoofNlbx4+uZCqU\n+Ye1JGKkthG4QAT0XzXi/o0435r4AO2xr2jvRupyykrh5fIymUm2P57ylswn0Zsv\ncDqEASiVqq6N4swHj9ue1eLFDeTXVUwGp2x2y8ZZKEm13CB2WcsUnwPGS6cchLHr\nkWL7Pfa+SP766Dfpx4fp1j8DQnhbXULrPHfa2y/JtcrgqaUliVFltzoy0e6itE/l\nhTOFFr0T2QyaDvC1WHZkGpXf8NVU3zGK0pVu9M1/B12wiRLac7R/wEDKYk2CUL/c\nIiUBEwZsTvIrLHGo+k+Lk+eNatBvzcTGCqv2MuamBs+Bm7IwHoGgNHA6ETaHCmxW\n3sHbP3Y2uqom33Eng9POHAr627iSjMQ190bFFZ4+dXN33vlTdxcIbHl6UPe3aYyV\njlnaLCR/OipEX3+d21djbMC2KgS7nSmNt+tCb9u3BPFiCaZp6RAJondsRA0aeZAv\nMLl1tJ8O/K6wF+99sR9nN1DSdgkZUupNGGZdK8i/48zY0R9eAQKCAQEA8mddICWy\n2951/qaU/0G4Nq9scvBqWBpdRzw7bKXqbWHgJ1DBJw2P+J46E54xRDGhfyK7qwC3\n5zAB2Mpddecpo2nOI4Q86V27viuXcvOFHCFFVB2gj21sbPDceQNEKwUR1EFB4wzl\njwBBO+8G8DmGkuzEIwQtQTdEnKZTG7Rprp7M+iM3YaYa9p+YUKQm9SkpLlck/WAu\nHGwc06HVjIhs59pszHKWmTY9aOhtjV38Bjmp6SHJVZG9fSLOoeHidpoeKAnqKxui\n18ICJizD79Q/oa4BTYWsZPPvywnxiyNaTigYmKkZ4FNiS+YSg+tZBboZ7UpfPaQM\nocQ01+a4OhxenQKCAQEAy+msn1QyWt/m8tDDon6OPIhFi5BA7k1bK4W9zkW2FiMR\nt8b3o6SZFAyxqfHVymt/p0aoc4EhDvnIt6qbtB68gY6lvNWL4kX2XD/WodkazKWq\nhLBt8H64ehwnus96gzR9/SkooQ/N/6S7peDVxjsokU8XpXg3/h8Vg5JvADio/fYL\nXHMiS+aowJJkjskNGKSd0fzTZbSW2ij9LKET9n/T7snr9bnk2q2TpGPJvmm1Hb9o\nl3yfSGBz7QuWGzCi//0hoQTuAguRpVQ0i8cTdT4eg5WykwdgomaNRbz79M0OXs0w\nbO0JNKUE2PaRgw4PaY3lQcLYYKGyUml/ejyiwtiTOQKCAQEA6nC9yJGtYqjNRfSm\nthlBqOIQ6TlMINmezX6bmoD9Mb0vpdaceMDNNY8SbFbbHzFBGEznZIPVWWs83gca\nTSW9R6bVD9SddLaLFWnjl/GeE466Fphw6UbTTqnFEeTu0QyeKcLTjlyyyJNehDCx\nbTS1yvPi3lrzyddCLJ9QUcMzUweTB3l33qFgApZoIdYhN4sPoRn3VHbpIeQOHUCv\n4LMxYSwHfdR1gsjKq+Pf0JHNZdfvVOKwbmn98kDvx/FHrZ1w/RhZukeIP1QL8A/r\nkNCemihIakmWaizjBmQfkIoolN6Cq2Mg+6yprO5fiebcuoU6/hyn8F3xOaMh2I30\nL3+woQKCAQAqDcs4INkxvLOYqE1wmcEj4sbU/a8mdnWzCCYZAG+JKTpiOHqiGTQo\n2mVZszJwSLNPAFeFWsBComku19S81QnzfkPYKgJrbBpe9BuDzY6lXhVIwEosKzZI\nmL3o3RlbLdw99dsXPHcznfnFQBVWiKTZMwKhcaW6lxaMyAp0dTsFBVVaf7Q3Cx8K\neCac/AHjby/NOuMuOoxR+doc9itzzvEacjJjvy7fmqS0ZpAY4RwlQnCDrYP8HUhL\nPvR6LxGu0bm5x5Z+fXxQKImdujTdHS6V3K2zfPYFCDlihJNB7XhlPNQb4tbfMJlL\nVa605JVxI36AjXqqky5/qJpNz2uR27ChAoIBAQCL2JRVNRTvhf/+6YIgsz43uOdH\nHZqdjPljSJQm1NlPXcBYIXdBBlHliY7PuHOhDPbSNSnLBtHos1agnuKqwUa7/gCd\nDurxFrDtHGSfJwpxap1RpdJGEqbzf95Lt2ijrXNMVMYs0kVhgklekw7FdE5dGNsx\n0ffdrKXPmh3Ye6RNRvo0ARqQpF9Q0EwXz2gLjseHPAXV4ehoha5KCdn3KuxAXEpV\n809uFMc7BPBwluy37okKMwvycER8RTrh1PK+3GX3GWDsQ+nNS6HsHpMqh+9SWdPA\nXsafduArI+E1tYdgZZOpGd06Zm3rheAxA6ZsJhd3Whz5c3nVPulUtx7iK9xz\n-----END
+    body: '{"load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":true,"backend_certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfblpRVjNuV1FEekVQSkd2MC5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTIwNzA1WhgPMjA3NDA2MTkxMjA3MDVaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAM+mV6pG7xy4NugCi8nxFqceQnFvkOFnwIAg\nPdb6IPFOZ6XQ9g4+5/8keKYO0We/V/kx8RxuBI3SzwLRt8oXPKIjdlZOsgk4NDEx\nbiWYi0kuWFAVYPTyfH6gPjzWDoc92nsjnX+UQ4gfkCVbSQbc78yq3bICTJ2wh5Aq\nbqz6CIv0iSb8fDdeWsOSsHtpDDvM5SOnVktD5tfyprcmF+J4Q3Y0bEDe2tdY6KpU\nk7Y7HUDp3b/FnAhPSO4ldOJJQwWQS2leXSB5/rFLELqAbHVCtwP6ObMGJNqGG46A\nqN5U96F04l8RGvVWkf+Jepy2bcm0ItIGsHh/xahejgqVxOxrZqcbHQD+NZI5uD0j\nglJl2lZ8kdCTc1jbPYmY64HfilExWlyuAmLT3Yl39kkErcWcrlGQliyyZnFTJJit\nUzVgFxwzEAfJD13KwYY0Hl1Kka9nHCt8dNRit+6RZBZiJidLHtzn0duC5ZpNwx3y\nGyGoiYxk/vcaii6goT0nivkYTw5RI+52JFT916yI0gv6SX0RNVd4rVQlsbtQcT31\nb+TjBhYoJTgqULJ5AOJd21KecXsfMkwTz2oVv1vF3FwjFHhHT70dxZz3xxBMpbe2\nko9feHB/2b2gxI63QiK1TU4X9WwGajOYLd0ABaYn5KeSdRwK/5yUI4h7iwUzkZbs\nnvdGdwsXAgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQe\nXAY7U4+HnRudhkGAOH7Jy9XJszATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFB5cBjtTj4edG52GQYA4fsnL1cmz\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAhc4xkU7pGPp2\nfBWaNUBeAstAZYJxJEtCZnQ9tufyyc9mxm0dINOcw8fkLEJe9MkEestgvwIZHLJX\nqNQ6EtSwf6gfyZ/Yb/OPw2HDuRsBWKoFCDrxEv33Ld86GP6nGVE4x5CXjIDAJD0G\nPZA/fX2QPCDDmrDjTUya+6PndzpwZgXkQ/rA/J1+Qr1CQcVwghyswmMZLqDAK7RH\ns9abWS39sZHRAq7+cTnDZlvJU60aJo3xr33xZYzgxWqPNfuuAbzDX72C5lVNwKJ5\nCCLNr/ryEUKTeNRLIImjke84VSZkXulu/tS1M0ywZfVAa5aAs5Jqx6wuaLw7n8Rh\nLNrgWIPQ61h/eYwvOAFvVHN+FT2C1WCEqCAM3V8aXsiAOOZBnaR+13b5tlTLsR/J\nj7epXFllIvxwTg+AjvYgs6k06rIRj551HhoWbO6zromiEp4RlLAJl3KVhvGRS5vC\nc5Iw1gv7r0sEGfggeITOjnDLzwbwpm6UthApZu41OSZbHdtCCa2P9Govj8uuYu41\nvmrdX6QQyDacvb7x/QWroUtAlfM5ZbwnwbwIJ6GEZuKXbjW90/x7ZeBII5lr0cqt\nfAz08bM2HFg/jvRlq+yXCoIJwReBPnnVgL5lJrRiWisEYe6iFwkyUqAvTqM5GF6G\nVw1edlTqNU82tS5hIIYpoWbU2JlxQUU=\n-----END
+      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
       RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[],"standby_vms":[]}}'
     headers:
       Access-Control-Allow-Headers:
@@ -497,9 +470,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:38 GMT
+      - Wed, 19 Jun 2024 12:07:07 GMT
       Etag:
-      - W/"942f8731945efb172bec4704366d5bdc"
+      - W/"d022c58ffef3d6ec79a584b8f41f9d45"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -507,7 +480,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "988"
       X-Request-Id:
-      - 1f85d5bf-b766-4276-847e-ffb1f0a881a5
+      - f354d115-8d89-4b1b-8979-2807d1826c67
     status: 200 OK
     code: 200
     duration: ""
@@ -515,16 +488,14 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_aGOXqXa9QjKxXRqA
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_nZQV3nWQDzEPJGv0
     method: GET
   response:
-    body: '{"load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":true,"backend_certificate":"-----BEGIN
-      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfYUdPWHFYYTlRakt4WFJxQS5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTA1MjM3WhgPMjA3NDA2MTkxMDUyMzdaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAMEVOmCQpS06MPabs/Hk+dEJfnFLgWYOHo9w\n+zmWKp1nEOd9oKnSGohKg6GdyIfFsqwlG3s+pcI6jFEDZDDIu7fXadvtFppbh3+M\nbVp3fiMuM0dwNVh8zZVkp9AQVeSRZnL3wO5ZTmHZYp4nCKcHpjWGJx87rr4xF8ws\n0JC3qZTzOrhsGbSzyGm+JJI1VgIJZTzAaM/Jomx9r4d7/o5JZ653hy1SoXaLEc2Z\nNUDQLz/p0hyE6tB2W2NUCvRy2vyTotVvMfLA/wzH8k5mq5xoEQx8hg4N/7M9f3u6\na3o/CzI7hnhEyE4NCXXctJd2UvgTMpF4zXUWCGuyI0MO9tJwcNIvNNO//yvKDVXM\ngzZcqpRWvkT2Z2nzHQx7R6vw/YdLS3GOU4eJJA+ljLNQwk5AAcuuOpKf5c/oF5LL\nMD2r8O9VTJJRnvG8zOUCiIwPmfd+QBZ6O4zrLbshE2XLQXOgY8VpF4VeuSSLazUL\nKjTUvLy7btdqPio0qJWR+E1o2TM7pg5hg77/vnEEje9fnC0ZKRtv82uALGi729nz\nHLwc1XbNoZHwTfZ5nyoxAJzXzoRW8ucpSqAoDLHpt54GhuLkNy/vp5UOVBCigHd6\nxzTfwiAUE6bTQWJ/f/dzlTO3SmsME4j6anpt05/WOaqMXsKEF2I3vxJYyrntF2r7\nW2AJHTf1AgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRh\nURW5bFUKsCemgLw0WdG9VQsTjTATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFGFRFblsVQqwJ6aAvDRZ0b1VCxON\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAiHW6DJwsQfU/\n5DZt2sLDMBo8kydnU7cjoyLvB4PC2smHf7FYh/nLBIEoZArreULe2953F9CRhP08\n6KtBbfl4xel5AjOwc3oRmOWdfHpYk5R4IjQrYdEXN0RYlZbw/uT1mOQ5m1E4Ya21\nsrLbBwnQZWFLp1U6nOK2CfT61Jk8wY1sEpnWW7Ga1fhheB+hmM+e4gk0UShldKsI\n0e3xAr7lcfpgoKCqRZBdbxzOo6rroiCk7IrMAkNLvNLAr3duprza4MmiH8wR1n86\nzrMhaRe+CkEucokCBt+Q0v3RgbNv7K7TLVA4tegjjhpw/xSuLKJ6D9BnITXKz0nc\nAN8uNY3buO5PGZQOQNMpTJiS+ejlHuELxWrYY+AU8R7dziqzLrd6hhdIuUGJ4VUW\nmiuYjfMxnBlEU1PjF1JiCIOtGSGVGNpfv7amPZTOTJWlc4ELFY9zXysE2bQpy9de\nkJOHDTPPVyIN6iZ2I2xiXx2gjaYrQMGo5RNdCHukxEOsgC2q4VgnXf3OoWGSCkjP\nfMs4vTgNTOENfAbVIPdkwAnH5FLP8MNXfyP+lQxsb6icExkZuCPwwejB9rMc4A1X\nMrofgaCRrqcv3jLrgzrLqeJUvWuWWQhbllng2CHCiSClqZNe3C45YO7y1+vMr/C/\ngI/BxIu5UNSCgh7p8v/nZ1otrB+g6lo=\n-----END
-      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
+    body: '{"load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":true,"backend_certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfblpRVjNuV1FEekVQSkd2MC5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTIwNzA1WhgPMjA3NDA2MTkxMjA3MDVaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAM+mV6pG7xy4NugCi8nxFqceQnFvkOFnwIAg\nPdb6IPFOZ6XQ9g4+5/8keKYO0We/V/kx8RxuBI3SzwLRt8oXPKIjdlZOsgk4NDEx\nbiWYi0kuWFAVYPTyfH6gPjzWDoc92nsjnX+UQ4gfkCVbSQbc78yq3bICTJ2wh5Aq\nbqz6CIv0iSb8fDdeWsOSsHtpDDvM5SOnVktD5tfyprcmF+J4Q3Y0bEDe2tdY6KpU\nk7Y7HUDp3b/FnAhPSO4ldOJJQwWQS2leXSB5/rFLELqAbHVCtwP6ObMGJNqGG46A\nqN5U96F04l8RGvVWkf+Jepy2bcm0ItIGsHh/xahejgqVxOxrZqcbHQD+NZI5uD0j\nglJl2lZ8kdCTc1jbPYmY64HfilExWlyuAmLT3Yl39kkErcWcrlGQliyyZnFTJJit\nUzVgFxwzEAfJD13KwYY0Hl1Kka9nHCt8dNRit+6RZBZiJidLHtzn0duC5ZpNwx3y\nGyGoiYxk/vcaii6goT0nivkYTw5RI+52JFT916yI0gv6SX0RNVd4rVQlsbtQcT31\nb+TjBhYoJTgqULJ5AOJd21KecXsfMkwTz2oVv1vF3FwjFHhHT70dxZz3xxBMpbe2\nko9feHB/2b2gxI63QiK1TU4X9WwGajOYLd0ABaYn5KeSdRwK/5yUI4h7iwUzkZbs\nnvdGdwsXAgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQe\nXAY7U4+HnRudhkGAOH7Jy9XJszATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFB5cBjtTj4edG52GQYA4fsnL1cmz\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAhc4xkU7pGPp2\nfBWaNUBeAstAZYJxJEtCZnQ9tufyyc9mxm0dINOcw8fkLEJe9MkEestgvwIZHLJX\nqNQ6EtSwf6gfyZ/Yb/OPw2HDuRsBWKoFCDrxEv33Ld86GP6nGVE4x5CXjIDAJD0G\nPZA/fX2QPCDDmrDjTUya+6PndzpwZgXkQ/rA/J1+Qr1CQcVwghyswmMZLqDAK7RH\ns9abWS39sZHRAq7+cTnDZlvJU60aJo3xr33xZYzgxWqPNfuuAbzDX72C5lVNwKJ5\nCCLNr/ryEUKTeNRLIImjke84VSZkXulu/tS1M0ywZfVAa5aAs5Jqx6wuaLw7n8Rh\nLNrgWIPQ61h/eYwvOAFvVHN+FT2C1WCEqCAM3V8aXsiAOOZBnaR+13b5tlTLsR/J\nj7epXFllIvxwTg+AjvYgs6k06rIRj551HhoWbO6zromiEp4RlLAJl3KVhvGRS5vC\nc5Iw1gv7r0sEGfggeITOjnDLzwbwpm6UthApZu41OSZbHdtCCa2P9Govj8uuYu41\nvmrdX6QQyDacvb7x/QWroUtAlfM5ZbwnwbwIJ6GEZuKXbjW90/x7ZeBII5lr0cqt\nfAz08bM2HFg/jvRlq+yXCoIJwReBPnnVgL5lJrRiWisEYe6iFwkyUqAvTqM5GF6G\nVw1edlTqNU82tS5hIIYpoWbU2JlxQUU=\n-----END
+      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
       RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[],"standby_vms":[]}}'
     headers:
       Access-Control-Allow-Headers:
@@ -540,9 +511,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:38 GMT
+      - Wed, 19 Jun 2024 12:07:07 GMT
       Etag:
-      - W/"942f8731945efb172bec4704366d5bdc"
+      - W/"d022c58ffef3d6ec79a584b8f41f9d45"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -550,7 +521,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "987"
       X-Request-Id:
-      - dd6737e9-2198-477f-b9a4-e3bf0c9ffbb3
+      - b775ce8a-ddaf-4c5c-b51b-5be28f998f4e
     status: 200 OK
     code: 200
     duration: ""
@@ -558,14 +529,12 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/rules/_?load_balancer_rule%5Bid%5D=lbrule_pDeK8LxDowScIGmm
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/rules/:load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_0KlDwqlWmxxWLoTY
     method: GET
   response:
-    body: '{"load_balancer_rule":{"id":"lbrule_pDeK8LxDowScIGmm","algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2","load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt"}}}'
+    body: '{"load_balancer_rule":{"id":"lbrule_0KlDwqlWmxxWLoTY","algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2","load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej"}}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -580,9 +549,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:38 GMT
+      - Wed, 19 Jun 2024 12:07:07 GMT
       Etag:
-      - W/"6cc2d892109f21341f174ea2f7beef3a"
+      - W/"8066f691654949e57093f0ae58e157b4"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -590,7 +559,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "986"
       X-Request-Id:
-      - 8331051d-d91f-49e7-a34d-a386432532c9
+      - feacbd4b-95a4-444d-8bb5-de416bfd7e17
     status: 200 OK
     code: 200
     duration: ""
@@ -598,16 +567,14 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_aGOXqXa9QjKxXRqA
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_nZQV3nWQDzEPJGv0
     method: GET
   response:
-    body: '{"load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":true,"backend_certificate":"-----BEGIN
-      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfYUdPWHFYYTlRakt4WFJxQS5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTA1MjM3WhgPMjA3NDA2MTkxMDUyMzdaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAMEVOmCQpS06MPabs/Hk+dEJfnFLgWYOHo9w\n+zmWKp1nEOd9oKnSGohKg6GdyIfFsqwlG3s+pcI6jFEDZDDIu7fXadvtFppbh3+M\nbVp3fiMuM0dwNVh8zZVkp9AQVeSRZnL3wO5ZTmHZYp4nCKcHpjWGJx87rr4xF8ws\n0JC3qZTzOrhsGbSzyGm+JJI1VgIJZTzAaM/Jomx9r4d7/o5JZ653hy1SoXaLEc2Z\nNUDQLz/p0hyE6tB2W2NUCvRy2vyTotVvMfLA/wzH8k5mq5xoEQx8hg4N/7M9f3u6\na3o/CzI7hnhEyE4NCXXctJd2UvgTMpF4zXUWCGuyI0MO9tJwcNIvNNO//yvKDVXM\ngzZcqpRWvkT2Z2nzHQx7R6vw/YdLS3GOU4eJJA+ljLNQwk5AAcuuOpKf5c/oF5LL\nMD2r8O9VTJJRnvG8zOUCiIwPmfd+QBZ6O4zrLbshE2XLQXOgY8VpF4VeuSSLazUL\nKjTUvLy7btdqPio0qJWR+E1o2TM7pg5hg77/vnEEje9fnC0ZKRtv82uALGi729nz\nHLwc1XbNoZHwTfZ5nyoxAJzXzoRW8ucpSqAoDLHpt54GhuLkNy/vp5UOVBCigHd6\nxzTfwiAUE6bTQWJ/f/dzlTO3SmsME4j6anpt05/WOaqMXsKEF2I3vxJYyrntF2r7\nW2AJHTf1AgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRh\nURW5bFUKsCemgLw0WdG9VQsTjTATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFGFRFblsVQqwJ6aAvDRZ0b1VCxON\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9hR09YcVhhOVFqS3hYUnFBLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAiHW6DJwsQfU/\n5DZt2sLDMBo8kydnU7cjoyLvB4PC2smHf7FYh/nLBIEoZArreULe2953F9CRhP08\n6KtBbfl4xel5AjOwc3oRmOWdfHpYk5R4IjQrYdEXN0RYlZbw/uT1mOQ5m1E4Ya21\nsrLbBwnQZWFLp1U6nOK2CfT61Jk8wY1sEpnWW7Ga1fhheB+hmM+e4gk0UShldKsI\n0e3xAr7lcfpgoKCqRZBdbxzOo6rroiCk7IrMAkNLvNLAr3duprza4MmiH8wR1n86\nzrMhaRe+CkEucokCBt+Q0v3RgbNv7K7TLVA4tegjjhpw/xSuLKJ6D9BnITXKz0nc\nAN8uNY3buO5PGZQOQNMpTJiS+ejlHuELxWrYY+AU8R7dziqzLrd6hhdIuUGJ4VUW\nmiuYjfMxnBlEU1PjF1JiCIOtGSGVGNpfv7amPZTOTJWlc4ELFY9zXysE2bQpy9de\nkJOHDTPPVyIN6iZ2I2xiXx2gjaYrQMGo5RNdCHukxEOsgC2q4VgnXf3OoWGSCkjP\nfMs4vTgNTOENfAbVIPdkwAnH5FLP8MNXfyP+lQxsb6icExkZuCPwwejB9rMc4A1X\nMrofgaCRrqcv3jLrgzrLqeJUvWuWWQhbllng2CHCiSClqZNe3C45YO7y1+vMr/C/\ngI/BxIu5UNSCgh7p8v/nZ1otrB+g6lo=\n-----END
-      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
+    body: '{"load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_tCKFoNSN2b9rosEo","address":"185.199.222.149"},"https_redirect":true,"backend_certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIHAzCCBOugAwIBAgIBATANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE3MDUGA1UEAwwubGJfblpRVjNuV1FEekVQSkd2MC5s\nYi1iYWNrZW5kcy5rYXRhcHVsdC5jbG91ZDERMA8GA1UECgwIS2F0YXB1bHQxKzAp\nBgNVBAsMIkxvYWQgQmFsYW5jZXIgQmFja2VuZCBDZXJ0aWZpY2F0ZXMwIBcNMjQw\nNjE5MTIwNzA1WhgPMjA3NDA2MTkxMjA3MDVaMIGXMQswCQYDVQQGEwJHQjEPMA0G\nA1UECAwGTG9uZG9uMTcwNQYDVQQDDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJh\nY2tlbmRzLmthdGFwdWx0LmNsb3VkMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UE\nCwwiTG9hZCBCYWxhbmNlciBCYWNrZW5kIENlcnRpZmljYXRlczCCAiIwDQYJKoZI\nhvcNAQEBBQADggIPADCCAgoCggIBAM+mV6pG7xy4NugCi8nxFqceQnFvkOFnwIAg\nPdb6IPFOZ6XQ9g4+5/8keKYO0We/V/kx8RxuBI3SzwLRt8oXPKIjdlZOsgk4NDEx\nbiWYi0kuWFAVYPTyfH6gPjzWDoc92nsjnX+UQ4gfkCVbSQbc78yq3bICTJ2wh5Aq\nbqz6CIv0iSb8fDdeWsOSsHtpDDvM5SOnVktD5tfyprcmF+J4Q3Y0bEDe2tdY6KpU\nk7Y7HUDp3b/FnAhPSO4ldOJJQwWQS2leXSB5/rFLELqAbHVCtwP6ObMGJNqGG46A\nqN5U96F04l8RGvVWkf+Jepy2bcm0ItIGsHh/xahejgqVxOxrZqcbHQD+NZI5uD0j\nglJl2lZ8kdCTc1jbPYmY64HfilExWlyuAmLT3Yl39kkErcWcrlGQliyyZnFTJJit\nUzVgFxwzEAfJD13KwYY0Hl1Kka9nHCt8dNRit+6RZBZiJidLHtzn0duC5ZpNwx3y\nGyGoiYxk/vcaii6goT0nivkYTw5RI+52JFT916yI0gv6SX0RNVd4rVQlsbtQcT31\nb+TjBhYoJTgqULJ5AOJd21KecXsfMkwTz2oVv1vF3FwjFHhHT70dxZz3xxBMpbe2\nko9feHB/2b2gxI63QiK1TU4X9WwGajOYLd0ABaYn5KeSdRwK/5yUI4h7iwUzkZbs\nnvdGdwsXAgMBAAGjggFUMIIBUDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBQe\nXAY7U4+HnRudhkGAOH7Jy9XJszATBgNVHSUEDDAKBggrBgEFBQcDATBCBgNVHREE\nOzA5gi5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNs\nb3VkggdiYWNrZW5kMIHEBgNVHSMEgbwwgbmAFB5cBjtTj4edG52GQYA4fsnL1cmz\noYGdpIGaMIGXMQswCQYDVQQGEwJHQjEPMA0GA1UECAwGTG9uZG9uMTcwNQYDVQQD\nDC5sYl9uWlFWM25XUUR6RVBKR3YwLmxiLWJhY2tlbmRzLmthdGFwdWx0LmNsb3Vk\nMREwDwYDVQQKDAhLYXRhcHVsdDErMCkGA1UECwwiTG9hZCBCYWxhbmNlciBCYWNr\nZW5kIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsFAAOCAgEAhc4xkU7pGPp2\nfBWaNUBeAstAZYJxJEtCZnQ9tufyyc9mxm0dINOcw8fkLEJe9MkEestgvwIZHLJX\nqNQ6EtSwf6gfyZ/Yb/OPw2HDuRsBWKoFCDrxEv33Ld86GP6nGVE4x5CXjIDAJD0G\nPZA/fX2QPCDDmrDjTUya+6PndzpwZgXkQ/rA/J1+Qr1CQcVwghyswmMZLqDAK7RH\ns9abWS39sZHRAq7+cTnDZlvJU60aJo3xr33xZYzgxWqPNfuuAbzDX72C5lVNwKJ5\nCCLNr/ryEUKTeNRLIImjke84VSZkXulu/tS1M0ywZfVAa5aAs5Jqx6wuaLw7n8Rh\nLNrgWIPQ61h/eYwvOAFvVHN+FT2C1WCEqCAM3V8aXsiAOOZBnaR+13b5tlTLsR/J\nj7epXFllIvxwTg+AjvYgs6k06rIRj551HhoWbO6zromiEp4RlLAJl3KVhvGRS5vC\nc5Iw1gv7r0sEGfggeITOjnDLzwbwpm6UthApZu41OSZbHdtCCa2P9Govj8uuYu41\nvmrdX6QQyDacvb7x/QWroUtAlfM5ZbwnwbwIJ6GEZuKXbjW90/x7ZeBII5lr0cqt\nfAz08bM2HFg/jvRlq+yXCoIJwReBPnnVgL5lJrRiWisEYe6iFwkyUqAvTqM5GF6G\nVw1edlTqNU82tS5hIIYpoWbU2JlxQUU=\n-----END
+      CERTIFICATE-----\n","backend_certificate_key":"-----BEGIN RSA PRIVATE KEY-----\n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\n-----END
       RSA PRIVATE KEY-----\n","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"enable_weighting":false,"weights":[],"standby_vms":[]}}'
     headers:
       Access-Control-Allow-Headers:
@@ -623,9 +590,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:39 GMT
+      - Wed, 19 Jun 2024 12:07:08 GMT
       Etag:
-      - W/"942f8731945efb172bec4704366d5bdc"
+      - W/"d022c58ffef3d6ec79a584b8f41f9d45"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -633,7 +600,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "985"
       X-Request-Id:
-      - 5d2652fc-0661-4271-9dbf-9f8bf8c59eaf
+      - 447adc2d-ebf1-4a25-9d5c-31afa3281bd8
     status: 200 OK
     code: 200
     duration: ""
@@ -641,14 +608,12 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/rules/_?load_balancer_rule%5Bid%5D=lbrule_pDeK8LxDowScIGmm
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/rules/:load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_0KlDwqlWmxxWLoTY
     method: GET
   response:
-    body: '{"load_balancer_rule":{"id":"lbrule_pDeK8LxDowScIGmm","algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2","load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt"}}}'
+    body: '{"load_balancer_rule":{"id":"lbrule_0KlDwqlWmxxWLoTY","algorithm":"round_robin","destination_port":8443,"listen_port":443,"protocol":"HTTPS","proxy_protocol":false,"certificates":[],"backend_ssl":false,"passthrough_ssl":false,"check_enabled":false,"check_fall":2,"check_interval":20,"check_path":"/","check_protocol":"HTTP","check_rise":2,"check_timeout":5,"check_http_statuses":"2","load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej"}}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -663,9 +628,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:39 GMT
+      - Wed, 19 Jun 2024 12:07:08 GMT
       Etag:
-      - W/"6cc2d892109f21341f174ea2f7beef3a"
+      - W/"8066f691654949e57093f0ae58e157b4"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -673,22 +638,22 @@ interactions:
       X-Ratelimit-Remaining:
       - "984"
       X-Request-Id:
-      - 98bd38e6-3e7b-4064-bbc4-27c50e0aef0b
+      - e67be2f7-2104-4133-95b4-38899f496527
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: ""
+    body: '{"load_balancer_rule":{"id":"lbrule_0KlDwqlWmxxWLoTY"}}'
     form: {}
     headers:
-      Accept:
+      Content-Type:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/rules/_?load_balancer_rule%5Bid%5D=lbrule_pDeK8LxDowScIGmm
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/rules/:load_balancer_rule
     method: DELETE
   response:
-    body: '{"load_balancer_rule":{"id":"lbrule_pDeK8LxDowScIGmm"}}'
+    body: '{"load_balancer_rule":{"id":"lbrule_0KlDwqlWmxxWLoTY"}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -703,9 +668,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:39 GMT
+      - Wed, 19 Jun 2024 12:07:08 GMT
       Etag:
-      - W/"92b7608573e8ab2364eccf1b0938d56f"
+      - W/"85b19afdc46b1b99bfc4d97c4018d489"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -713,22 +678,22 @@ interactions:
       X-Ratelimit-Remaining:
       - "983"
       X-Request-Id:
-      - 4ab1e945-2239-4f16-a480-581363e51026
+      - 5db64bda-8b5e-472a-a02e-da8605b67ea4
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: ""
+    body: '{"load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0"}}'
     form: {}
     headers:
-      Accept:
+      Content-Type:
       - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_aGOXqXa9QjKxXRqA
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer
     method: DELETE
   response:
-    body: '{"load_balancer":{"id":"lb_aGOXqXa9QjKxXRqA","name":"tf-acc-test-stableID-XcxA0Uq7odbt","api_reference":null}}'
+    body: '{"load_balancer":{"id":"lb_nZQV3nWQDzEPJGv0","name":"tf-acc-test-stableID-uSyGeBjKaMej","api_reference":null}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -743,9 +708,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:40 GMT
+      - Wed, 19 Jun 2024 12:07:08 GMT
       Etag:
-      - W/"1f99b8c86ccfef2a541b153a026c4b55"
+      - W/"b9c6410348ff82ec01c9b36883567ab9"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Ratelimit-Permitted:
@@ -753,7 +718,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "982"
       X-Request-Id:
-      - a62197e6-10ba-4bb8-9750-84257b9eacf5
+      - fd9b2a7e-ac35-48c0-ae17-87104be2af1e
     status: 200 OK
     code: 200
     duration: ""
@@ -761,11 +726,9 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
-      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/_?load_balancer%5Bid%5D=lb_aGOXqXa9QjKxXRqA
+      - go-katapult/0.2.0
+    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_nZQV3nWQDzEPJGv0
     method: GET
   response:
     body: '{"error":{"code":"load_balancer_not_found","description":"No load balancer
@@ -784,7 +747,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:52:40 GMT
+      - Wed, 19 Jun 2024 12:07:09 GMT
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Api-Schema:
@@ -794,7 +757,7 @@ interactions:
       X-Ratelimit-Remaining:
       - "981"
       X-Request-Id:
-      - bf6c2ca7-70ee-4d23-ac9b-d55a6240e9af
+      - 32cc74be-d587-4db2-bbf3-53318f0574dc
     status: 404 Not Found
     code: 404
     duration: ""
