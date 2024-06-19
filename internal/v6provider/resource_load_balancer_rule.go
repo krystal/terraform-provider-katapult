@@ -14,8 +14,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -115,6 +118,9 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"load_balancer_id": schema.StringAttribute{
 			Required: true,
@@ -134,6 +140,9 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 					string(core.RoundRobin),
 					string(core.Sticky),
 				),
+			},
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
 			},
 		},
 		"destination_port": schema.Int64Attribute{
@@ -156,26 +165,41 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 			Optional: true,
 			Computed: true,
 			Default:  booldefault.StaticBool(false),
+			PlanModifiers: []planmodifier.Bool{
+				boolplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"certificate_ids": schema.SetAttribute{
 			Optional:    true,
 			Computed:    true,
 			ElementType: types.StringType,
+			PlanModifiers: []planmodifier.Set{
+				setplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"backend_ssl": schema.BoolAttribute{
 			Optional: true,
 			Computed: true,
 			Default:  booldefault.StaticBool(false),
+			PlanModifiers: []planmodifier.Bool{
+				boolplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"passthrough_ssl": schema.BoolAttribute{
 			Optional: true,
 			Computed: true,
 			Default:  booldefault.StaticBool(false),
+			PlanModifiers: []planmodifier.Bool{
+				boolplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"check_enabled": schema.BoolAttribute{
 			Optional: true,
 			Computed: true,
 			Default:  booldefault.StaticBool(false),
+			PlanModifiers: []planmodifier.Bool{
+				boolplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"check_fall": schema.Int64Attribute{
 			Optional: true,
@@ -186,6 +210,9 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 					path.MatchRoot("check_enabled"),
 				),
 				int64validator.AtLeast(1),
+			},
+			PlanModifiers: []planmodifier.Int64{
+				int64planmodifier.UseStateForUnknown(),
 			},
 		},
 		"check_interval": schema.Int64Attribute{
@@ -198,6 +225,9 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 				),
 				int64validator.AtLeast(1),
 			},
+			PlanModifiers: []planmodifier.Int64{
+				int64planmodifier.UseStateForUnknown(),
+			},
 		},
 		"check_http_statuses": schema.StringAttribute{
 			Optional: true,
@@ -207,6 +237,9 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 				stringvalidator.AlsoRequires(
 					path.MatchRoot("check_enabled"),
 				),
+			},
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
 			},
 		},
 		"check_path": schema.StringAttribute{
@@ -218,6 +251,9 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 					path.MatchRoot("check_enabled"),
 				),
 				stringvalidator.LengthAtLeast(1),
+			},
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
 			},
 		},
 		"check_protocol": schema.StringAttribute{
@@ -235,6 +271,9 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 					string(core.LoadBalancerRuleCheckProtocolEnumTCP),
 				),
 			},
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"check_rise": schema.Int64Attribute{
 			Optional: true,
@@ -245,6 +284,9 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 					path.MatchRoot("check_enabled"),
 				),
 			},
+			PlanModifiers: []planmodifier.Int64{
+				int64planmodifier.UseStateForUnknown(),
+			},
 		},
 		"check_timeout": schema.Int64Attribute{
 			Optional: true,
@@ -254,6 +296,9 @@ func LoadBalancerRuleSchemaAttributes() map[string]schema.Attribute {
 				int64validator.AlsoRequires(
 					path.MatchRoot("check_enabled"),
 				),
+			},
+			PlanModifiers: []planmodifier.Int64{
+				int64planmodifier.UseStateForUnknown(),
 			},
 		},
 	}

@@ -677,7 +677,23 @@ func testAccCheckResourceAttrChanged(
 	return func(_ *terraform.State) error {
 		if *oldValue == *currentValue {
 			return fmt.Errorf(
-				"Expected resource %q attribute %q to change, but it did not",
+				"Expected resource %q attribute %q to change, but it did NOT",
+				res, attr,
+			)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckResourceAttrNotChanged(
+	res, attr string,
+	oldValue, currentValue *string,
+) resource.TestCheckFunc {
+	return func(_ *terraform.State) error {
+		if *oldValue != *currentValue {
+			return fmt.Errorf(
+				"Expected resource %q attribute %q to NOT change, but it did",
 				res, attr,
 			)
 		}

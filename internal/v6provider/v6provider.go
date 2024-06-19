@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -159,6 +160,18 @@ func boolOrEnv(in *bool, env string) bool {
 	}
 
 	return false
+}
+
+// getTagValue returns the value of a tag for a field in a struct. Primarily
+// used for getting the value of the `tfsdk` tag in custom plan modifiers.
+func getTagValue(st interface{}, field string, tag string) string {
+	rType := reflect.TypeOf(st)
+	fieldType, ok := rType.FieldByName(field)
+	if !ok {
+		return ""
+	}
+
+	return fieldType.Tag.Get(tag)
 }
 
 func userAgent(name string, terraformVersion string, version string) string {

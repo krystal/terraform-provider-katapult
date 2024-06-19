@@ -718,6 +718,77 @@ func TestAccKatapultLoadBalancer_vms_update(t *testing.T) {
 	})
 }
 
+// Test that the ID attribute does not get marked as unknown when the resource
+// is modified, which in turn would case associated rules to be re-created.
+func TestAccKatapultLoadBalancer_stableID(t *testing.T) {
+	tt := newTestTools(t)
+
+	name := tt.ResourceName()
+
+	var oldRuleID, currentRuleID string
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+					resource "katapult_load_balancer" "main" {
+						name = "%s"
+						https_redirect = false
+					}
+
+					resource "katapult_load_balancer_rule" "https" {
+						load_balancer_id = katapult_load_balancer.main.id
+						destination_port = 8443
+						listen_port = 443
+						protocol = "HTTPS"
+					}`,
+					name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultLoadBalancerAttrs(
+						tt, "katapult_load_balancer.main",
+					),
+					testAccCheckKatapultLoadBalancerRuleExists(
+						tt, "katapult_load_balancer_rule.https", &oldRuleID,
+					),
+				),
+			},
+			{
+				Config: undent.Stringf(`
+					resource "katapult_load_balancer" "main" {
+						name = "%s"
+						https_redirect = true
+					}
+
+					resource "katapult_load_balancer_rule" "https" {
+						load_balancer_id = katapult_load_balancer.main.id
+						destination_port = 8443
+						listen_port = 443
+						protocol = "HTTPS"
+					}`,
+					name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultLoadBalancerAttrs(
+						tt, "katapult_load_balancer.main",
+					),
+					testAccCheckKatapultLoadBalancerRuleExists(
+						tt, "katapult_load_balancer_rule.https",
+						&currentRuleID,
+					),
+					testAccCheckResourceAttrNotChanged(
+						"katapult_load_balancer_rule.https", "id",
+						&oldRuleID, &currentRuleID,
+					),
+				),
+			},
+		},
+	})
+}
+
 //
 // Helpers
 //
