@@ -10,6 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -91,6 +94,9 @@ func (r LoadBalancerResource) Schema(
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"name": schema.StringAttribute{
 				Required: true,
@@ -105,6 +111,9 @@ func (r LoadBalancerResource) Schema(
 					),
 				},
 				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Set{
+					loadBalancerResourceIDsPlanModifier(),
+				},
 			},
 			"virtual_machine_group_ids": schema.SetAttribute{
 				Optional: true,
@@ -116,6 +125,9 @@ func (r LoadBalancerResource) Schema(
 					),
 				},
 				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Set{
+					loadBalancerResourceIDsPlanModifier(),
+				},
 			},
 			"tag_ids": schema.SetAttribute{
 				Optional: true,
@@ -127,14 +139,23 @@ func (r LoadBalancerResource) Schema(
 					),
 				},
 				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Set{
+					loadBalancerResourceIDsPlanModifier(),
+				},
 			},
 			"ip_address": schema.StringAttribute{
 				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"https_redirect": schema.BoolAttribute{
 				Optional: true,
 				Computed: true,
 				Default:  booldefault.StaticBool(false),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
@@ -333,9 +354,13 @@ func populateLoadBalancerTargets(
 	ids []string,
 ) {
 	list := flattenLoadBalancerResourceIDs(ids)
-	model.VirtualMachineIDs = types.SetNull(types.StringType)
-	model.TagIDs = types.SetNull(types.StringType)
-	model.VirtualMachineGroupIDs = types.SetNull(types.StringType)
+	model.VirtualMachineIDs = types.SetValueMust(
+		types.StringType, []attr.Value{},
+	)
+	model.VirtualMachineGroupIDs = types.SetValueMust(
+		types.StringType, []attr.Value{},
+	)
+	model.TagIDs = types.SetValueMust(types.StringType, []attr.Value{})
 
 	if len(ids) == 0 {
 		return
@@ -388,4 +413,89 @@ func extractLoadBalancerResourceTypeAndIDs(
 	}
 
 	return t, ids
+}
+
+// loadBalancerResourceIDsPlanModifier handles the planning of the resource IDs
+// attributes for the load balancer resource. This is needed to ensure correct
+// planning when between one of the three attributes used to specify resource
+// IDs of different types.
+//
+// It is based on setplanmanager.UseStateForUnknown(), and behaves identically
+// to it when the attribute being planned is configured with one or more values
+// in the config.
+//
+// When the attribute being planned however is not the with values, it will
+// forcibly set the planned value to a empty list. Without this, Terraform does
+// not realize that the old attribute needs to be cleared out when switching
+// between VM IDs, VM Group IDs, and Tag IDs.
+func loadBalancerResourceIDsPlanModifier() planmodifier.Set {
+	return &loadBalancerResourceIDsModifier{}
+}
+
+type loadBalancerResourceIDsModifier struct{}
+
+var _ planmodifier.Set = &loadBalancerResourceIDsModifier{}
+
+func (m *loadBalancerResourceIDsModifier) Description(
+	_ context.Context,
+) string {
+	return "Handles load balancer resource ID change planning."
+}
+
+func (m *loadBalancerResourceIDsModifier) MarkdownDescription(
+	_ context.Context,
+) string {
+	return "Handles load balancer resource ID change planning."
+}
+
+func (m *loadBalancerResourceIDsModifier) PlanModifySet(
+	ctx context.Context,
+	req planmodifier.SetRequest,
+	resp *planmodifier.SetResponse,
+) {
+	// Do nothing if there is no state value.
+	if req.StateValue.IsNull() {
+		return
+	}
+
+	// Do nothing if there is a known planned value.
+	if !req.PlanValue.IsUnknown() {
+		return
+	}
+
+	// Do nothing if there is an unknown configuration value, otherwise
+	// interpolation gets messed up.
+	if req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	model := LoadBalancerResourceModel{}
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
+
+	// Determine the resource type based on which attribute has one or more
+	// elements, and extract the path based on the `tfsdk` struct tag.
+	var resourceTypeAttr string
+	switch {
+	case len(model.VirtualMachineIDs.Elements()) > 0:
+		resourceTypeAttr = getTagValue(model, "VirtualMachineIDs", "tfsdk")
+	case len(model.VirtualMachineGroupIDs.Elements()) > 0:
+		resourceTypeAttr = getTagValue(model, "VirtualMachineGroupIDs", "tfsdk")
+	case len(model.TagIDs.Elements()) > 0:
+		resourceTypeAttr = getTagValue(model, "TagIDs", "tfsdk")
+	}
+	if resourceTypeAttr == "" {
+		return
+	}
+
+	// Set the plan value to a empty set if the resource type is not that of the
+	// current path. This is required for the plan to include removal of
+	// existing values when switching between VM IDs, VM Group IDs and Tag IDs.
+	if !req.Path.Equal(path.Root(resourceTypeAttr)) {
+		resp.PlanValue = types.SetValueMust(types.StringType, []attr.Value{})
+		return
+	}
+
+	// Set the plan value to the state value if the resource type is that of the
+	// current path.
+	resp.PlanValue = req.StateValue
 }
