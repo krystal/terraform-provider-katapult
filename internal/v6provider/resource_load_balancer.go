@@ -458,11 +458,6 @@ func (m *loadBalancerResourceIDsModifier) PlanModifySet(
 		return
 	}
 
-	// Do nothing if there is a known planned value.
-	if !req.PlanValue.IsUnknown() {
-		return
-	}
-
 	// Do nothing if there is an unknown configuration value, otherwise
 	// interpolation gets messed up.
 	if req.ConfigValue.IsUnknown() {
@@ -483,15 +478,21 @@ func (m *loadBalancerResourceIDsModifier) PlanModifySet(
 	case len(model.TagIDs.Elements()) > 0:
 		resourceTypeAttr = getTagValue(model, "TagIDs", "tfsdk")
 	}
-	if resourceTypeAttr == "" {
+
+	// Set the plan value to empty if:
+	//
+	// - None of the resource ID attributes have any values.
+	// - Current path is not the one which has one or more values.
+	// - Current path has value in plan, but not in the configuration,
+	//   indicating it has been removed.
+	if resourceTypeAttr == "" || !req.Path.Equal(path.Root(resourceTypeAttr)) ||
+		len(req.ConfigValue.Elements()) == 0 {
+		resp.PlanValue = types.SetValueMust(types.StringType, []attr.Value{})
 		return
 	}
 
-	// Set the plan value to a empty set if the resource type is not that of the
-	// current path. This is required for the plan to include removal of
-	// existing values when switching between VM IDs, VM Group IDs and Tag IDs.
-	if !req.Path.Equal(path.Root(resourceTypeAttr)) {
-		resp.PlanValue = types.SetValueMust(types.StringType, []attr.Value{})
+	// Do nothing if there is a known planned value.
+	if !req.PlanValue.IsUnknown() {
 		return
 	}
 

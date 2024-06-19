@@ -246,6 +246,8 @@ func TestAccKatapultLoadBalancer_vm(t *testing.T) {
 		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
 		Steps: []resource.TestStep{
 			{
+				// Create a load balancer with a virtual machine, and one
+				// without.
 				Config: undent.Stringf(`
 					resource "katapult_ip" "web" {}
 
@@ -261,18 +263,127 @@ func TestAccKatapultLoadBalancer_vm(t *testing.T) {
 					resource "katapult_load_balancer" "main" {
 						name = "%s"
 						virtual_machine_ids = [katapult_virtual_machine.base.id]
+					}
+
+					resource "katapult_load_balancer" "alt" {
+						depends_on = [katapult_load_balancer.main]
+						name = "%s-alt"
 					}`,
-					name,
+					name, name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultLoadBalancerAttrs(
 						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"virtual_machine_ids.#",
+						"1",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_load_balancer.main",
 						"virtual_machine_ids.*",
 						"katapult_virtual_machine.base",
 						"id",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"virtual_machine_group_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"tag_ids.#",
+						"0",
+					),
+					testAccCheckKatapultLoadBalancerAttrs(
+						tt, "katapult_load_balancer.alt",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"virtual_machine_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"virtual_machine_group_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"tag_ids.#",
+						"0",
+					),
+				),
+			},
+			{
+				// Remove the virtual machine from the load balancer created
+				// with it, add it to the one created without.
+				Config: undent.Stringf(`
+					resource "katapult_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+						package       = "rock-3"
+						disk_template = "ubuntu-22-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_ip.web.id]
+					}
+
+					resource "katapult_load_balancer" "main" {
+						name = "%s"
+					}
+
+					resource "katapult_load_balancer" "alt" {
+						depends_on = [katapult_load_balancer.main]
+						name = "%s-alt"
+						virtual_machine_ids = [katapult_virtual_machine.base.id]
+					}`,
+					name, name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultLoadBalancerAttrs(
+						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"virtual_machine_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"virtual_machine_group_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"tag_ids.#",
+						"0",
+					),
+					testAccCheckKatapultLoadBalancerAttrs(
+						tt, "katapult_load_balancer.alt",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"virtual_machine_ids.#",
+						"1",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"katapult_load_balancer.alt",
+						"virtual_machine_ids.*",
+						"katapult_virtual_machine.base",
+						"id",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"virtual_machine_group_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"tag_ids.#",
+						"0",
 					),
 				),
 			},
@@ -291,6 +402,8 @@ func TestAccKatapultLoadBalancer_vm_group(t *testing.T) {
 		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
 		Steps: []resource.TestStep{
 			{
+				// Create a load balancer with a virtual machine group, and one
+				// without.
 				Config: undent.Stringf(`
 					resource "katapult_ip" "web" {}
 
@@ -313,12 +426,22 @@ func TestAccKatapultLoadBalancer_vm_group(t *testing.T) {
 						virtual_machine_group_ids = [
 							katapult_virtual_machine_group.web.id
 						]
+					}
+
+					resource "katapult_load_balancer" "alt" {
+						depends_on = [katapult_load_balancer.main]
+						name = "%s-alt"
 					}`,
-					name,
+					name, name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultLoadBalancerAttrs(
 						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"virtual_machine_ids.#",
+						"0",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main",
@@ -330,6 +453,107 @@ func TestAccKatapultLoadBalancer_vm_group(t *testing.T) {
 						"virtual_machine_group_ids.*",
 						"katapult_virtual_machine_group.web",
 						"id",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"tag_ids.#",
+						"0",
+					),
+					testAccCheckKatapultLoadBalancerAttrs(
+						tt, "katapult_load_balancer.alt",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"vitual_machine_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"virtual_machine_group_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"tag_ids.#",
+						"0",
+					),
+				),
+			},
+			{
+				// Remove the virtual machine group from the load balancer
+				// created with it, add it to the one created without.
+				Config: undent.Stringf(`
+					resource "katapult_ip" "web" {}
+
+					resource "katapult_virtual_machine_group" "web" {
+						name = "web"
+					}
+
+					resource "katapult_virtual_machine" "base" {
+						package       = "rock-3"
+						disk_template = "ubuntu-22-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_ip.web.id]
+						group_id = katapult_virtual_machine_group.web.id
+					}
+
+					resource "katapult_load_balancer" "main" {
+						name = "%s"
+					}
+
+					resource "katapult_load_balancer" "alt" {
+						depends_on = [katapult_load_balancer.main]
+						name = "%s-alt"
+						virtual_machine_group_ids = [
+							katapult_virtual_machine_group.web.id
+						]
+					}`,
+					name, name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultLoadBalancerAttrs(
+						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"virtual_machine_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"virtual_machine_group_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"tag_ids.#",
+						"0",
+					),
+					testAccCheckKatapultLoadBalancerAttrs(
+						tt, "katapult_load_balancer.alt",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"vitual_machine_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"virtual_machine_group_ids.#",
+						"1",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"katapult_load_balancer.alt",
+						"virtual_machine_group_ids.*",
+						"katapult_virtual_machine_group.web",
+						"id",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"tag_ids.#",
+						"0",
 					),
 				),
 			},
@@ -348,8 +572,7 @@ func TestAccKatapultLoadBalancer_tag(t *testing.T) {
 		CheckDestroy:             testAccCheckKatapultLoadBalancerDestroy(tt),
 		Steps: []resource.TestStep{
 			{
-				// TODO: Update hard-coded tag ID when katapult_tag resource is
-				// implemented.
+				// Create a load balancer with a tag, and one without.
 				Config: undent.Stringf(`
 					resource "katapult_ip" "web" {}
 
@@ -364,14 +587,31 @@ func TestAccKatapultLoadBalancer_tag(t *testing.T) {
 					}
 
 					resource "katapult_load_balancer" "main" {
-						name = "%s"
+						name = "%s-1"
+						// TODO: Update hard-coded tag ID when katapult_tag
+						// resource is implemented.
 						tag_ids = ["tag_NqAjIfOyzSMyuFPS"]
+					}
+
+					resource "katapult_load_balancer" "alt" {
+						depends_on = [katapult_load_balancer.main]
+						name = "%s-alt"
 					}`,
-					name,
+					name, name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultLoadBalancerAttrs(
 						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"virtual_machine_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"virtual_machine_group_ids.#",
+						"0",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_load_balancer.main",
@@ -380,6 +620,97 @@ func TestAccKatapultLoadBalancer_tag(t *testing.T) {
 					),
 					resource.TestCheckTypeSetElemAttr(
 						"katapult_load_balancer.main",
+						"tag_ids.*",
+						"tag_NqAjIfOyzSMyuFPS",
+					),
+					testAccCheckKatapultLoadBalancerAttrs(
+						tt, "katapult_load_balancer.alt",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"virtual_machine_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"virtual_machine_group_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"tag_ids.#",
+						"0",
+					),
+				),
+			},
+			{
+				// Remove the tag from the load balancer created with it, add it
+				// to the one created without.
+				Config: undent.Stringf(`
+					resource "katapult_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+						package       = "rock-3"
+						disk_template = "ubuntu-22-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_ip.web.id]
+						tags = ["web"]
+					}
+
+					resource "katapult_load_balancer" "main" {
+						name = "%s-1"
+					}
+
+					resource "katapult_load_balancer" "alt" {
+						depends_on = [katapult_load_balancer.main]
+						name = "%s-alt"
+						// TODO: Update hard-coded tag ID when katapult_tag
+						// resource is implemented.
+						tag_ids = ["tag_NqAjIfOyzSMyuFPS"]
+					}`,
+					name, name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultLoadBalancerAttrs(
+						tt, "katapult_load_balancer.main",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"virtual_machine_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"virtual_machine_group_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.main",
+						"tag_ids.#",
+						"0",
+					),
+					testAccCheckKatapultLoadBalancerAttrs(
+						tt, "katapult_load_balancer.alt",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"vitual_machine_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"virtual_machine_group_ids.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_load_balancer.alt",
+						"tag_ids.#",
+						"1",
+					),
+					resource.TestCheckTypeSetElemAttr(
+						"katapult_load_balancer.alt",
 						"tag_ids.*",
 						"tag_NqAjIfOyzSMyuFPS",
 					),
