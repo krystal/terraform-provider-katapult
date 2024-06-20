@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
@@ -199,7 +198,7 @@ func (r *LoadBalancerResource) Create(
 		return
 	}
 
-	if err := r.LoadBalancerRead(ctx, lb.ID, &plan, &resp.State); err != nil {
+	if err := r.LoadBalancerRead(ctx, lb.ID, &plan); err != nil {
 		resp.Diagnostics.AddError("Load Balancer Read Error", err.Error())
 		return
 	}
@@ -219,12 +218,18 @@ func (r *LoadBalancerResource) Read(
 		return
 	}
 
-	if err := r.LoadBalancerRead(
-		ctx,
-		state.ID.ValueString(),
-		state,
-		&resp.State,
-	); err != nil {
+	err := r.LoadBalancerRead(ctx, state.ID.ValueString(), state)
+	if err != nil {
+		if errors.Is(err, katapult.ErrNotFound) {
+			r.M.Logger.Info(
+				"Load Balancer not found, removing from state",
+				"id", state.ID.ValueString(),
+			)
+			resp.State.RemoveResource(ctx)
+
+			return
+		}
+
 		resp.Diagnostics.AddError("Load Balancer Read Error", err.Error())
 		return
 	}
@@ -281,7 +286,7 @@ func (r *LoadBalancerResource) Update(
 		return
 	}
 
-	if err := r.LoadBalancerRead(ctx, id, &plan, &resp.State); err != nil {
+	if err := r.LoadBalancerRead(ctx, id, &plan); err != nil {
 		resp.Diagnostics.AddError("Load Balancer Read Error", err.Error())
 		return
 	}
@@ -323,16 +328,9 @@ func (r *LoadBalancerResource) LoadBalancerRead(
 	ctx context.Context,
 	id string,
 	model *LoadBalancerResourceModel,
-	state *tfsdk.State,
 ) error {
 	lb, _, err := r.M.Core.LoadBalancers.GetByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, katapult.ErrNotFound) {
-			state.RemoveResource(ctx)
-
-			return nil
-		}
-
 		return err
 	}
 
