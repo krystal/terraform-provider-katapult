@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
@@ -215,7 +214,7 @@ func (r *IPResource) Create(
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 
-	if err := r.IPRead(ctx, &plan, &resp.State); err != nil {
+	if err := r.IPRead(ctx, ip.ID, &plan); err != nil {
 		resp.Diagnostics.AddError("IP Address Read Error", err.Error())
 		return
 	}
@@ -236,7 +235,16 @@ func (r *IPResource) Read(
 		return
 	}
 
-	if err := r.IPRead(ctx, state, &resp.State); err != nil {
+	if err := r.IPRead(ctx, state.ID.ValueString(), state); err != nil {
+		if errors.Is(err, katapult.ErrNotFound) {
+			r.M.Logger.Info(
+				"IP Address not found, removing from state",
+				"id", state.ID.ValueString(),
+			)
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("IP Address Read Error", err.Error())
 		return
 	}
@@ -266,7 +274,8 @@ func (r *IPResource) Update(
 		return
 	}
 
-	ipRef := core.IPAddressRef{ID: state.ID.ValueString()}
+	id := state.ID.ValueString()
+	ipRef := core.IPAddressRef{ID: id}
 	args := &core.IPAddressUpdateArguments{}
 
 	if !plan.VIP.Equal(state.VIP) {
@@ -284,7 +293,7 @@ func (r *IPResource) Update(
 		return
 	}
 
-	if err := r.IPRead(ctx, &plan, &resp.State); err != nil {
+	if err := r.IPRead(ctx, id, &plan); err != nil {
 		resp.Diagnostics.AddError("IP Address Read Error", err.Error())
 		return
 	}
@@ -314,16 +323,11 @@ func (r *IPResource) Delete(
 
 func (r *IPResource) IPRead(
 	ctx context.Context,
+	id string,
 	model *IPResourceModel,
-	state *tfsdk.State,
 ) error {
-	ip, _, err := r.M.Core.IPAddresses.GetByID(ctx, model.ID.ValueString())
+	ip, _, err := r.M.Core.IPAddresses.GetByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, katapult.ErrNotFound) {
-			state.RemoveResource(ctx)
-			return nil
-		}
-
 		return err
 	}
 

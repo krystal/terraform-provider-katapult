@@ -21,7 +21,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/krystal/go-katapult"
@@ -391,11 +390,7 @@ func (r *LoadBalancerRuleResource) Create(
 		return
 	}
 
-	if err := r.LoadBalancerRuleRead(ctx,
-		lbr.ID,
-		&plan,
-		&resp.State,
-	); err != nil {
+	if err := r.LoadBalancerRuleRead(ctx, lbr.ID, &plan); err != nil {
 		resp.Diagnostics.AddError(
 			"LoadBalancerRule Read Error",
 			"Error reading LoadBalancerRule: "+err.Error(),
@@ -417,11 +412,17 @@ func (r *LoadBalancerRuleResource) Read(
 		return
 	}
 
-	if err := r.LoadBalancerRuleRead(ctx,
-		state.ID.ValueString(),
-		state,
-		&resp.State,
-	); err != nil {
+	err := r.LoadBalancerRuleRead(ctx, state.ID.ValueString(), state)
+	if err != nil {
+		if errors.Is(err, katapult.ErrNotFound) {
+			r.M.Logger.Info(
+				"LoadBalancerRule not found, removing from state",
+				"id", state.ID.ValueString(),
+			)
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"LoadBalancerRule Read Error",
 			"Error reading LoadBalancerRule: "+err.Error(),
@@ -454,7 +455,6 @@ func (r *LoadBalancerRuleResource) Update(
 	}
 
 	id := state.ID.ValueString()
-
 	lbrRef := core.LoadBalancerRuleRef{ID: id}
 	args, diags := buildLoadBalancerRuleUpdateArgs(ctx, &plan, &state)
 	resp.Diagnostics.Append(diags...)
@@ -475,12 +475,7 @@ func (r *LoadBalancerRuleResource) Update(
 		plan.LoadBalancerID = state.LoadBalancerID
 	}
 
-	if err := r.LoadBalancerRuleRead(
-		ctx,
-		id,
-		&plan,
-		&resp.State,
-	); err != nil {
+	if err = r.LoadBalancerRuleRead(ctx, id, &plan); err != nil {
 		resp.Diagnostics.AddError(
 			"LoadBalancerRule Read Error",
 			"Error reading LoadBalancerRule: "+err.Error(),
@@ -526,17 +521,9 @@ func (r *LoadBalancerRuleResource) LoadBalancerRuleRead(
 	ctx context.Context,
 	id string,
 	model *LoadBalancerRuleResourceModel,
-	state *tfsdk.State,
 ) error {
-	lbr, _, err := r.M.Core.LoadBalancerRules.GetByID(ctx,
-		id)
+	lbr, _, err := r.M.Core.LoadBalancerRules.GetByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, katapult.ErrNotFound) {
-			state.RemoveResource(ctx)
-
-			return nil
-		}
-
 		return err
 	}
 
