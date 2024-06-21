@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.13](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.12...v0.0.13) (2024-06-21)
+
+
+### Bug Fixes
+
+* **ci:** separate release-please and goreleaser, also update all the things ([#134](https://github.com/krystal/terraform-provider-katapult/issues/134)) ([2a86d40](https://github.com/krystal/terraform-provider-katapult/commit/2a86d40bccd8dd7f31f9894636cba1f6d1872c3e))
+
 ## [0.0.12](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.11...v0.0.12) (2024-06-20)
 
 
