@@ -2,6 +2,8 @@ package v6provider
 
 import (
 	"context"
+	"errors"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -13,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	core "github.com/krystal/go-katapult/next/core"
@@ -220,7 +221,7 @@ func (r *LoadBalancerResource) Create(
 
 	id := *res.JSON200.LoadBalancer.Id
 
-	if err := r.LoadBalancerRead(ctx, id, &plan, &resp.State); err != nil {
+	if err := r.LoadBalancerRead(ctx, id, &plan); err != nil {
 		resp.Diagnostics.AddError("Load Balancer Read Error", err.Error())
 		return
 	}
@@ -240,12 +241,18 @@ func (r *LoadBalancerResource) Read(
 		return
 	}
 
-	if err := r.LoadBalancerRead(
-		ctx,
-		state.ID.ValueString(),
-		state,
-		&resp.State,
-	); err != nil {
+	err := r.LoadBalancerRead(ctx, state.ID.ValueString(), state)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			r.M.Logger.Info(
+				"Load Balancer not found, removing from state",
+				"id", state.ID.ValueString(),
+			)
+			resp.State.RemoveResource(ctx)
+
+			return
+		}
+
 		resp.Diagnostics.AddError("Load Balancer Read Error", err.Error())
 		return
 	}
@@ -317,7 +324,7 @@ func (r *LoadBalancerResource) Update(
 		return
 	}
 
-	if err := r.LoadBalancerRead(ctx, id, &plan, &resp.State); err != nil {
+	if err := r.LoadBalancerRead(ctx, id, &plan); err != nil {
 		resp.Diagnostics.AddError("Load Balancer Read Error", err.Error())
 		return
 	}
@@ -361,20 +368,18 @@ func (r *LoadBalancerResource) LoadBalancerRead(
 	ctx context.Context,
 	id string,
 	model *LoadBalancerResourceModel,
-	state *tfsdk.State,
 ) error {
 	res, err := r.M.Core.GetLoadBalancerWithResponse(
 		ctx,
 		&core.GetLoadBalancerParams{
 			LoadBalancerId: &id,
 		})
+
+	if res.StatusCode() == http.StatusNotFound {
+		return ErrNotFound
+	}
+
 	if err != nil {
-		if res.JSON404 != nil {
-			state.RemoveResource(ctx)
-
-			return nil
-		}
-
 		return err
 	}
 
@@ -503,11 +508,6 @@ func (m *loadBalancerResourceIDsModifier) PlanModifySet(
 		return
 	}
 
-	// Do nothing if there is a known planned value.
-	if !req.PlanValue.IsUnknown() {
-		return
-	}
-
 	// Do nothing if there is an unknown configuration value, otherwise
 	// interpolation gets messed up.
 	if req.ConfigValue.IsUnknown() {
@@ -528,15 +528,21 @@ func (m *loadBalancerResourceIDsModifier) PlanModifySet(
 	case len(model.TagIDs.Elements()) > 0:
 		resourceTypeAttr = getTagValue(model, "TagIDs", "tfsdk")
 	}
-	if resourceTypeAttr == "" {
+
+	// Set the plan value to empty if:
+	//
+	// - None of the resource ID attributes have any values.
+	// - Current path is not the one which has one or more values.
+	// - Current path has value in plan, but not in the configuration,
+	//   indicating it has been removed.
+	if resourceTypeAttr == "" || !req.Path.Equal(path.Root(resourceTypeAttr)) ||
+		len(req.ConfigValue.Elements()) == 0 {
+		resp.PlanValue = types.SetValueMust(types.StringType, []attr.Value{})
 		return
 	}
 
-	// Set the plan value to a empty set if the resource type is not that of the
-	// current path. This is required for the plan to include removal of
-	// existing values when switching between VM IDs, VM Group IDs and Tag IDs.
-	if !req.Path.Equal(path.Root(resourceTypeAttr)) {
-		resp.PlanValue = types.SetValueMust(types.StringType, []attr.Value{})
+	// Do nothing if there is a known planned value.
+	if !req.PlanValue.IsUnknown() {
 		return
 	}
 

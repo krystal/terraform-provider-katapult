@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	core "github.com/krystal/go-katapult/next/core"
 )
@@ -223,11 +223,13 @@ func (r *IPResource) Create(
 		return
 	}
 
-	plan.ID = types.StringPointerValue(res.JSON200.IpAddress.Id)
+	id := res.JSON200.IpAddress.Id
+
+	plan.ID = types.StringPointerValue(id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 
-	if err := r.IPRead(ctx, &plan, &resp.State); err != nil {
+	if err := r.IPRead(ctx, *id, &plan); err != nil {
 		resp.Diagnostics.AddError("IP Address Read Error", err.Error())
 		return
 	}
@@ -248,7 +250,16 @@ func (r *IPResource) Read(
 		return
 	}
 
-	if err := r.IPRead(ctx, state, &resp.State); err != nil {
+	if err := r.IPRead(ctx, state.ID.ValueString(), state); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			r.M.Logger.Info(
+				"IP Address not found, removing from state",
+				"id", state.ID.ValueString(),
+			)
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resp.Diagnostics.AddError("IP Address Read Error", err.Error())
 		return
 	}
@@ -277,10 +288,11 @@ func (r *IPResource) Update(
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	id := state.ID.ValueString()
 
 	args := core.PatchIpAddressJSONRequestBody{
 		IpAddress: core.IPAddressLookup{
-			Id: plan.ID.ValueStringPointer(),
+			Id: &id,
 		},
 	}
 
@@ -298,7 +310,7 @@ func (r *IPResource) Update(
 		return
 	}
 
-	if err := r.IPRead(ctx, &plan, &resp.State); err != nil {
+	if err := r.IPRead(ctx, id, &plan); err != nil {
 		resp.Diagnostics.AddError("IP Address Read Error", err.Error())
 		return
 	}
@@ -332,8 +344,8 @@ func (r *IPResource) Delete(
 
 func (r *IPResource) IPRead(
 	ctx context.Context,
+	id string,
 	model *IPResourceModel,
-	state *tfsdk.State,
 ) error {
 	res, err := r.M.Core.GetIpAddressWithResponse(ctx,
 		&core.GetIpAddressParams{
@@ -341,8 +353,7 @@ func (r *IPResource) IPRead(
 		},
 	)
 	if res.StatusCode() == http.StatusNotFound {
-		state.RemoveResource(ctx)
-		return nil
+		return ErrNotFound
 	}
 
 	if err != nil {
