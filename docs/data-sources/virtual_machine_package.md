@@ -40,5 +40,3 @@ data "katapult_virtual_machine_package" "rock3" {
 - `name` (String)
 - `privacy` (String)
 - `storage_in_gb` (Number) Storage in GB.
-
-

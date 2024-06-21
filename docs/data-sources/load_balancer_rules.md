@@ -56,5 +56,3 @@ Read-Only:
 - `passthrough_ssl` (Boolean)
 - `protocol` (String)
 - `proxy_protocol` (Boolean)
-
-

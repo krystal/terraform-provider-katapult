@@ -35,5 +35,3 @@ Read-Only:
 - `name` (String)
 - `nfs_location` (String)
 - `size` (Number)
-
-

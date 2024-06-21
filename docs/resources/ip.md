@@ -46,5 +46,3 @@ resource "katapult_ip" "primary-db" {
 - `allocation_type` (String)
 - `id` (String) The ID of this resource.
 - `reverse_dns` (String)
-
-

@@ -32,5 +32,3 @@ data "katapult_file_storage_volume" "web" {
 - `name` (String) Unique name to help identify the volume. Must be unique within the organization.
 - `nfs_location` (String) The NFS location indicating where to mount the volume from. This is where the volume must be mounted from inside of virtual machines referenced in `associations`.
 - `size` (Number) The size of the volume in bytes.
-
-

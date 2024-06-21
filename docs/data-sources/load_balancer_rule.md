@@ -42,5 +42,3 @@ data "katapult_load_balancer_rule" "web-redirect" {
 - `passthrough_ssl` (Boolean)
 - `protocol` (String)
 - `proxy_protocol` (Boolean)
-
-

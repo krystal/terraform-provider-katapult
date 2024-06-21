@@ -38,5 +38,3 @@ Read-Only:
 - `permalink` (String)
 - `privacy` (String)
 - `storage_in_gb` (Number)
-
-
