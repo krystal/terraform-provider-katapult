@@ -30,5 +30,3 @@ data "katapult_virtual_machine_group" "group-1" {
 
 - `name` (String)
 - `segregate` (Boolean)
-
-

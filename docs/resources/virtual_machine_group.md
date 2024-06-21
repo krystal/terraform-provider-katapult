@@ -39,5 +39,3 @@ resource "katapult_virtual_machine_group" "web-1" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-
-

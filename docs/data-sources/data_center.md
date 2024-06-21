@@ -40,5 +40,3 @@ data "katapult_data_center" "lon" {
 - `country_id` (String)
 - `country_name` (String)
 - `name` (String)
-
-

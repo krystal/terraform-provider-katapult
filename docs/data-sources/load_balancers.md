@@ -35,5 +35,3 @@ Read-Only:
 - `tag_ids` (Set of String)
 - `virtual_machine_group_ids` (Set of String)
 - `virtual_machine_ids` (Set of String)
-
-

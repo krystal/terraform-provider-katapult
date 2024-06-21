@@ -39,5 +39,3 @@ data "katapult_disk_template" "ubuntu-18-04" {
 - `os_family` (String)
 - `template_version` (Number)
 - `universal` (Boolean)
-
-

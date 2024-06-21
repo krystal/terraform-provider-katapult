@@ -66,5 +66,3 @@ resource "katapult_load_balancer" "by-tag" {
 
 - `id` (String) The ID of this resource.
 - `ip_address` (String)
-
-

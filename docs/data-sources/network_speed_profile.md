@@ -37,5 +37,3 @@ data "katapult_network_speed_profile" "10gbps" {
 - `download_speed` (Number) Download speed in Mbit. A  value of `0` means unrestricted.
 - `name` (String)
 - `upload_speed` (Number) Upload speed in Mbit. A value of `0` means unrestricted.
-
-

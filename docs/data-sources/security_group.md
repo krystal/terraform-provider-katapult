@@ -69,5 +69,3 @@ Read-Only:
 - `ports` (String)
 - `protocol` (String)
 - `targets` (Set of String)
-
-

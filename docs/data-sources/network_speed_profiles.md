@@ -35,5 +35,3 @@ Read-Only:
 - `name` (String)
 - `permalink` (String)
 - `upload_speed` (Number)
-
-
