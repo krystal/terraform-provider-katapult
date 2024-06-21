@@ -349,7 +349,7 @@ func (r *IPResource) IPRead(
 ) error {
 	res, err := r.M.Core.GetIpAddressWithResponse(ctx,
 		&core.GetIpAddressParams{
-			IpAddressId: model.ID.ValueStringPointer(),
+			IpAddressId: &id,
 		},
 	)
 	if res.StatusCode() == http.StatusNotFound {
