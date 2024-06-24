@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/krystal/go-katapult/core"
+	core "github.com/krystal/go-katapult/next/core"
 )
 
 type (
@@ -105,32 +105,39 @@ func (ds *LoadBalancerDataSource) Read(
 		return
 	}
 
-	lb, _, err := ds.M.Core.LoadBalancers.GetByID(ctx, data.ID.ValueString())
+	res, err := ds.M.Core.GetLoadBalancerWithResponse(
+		ctx,
+		&core.GetLoadBalancerParams{
+			LoadBalancerId: data.ID.ValueStringPointer(),
+		})
 	if err != nil {
 		resp.Diagnostics.AddError("Load Balancer GetByID Error", err.Error())
 		return
 	}
-
-	data.Name = types.StringValue(lb.Name)
-	data.HTTPSRedirect = types.BoolValue(lb.HTTPSRedirect)
-	if lb.IPAddress != nil {
-		data.IPAddress = types.StringValue(lb.IPAddress.Address)
+	lb := res.JSON200.LoadBalancer
+	data.Name = types.StringPointerValue(lb.Name)
+	data.HTTPSRedirect = types.BoolPointerValue(lb.HttpsRedirect)
+	if lb.IpAddress != nil {
+		data.IPAddress = types.StringPointerValue(lb.IpAddress.Address)
 	}
 
-	list := flattenLoadBalancerResourceIDs(lb.ResourceIDs)
 	data.VirtualMachineIDs = types.SetNull(types.StringType)
 	data.TagIDs = types.SetNull(types.StringType)
 	data.VirtualMachineGroupIDs = types.SetNull(types.StringType)
+	if lb.ResourceIds != nil {
+		list := flattenLoadBalancerResourceIDs(*lb.ResourceIds)
 
-	switch lb.ResourceType {
-	case core.VirtualMachinesResourceType:
-		data.VirtualMachineIDs = list
-	case core.VirtualMachineGroupsResourceType:
-		data.VirtualMachineGroupIDs = list
-	case core.TagsResourceType:
-		data.TagIDs = list
+		switch *lb.ResourceType {
+		case core.VirtualMachines:
+			data.VirtualMachineIDs = list
+		case core.VirtualMachineGroups:
+			data.VirtualMachineGroupIDs = list
+		case core.Tags:
+			data.TagIDs = list
+		}
 	}
-	data.ID = types.StringValue(lb.ID)
+
+	data.ID = types.StringPointerValue(lb.Id)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

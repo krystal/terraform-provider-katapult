@@ -2,9 +2,11 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/krystal/go-katapult/next/core"
 )
 
 func init() { //nolint:gochecknoinits
@@ -19,24 +21,40 @@ func testSweepVMGroups(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()
 
-	vmgs, _, err := m.Core.VirtualMachineGroups.List(
-		ctx, m.OrganizationRef,
-	)
+	res, err := m.Core.GetOrganizationVirtualMachineGroupsWithResponse(ctx,
+		&core.GetOrganizationVirtualMachineGroupsParams{
+			OrganizationSubDomain: &m.confOrganization,
+		})
 	if err != nil {
 		return err
 	}
 
+	if res.JSON200 == nil {
+		return errors.New("unexpected nil response")
+	}
+
+	vmgs := res.JSON200.VirtualMachineGroups
+
 	for _, vmg := range vmgs {
-		if !strings.HasPrefix(vmg.Name, testAccResourceNamePrefix) {
+		if !strings.HasPrefix(*vmg.Name, testAccResourceNamePrefix) {
 			continue
 		}
 
 		m.Logger.Info(
-			"deleting virtual machine group", "id", vmg.ID, "name", vmg.Name,
+			"deleting virtual machine group", "id", vmg.Id, "name", vmg.Name,
 		)
-		_, err := m.Core.VirtualMachineGroups.Delete(ctx, vmg.Ref())
+
+		delRes, err := m.Core.DeleteVirtualMachineGroupWithResponse(ctx,
+			core.DeleteVirtualMachineGroupJSONRequestBody{
+				VirtualMachineGroup: core.VirtualMachineGroupLookup{
+					Id: vmg.Id,
+				},
+			})
 		if err != nil {
 			return err
+		}
+		if delRes.JSON200 == nil {
+			return errors.New("unexpected nil response")
 		}
 	}
 

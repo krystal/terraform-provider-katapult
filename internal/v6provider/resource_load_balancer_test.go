@@ -3,6 +3,7 @@ package v6provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"testing"
@@ -11,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
-	"github.com/krystal/go-katapult/core"
+	"github.com/krystal/go-katapult/next/core"
 )
 
 func init() { //nolint:gochecknoinits
@@ -25,27 +26,44 @@ func testSweepLoadBalancers(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()
 
-	var loadBalancers []*core.LoadBalancer
+	//nolint:lll // type is generated
+	var loadBalancers []core.GetOrganizationLoadBalancers200ResponseLoadBalancers
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := m.Core.LoadBalancers.List(
-			ctx, m.OrganizationRef, &core.ListOptions{Page: pageNum},
-		)
+		res, err := m.Core.GetOrganizationLoadBalancersWithResponse(ctx,
+			&core.GetOrganizationLoadBalancersParams{
+				OrganizationId: &m.confOrganization,
+				Page:           &pageNum,
+			})
 		if err != nil {
 			return err
 		}
+		if res.StatusCode() == http.StatusNotFound {
+			return nil
+		}
 
-		totalPages = resp.Pagination.TotalPages
-		loadBalancers = append(loadBalancers, pageResult...)
+		if res.JSON200 == nil {
+			return fmt.Errorf("nil JSON200 response")
+		}
+
+		resp := res.JSON200
+
+		totalPages = *resp.Pagination.TotalPages
+		loadBalancers = append(loadBalancers, resp.LoadBalancers...)
 	}
 
 	for _, lb := range loadBalancers {
-		if !strings.HasPrefix(lb.Name, testAccResourceNamePrefix) {
+		if !strings.HasPrefix(*lb.Name, testAccResourceNamePrefix) {
 			continue
 		}
 
-		m.Logger.Info("deleting load balancer", "id", lb.ID, "name", lb.Name)
-		_, _, err := m.Core.LoadBalancers.Delete(ctx, lb.Ref())
+		m.Logger.Info("deleting load balancer", "id", lb.Id, "name", lb.Name)
+		_, err := m.Core.DeleteLoadBalancerWithResponse(ctx,
+			core.DeleteLoadBalancerJSONRequestBody{
+				LoadBalancer: core.LoadBalancerLookup{
+					Id: lb.Id,
+				},
+			})
 		if err != nil {
 			return err
 		}
@@ -1118,29 +1136,32 @@ func testAccCheckKatapultLoadBalancerAttrs(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		lb, _, err := m.Core.LoadBalancers.GetByID(
-			tt.Ctx, rs.Primary.ID,
-		)
+		resp, err := m.Core.GetLoadBalancerWithResponse(tt.Ctx,
+			&core.GetLoadBalancerParams{
+				LoadBalancerId: &rs.Primary.ID,
+			})
 		if err != nil {
 			return err
 		}
 
+		lb := resp.JSON200.LoadBalancer
+
 		var resourceAttribute string
 		var otherResourceAttrs []string
-		switch lb.ResourceType {
-		case core.VirtualMachinesResourceType:
+		switch *lb.ResourceType {
+		case core.VirtualMachines:
 			resourceAttribute = "virtual_machine_ids"
 			otherResourceAttrs = []string{
 				"virtual_machine_group_ids",
 				"tag_ids",
 			}
-		case core.VirtualMachineGroupsResourceType:
+		case core.VirtualMachineGroups:
 			resourceAttribute = "virtual_machine_group_ids"
 			otherResourceAttrs = []string{
 				"virtual_machine_ids",
 				"tag_ids",
 			}
-		case core.TagsResourceType:
+		case core.Tags:
 			resourceAttribute = "tag_ids"
 			otherResourceAttrs = []string{
 				"virtual_machine_ids",
@@ -1149,16 +1170,16 @@ func testAccCheckKatapultLoadBalancerAttrs(
 		}
 
 		tfs := []resource.TestCheckFunc{
-			resource.TestCheckResourceAttr(res, "id", lb.ID),
-			resource.TestCheckResourceAttr(res, "name", lb.Name),
+			resource.TestCheckResourceAttr(res, "id", *lb.Id),
+			resource.TestCheckResourceAttr(res, "name", *lb.Name),
 			resource.TestCheckResourceAttr(
-				res, "ip_address", lb.IPAddress.Address,
+				res, "ip_address", *lb.IpAddress.Address,
 			),
 			resource.TestCheckResourceAttr(
-				res, "https_redirect", strconv.FormatBool(lb.HTTPSRedirect),
+				res, "https_redirect", strconv.FormatBool(*lb.HttpsRedirect),
 			),
 			resource.TestCheckResourceAttr(
-				res, resourceAttribute+".#", strconv.Itoa(len(lb.ResourceIDs)),
+				res, resourceAttribute+".#", strconv.Itoa(len(*lb.ResourceIds)),
 			),
 		}
 
@@ -1170,7 +1191,7 @@ func testAccCheckKatapultLoadBalancerAttrs(
 			)
 		}
 
-		for _, id := range lb.ResourceIDs {
+		for _, id := range *lb.ResourceIds {
 			tfs = append(tfs,
 				resource.TestCheckTypeSetElemAttr(
 					res, resourceAttribute+".*", id,
@@ -1193,11 +1214,16 @@ func testAccCheckKatapultLoadBalancerDestroy(
 				continue
 			}
 
-			lb, _, err := m.Core.LoadBalancers.GetByID(tt.Ctx, rs.Primary.ID)
-			if err == nil && lb != nil {
+			// lb, _, err := m.Core.LoadBalancers.GetByID(tt.Ctx, rs.Primary.ID)
+			resp, err := m.Core.GetLoadBalancerWithResponse(tt.Ctx,
+				&core.GetLoadBalancerParams{
+					LoadBalancerId: &rs.Primary.ID,
+				})
+
+			if err == nil && resp.JSON200 != nil {
 				return fmt.Errorf(
 					"katapult_load_balancer %s (%s) was not destroyed",
-					rs.Primary.ID, lb.Name,
+					rs.Primary.ID, *resp.JSON200.LoadBalancer.Name,
 				)
 			}
 		}
