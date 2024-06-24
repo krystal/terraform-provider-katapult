@@ -211,7 +211,7 @@ func (r *LoadBalancerResource) Create(
 		return
 	}
 
-	if res.JSON200.LoadBalancer.Id == nil {
+	if res.JSON201 == nil {
 		resp.Diagnostics.AddError(
 			"Load Balancer Create Error",
 			"missing ID in response",
@@ -219,7 +219,7 @@ func (r *LoadBalancerResource) Create(
 		return
 	}
 
-	id := *res.JSON200.LoadBalancer.Id
+	id := *res.JSON201.LoadBalancer.Id
 
 	if err := r.LoadBalancerRead(ctx, id, &plan); err != nil {
 		resp.Diagnostics.AddError("Load Balancer Read Error", err.Error())
@@ -374,7 +374,6 @@ func (r *LoadBalancerResource) LoadBalancerRead(
 		&core.GetLoadBalancerParams{
 			LoadBalancerId: &id,
 		})
-
 	if res.StatusCode() == http.StatusNotFound {
 		return ErrNotFound
 	}
