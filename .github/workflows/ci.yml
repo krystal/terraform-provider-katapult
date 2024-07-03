@@ -89,10 +89,28 @@ jobs:
       - name: Ensure generated documentation is up to date
         run: mv docs docs-current && make docs && diff -rN docs-current docs
 
+  goreleaser-config:
+    name: Goreleaser Config
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+      - name: goreleaser check
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~> v2"
+          args: check
+
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
-    needs: [lint, lint-provider, tidy, test, docs]
+    needs: [lint, lint-provider, tidy, test, docs, goreleaser-config]
     if: github.ref == 'refs/heads/main'
     outputs:
       release_created: ${{ steps.release-please.outputs.release_created }}

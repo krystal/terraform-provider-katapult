@@ -1,3 +1,4 @@
+version: 2
 before:
   hooks:
     - go mod tidy
@@ -24,12 +25,15 @@ builds:
     ignore:
       - goos: darwin
         goarch: "386"
+
 archives:
   - format: zip
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
   algorithm: sha256
+
 signs:
   - artifacts: checksum
     args:
@@ -40,7 +44,11 @@ signs:
       - "${signature}"
       - "--detach-sign"
       - "${artifact}"
+
 snapshot:
   name_template: "{{ .Tag }}-next"
-changelog:
-  skip: true
+
+# GitHub release and release notes are created by the release-please action, so
+# we only need to upload the artifacts.
+release:
+  mode: keep-existing
