@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.14](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.13...v0.0.14) (2024-07-03)
+
+
+### Bug Fixes
+
+* **ci/release:** make goreleaser config compatible with v2 ([#137](https://github.com/krystal/terraform-provider-katapult/issues/137)) ([e7635f1](https://github.com/krystal/terraform-provider-katapult/commit/e7635f11c17b231ccc876916a7b9f2e24eb00e68))
+
 ## [0.0.13](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.12...v0.0.13) (2024-06-21)
 
 
