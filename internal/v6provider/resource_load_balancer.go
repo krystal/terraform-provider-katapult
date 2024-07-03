@@ -303,10 +303,6 @@ func (r *LoadBalancerResource) Update(
 		t, ids := extractLoadBalancerResourceTypeAndIDs(&plan)
 		args.Properties.ResourceType = &t
 		args.Properties.ResourceIds = &ids
-	} else {
-		t, ids := extractLoadBalancerResourceTypeAndIDs(&state)
-		args.Properties.ResourceType = &t
-		args.Properties.ResourceIds = &ids
 	}
 
 	res, err := r.M.Core.PatchLoadBalancerWithResponse(ctx, args)

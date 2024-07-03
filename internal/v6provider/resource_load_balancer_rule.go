@@ -595,7 +595,7 @@ func (r *LoadBalancerRuleResource) LoadBalancerRuleRead(
 	model.DestinationPort = types.Int64Value(int64(*lbr.DestinationPort))
 	model.ListenPort = types.Int64Value(int64(*lbr.ListenPort))
 	model.Protocol = types.StringValue(string(*lbr.Protocol))
-	model.ProxyProtocol = types.BoolValue(*lbr.ProxyProtocol)
+	model.ProxyProtocol = types.BoolPointerValue(lbr.ProxyProtocol)
 	model.CertificateIDs = types.SetValueMust(
 		types.StringType,
 		ConvertCoreCertsToTFValues(*lbr.Certificates),

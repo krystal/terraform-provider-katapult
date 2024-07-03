@@ -1,10 +1,10 @@
 package v6provider
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"os"
-	"time"
 
 	"github.com/hashicorp/go-hclog"
 
@@ -50,7 +50,6 @@ func (m *Meta) UseOrGenerateHostname(hostname string) string {
 	}
 }
 
-//nolint:funlen // it's fine
 func NewMeta(
 	apiKey string,
 	datacenter string,
@@ -99,22 +98,6 @@ func NewMeta(
 		m.GeneratedNamePrefix = defaultGeneratedNamePrefix
 	}
 
-	opts := []katapult.Option{
-		katapult.WithAPIKey(m.confAPIKey),
-		katapult.WithUserAgent(
-			userAgent(
-				"terraform-provider-katapult",
-				terraformVersion,
-				version,
-			),
-		),
-	}
-	if httpClient == nil {
-		httpClient = &http.Client{Timeout: 60 * time.Second}
-	}
-
-	opts = append(opts, katapult.WithHTTPClient(httpClient))
-
 	serverURL := &url.URL{
 		Scheme: "https",
 		Host:   "api.katapult.io",
@@ -128,30 +111,37 @@ func NewMeta(
 			return nil, err
 		}
 
-		opts = append(opts, katapult.WithBaseURL(u))
+		u.Path = "/core/v1"
+
 		serverURL = u
 	}
 
-	c, err := katapult.New(opts...)
-	if err != nil {
-		return nil, err
-	}
-
 	rhc := newRetryableHTTPClient(httpClient, m.Logger)
-	c.HTTPClient = rhc.StandardClient()
 
-	m.Client = c
-
-	CoreClient, err := core.NewClientWithResponses(
+	coreClient, err := core.NewClientWithResponses(
 		serverURL.String(),
 		m.confAPIKey,
 		core.WithHTTPClient(rhc.StandardClient()),
+		core.WithRequestEditorFn(
+			func(_ context.Context, req *http.Request) error {
+				req.Header.Set(
+					"User-Agent",
+					userAgent(
+						"terraform-provider-katapult",
+						terraformVersion,
+						version,
+					),
+				)
+
+				return nil
+			},
+		),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	m.Core = CoreClient
+	m.Core = coreClient
 
 	return m, nil
 }

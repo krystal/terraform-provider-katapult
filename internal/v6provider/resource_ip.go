@@ -192,6 +192,14 @@ func (r *IPResource) Create(
 			return
 		}
 
+		if res.JSON200 == nil {
+			resp.Diagnostics.AddError(
+				"Default Network Error",
+				"no default network found",
+			)
+			return
+		}
+
 		networkID = res.JSON200.Network.Id
 	}
 
