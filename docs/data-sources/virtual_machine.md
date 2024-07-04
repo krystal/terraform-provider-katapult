@@ -46,5 +46,3 @@ data "katapult_virtual_machine" "web-1" {
 - `package` (String) Permalink or ID of a Virtual Machine Package.
 - `state` (String)
 - `tags` (Set of String)
-
-

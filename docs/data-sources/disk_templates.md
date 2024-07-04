@@ -41,5 +41,3 @@ Read-Only:
 - `permalink` (String)
 - `template_version` (Number)
 - `universal` (Boolean)
-
-

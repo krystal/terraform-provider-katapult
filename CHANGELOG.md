@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.0.14](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.13...v0.0.14) (2024-07-03)
+
+
+### Bug Fixes
+
+* **ci/release:** make goreleaser config compatible with v2 ([#137](https://github.com/krystal/terraform-provider-katapult/issues/137)) ([e7635f1](https://github.com/krystal/terraform-provider-katapult/commit/e7635f11c17b231ccc876916a7b9f2e24eb00e68))
+
+## [0.0.13](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.12...v0.0.13) (2024-06-21)
+
+
+### Bug Fixes
+
+* **ci:** separate release-please and goreleaser, also update all the things ([#134](https://github.com/krystal/terraform-provider-katapult/issues/134)) ([2a86d40](https://github.com/krystal/terraform-provider-katapult/commit/2a86d40bccd8dd7f31f9894636cba1f6d1872c3e))
+
+## [0.0.12](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.11...v0.0.12) (2024-06-20)
+
+
+### Features
+
+* add katapult load balancer rule resource and data sources ([#119](https://github.com/krystal/terraform-provider-katapult/issues/119)) ([987b814](https://github.com/krystal/terraform-provider-katapult/commit/987b8140aba4155b93ce4b355e328404dccec961))
+
+
+### Bug Fixes
+
+* **load-balancer:** handle removal of all resource IDs ([#132](https://github.com/krystal/terraform-provider-katapult/issues/132)) ([b4cb8bf](https://github.com/krystal/terraform-provider-katapult/commit/b4cb8bfdc9227738de27299eb66124bfff2b9618))
+* **v6provider/refresh:** refreshing missing resources now clears them from state ([#133](https://github.com/krystal/terraform-provider-katapult/issues/133)) ([0ce024b](https://github.com/krystal/terraform-provider-katapult/commit/0ce024bb457d6b21724e79ece60f5cf8ea6b477c))
+* **v6provider:** add plan modifier rules to reduce excessive known after apply issues ([#131](https://github.com/krystal/terraform-provider-katapult/issues/131)) ([0fcb3a0](https://github.com/krystal/terraform-provider-katapult/commit/0fcb3a0324aba924129fde6d2d5e69368e157a5c))
+
 ## [0.0.11](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.10...v0.0.11) (2024-03-07)
 
 

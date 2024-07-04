@@ -78,5 +78,3 @@ resource "katapult_load_balancer_rule" "complete_rule" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-
-

@@ -42,5 +42,3 @@ data "katapult_ip" "web-2" {
 - `reverse_dns` (String)
 - `version` (Number) IPv4 or IPv6.
 - `vip` (Boolean)
-
-

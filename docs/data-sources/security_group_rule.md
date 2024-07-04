@@ -34,5 +34,3 @@ data "katapult_security_group_rule" "ssh" {
 - `protocol` (String) The protocol of the rule (`TCP`, `UDP`, or `ICMP`).
 - `security_group_id` (String) The ID of the security group to which the rule applies.
 - `targets` (Set of String) The targets to which the rule applies. Can be IP addresses, CIDR blocks, IDs for virtual machines, virtual machine groups, tags, address lists, or `all:ipv4` and `all:ipv6`.
-
-
