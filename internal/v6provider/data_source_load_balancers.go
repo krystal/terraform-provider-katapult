@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/krystal/go-katapult/core"
+	"github.com/krystal/go-katapult/next/core"
 )
 
 type (
@@ -84,21 +84,33 @@ func (ds *LoadBalancersDataSource) Read(
 		return
 	}
 
-	loadBalancers := []*core.LoadBalancer{}
+	loadBalancers := []core.GetLoadBalancer200ResponseLoadBalancer{}
 	totalPages := 2
 	for pageNum := 1; pageNum < totalPages; pageNum++ {
-		lbs, res, err := ds.M.Core.LoadBalancers.List(ctx,
-			ds.M.OrganizationRef,
-			&core.ListOptions{Page: pageNum})
+		res, err := ds.M.Core.GetOrganizationLoadBalancersWithResponse(ctx,
+			&core.GetOrganizationLoadBalancersParams{
+				OrganizationSubDomain: &ds.M.confOrganization,
+				Page:                  &pageNum,
+			})
 		if err != nil {
 			resp.Diagnostics.AddError("Load Balancer List Error", err.Error())
 			return
 		}
 
-		totalPages = res.Pagination.TotalPages
+		if res.JSON200 == nil {
+			resp.Diagnostics.AddError(
+				"Load Balancer List Error",
+				"nil response")
+			return
+		}
+
+		totalPages = *res.JSON200.Pagination.TotalPages
+
+		lbs := res.JSON200.LoadBalancers
 
 		for _, lb := range lbs {
-			fullLB, _, err := ds.M.Core.LoadBalancers.Get(ctx, lb.Ref())
+			res, err := ds.M.Core.GetLoadBalancerWithResponse(ctx,
+				&core.GetLoadBalancerParams{LoadBalancerId: lb.Id})
 			if err != nil {
 				resp.Diagnostics.AddError(
 					"Load Balancer Get Error",
@@ -106,7 +118,15 @@ func (ds *LoadBalancersDataSource) Read(
 				return
 			}
 
-			loadBalancers = append(loadBalancers, fullLB)
+			if res.JSON200 == nil {
+				resp.Diagnostics.AddError(
+					"Load Balancer Get Error",
+					"nil response",
+				)
+				return
+			}
+
+			loadBalancers = append(loadBalancers, res.JSON200.LoadBalancer)
 		}
 	}
 
@@ -114,26 +134,28 @@ func (ds *LoadBalancersDataSource) Read(
 
 	for i, lb := range loadBalancers {
 		attrs := map[string]attr.Value{
-			"id":                        types.StringValue(lb.ID),
-			"name":                      types.StringValue(lb.Name),
-			"https_redirect":            types.BoolValue(lb.HTTPSRedirect),
+			"id":   types.StringPointerValue(lb.Id),
+			"name": types.StringPointerValue(lb.Name),
+			"https_redirect": types.BoolPointerValue(
+				lb.HttpsRedirect,
+			),
 			"virtual_machine_ids":       types.SetNull(types.StringType),
 			"virtual_machine_group_ids": types.SetNull(types.StringType),
 			"tag_ids":                   types.SetNull(types.StringType),
 		}
 
-		resourceIDs := flattenLoadBalancerResourceIDs(lb.ResourceIDs)
-		switch lb.ResourceType {
-		case core.VirtualMachinesResourceType:
+		resourceIDs := flattenLoadBalancerResourceIDs(*lb.ResourceIds)
+		switch *lb.ResourceType {
+		case core.VirtualMachines:
 			attrs["virtual_machine_ids"] = resourceIDs
-		case core.VirtualMachineGroupsResourceType:
+		case core.VirtualMachineGroups:
 			attrs["virtual_machine_group_ids"] = resourceIDs
-		case core.TagsResourceType:
+		case core.Tags:
 			attrs["tag_ids"] = resourceIDs
 		}
 
-		if lb.IPAddress != nil {
-			attrs["ip_address"] = types.StringValue(lb.IPAddress.Address)
+		if lb.IpAddress != nil {
+			attrs["ip_address"] = types.StringPointerValue(lb.IpAddress.Address)
 		}
 
 		list[i] = types.ObjectValueMust(

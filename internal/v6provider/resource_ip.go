@@ -3,6 +3,7 @@ package v6provider
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -18,8 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/krystal/go-katapult"
-	"github.com/krystal/go-katapult/core"
+	core "github.com/krystal/go-katapult/next/core"
 )
 
 type (
@@ -175,15 +175,15 @@ func (r *IPResource) Create(
 		return
 	}
 
-	var network *core.Network
+	var networkID *string
 
 	if netID := plan.NetworkID.ValueString(); netID != "" {
-		network = &core.Network{ID: netID}
+		networkID = &netID
 	} else {
-		var err error
-		network, _, err = r.M.Core.DataCenters.DefaultNetwork(
-			ctx, r.M.DataCenterRef,
-		)
+		res, err := r.M.Core.GetDataCenterDefaultNetworkWithResponse(ctx,
+			&core.GetDataCenterDefaultNetworkParams{
+				DataCenterPermalink: &r.M.confDataCenter,
+			})
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Default Network Error",
@@ -191,30 +191,53 @@ func (r *IPResource) Create(
 			)
 			return
 		}
+
+		if res.JSON200 == nil {
+			resp.Diagnostics.AddError(
+				"Default Network Error",
+				"no default network found",
+			)
+			return
+		}
+
+		networkID = res.JSON200.Network.Id
 	}
 
-	args := &core.IPAddressCreateArguments{
-		Network: network.Ref(),
+	args := core.PostOrganizationIpAddressesJSONRequestBody{
+		Organization: core.OrganizationLookup{
+			SubDomain: &r.M.confOrganization,
+		},
+		Network: core.NetworkLookup{
+			Id: networkID,
+		},
 		Version: unflattenIPVersion(plan.Version.ValueInt64()),
 	}
 
 	if vip := plan.VIP.ValueBool(); vip {
-		args.VIP = &vip
-		args.Label = plan.Label.ValueString()
+		args.Vip = &vip
+		args.Label = plan.Label.ValueStringPointer()
 	}
 
-	ip, _, err := r.M.Core.IPAddresses.Create(ctx, r.M.OrganizationRef, args)
+	res, err := r.M.Core.PostOrganizationIpAddressesWithResponse(ctx, args)
 	if err != nil {
 		resp.Diagnostics.AddError("IP Address Create Error", err.Error())
 		return
 	}
+	if res.StatusCode() < 200 || res.StatusCode() >= 300 {
+		resp.Diagnostics.AddError(
+			"IP Address Create Error",
+			string(res.Body),
+		)
+		return
+	}
 
-	plan.ID = types.StringValue(ip.ID)
+	id := res.JSON200.IpAddress.Id
 
-	diags = resp.State.Set(ctx, plan)
-	resp.Diagnostics.Append(diags...)
+	plan.ID = types.StringPointerValue(id)
 
-	if err := r.IPRead(ctx, ip.ID, &plan); err != nil {
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+
+	if err := r.IPRead(ctx, *id, &plan); err != nil {
 		resp.Diagnostics.AddError("IP Address Read Error", err.Error())
 		return
 	}
@@ -236,7 +259,7 @@ func (r *IPResource) Read(
 	}
 
 	if err := r.IPRead(ctx, state.ID.ValueString(), state); err != nil {
-		if errors.Is(err, katapult.ErrNotFound) {
+		if errors.Is(err, ErrNotFound) {
 			r.M.Logger.Info(
 				"IP Address not found, removing from state",
 				"id", state.ID.ValueString(),
@@ -273,21 +296,23 @@ func (r *IPResource) Update(
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
 	id := state.ID.ValueString()
-	ipRef := core.IPAddressRef{ID: id}
-	args := &core.IPAddressUpdateArguments{}
+
+	args := core.PatchIpAddressJSONRequestBody{
+		IpAddress: core.IPAddressLookup{
+			Id: &id,
+		},
+	}
 
 	if !plan.VIP.Equal(state.VIP) {
-		vip := plan.VIP.ValueBool()
-		args.VIP = &vip
+		args.Vip = plan.VIP.ValueBoolPointer()
 	}
 
 	if !plan.Label.Equal(state.Label) {
-		args.Label = plan.Label.ValueString()
+		args.Label = plan.Label.ValueStringPointer()
 	}
 
-	_, _, err := r.M.Core.IPAddresses.Update(ctx, ipRef, args)
+	_, err := r.M.Core.PatchIpAddressWithResponse(ctx, args)
 	if err != nil {
 		resp.Diagnostics.AddError("IP Address Update Error", err.Error())
 		return
@@ -314,8 +339,12 @@ func (r *IPResource) Delete(
 		return
 	}
 
-	ipRef := core.IPAddressRef{ID: state.ID.ValueString()}
-	_, err := r.M.Core.IPAddresses.Delete(ctx, ipRef)
+	_, err := r.M.Core.DeleteIpAddressWithResponse(ctx,
+		core.DeleteIpAddressJSONRequestBody{
+			IpAddress: core.IPAddressLookup{
+				Id: state.ID.ValueStringPointer(),
+			},
+		})
 	if err != nil {
 		resp.Diagnostics.AddError("IP Address Delete Error", err.Error())
 	}
@@ -326,23 +355,50 @@ func (r *IPResource) IPRead(
 	id string,
 	model *IPResourceModel,
 ) error {
-	ip, _, err := r.M.Core.IPAddresses.GetByID(ctx, id)
+	res, err := r.M.Core.GetIpAddressWithResponse(ctx,
+		&core.GetIpAddressParams{
+			IpAddressId: &id,
+		},
+	)
+	if res.StatusCode() == http.StatusNotFound {
+		return ErrNotFound
+	}
+
 	if err != nil {
 		return err
 	}
 
+	ip := res.JSON200.IpAddress
+
 	if ip.Network != nil {
-		model.NetworkID = types.StringValue(ip.Network.ID)
+		model.NetworkID = types.StringPointerValue(ip.Network.Id)
 	}
 
-	model.Address = types.StringValue(ip.Address)
-	model.AddressWithMask = types.StringValue(ip.AddressWithMask)
-	model.ReverseDNS = types.StringValue(ip.ReverseDNS)
-	model.Version = types.Int64Value(flattenIPVersion(ip.Address))
-	model.VIP = types.BoolValue(ip.VIP)
-	model.Label = types.StringValue(ip.Label)
-	model.AllocationType = types.StringValue(ip.AllocationType)
-	model.AllocationID = types.StringValue(ip.AllocationID)
+	model.Address = types.StringPointerValue(ip.Address)
+	model.AddressWithMask = types.StringPointerValue(ip.AddressWithMask)
+	model.ReverseDNS = types.StringPointerValue(ip.ReverseDns)
+	if ip.Address != nil {
+		model.Version = types.Int64Value(flattenIPVersion(*ip.Address))
+	}
+	model.VIP = types.BoolPointerValue(ip.Vip)
+
+	if ip.Label != nil {
+		model.Label = types.StringPointerValue(ip.Label)
+	} else {
+		model.Label = types.StringValue("")
+	}
+
+	if ip.AllocationType != nil {
+		model.AllocationType = types.StringPointerValue(ip.AllocationType)
+	} else {
+		model.AllocationType = types.StringValue("")
+	}
+
+	if ip.AllocationId != nil {
+		model.AllocationID = types.StringPointerValue(ip.AllocationId)
+	} else {
+		model.AllocationID = types.StringValue("")
+	}
 
 	return nil
 }
@@ -355,12 +411,12 @@ func (r *IPResource) ImportState(
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func unflattenIPVersion(ver int64) core.IPVersion {
+func unflattenIPVersion(ver int64) core.IPAddressVersionEnum {
 	switch ver {
 	case 6:
-		return core.IPv6
+		return core.Ipv6
 	default:
-		return core.IPv4
+		return core.Ipv4
 	}
 }
 

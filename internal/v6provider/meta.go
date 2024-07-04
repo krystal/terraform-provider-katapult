@@ -1,21 +1,22 @@
 package v6provider
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"os"
-	"time"
 
 	"github.com/hashicorp/go-hclog"
 
 	"github.com/krystal/go-katapult"
-	"github.com/krystal/go-katapult/core"
+	core "github.com/krystal/go-katapult/next/core"
+
 	"github.com/krystal/go-katapult/namegenerator"
 )
 
 type Meta struct {
 	Client *katapult.Client
-	Core   *core.Client
+	Core   core.ClientWithResponsesInterface
 	Logger hclog.Logger
 
 	GeneratedNamePrefix  string
@@ -25,10 +26,6 @@ type Meta struct {
 	confAPIKey       string
 	confDataCenter   string
 	confOrganization string
-
-	// Internal cache of shallow lookup reference objects
-	DataCenterRef   core.DataCenterRef
-	OrganizationRef core.OrganizationRef
 }
 
 func (m *Meta) UseOrGenerateName(name string) string {
@@ -101,21 +98,11 @@ func NewMeta(
 		m.GeneratedNamePrefix = defaultGeneratedNamePrefix
 	}
 
-	opts := []katapult.Option{
-		katapult.WithAPIKey(m.confAPIKey),
-		katapult.WithUserAgent(
-			userAgent(
-				"terraform-provider-katapult",
-				terraformVersion,
-				version,
-			),
-		),
+	serverURL := &url.URL{
+		Scheme: "https",
+		Host:   "api.katapult.io",
+		Path:   "/core/v1",
 	}
-	if httpClient == nil {
-		httpClient = &http.Client{Timeout: 60 * time.Second}
-	}
-
-	opts = append(opts, katapult.WithHTTPClient(httpClient))
 
 	// Debug override of API URL for internal testing purposes.
 	if apiURL := os.Getenv("KATAPULT_TF_DEBUG_API_URL"); apiURL != "" {
@@ -124,26 +111,37 @@ func NewMeta(
 			return nil, err
 		}
 
-		opts = append(opts, katapult.WithBaseURL(u))
+		u.Path = "/core/v1"
+
+		serverURL = u
 	}
 
-	c, err := katapult.New(opts...)
+	rhc := newRetryableHTTPClient(httpClient, m.Logger)
+
+	coreClient, err := core.NewClientWithResponses(
+		serverURL.String(),
+		m.confAPIKey,
+		core.WithHTTPClient(rhc.StandardClient()),
+		core.WithRequestEditorFn(
+			func(_ context.Context, req *http.Request) error {
+				req.Header.Set(
+					"User-Agent",
+					userAgent(
+						"terraform-provider-katapult",
+						terraformVersion,
+						version,
+					),
+				)
+
+				return nil
+			},
+		),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	rhc := newRetryableHTTPClient(httpClient, m.Logger)
-	c.HTTPClient = rhc.StandardClient()
-
-	m.Client = c
-	m.Core = core.New(m.Client)
-
-	m.OrganizationRef = core.OrganizationRef{
-		SubDomain: m.confOrganization,
-	}
-	m.DataCenterRef = core.DataCenterRef{
-		Permalink: m.confDataCenter,
-	}
+	m.Core = coreClient
 
 	return m, nil
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	core "github.com/krystal/go-katapult/next/core"
 )
 
 type (
@@ -146,10 +147,10 @@ func (ds LoadBalancerRuleDataSource) Read(
 		return
 	}
 
-	id := data.ID.ValueString()
-
-	lbr, _, err := ds.M.Core.LoadBalancerRules.GetByID(ctx,
-		id)
+	res, err := ds.M.Core.GetLoadBalancersRulesLoadBalancerRuleWithResponse(ctx,
+		&core.GetLoadBalancersRulesLoadBalancerRuleParams{
+			LoadBalancerRuleId: data.ID.ValueStringPointer(),
+		})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Load Balancer Rule GetByID Error",
@@ -159,27 +160,36 @@ func (ds LoadBalancerRuleDataSource) Read(
 		return
 	}
 
-	data.ID = types.StringValue(lbr.ID)
-	data.LoadBalancerID = types.StringValue(lbr.LoadBalancer.ID)
-	data.Algorithm = types.StringValue(string(lbr.Algorithm))
-	data.DestinationPort = types.Int64Value(int64(lbr.DestinationPort))
-	data.ListenPort = types.Int64Value(int64(lbr.ListenPort))
-	data.Protocol = types.StringValue(string(lbr.Protocol))
-	data.ProxyProtocol = types.BoolValue(lbr.ProxyProtocol)
+	if res.JSON200 == nil {
+		resp.Diagnostics.AddError(
+			"Load Balancer Rule GetByID Error",
+			"response body is nil",
+		)
+	}
+
+	lbr := res.JSON200.LoadBalancerRule
+
+	data.ID = types.StringPointerValue(lbr.Id)
+	data.LoadBalancerID = types.StringPointerValue(lbr.LoadBalancer.Id)
+	data.Algorithm = types.StringValue(string(*lbr.Algorithm))
+	data.DestinationPort = types.Int64Value(int64(*lbr.DestinationPort))
+	data.ListenPort = types.Int64Value(int64(*lbr.ListenPort))
+	data.Protocol = types.StringValue(string(*lbr.Protocol))
+	data.ProxyProtocol = types.BoolPointerValue(lbr.ProxyProtocol)
 	data.CertificateIDs = types.SetValueMust(
 		types.StringType,
-		ConvertCoreCertsToTFValues(lbr.Certificates),
+		ConvertCoreCertsToTFValues(*lbr.Certificates),
 	)
-	data.BackendSSL = types.BoolValue(lbr.BackendSSL)
-	data.PassthroughSSL = types.BoolValue(lbr.PassthroughSSL)
-	data.CheckEnabled = types.BoolValue(lbr.CheckEnabled)
-	data.CheckFall = types.Int64Value(int64(lbr.CheckFall))
-	data.CheckInterval = types.Int64Value(int64(lbr.CheckInterval))
-	data.CheckPath = types.StringValue(lbr.CheckPath)
-	data.CheckProtocol = types.StringValue(string(lbr.CheckProtocol))
-	data.CheckRise = types.Int64Value(int64(lbr.CheckRise))
-	data.CheckTimeout = types.Int64Value(int64(lbr.CheckTimeout))
-	data.CheckHTTPStatuses = types.StringValue(string(lbr.CheckHTTPStatuses))
+	data.BackendSSL = types.BoolPointerValue(lbr.BackendSsl)
+	data.PassthroughSSL = types.BoolPointerValue(lbr.PassthroughSsl)
+	data.CheckEnabled = types.BoolPointerValue(lbr.CheckEnabled)
+	data.CheckFall = types.Int64Value(int64(*lbr.CheckFall))
+	data.CheckInterval = types.Int64Value(int64(*lbr.CheckInterval))
+	data.CheckPath = types.StringPointerValue(lbr.CheckPath)
+	data.CheckProtocol = types.StringValue(string(*lbr.CheckProtocol))
+	data.CheckRise = types.Int64Value(int64(*lbr.CheckRise))
+	data.CheckTimeout = types.Int64Value(int64(*lbr.CheckTimeout))
+	data.CheckHTTPStatuses = types.StringValue(string(*lbr.CheckHttpStatuses))
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

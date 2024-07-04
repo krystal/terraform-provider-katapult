@@ -3,6 +3,7 @@ package v6provider
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -15,8 +16,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/krystal/go-katapult"
-	"github.com/krystal/go-katapult/core"
+
+	core "github.com/krystal/go-katapult/next/core"
 )
 
 type (
@@ -177,28 +178,50 @@ func (r *LoadBalancerResource) Create(
 	name := r.M.UseOrGenerateName(plan.Name.ValueString())
 
 	t, ids := extractLoadBalancerResourceTypeAndIDs(&plan)
-
-	args := &core.LoadBalancerCreateArguments{
-		Name:          name,
-		DataCenter:    r.M.DataCenterRef,
-		HTTPSRedirect: plan.HTTPSRedirect.ValueBoolPointer(),
-		ResourceType:  core.VirtualMachinesResourceType,
+	if t == "" {
+		t = core.VirtualMachines
 	}
 
-	if len(ids) > 0 {
-		args.ResourceType = t
-		args.ResourceIDs = &ids
+	args := core.PostOrganizationLoadBalancersJSONRequestBody{
+		Organization: core.OrganizationLookup{
+			SubDomain: &r.M.confOrganization,
+		},
+		Properties: core.LoadBalancerArguments{
+			Name:          &name,
+			ResourceType:  &t,
+			ResourceIds:   &ids,
+			HttpsRedirect: plan.HTTPSRedirect.ValueBoolPointer(),
+			DataCenter: &core.DataCenterLookup{
+				Permalink: &r.M.confDataCenter,
+			},
+		},
 	}
 
-	lb, _, err := r.M.Core.LoadBalancers.Create(
-		ctx, r.M.OrganizationRef, args,
-	)
+	res, err := r.M.Core.
+		PostOrganizationLoadBalancersWithResponse(ctx, args)
 	if err != nil {
 		resp.Diagnostics.AddError("Load Balancer Create Error", err.Error())
 		return
 	}
+	if res.StatusCode() < 200 || res.StatusCode() >= 300 {
+		resp.Diagnostics.AddError(
+			"Load Balancer Create Error",
+			string(res.Body),
+		)
+		return
+	}
 
-	if err := r.LoadBalancerRead(ctx, lb.ID, &plan); err != nil {
+	if res.JSON201 == nil {
+		resp.Diagnostics.AddError(
+			"Load Balancer Create Error",
+			"missing ID in response",
+		)
+		return
+	}
+
+	id := *res.JSON201.LoadBalancer.Id
+
+	if err := r.LoadBalancerRead(ctx, id, &plan); err != nil {
 		resp.Diagnostics.AddError("Load Balancer Read Error", err.Error())
 		return
 	}
@@ -220,7 +243,7 @@ func (r *LoadBalancerResource) Read(
 
 	err := r.LoadBalancerRead(ctx, state.ID.ValueString(), state)
 	if err != nil {
-		if errors.Is(err, katapult.ErrNotFound) {
+		if errors.Is(err, ErrNotFound) {
 			r.M.Logger.Info(
 				"Load Balancer not found, removing from state",
 				"id", state.ID.ValueString(),
@@ -261,28 +284,39 @@ func (r *LoadBalancerResource) Update(
 
 	id := state.ID.ValueString()
 
-	lbRef := core.LoadBalancerRef{ID: id}
-	args := &core.LoadBalancerUpdateArguments{}
+	args := core.PatchLoadBalancerJSONRequestBody{
+		LoadBalancer: core.LoadBalancerLookup{Id: &id},
+		Properties:   core.LoadBalancerArguments{},
+	}
 
 	if !plan.Name.Equal(state.Name) {
-		args.Name = plan.Name.ValueString()
+		args.Properties.Name = plan.Name.ValueStringPointer()
 	}
 
 	if !plan.HTTPSRedirect.Equal(state.HTTPSRedirect) {
-		args.HTTPSRedirect = plan.HTTPSRedirect.ValueBoolPointer()
+		args.Properties.HttpsRedirect = plan.HTTPSRedirect.ValueBoolPointer()
 	}
 
 	if !plan.VirtualMachineIDs.Equal(state.VirtualMachineIDs) ||
 		!plan.VirtualMachineGroupIDs.Equal(state.VirtualMachineGroupIDs) ||
 		!plan.TagIDs.Equal(state.TagIDs) {
 		t, ids := extractLoadBalancerResourceTypeAndIDs(&plan)
-		args.ResourceType = t
-		args.ResourceIDs = &ids
+		args.Properties.ResourceType = &t
+		args.Properties.ResourceIds = &ids
 	}
 
-	_, _, err := r.M.Core.LoadBalancers.Update(ctx, lbRef, args)
+	res, err := r.M.Core.PatchLoadBalancerWithResponse(ctx, args)
 	if err != nil {
 		resp.Diagnostics.AddError("Load Balancer Update Error", err.Error())
+		return
+	}
+
+	if res.JSON200 == nil {
+		resp.Diagnostics.AddError(
+			"Load Balancer Update Error",
+			"unexpected status code from API",
+		)
+
 		return
 	}
 
@@ -307,10 +341,12 @@ func (r *LoadBalancerResource) Delete(
 		return
 	}
 
-	_, _, err := r.M.Core.LoadBalancers.Delete(
-		ctx,
-		core.LoadBalancerRef{ID: state.ID.ValueString()},
-	)
+	_, err := r.M.Core.DeleteLoadBalancerWithResponse(ctx,
+		core.DeleteLoadBalancerJSONRequestBody{
+			LoadBalancer: core.LoadBalancerLookup{
+				Id: state.ID.ValueStringPointer(),
+			},
+		})
 	if err != nil {
 		resp.Diagnostics.AddError("Load Balancer Delete Error", err.Error())
 	}
@@ -329,26 +365,37 @@ func (r *LoadBalancerResource) LoadBalancerRead(
 	id string,
 	model *LoadBalancerResourceModel,
 ) error {
-	lb, _, err := r.M.Core.LoadBalancers.GetByID(ctx, id)
+	res, err := r.M.Core.GetLoadBalancerWithResponse(
+		ctx,
+		&core.GetLoadBalancerParams{
+			LoadBalancerId: &id,
+		})
+	if res.StatusCode() == http.StatusNotFound {
+		return ErrNotFound
+	}
+
 	if err != nil {
 		return err
 	}
 
+	lb := res.JSON200.LoadBalancer
+
 	model.ID = types.StringValue(id)
-	model.Name = types.StringValue(lb.Name)
-	model.HTTPSRedirect = types.BoolValue(lb.HTTPSRedirect)
-	if lb.IPAddress != nil {
-		model.IPAddress = types.StringValue(lb.IPAddress.Address)
+	model.Name = types.StringPointerValue(lb.Name)
+
+	model.HTTPSRedirect = types.BoolPointerValue(lb.HttpsRedirect)
+	if lb.IpAddress != nil {
+		model.IPAddress = types.StringPointerValue(lb.IpAddress.Address)
 	}
 
-	populateLoadBalancerTargets(model, lb.ResourceType, lb.ResourceIDs)
+	populateLoadBalancerTargets(model, *lb.ResourceType, *lb.ResourceIds)
 
 	return nil
 }
 
 func populateLoadBalancerTargets(
 	model *LoadBalancerResourceModel,
-	t core.ResourceType,
+	t core.LoadBalancerResourceTypesEnum,
 	ids []string,
 ) {
 	list := flattenLoadBalancerResourceIDs(ids)
@@ -365,11 +412,11 @@ func populateLoadBalancerTargets(
 	}
 
 	switch t {
-	case core.VirtualMachinesResourceType:
+	case core.VirtualMachines:
 		model.VirtualMachineIDs = list
-	case core.VirtualMachineGroupsResourceType:
+	case core.VirtualMachineGroups:
 		model.VirtualMachineGroupIDs = list
-	case core.TagsResourceType:
+	case core.Tags:
 		model.TagIDs = list
 	}
 }
@@ -386,21 +433,21 @@ func flattenLoadBalancerResourceIDs(ids []string) types.Set {
 
 func extractLoadBalancerResourceTypeAndIDs(
 	model *LoadBalancerResourceModel,
-) (core.ResourceType, []string) {
-	var t core.ResourceType
+) (core.LoadBalancerResourceTypesEnum, []string) {
+	var t core.LoadBalancerResourceTypesEnum = core.VirtualMachines
 	var list []attr.Value
 	ids := []string{}
 
 	//nolint:lll
 	switch {
 	case !model.VirtualMachineIDs.IsNull() && len(model.VirtualMachineIDs.Elements()) > 0:
-		t = core.VirtualMachinesResourceType
+		t = core.VirtualMachines
 		list = model.VirtualMachineIDs.Elements()
 	case !model.VirtualMachineGroupIDs.IsNull() && len(model.VirtualMachineGroupIDs.Elements()) > 0:
-		t = core.VirtualMachineGroupsResourceType
+		t = core.VirtualMachineGroups
 		list = model.VirtualMachineGroupIDs.Elements()
 	case !model.TagIDs.IsNull() && len(model.TagIDs.Elements()) > 0:
-		t = core.TagsResourceType
+		t = core.Tags
 		list = model.TagIDs.Elements()
 	}
 

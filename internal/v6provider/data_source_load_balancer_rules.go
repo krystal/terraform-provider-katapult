@@ -2,12 +2,13 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/krystal/go-katapult/core"
+	"github.com/krystal/go-katapult/next/core"
 )
 
 type (
@@ -83,9 +84,8 @@ func (ds *LoadBalancerRulesDataSource) Read(
 	}
 
 	rules, err := getLBRules(ctx, ds.M,
-		core.LoadBalancerRef{
-			ID: data.LoadBalancerID.ValueString(),
-		})
+		data.LoadBalancerID.ValueString(),
+	)
 	if err != nil {
 		resp.Diagnostics.AddError("Load Balancer Rules Error", err.Error())
 
@@ -103,67 +103,89 @@ func (ds *LoadBalancerRulesDataSource) Read(
 func getLBRules(
 	ctx context.Context,
 	m *Meta,
-	lbRef core.LoadBalancerRef,
-) ([]*core.LoadBalancerRule, error) {
-	var rules []*core.LoadBalancerRule
+	lbID string,
+) (
+	[]core.GetLoadBalancersRulesLoadBalancerRule200ResponseLoadBalancerRule,
+	error,
+) {
+	var ruleList []core.GetLoadBalancerRules200ResponseLoadBalancerRules
 
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, resp, err := m.Core.LoadBalancerRules.List(
-			ctx, lbRef, &core.ListOptions{Page: pageNum},
+		res, err := m.Core.GetLoadBalancerRulesWithResponse(ctx,
+			&core.GetLoadBalancerRulesParams{
+				LoadBalancerId: &lbID,
+				Page:           &pageNum,
+			},
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		totalPages = resp.Pagination.TotalPages
-		rules = append(rules, pageResult...)
+		if res.JSON200 == nil {
+			return nil, errors.New("response body is nil")
+		}
+
+		totalPages = *res.JSON200.Pagination.TotalPages
+
+		ruleList = append(ruleList, res.JSON200.LoadBalancerRules...)
 	}
 
-	for i, rl := range rules {
-		rule, _, err := m.Core.LoadBalancerRules.GetByID(
-			ctx, rl.ID,
-		)
+	rules := make(
+		[]core.GetLoadBalancersRulesLoadBalancerRule200ResponseLoadBalancerRule,
+		len(ruleList))
+
+	for i, rl := range ruleList {
+		res, err := m.Core.
+			GetLoadBalancersRulesLoadBalancerRuleWithResponse(ctx,
+				&core.GetLoadBalancersRulesLoadBalancerRuleParams{
+					LoadBalancerRuleId: rl.Id,
+				})
 		if err != nil {
 			return nil, err
 		}
 
-		rules[i] = rule
+		if res.JSON200 == nil {
+			return nil, errors.New("response body is nil")
+		}
+
+		rules[i] = res.JSON200.LoadBalancerRule
 	}
 
 	return rules, nil
 }
 
 func convertCoreLBRulesToAttrValue(
-	rules []*core.LoadBalancerRule,
+	//nolint:lll // generated type name
+	rules []core.GetLoadBalancersRulesLoadBalancerRule200ResponseLoadBalancerRule,
 ) []attr.Value {
 	attrs := make([]attr.Value, len(rules))
 	for i, r := range rules {
 		attrs[i] = types.ObjectValueMust(
 			LoadBalancerRuleType().AttrTypes,
 			map[string]attr.Value{
-				"id":               types.StringValue(r.ID),
+				"id":               types.StringPointerValue(r.Id),
 				"load_balancer_id": types.StringNull(),
-				"algorithm":        types.StringValue(string(r.Algorithm)),
-				"protocol":         types.StringValue(string(r.Protocol)),
-				"listen_port":      types.Int64Value(int64(r.ListenPort)),
-				"destination_port": types.Int64Value(int64(r.DestinationPort)),
-				"proxy_protocol":   types.BoolValue(r.ProxyProtocol),
-				"backend_ssl":      types.BoolValue(r.BackendSSL),
-				"passthrough_ssl":  types.BoolValue(r.PassthroughSSL),
+				"algorithm":        types.StringValue(string(*r.Algorithm)),
+				"protocol":         types.StringValue(string(*r.Protocol)),
+				"listen_port":      types.Int64Value(int64(*r.ListenPort)),
+				"destination_port": types.Int64Value(int64(*r.DestinationPort)),
+				"proxy_protocol":   types.BoolPointerValue(r.ProxyProtocol),
+				"backend_ssl":      types.BoolPointerValue(r.BackendSsl),
+				"passthrough_ssl":  types.BoolPointerValue(r.PassthroughSsl),
 				"certificate_ids": types.SetValueMust(
 					types.StringType,
-					ConvertCoreCertsToTFValues(r.Certificates),
+					ConvertCoreCertsToTFValues(*r.Certificates),
 				),
-				"check_enabled":  types.BoolValue(r.CheckEnabled),
-				"check_fall":     types.Int64Value(int64(r.CheckFall)),
-				"check_interval": types.Int64Value(int64(r.CheckInterval)),
-				"check_path":     types.StringValue(r.CheckPath),
-				"check_protocol": types.StringValue(string(r.CheckProtocol)),
-				"check_rise":     types.Int64Value(int64(r.CheckRise)),
-				"check_timeout":  types.Int64Value(int64(r.CheckTimeout)),
+				"check_enabled":  types.BoolPointerValue(r.CheckEnabled),
+				"check_fall":     types.Int64Value(int64(*r.CheckFall)),
+				"check_interval": types.Int64Value(int64(*r.CheckInterval)),
+				"check_path":     types.StringValue(*r.CheckPath),
+				"check_protocol": types.StringValue(string(*r.CheckProtocol)),
+				"check_rise":     types.Int64Value(int64(*r.CheckRise)),
+				"check_timeout":  types.Int64Value(int64(*r.CheckTimeout)),
 				"check_http_statuses": types.StringValue(
-					string(r.CheckHTTPStatuses),
+					string(*r.CheckHttpStatuses),
 				),
 			},
 		)

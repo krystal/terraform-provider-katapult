@@ -5,11 +5,9 @@ interactions:
     body: ""
     form: {}
     headers:
-      Accept:
-      - application/json
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/data_centers/_/default_network?data_center%5Bpermalink%5D=uk-lon-01
+    url: https://api.katapult.io/core/v1/data_centers/:data_center/default_network?data_center%5Bpermalink%5D=uk-lon-01
     method: GET
   response:
     body: '{"network":{"id":"netw_gVRkZdSKczfNg34P","name":"Public Network","permalink":"uk-lon-01-public","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"}}}'
@@ -27,7 +25,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:29:14 GMT
+      - Fri, 21 Jun 2024 10:57:21 GMT
       Etag:
       - W/"d60d47b2ba0b179327bb89a97b1c0e77"
       Strict-Transport-Security:
@@ -35,24 +33,21 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "997"
+      - "967"
       X-Request-Id:
-      - 991c46fb-48cd-4bc9-91c6-6c538a3f08ef
+      - bb3f5b5f-d5b7-4fba-9933-0f113a0de93a
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: |
-      {"organization":{"sub_domain":"terraform-acc-test"},"network":{"id":"netw_gVRkZdSKczfNg34P"},"version":"ipv4","vip":true}
+    body: '{"label":"","network":{"id":"netw_gVRkZdSKczfNg34P"},"organization":{"sub_domain":"terraform-acc-test"},"version":"ipv4","vip":true}'
     form: {}
     headers:
-      Accept:
-      - application/json
       Content-Type:
       - application/json
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/organizations/_/ip_addresses
+    url: https://api.katapult.io/core/v1/organizations/:organization/ip_addresses
     method: POST
   response:
     body: '{"error":{"code":"validation_error","description":"A validation error occurred
@@ -72,7 +67,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 19 Jun 2024 10:29:14 GMT
+      - Fri, 21 Jun 2024 10:57:24 GMT
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       X-Api-Schema:
@@ -80,9 +75,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "996"
+      - "956"
       X-Request-Id:
-      - 643ba403-2ea0-4b7b-b125-4fcbafb2a06b
+      - b90d1d58-124f-4703-a237-8369e4722d48
     status: 422 Unprocessable Entity
     code: 422
     duration: ""
