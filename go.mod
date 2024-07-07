@@ -15,8 +15,8 @@ require (
 	github.com/hashicorp/terraform-plugin-testing v1.5.1
 	github.com/jimeh/rands v0.3.0
 	github.com/jimeh/undent v1.1.1
-	github.com/krystal/go-katapult v0.2.8
-	github.com/stretchr/testify v1.8.4
+	github.com/krystal/go-katapult v0.2.9-0.20240704121718-e410f3fa37b9
+	github.com/stretchr/testify v1.9.0
 )
 
 require (
@@ -27,7 +27,6 @@ require (
 	github.com/augurysys/timestamp v0.3.2 // indirect
 	github.com/cloudflare/circl v1.3.6 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/deepmap/oapi-codegen/v2 v2.1.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
@@ -57,6 +56,8 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
+	github.com/oapi-codegen/nullable v1.1.0 // indirect
+	github.com/oapi-codegen/oapi-codegen/v2 v2.3.0 // indirect
 	github.com/oapi-codegen/runtime v1.1.1 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -67,10 +68,10 @@ require (
 	go.mongodb.org/mongo-driver v1.13.1 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/exp v0.0.0-20230809150735-7b3493d9a819 // indirect
-	golang.org/x/mod v0.14.0 // indirect
+	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
+	golang.org/x/text v0.15.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231212172506-995d672761c0 // indirect
 	google.golang.org/grpc v1.60.0 // indirect

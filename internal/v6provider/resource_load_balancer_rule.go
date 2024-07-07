@@ -3,7 +3,6 @@ package v6provider
 import (
 	"context"
 	"errors"
-	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -398,14 +397,6 @@ func (r *LoadBalancerRuleResource) Create(
 		return
 	}
 
-	if lbrRes.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"LoadBalancerRule Create Error",
-			"response body is nil",
-		)
-		return
-	}
-
 	lbr := lbrRes.JSON200.LoadBalancerRule
 
 	if err := r.LoadBalancerRuleRead(ctx,
@@ -435,7 +426,7 @@ func (r *LoadBalancerRuleResource) Read(
 
 	err := r.LoadBalancerRuleRead(ctx, state.ID.ValueString(), state)
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
+		if errors.Is(err, core.ErrNotFound) {
 			r.M.Logger.Info(
 				"LoadBalancerRule not found, removing from state",
 				"id", state.ID.ValueString(),
@@ -533,7 +524,7 @@ func (r *LoadBalancerRuleResource) Delete(
 		return
 	}
 
-	res, err := r.M.Core.
+	_, err := r.M.Core.
 		DeleteLoadBalancersRulesLoadBalancerRuleWithResponse(ctx,
 			core.DeleteLoadBalancersRulesLoadBalancerRuleJSONRequestBody{
 				LoadBalancerRule: core.LoadBalancerRuleLookup{
@@ -546,14 +537,6 @@ func (r *LoadBalancerRuleResource) Delete(
 			"LoadBalancerRule Delete Error",
 			"Error deleting LoadBalancerRule: "+err.Error(),
 		)
-	}
-
-	if res.StatusCode() != http.StatusOK {
-		resp.Diagnostics.AddError(
-			"LoadBalancerRule Delete Error",
-			"response status code is not 200",
-		)
-		return
 	}
 }
 
@@ -575,16 +558,8 @@ func (r *LoadBalancerRuleResource) LoadBalancerRuleRead(
 			LoadBalancerRuleId: &id,
 		},
 	)
-	if res.StatusCode() == http.StatusNotFound {
-		return ErrNotFound
-	}
-
 	if err != nil {
 		return err
-	}
-
-	if res.JSON200 == nil {
-		return errors.New("response body is nil")
 	}
 
 	lbr := res.JSON200.LoadBalancerRule
@@ -605,11 +580,15 @@ func (r *LoadBalancerRuleResource) LoadBalancerRuleRead(
 	model.CheckEnabled = types.BoolPointerValue(lbr.CheckEnabled)
 	model.CheckFall = types.Int64Value(int64(*lbr.CheckFall))
 	model.CheckInterval = types.Int64Value(int64(*lbr.CheckInterval))
-	model.CheckHTTPStatuses = types.StringValue(string(*lbr.CheckHttpStatuses))
 	model.CheckPath = types.StringPointerValue(lbr.CheckPath)
-	model.CheckProtocol = types.StringValue(string(*lbr.CheckProtocol))
 	model.CheckRise = types.Int64Value(int64(*lbr.CheckRise))
 	model.CheckTimeout = types.Int64Value(int64(*lbr.CheckTimeout))
+
+	checkProtocol, _ := lbr.CheckProtocol.Get()
+	model.CheckProtocol = types.StringValue(string(checkProtocol))
+
+	checkHTTPStatuses, _ := lbr.CheckHttpStatuses.Get()
+	model.CheckHTTPStatuses = types.StringValue(string(checkHTTPStatuses))
 
 	return nil
 }

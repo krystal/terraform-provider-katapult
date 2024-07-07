@@ -126,7 +126,11 @@ func getLBRules(
 			return nil, errors.New("response body is nil")
 		}
 
-		totalPages = *res.JSON200.Pagination.TotalPages
+		var totalPagesError error
+		totalPages, totalPagesError = res.JSON200.Pagination.TotalPages.Get()
+		if totalPagesError != nil {
+			return nil, totalPagesError
+		}
 
 		ruleList = append(ruleList, res.JSON200.LoadBalancerRules...)
 	}
@@ -161,6 +165,9 @@ func convertCoreLBRulesToAttrValue(
 ) []attr.Value {
 	attrs := make([]attr.Value, len(rules))
 	for i, r := range rules {
+		checkProtocol, _ := r.CheckProtocol.Get()
+		checkHTTPStatuses, _ := r.CheckHttpStatuses.Get()
+
 		attrs[i] = types.ObjectValueMust(
 			LoadBalancerRuleType().AttrTypes,
 			map[string]attr.Value{
@@ -181,11 +188,11 @@ func convertCoreLBRulesToAttrValue(
 				"check_fall":     types.Int64Value(int64(*r.CheckFall)),
 				"check_interval": types.Int64Value(int64(*r.CheckInterval)),
 				"check_path":     types.StringValue(*r.CheckPath),
-				"check_protocol": types.StringValue(string(*r.CheckProtocol)),
+				"check_protocol": types.StringValue(string(checkProtocol)),
 				"check_rise":     types.Int64Value(int64(*r.CheckRise)),
 				"check_timeout":  types.Int64Value(int64(*r.CheckTimeout)),
 				"check_http_statuses": types.StringValue(
-					string(*r.CheckHttpStatuses),
+					string(checkHTTPStatuses),
 				),
 			},
 		)

@@ -3,7 +3,6 @@ package v6provider
 import (
 	"context"
 	"errors"
-	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -203,13 +202,6 @@ func (r *LoadBalancerResource) Create(
 		resp.Diagnostics.AddError("Load Balancer Create Error", err.Error())
 		return
 	}
-	if res.StatusCode() < 200 || res.StatusCode() >= 300 {
-		resp.Diagnostics.AddError(
-			"Load Balancer Create Error",
-			string(res.Body),
-		)
-		return
-	}
 
 	if res.JSON201 == nil {
 		resp.Diagnostics.AddError(
@@ -243,7 +235,7 @@ func (r *LoadBalancerResource) Read(
 
 	err := r.LoadBalancerRead(ctx, state.ID.ValueString(), state)
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
+		if errors.Is(err, core.ErrNotFound) {
 			r.M.Logger.Info(
 				"Load Balancer not found, removing from state",
 				"id", state.ID.ValueString(),
@@ -370,10 +362,6 @@ func (r *LoadBalancerResource) LoadBalancerRead(
 		&core.GetLoadBalancerParams{
 			LoadBalancerId: &id,
 		})
-	if res.StatusCode() == http.StatusNotFound {
-		return ErrNotFound
-	}
-
 	if err != nil {
 		return err
 	}

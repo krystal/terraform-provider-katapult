@@ -2,7 +2,6 @@ package v6provider
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -152,13 +151,6 @@ func (r *IPDataSource) Read(
 		)
 		return
 	}
-	if res.StatusCode() != http.StatusOK {
-		resp.Diagnostics.AddError(
-			"IP Error",
-			res.Status(),
-		)
-		return
-	}
 
 	ip := res.JSON200.IpAddress
 
@@ -174,18 +166,14 @@ func (r *IPDataSource) Read(
 		data.Version = types.Int64Value(flattenIPVersion(*ip.Address))
 	}
 	data.VIP = types.BoolPointerValue(ip.Vip)
-	data.Label = types.StringPointerValue(ip.Label)
-	if ip.AllocationType != nil {
-		data.AllocationType = types.StringPointerValue(ip.AllocationType)
-	} else {
-		data.AllocationType = types.StringValue("")
-	}
+	label, _ := ip.Label.Get()
+	data.Label = types.StringValue(label)
 
-	if ip.AllocationId != nil {
-		data.AllocationID = types.StringPointerValue(ip.AllocationId)
-	} else {
-		data.AllocationID = types.StringValue("")
-	}
+	allocationType, _ := ip.AllocationType.Get()
+	data.AllocationType = types.StringValue(allocationType)
+
+	allocationID, _ := ip.AllocationId.Get()
+	data.AllocationID = types.StringValue(allocationID)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

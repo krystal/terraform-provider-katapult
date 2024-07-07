@@ -186,10 +186,16 @@ func (ds LoadBalancerRuleDataSource) Read(
 	data.CheckFall = types.Int64Value(int64(*lbr.CheckFall))
 	data.CheckInterval = types.Int64Value(int64(*lbr.CheckInterval))
 	data.CheckPath = types.StringPointerValue(lbr.CheckPath)
-	data.CheckProtocol = types.StringValue(string(*lbr.CheckProtocol))
 	data.CheckRise = types.Int64Value(int64(*lbr.CheckRise))
 	data.CheckTimeout = types.Int64Value(int64(*lbr.CheckTimeout))
-	data.CheckHTTPStatuses = types.StringValue(string(*lbr.CheckHttpStatuses))
+
+	if checkProtocol, err := lbr.CheckProtocol.Get(); err == nil {
+		data.CheckProtocol = types.StringValue(string(checkProtocol))
+	}
+
+	if checkHTTPStatuses, err := lbr.CheckHttpStatuses.Get(); err == nil {
+		data.CheckHTTPStatuses = types.StringValue(string(checkHTTPStatuses))
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
