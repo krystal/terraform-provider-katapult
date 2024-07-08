@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/krystal/go-katapult/core"
+	"github.com/krystal/go-katapult/next/core"
 )
 
 type (
@@ -127,9 +127,11 @@ func (r *FileStorageVolumesDataSource) Read(
 	totalPages := 2
 
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResult, res, err := r.M.Core.FileStorageVolumes.List(
-			ctx, r.M.OrganizationRef, &core.ListOptions{Page: pageNum},
-		)
+		res, err := r.M.Core.GetOrganizationFileStorageVolumesWithResponse(ctx,
+			&core.GetOrganizationFileStorageVolumesParams{
+				OrganizationSubDomain: &r.M.confOrganization,
+				Page:                  &pageNum,
+			})
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"FileStorageVolumes Error",
@@ -139,10 +141,12 @@ func (r *FileStorageVolumesDataSource) Read(
 			return
 		}
 
-		totalPages = res.Pagination.TotalPages
+		totalPages, _ = res.JSON200.Pagination.TotalPages.Get()
 
-		for _, fsv := range pageResult {
+		for _, fsv := range res.JSON200.FileStorageVolumes {
 			associations := []attr.Value{}
+			NFSLocation, _ := fsv.NfsLocation.Get()
+			Size, _ := fsv.Size.Get()
 			vol := types.ObjectValueMust(
 				map[string]attr.Type{
 					"id":   types.StringType,
@@ -154,14 +158,14 @@ func (r *FileStorageVolumesDataSource) Read(
 					"size":         types.Int64Type,
 				},
 				map[string]attr.Value{
-					"id":   types.StringValue(fsv.ID),
-					"name": types.StringValue(fsv.Name),
+					"id":   types.StringPointerValue(fsv.Id),
+					"name": types.StringPointerValue(fsv.Name),
 					"associations": types.SetValueMust(
 						types.StringType,
 						associations,
 					),
-					"nfs_location": types.StringValue(fsv.NFSLocation),
-					"size":         types.Int64Value(fsv.Size),
+					"nfs_location": types.StringValue(NFSLocation),
+					"size":         types.Int64Value(int64(Size)),
 				},
 			)
 
@@ -171,7 +175,7 @@ func (r *FileStorageVolumesDataSource) Read(
 
 	resp.Diagnostics.Append(
 		resp.State.Set(ctx, &FileStorageVolumesDataSourceModel{
-			ID: types.StringValue(r.M.OrganizationRef.ID),
+			ID: types.StringValue(r.M.confOrganization),
 			FileStorageVolumes: types.ListValueMust(
 				types.ObjectType{
 					AttrTypes: map[string]attr.Type{
