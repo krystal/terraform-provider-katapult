@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/krystal/go-katapult/next/core"
 )
 
 type (
@@ -114,10 +115,10 @@ func (r *FileStorageVolumeDataSource) Read(
 		return
 	}
 
-	fsv, _, err := r.M.Core.FileStorageVolumes.GetByID(
-		ctx,
-		data.ID.ValueString(),
-	)
+	res, err := r.M.Core.GetFileStorageVolumeWithResponse(ctx,
+		&core.GetFileStorageVolumeParams{
+			FileStorageVolumeId: data.ID.ValueStringPointer(),
+		})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"File Storage Volume Error",
@@ -126,12 +127,18 @@ func (r *FileStorageVolumeDataSource) Read(
 		return
 	}
 
-	data.Name = types.StringValue(fsv.Name)
-	data.NFSLocation = types.StringValue(fsv.NFSLocation)
-	data.Size = types.Int64Value(fsv.Size)
+	fsv := res.JSON200.FileStorageVolume
+
+	data.Name = types.StringPointerValue(fsv.Name)
+
+	NFSLocation, _ := fsv.NfsLocation.Get()
+	data.NFSLocation = types.StringValue(NFSLocation)
+
+	Size, _ := fsv.Size.Get()
+	data.Size = types.Int64Value(int64(Size))
 
 	associations := []attr.Value{}
-	for _, a := range fsv.Associations {
+	for _, a := range *fsv.Associations {
 		associations = append(associations, types.StringValue(a))
 	}
 

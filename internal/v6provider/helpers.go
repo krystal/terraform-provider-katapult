@@ -5,13 +5,13 @@ import (
 	"errors"
 	"time"
 
-	"github.com/krystal/go-katapult"
-	"github.com/krystal/go-katapult/core"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/krystal/go-katapult/next/core"
 )
 
-func isErrNotFoundOrInTrash(err error) bool {
-	return errors.Is(err, katapult.ErrNotFound) ||
-		errors.Is(err, core.ErrObjectInTrash)
+func isErrNotFoundOrInTrash(err error, res *core.ObjectInTrashResponse) bool {
+	return errors.Is(err, core.ErrNotFound) ||
+		(res != nil && *res.Code == core.ObjectInTrashEnumObjectInTrash)
 }
 
 func purgeTrashObjectByObjectID(
@@ -21,7 +21,7 @@ func purgeTrashObjectByObjectID(
 	objectID string,
 ) error {
 	return purgeTrashObject(
-		ctx, m, timeout, core.TrashObjectRef{ObjectID: objectID},
+		ctx, m, timeout, core.TrashObject{Id: &objectID},
 	)
 }
 
@@ -29,18 +29,19 @@ func purgeTrashObject(
 	ctx context.Context,
 	m *Meta,
 	timeout time.Duration,
-	ref core.TrashObjectRef,
+	trashObject core.TrashObject,
 ) error {
-	_, _, err := m.Core.TrashObjects.Purge(ctx, ref)
+	_, err := m.Core.DeleteTrashObjectWithResponse(ctx,
+		core.DeleteTrashObjectJSONRequestBody{
+			TrashObject: core.TrashObjectLookup{
+				Id: trashObject.Id,
+			},
+		})
 	if err != nil {
-		if errors.Is(err, katapult.ErrNotFound) {
-			return nil
-		}
-
 		return err
 	}
 
-	err = waitForTrashObjectNotFound(ctx, m, timeout, ref)
+	err = waitForTrashObjectNotFound(ctx, m, timeout, trashObject)
 
 	return err
 }
@@ -49,15 +50,18 @@ func waitForTrashObjectNotFound(
 	ctx context.Context,
 	m *Meta,
 	timeout time.Duration,
-	ref core.TrashObjectRef,
+	trashObject core.TrashObject,
 ) error {
-	waiter := &Waiter{
+	waiter := &retry.StateChangeConf{
 		Pending: []string{"exists"},
 		Target:  []string{"not_found"},
 		Refresh: func() (interface{}, string, error) {
-			_, _, e := m.Core.TrashObjects.Get(ctx, ref)
-			if e != nil && errors.Is(e, katapult.ErrNotFound) {
-				return 1, "not_found", nil
+			_, e := m.Core.GetTrashObjectWithResponse(ctx,
+				&core.GetTrashObjectParams{
+					TrashObjectId: trashObject.Id,
+				})
+			if e != nil {
+				return nil, "", e
 			}
 
 			return nil, "exists", nil

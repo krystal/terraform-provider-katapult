@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
+	"github.com/krystal/go-katapult/next/core"
 )
 
 func TestAccKatapultDataSourceFileStorageVolume_minimal(t *testing.T) {
@@ -66,126 +67,125 @@ func TestAccKatapultDataSourceFileStorageVolume_minimal(t *testing.T) {
 	})
 }
 
-// TODO: RE-ADD THIS TEST WHEN VMS ARE MIGRATED TO V6
-// func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
-// 	tt := newTestTools(t)
+func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
+	tt := newTestTools(t)
 
-// 	name := tt.ResourceName()
+	name := tt.ResourceName()
 
-// 	resource.ParallelTest(t, resource.TestCase{
-// 		PreCheck:                 func() { testAccPreCheck(t) },
-// 		ProtoV6ProviderFactories: tt.ProviderFactories,
-// 		CheckDestroy:             testAccCheckKatapultFSVDestroy(tt),
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: undent.Stringf(`
-// 					resource "katapult_legacy_ip" "web" {}
-// 					resource "katapult_virtual_machine" "web" {
-// 						hostname = "%s-web"
-// 						package       = "rock-3"
-// 						disk_template = "ubuntu-18-04"
-// 						disk_template_options = {
-// 							install_agent = true
-// 						}
-// 						ip_address_ids = [katapult_legacy_ip.web.id]
-// 					}
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultFSVDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+					resource "katapult_legacy_ip" "web" {}
+					resource "katapult_virtual_machine" "web" {
+						hostname = "%s-web"
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_legacy_ip.web.id]
+					}
 
-// 					resource "katapult_file_storage_volume" "my_vol" {
-// 						name = "%s"
-// 						associations = [
-// 							katapult_virtual_machine.web.id,
-// 						]
-// 					}
+					resource "katapult_file_storage_volume" "my_vol" {
+						name = "%s"
+						associations = [
+							katapult_virtual_machine.web.id,
+						]
+					}
 
-// 					data "katapult_file_storage_volume" "my_vol" {
-// 						id = katapult_file_storage_volume.my_vol.id
-// 					}`,
-// 					name, name,
-// 				),
-// 				Check: resource.ComposeAggregateTestCheckFunc(
-// 					testAccCheckKatapultDataSourceFileStorageVolumeAttrs(
-// 						tt, "data.katapult_file_storage_volume.my_vol",
-// 					),
-// 					resource.TestCheckResourceAttrPair(
-// 						"data.katapult_file_storage_volume.my_vol", "name",
-// 						"katapult_file_storage_volume.my_vol", "name",
-// 					),
-// 					resource.TestCheckResourceAttrPair(
-// 						"data.katapult_file_storage_volume.my_vol",
-// 						"associations",
-// 						"katapult_file_storage_volume.my_vol",
-// 						"associations",
-// 					),
-// 					resource.TestCheckResourceAttrPair(
-// 						"data.katapult_file_storage_volume.my_vol",
-// 						"nsf_location",
-// 						"katapult_file_storage_volume.my_vol",
-// 						"nsf_location",
-// 					),
-// 				),
-// 			},
-// 			{
-// 				Config: undent.Stringf(`
-// 					resource "katapult_legacy_ip" "web" {}
-// 					resource "katapult_virtual_machine" "web" {
-// 						hostname = "%s-web"
-// 						package       = "rock-3"
-// 						disk_template = "ubuntu-18-04"
-// 						disk_template_options = {
-// 							install_agent = true
-// 						}
-// 						ip_address_ids = [katapult_legacy_ip.web.id]
-// 					}
+					data "katapult_file_storage_volume" "my_vol" {
+						id = katapult_file_storage_volume.my_vol.id
+					}`,
+					name, name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultDataSourceFileStorageVolumeAttrs(
+						tt, "data.katapult_file_storage_volume.my_vol",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_file_storage_volume.my_vol", "name",
+						"katapult_file_storage_volume.my_vol", "name",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_file_storage_volume.my_vol",
+						"associations",
+						"katapult_file_storage_volume.my_vol",
+						"associations",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_file_storage_volume.my_vol",
+						"nsf_location",
+						"katapult_file_storage_volume.my_vol",
+						"nsf_location",
+					),
+				),
+			},
+			{
+				Config: undent.Stringf(`
+					resource "katapult_legacy_ip" "web" {}
+					resource "katapult_virtual_machine" "web" {
+						hostname = "%s-web"
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_legacy_ip.web.id]
+					}
 
-// 					resource "katapult_legacy_ip" "db" {}
-// 					resource "katapult_virtual_machine" "db" {
-// 						hostname = "%s-db"
-// 						package       = "rock-3"
-// 						disk_template = "ubuntu-18-04"
-// 						disk_template_options = {
-// 							install_agent = true
-// 						}
-// 						ip_address_ids = [katapult_legacy_ip.db.id]
-// 					}
+					resource "katapult_legacy_ip" "db" {}
+					resource "katapult_virtual_machine" "db" {
+						hostname = "%s-db"
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_legacy_ip.db.id]
+					}
 
-// 					resource "katapult_file_storage_volume" "my_vol" {
-// 						name = "%s"
-// 						associations = [
-// 							katapult_virtual_machine.web.id,
-// 							katapult_virtual_machine.db.id,
-// 						]
-// 					}
+					resource "katapult_file_storage_volume" "my_vol" {
+						name = "%s"
+						associations = [
+							katapult_virtual_machine.web.id,
+							katapult_virtual_machine.db.id,
+						]
+					}
 
-// 					data "katapult_file_storage_volume" "my_vol" {
-// 						id = katapult_file_storage_volume.my_vol.id
-// 					}`,
-// 					name, name, name,
-// 				),
-// 				Check: resource.ComposeAggregateTestCheckFunc(
-// 					testAccCheckKatapultDataSourceFileStorageVolumeAttrs(
-// 						tt, "data.katapult_file_storage_volume.my_vol",
-// 					),
-// 					resource.TestCheckResourceAttrPair(
-// 						"data.katapult_file_storage_volume.my_vol", "name",
-// 						"katapult_file_storage_volume.my_vol", "name",
-// 					),
-// 					resource.TestCheckResourceAttrPair(
-// 						"data.katapult_file_storage_volume.my_vol",
-// 						"associations",
-// 						"katapult_file_storage_volume.my_vol",
-// 						"associations",
-// 					),
-// 					resource.TestCheckResourceAttrPair(
-// 						"data.katapult_file_storage_volume.my_vol",
-// 						"nsf_location",
-// 						"katapult_file_storage_volume.my_vol",
-// 						"nsf_location",
-// 					),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+					data "katapult_file_storage_volume" "my_vol" {
+						id = katapult_file_storage_volume.my_vol.id
+					}`,
+					name, name, name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultDataSourceFileStorageVolumeAttrs(
+						tt, "data.katapult_file_storage_volume.my_vol",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_file_storage_volume.my_vol", "name",
+						"katapult_file_storage_volume.my_vol", "name",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_file_storage_volume.my_vol",
+						"associations",
+						"katapult_file_storage_volume.my_vol",
+						"associations",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_file_storage_volume.my_vol",
+						"nsf_location",
+						"katapult_file_storage_volume.my_vol",
+						"nsf_location",
+					),
+				),
+			},
+		},
+	})
+}
 
 func TestAccKatapultDataSourceFileStorageVolume_not_found(t *testing.T) {
 	tt := newTestTools(t)
@@ -248,28 +248,35 @@ func testAccCheckKatapultDataSourceFileStorageVolumeAttrs(
 		}
 
 		var err error
-		fsv, _, err := tt.Meta.Core.FileStorageVolumes.GetByID(
-			tt.Ctx, rs.Primary.ID,
-		)
+
+		fsvRes, err := tt.Meta.Core.GetFileStorageVolumeWithResponse(tt.Ctx,
+			&core.GetFileStorageVolumeParams{
+				FileStorageVolumeId: &rs.Primary.ID,
+			})
 		if err != nil {
 			return err
 		}
 
+		fsv := fsvRes.JSON200.FileStorageVolume
+
+		Size, _ := fsv.Size.Get()
+		NFSLocation, _ := fsv.NfsLocation.Get()
+
 		tfs := []resource.TestCheckFunc{
-			resource.TestCheckResourceAttr(res, "id", fsv.ID),
-			resource.TestCheckResourceAttr(res, "name", fsv.Name),
+			resource.TestCheckResourceAttr(res, "id", *fsv.Id),
+			resource.TestCheckResourceAttr(res, "name", *fsv.Name),
 			resource.TestCheckResourceAttr(
-				res, "associations.#", strconv.Itoa(len(fsv.Associations)),
+				res, "associations.#", strconv.Itoa(len(*fsv.Associations)),
 			),
 			resource.TestCheckResourceAttr(
-				res, "size", strconv.FormatInt(fsv.Size, 10),
+				res, "size", strconv.FormatInt(int64(Size), 10),
 			),
 			resource.TestCheckResourceAttr(
-				res, "nfs_location", fsv.NFSLocation,
+				res, "nfs_location", NFSLocation,
 			),
 		}
 
-		for _, assoc := range fsv.Associations {
+		for _, assoc := range *fsv.Associations {
 			tfs = append(tfs, resource.TestCheckTypeSetElemAttr(
 				res, "associations.*", assoc,
 			))
