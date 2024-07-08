@@ -103,13 +103,6 @@ func (r *AddressListEntryResource) Create(
 
 		return
 	}
-	if res.StatusCode() < 200 || res.StatusCode() >= 300 {
-		resp.Diagnostics.AddError(
-			"Address List Entry Create Error",
-			string(res.Body),
-		)
-		return
-	}
 
 	if res.JSON201.AddressListEntry.Id == nil {
 		resp.Diagnostics.AddError(
@@ -168,7 +161,7 @@ func (r *AddressListEntryResource) Update(
 		return
 	}
 
-	res, err := r.M.Core.PatchAddressListEntryWithResponse(ctx,
+	_, err := r.M.Core.PatchAddressListEntryWithResponse(ctx,
 		core.PatchAddressListEntryJSONRequestBody{
 			AddressListEntry: core.AddressListEntryLookup{
 				Id: state.ID.ValueStringPointer(),
@@ -181,14 +174,6 @@ func (r *AddressListEntryResource) Update(
 	if err != nil {
 		resp.Diagnostics.AddError("update error", err.Error())
 
-		return
-	}
-
-	if res.StatusCode() < 200 || res.StatusCode() >= 300 {
-		resp.Diagnostics.AddError(
-			"Address Entry List Update Error",
-			string(res.Body),
-		)
 		return
 	}
 

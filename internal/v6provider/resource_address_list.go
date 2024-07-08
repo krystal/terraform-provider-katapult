@@ -94,14 +94,6 @@ func (r *AddressListResource) Create(
 		return
 	}
 
-	if res.StatusCode() < 200 || res.StatusCode() >= 300 {
-		resp.Diagnostics.AddError(
-			"Address List Create Error",
-			string(res.Body),
-		)
-		return
-	}
-
 	if res.JSON201.AddressList.Id == nil {
 		resp.Diagnostics.AddError(
 			"Address List Create Error",
@@ -158,7 +150,7 @@ func (r *AddressListResource) Update(
 		return
 	}
 
-	res, err := r.M.Core.PatchAddressListWithResponse(ctx,
+	_, err := r.M.Core.PatchAddressListWithResponse(ctx,
 		core.PatchAddressListJSONRequestBody{
 			AddressList: core.AddressListLookup{
 				Id: state.ID.ValueStringPointer(),
@@ -169,14 +161,6 @@ func (r *AddressListResource) Update(
 		})
 	if err != nil {
 		resp.Diagnostics.AddError("update error", err.Error())
-		return
-	}
-
-	if res.StatusCode() < 200 || res.StatusCode() >= 300 {
-		resp.Diagnostics.AddError(
-			"Address List Update Error",
-			string(res.Body),
-		)
 		return
 	}
 
