@@ -105,6 +105,7 @@ func (r FileStorageVolumeResource) Schema(
 			},
 			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
 				Create: true,
+				Delete: true,
 			}),
 		},
 	}
@@ -311,6 +312,13 @@ func (r *FileStorageVolumeResource) Delete(
 		return
 	}
 
+	deleteTime, diags := state.Timeouts.Delete(ctx, 20*time.Minute)
+
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	res, err := r.M.Core.GetFileStorageVolumeWithResponse(ctx,
 		&core.GetFileStorageVolumeParams{
 			FileStorageVolumeId: state.ID.ValueStringPointer(),
@@ -325,7 +333,7 @@ func (r *FileStorageVolumeResource) Delete(
 			}
 
 			purgeError := purgeTrashObjectByObjectID(
-				ctx, r.M, 20*time.Minute, state.ID.ValueString(),
+				ctx, r.M, deleteTime, state.ID.ValueString(),
 			)
 			if purgeError != nil {
 				resp.Diagnostics.AddError(
@@ -393,7 +401,7 @@ func (r *FileStorageVolumeResource) Delete(
 
 	if !r.M.SkipTrashObjectPurge {
 		err = purgeTrashObjectByObjectID(
-			ctx, r.M, 20*time.Minute, *fsv.Id,
+			ctx, r.M, deleteTime, *fsv.Id,
 		)
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -403,6 +411,7 @@ func (r *FileStorageVolumeResource) Delete(
 			return
 		}
 	}
+
 }
 
 func (r *FileStorageVolumeResource) ImportState(
@@ -490,6 +499,10 @@ func waitForFileStorageVolumeToBeReady(
 	}
 
 	readyFSV, err := waiter.WaitForStateContext(ctx)
+
+	if readyFSV == nil {
+		return nil, err
+	}
 
 	//nolint:lll // Generated type names are long.
 	return readyFSV.(*core.GetFileStorageVolume200ResponseFileStorageVolume), err

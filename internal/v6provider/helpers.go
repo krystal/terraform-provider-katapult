@@ -21,7 +21,7 @@ func purgeTrashObjectByObjectID(
 	objectID string,
 ) error {
 	return purgeTrashObject(
-		ctx, m, timeout, core.TrashObject{Id: &objectID},
+		ctx, m, timeout, core.TrashObject{ObjectId: &objectID},
 	)
 }
 
@@ -34,7 +34,8 @@ func purgeTrashObject(
 	_, err := m.Core.DeleteTrashObjectWithResponse(ctx,
 		core.DeleteTrashObjectJSONRequestBody{
 			TrashObject: core.TrashObjectLookup{
-				Id: trashObject.Id,
+				Id:       trashObject.Id,
+				ObjectId: trashObject.ObjectId,
 			},
 		})
 	if err != nil {
@@ -58,10 +59,11 @@ func waitForTrashObjectNotFound(
 		Refresh: func() (interface{}, string, error) {
 			_, e := m.Core.GetTrashObjectWithResponse(ctx,
 				&core.GetTrashObjectParams{
-					TrashObjectId: trashObject.Id,
+					TrashObjectId:       trashObject.Id,
+					TrashObjectObjectId: trashObject.ObjectId,
 				})
-			if e != nil {
-				return nil, "", e
+			if e != nil && errors.Is(e, core.ErrNotFound) {
+				return 1, "not_found", nil
 			}
 
 			return nil, "exists", nil
