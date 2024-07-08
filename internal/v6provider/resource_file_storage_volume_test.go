@@ -204,7 +204,7 @@ func TestAccKatapultFileStorageVolume_update_name(t *testing.T) {
 func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName()
+	name := strings.ToLower(tt.ResourceName())
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
