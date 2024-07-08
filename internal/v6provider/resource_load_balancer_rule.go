@@ -473,7 +473,7 @@ func (r *LoadBalancerRuleResource) Update(
 		return
 	}
 
-	res, err := r.M.Core.
+	_, err := r.M.Core.
 		PatchLoadBalancersRulesLoadBalancerRuleWithResponse(ctx,
 			core.PatchLoadBalancersRulesLoadBalancerRuleJSONRequestBody{
 				LoadBalancerRule: core.LoadBalancerRuleLookup{
