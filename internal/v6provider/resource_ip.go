@@ -211,7 +211,19 @@ func (r *IPResource) Create(
 
 	res, err := r.M.Core.PostOrganizationIpAddressesWithResponse(ctx, args)
 	if err != nil {
-		resp.Diagnostics.AddError("IP Address Create Error", err.Error())
+		// If we have a response, we can use the body to get the error
+		// message. If we don't have a response, we can use the error
+		// message.
+		if res != nil {
+			resp.Diagnostics.AddError(
+				"IP Address Create Error",
+				string(res.Body))
+		} else {
+			resp.Diagnostics.AddError(
+				"IP Address Create Error",
+				err.Error())
+		}
+
 		return
 	}
 
