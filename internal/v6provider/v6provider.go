@@ -250,6 +250,9 @@ func (k *KatapultProvider) Resources(
 			return &LoadBalancerRuleResource{}
 		},
 		func() resource.Resource {
+			return &AddressListResource{}
+		},
+		func() resource.Resource {
 			return &AddressListEntryResource{}
 		},
 	}
@@ -285,6 +288,9 @@ func (k *KatapultProvider) DataSources(
 		},
 		func() datasource.DataSource {
 			return &LoadBalancersDataSource{}
+		},
+		func() datasource.DataSource {
+			return &GlobalAddressListsDataSource{}
 		},
 	}
 }
