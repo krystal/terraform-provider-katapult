@@ -29,5 +29,3 @@ resource "katapult_address_list" "web-1" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-
-

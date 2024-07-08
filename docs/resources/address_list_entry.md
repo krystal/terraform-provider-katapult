@@ -38,5 +38,3 @@ resource "katapult_address_list_entry" "goog" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-
-

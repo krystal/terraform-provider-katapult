@@ -27,5 +27,3 @@ data "katapult_address_list_entry" "cf" {
 - `address` (String)
 - `id` (String) The ID of this resource.
 - `name` (String)
-
-

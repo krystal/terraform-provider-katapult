@@ -26,5 +26,3 @@ data "katapult_address_list" "goog" {
 
 - `id` (String) The ID of this resource.
 - `name` (String)
-
-

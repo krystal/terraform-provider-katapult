@@ -38,5 +38,3 @@ Read-Only:
 - `address` (String)
 - `id` (String)
 - `name` (String)
-
-
