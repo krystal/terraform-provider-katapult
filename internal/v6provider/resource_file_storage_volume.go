@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -15,8 +16,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/krystal/go-katapult"
-	"github.com/krystal/go-katapult/core"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/krystal/go-katapult/next/core"
 )
 
 type (
@@ -25,10 +26,11 @@ type (
 	}
 
 	FileStorageVolumeResourceModel struct {
-		ID           types.String `tfsdk:"id"`
-		Name         types.String `tfsdk:"name"`
-		Associations types.Set    `tfsdk:"associations"`
-		NFSLocation  types.String `tfsdk:"nfs_location"`
+		ID           types.String   `tfsdk:"id"`
+		Name         types.String   `tfsdk:"name"`
+		Associations types.Set      `tfsdk:"associations"`
+		NFSLocation  types.String   `tfsdk:"nfs_location"`
+		Timeouts     timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -62,7 +64,7 @@ func (r *FileStorageVolumeResource) Configure(
 }
 
 func (r FileStorageVolumeResource) Schema(
-	_ context.Context,
+	ctx context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
@@ -101,6 +103,9 @@ func (r FileStorageVolumeResource) Schema(
 					"must be mounted from inside of virtual machines " +
 					"referenced in `associations`.",
 			},
+			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
+				Create: true,
+			}),
 		},
 	}
 }
@@ -128,14 +133,20 @@ func (r *FileStorageVolumeResource) Create(
 		return
 	}
 
-	args := &core.FileStorageVolumeCreateArguments{
-		Name:         plan.Name.ValueString(),
-		DataCenter:   r.M.DataCenterRef,
-		Associations: associations,
-	}
-
-	fsv, _, err := r.M.Core.FileStorageVolumes.Create(
-		ctx, r.M.OrganizationRef, args,
+	res, err := r.M.Core.PostOrganizationFileStorageVolumesWithResponse(
+		ctx,
+		core.PostOrganizationFileStorageVolumesJSONRequestBody{
+			Organization: core.OrganizationLookup{
+				SubDomain: &r.M.confOrganization,
+			},
+			Properties: core.FileStorageVolumeArguments{
+				DataCenter: &core.DataCenterLookup{
+					Permalink: &r.M.confDataCenter,
+				},
+				Name:         plan.Name.ValueStringPointer(),
+				Associations: &associations,
+			},
+		},
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -145,14 +156,15 @@ func (r *FileStorageVolumeResource) Create(
 		return
 	}
 
-	// 20 minutes is the default timeout for the provider
-	// 2 seconds is the default delay for the provider
-	// The 20 minutes is used as it was the default in SDKv2
-	// TODO: look into allowing users to configure this
-	fsv, err = waitForFileStorageVolumeToBeReady(
-		ctx, r.M, 20*time.Minute, 2*time.Second, fsv.Ref(),
-	)
+	create, diags := plan.Timeouts.Create(ctx, 20*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
+	fsv, err := waitForFileStorageVolumeToBeReady(
+		ctx, r.M, create, 2*time.Second, res.JSON201.FileStorageVolume.Id,
+	)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error waiting for file storage "+
@@ -163,7 +175,7 @@ func (r *FileStorageVolumeResource) Create(
 
 	if err := r.FileStorageVolumeRead(
 		ctx,
-		fsv.ID,
+		fsv.Id,
 		&plan,
 		&resp.State,
 	); err != nil {
@@ -190,7 +202,7 @@ func (r *FileStorageVolumeResource) Read(
 	}
 
 	err := r.FileStorageVolumeRead(
-		ctx, state.ID.ValueString(), state, &resp.State,
+		ctx, state.ID.ValueStringPointer(), state, &resp.State,
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -220,11 +232,11 @@ func (r *FileStorageVolumeResource) Update(
 		return
 	}
 
-	ref := core.FileStorageVolumeRef{ID: plan.ID.ValueString()}
-	args := &core.FileStorageVolumeUpdateArguments{}
+	ref := core.FileStorageVolumeLookup{Id: plan.ID.ValueStringPointer()}
+	args := core.FileStorageVolumeArguments{}
 
 	if !plan.Name.Equal(state.Name) {
-		args.Name = plan.Name.ValueString()
+		args.Name = plan.Name.ValueStringPointer()
 	}
 
 	if !plan.Associations.Equal(state.Associations) {
@@ -242,7 +254,11 @@ func (r *FileStorageVolumeResource) Update(
 		args.Associations = &associations
 	}
 
-	fsv, _, err := r.M.Core.FileStorageVolumes.Update(ctx, ref, args)
+	res, err := r.M.Core.PatchFileStorageVolumeWithResponse(ctx,
+		core.PatchFileStorageVolumeJSONRequestBody{
+			FileStorageVolume: ref,
+			Properties:        args,
+		})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"FileStorageVolumeUpdate Error",
@@ -251,12 +267,14 @@ func (r *FileStorageVolumeResource) Update(
 		return
 	}
 
+	fsv := res.JSON200.FileStorageVolume
+
 	_, err = waitForFileStorageVolumeToBeReady(
 		ctx,
 		r.M,
 		20*time.Minute,
 		5*time.Second,
-		fsv.Ref())
+		fsv.Id)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error waiting for file storage "+
@@ -267,7 +285,7 @@ func (r *FileStorageVolumeResource) Update(
 
 	if err := r.FileStorageVolumeRead(
 		ctx,
-		fsv.ID,
+		fsv.Id,
 		&plan,
 		&resp.State,
 	); err != nil {
@@ -281,6 +299,7 @@ func (r *FileStorageVolumeResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
+//nolint:funlen // only a few more lines than the max
 func (r *FileStorageVolumeResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -292,19 +311,21 @@ func (r *FileStorageVolumeResource) Delete(
 		return
 	}
 
-	fsv, _, err := r.M.Core.FileStorageVolumes.GetByID(
-		ctx,
-		state.ID.ValueString())
+	res, err := r.M.Core.GetFileStorageVolumeWithResponse(ctx,
+		&core.GetFileStorageVolumeParams{
+			FileStorageVolumeId: state.ID.ValueStringPointer(),
+		})
 	if err != nil {
-		if errors.Is(err, katapult.ErrNotFound) {
+		if errors.Is(err, core.ErrNotFound) {
 			return
-		} else if errors.Is(err, core.ErrObjectInTrash) {
+		} else if errors.Is(err, core.ErrRequestFailed) &&
+			*res.JSON406.Code == core.ObjectInTrashEnumObjectInTrash {
 			if r.M.SkipTrashObjectPurge {
 				return
 			}
 
 			purgeError := purgeTrashObjectByObjectID(
-				ctx, r.M, 20*time.Minute, fsv.ID,
+				ctx, r.M, 20*time.Minute, state.ID.ValueString(),
 			)
 			if purgeError != nil {
 				resp.Diagnostics.AddError(
@@ -326,6 +347,8 @@ func (r *FileStorageVolumeResource) Delete(
 		return
 	}
 
+	fsv := res.JSON200.FileStorageVolume
+
 	// If we're skipping purge, we rename the file storage volume before
 	// deletion to include its ID. This allows it to be easily identified in the
 	// trash, and also avoids name conflicts if another volume is created with
@@ -334,8 +357,8 @@ func (r *FileStorageVolumeResource) Delete(
 		// Append the ID to the end of the name, if it's not already there. If
 		// the resulting name would be too long, truncate name to fit once the
 		// ID is appended.
-		name := fsv.Name
-		suffix := "-" + fsv.ID
+		name := *fsv.Name
+		suffix := "-" + *fsv.Id
 		if !strings.HasSuffix(name, suffix) {
 			if len(name)+len(suffix) > 128 {
 				name = name[:128-len(suffix)]
@@ -343,29 +366,34 @@ func (r *FileStorageVolumeResource) Delete(
 			name += suffix
 		}
 
-		_, _, err = r.M.Core.FileStorageVolumes.Update(
-			ctx, fsv.Ref(),
-			&core.FileStorageVolumeUpdateArguments{Name: name},
-		)
+		res, patchErr := r.M.Core.PatchFileStorageVolumeWithResponse(ctx,
+			core.PatchFileStorageVolumeJSONRequestBody{
+				FileStorageVolume: core.FileStorageVolumeLookup{Id: fsv.Id},
+				Properties:        core.FileStorageVolumeArguments{Name: &name},
+			})
 
-		if err != nil && !isErrNotFoundOrInTrash(err) {
+		if patchErr != nil && !isErrNotFoundOrInTrash(patchErr, res.JSON406) {
 			resp.Diagnostics.AddError("Failed to rename file storage "+
 				"volume before moving to trash.",
-				err.Error())
+				patchErr.Error())
 
 			return
 		}
 	}
 
-	_, _, _, err = r.M.Core.FileStorageVolumes.Delete(ctx, fsv.Ref())
-	if err != nil && !isErrNotFoundOrInTrash(err) {
+	delRes, err := r.M.Core.DeleteFileStorageVolumeWithResponse(ctx,
+		core.DeleteFileStorageVolumeJSONRequestBody{
+			FileStorageVolume: core.FileStorageVolumeLookup{Id: fsv.Id},
+		})
+
+	if err != nil && !isErrNotFoundOrInTrash(err, delRes.JSON406) {
 		resp.Diagnostics.AddError("FileStorageVolumeDelete Error", err.Error())
 		return
 	}
 
 	if !r.M.SkipTrashObjectPurge {
 		err = purgeTrashObjectByObjectID(
-			ctx, r.M, 20*time.Minute, fsv.ID,
+			ctx, r.M, 20*time.Minute, *fsv.Id,
 		)
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -387,13 +415,16 @@ func (r *FileStorageVolumeResource) ImportState(
 
 func (r *FileStorageVolumeResource) FileStorageVolumeRead(
 	ctx context.Context,
-	id string,
+	id *string,
 	model *FileStorageVolumeResourceModel,
 	state *tfsdk.State,
 ) error {
-	fsv, _, err := r.M.Core.FileStorageVolumes.GetByID(ctx, id)
+	res, err := r.M.Core.GetFileStorageVolumeWithResponse(ctx,
+		&core.GetFileStorageVolumeParams{
+			FileStorageVolumeId: id,
+		})
 	if err != nil {
-		if errors.Is(err, katapult.ErrNotFound) {
+		if errors.Is(err, core.ErrNotFound) {
 			state.RemoveResource(ctx)
 
 			return nil
@@ -402,13 +433,17 @@ func (r *FileStorageVolumeResource) FileStorageVolumeRead(
 		return err
 	}
 
-	model.ID = types.StringValue(fsv.ID)
-	model.Name = types.StringValue(fsv.Name)
-	model.NFSLocation = types.StringValue(fsv.NFSLocation)
+	fsv := res.JSON200.FileStorageVolume
 
-	if len(fsv.Associations) > 0 {
+	model.ID = types.StringPointerValue(fsv.Id)
+	model.Name = types.StringPointerValue(fsv.Name)
+
+	NFSLocation, _ := fsv.NfsLocation.Get()
+	model.NFSLocation = types.StringValue(NFSLocation)
+
+	if fsv.Associations != nil && len(*fsv.Associations) > 0 {
 		associations := []attr.Value{}
-		for _, a := range fsv.Associations {
+		for _, a := range *fsv.Associations {
 			associations = append(associations, types.StringValue(a))
 		}
 
@@ -425,23 +460,28 @@ func waitForFileStorageVolumeToBeReady(
 	m *Meta,
 	timeout time.Duration,
 	delay time.Duration,
-	ref core.FileStorageVolumeRef,
-) (*core.FileStorageVolume, error) {
-	waiter := &Waiter{
+	fsvID *string,
+) (*core.GetFileStorageVolume200ResponseFileStorageVolume, error) {
+	waiter := &retry.StateChangeConf{
 		Pending: []string{
-			string(core.FileStorageVolumePending),
-			string(core.FileStorageVolumeConfiguring),
+			string(core.FileStorageVolumeStateEnumPending),
+			string(core.FileStorageVolumeStateEnumConfiguring),
 		},
 		Target: []string{
-			string(core.FileStorageVolumeReady),
+			string(core.FileStorageVolumeStateEnumReady),
 		},
 		Refresh: func() (interface{}, string, error) {
-			f, _, err := m.Core.FileStorageVolumes.Get(ctx, ref)
+			res, err := m.Core.GetFileStorageVolumeWithResponse(ctx,
+				&core.GetFileStorageVolumeParams{
+					FileStorageVolumeId: fsvID,
+				})
 			if err != nil {
-				return f, "", err
+				return nil, "", err
 			}
 
-			return f, string(f.State), nil
+			f := &res.JSON200.FileStorageVolume
+
+			return f, string(*f.State), nil
 		},
 		Timeout:                   timeout,
 		Delay:                     delay,
@@ -451,5 +491,6 @@ func waitForFileStorageVolumeToBeReady(
 
 	readyFSV, err := waiter.WaitForStateContext(ctx)
 
-	return readyFSV.(*core.FileStorageVolume), err
+	//nolint:lll // Generated type names are long.
+	return readyFSV.(*core.GetFileStorageVolume200ResponseFileStorageVolume), err
 }
