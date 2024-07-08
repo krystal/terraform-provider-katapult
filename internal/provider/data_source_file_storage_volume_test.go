@@ -23,33 +23,35 @@ func TestAccKatapultDataSourceFileStorageVolume_minimal(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_file_storage_volume" "my_vol" {
+					resource "katapult_legacy_file_storage_volume" "my_vol" {
 						name = "%s"
 					}
 
-					data "katapult_file_storage_volume" "my_vol" {
-						id = katapult_file_storage_volume.my_vol.id
+					data "katapult_legacy_file_storage_volume" "my_vol" {
+						id = katapult_legacy_file_storage_volume.my_vol.id
 					}`,
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultDataSourceFileStorageVolumeAttrs(
-						tt, "data.katapult_file_storage_volume.my_vol",
+						tt, "data.katapult_legacy_file_storage_volume.my_vol",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.katapult_file_storage_volume.my_vol", "name",
-						"katapult_file_storage_volume.my_vol", "name",
+						"data.katapult_legacy_file_storage_volume.my_vol",
+						"name",
+						"katapult_legacy_file_storage_volume.my_vol",
+						"name",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.katapult_file_storage_volume.my_vol",
+						"data.katapult_legacy_file_storage_volume.my_vol",
 						"associations",
-						"katapult_file_storage_volume.my_vol",
+						"katapult_legacy_file_storage_volume.my_vol",
 						"associations",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.katapult_file_storage_volume.my_vol",
+						"data.katapult_legacy_file_storage_volume.my_vol",
 						"nsf_location",
-						"katapult_file_storage_volume.my_vol",
+						"katapult_legacy_file_storage_volume.my_vol",
 						"nsf_location",
 					),
 				),
@@ -81,36 +83,38 @@ func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
 						ip_address_ids = [katapult_legacy_ip.web.id]
 					}
 
-					resource "katapult_file_storage_volume" "my_vol" {
+					resource "katapult_legacy_file_storage_volume" "my_vol" {
 						name = "%s"
 						associations = [
 							katapult_virtual_machine.web.id,
 						]
 					}
 
-					data "katapult_file_storage_volume" "my_vol" {
-						id = katapult_file_storage_volume.my_vol.id
+					data "katapult_legacy_file_storage_volume" "my_vol" {
+						id = katapult_legacy_file_storage_volume.my_vol.id
 					}`,
 					name, name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultDataSourceFileStorageVolumeAttrs(
-						tt, "data.katapult_file_storage_volume.my_vol",
+						tt, "data.katapult_legacy_file_storage_volume.my_vol",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.katapult_file_storage_volume.my_vol", "name",
-						"katapult_file_storage_volume.my_vol", "name",
+						"data.katapult_legacy_file_storage_volume.my_vol",
+						"name",
+						"katapult_legacy_file_storage_volume.my_vol",
+						"name",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.katapult_file_storage_volume.my_vol",
+						"data.katapult_legacy_file_storage_volume.my_vol",
 						"associations",
-						"katapult_file_storage_volume.my_vol",
+						"katapult_legacy_file_storage_volume.my_vol",
 						"associations",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.katapult_file_storage_volume.my_vol",
+						"data.katapult_legacy_file_storage_volume.my_vol",
 						"nsf_location",
-						"katapult_file_storage_volume.my_vol",
+						"katapult_legacy_file_storage_volume.my_vol",
 						"nsf_location",
 					),
 				),
@@ -139,7 +143,7 @@ func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
 						ip_address_ids = [katapult_legacy_ip.db.id]
 					}
 
-					resource "katapult_file_storage_volume" "my_vol" {
+					resource "katapult_legacy_file_storage_volume" "my_vol" {
 						name = "%s"
 						associations = [
 							katapult_virtual_machine.web.id,
@@ -147,29 +151,31 @@ func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
 						]
 					}
 
-					data "katapult_file_storage_volume" "my_vol" {
-						id = katapult_file_storage_volume.my_vol.id
+					data "katapult_legacy_file_storage_volume" "my_vol" {
+						id = katapult_legacy_file_storage_volume.my_vol.id
 					}`,
 					name, name, name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultDataSourceFileStorageVolumeAttrs(
-						tt, "data.katapult_file_storage_volume.my_vol",
+						tt, "data.katapult_legacy_file_storage_volume.my_vol",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.katapult_file_storage_volume.my_vol", "name",
-						"katapult_file_storage_volume.my_vol", "name",
+						"data.katapult_legacy_file_storage_volume.my_vol",
+						"name",
+						"katapult_legacy_file_storage_volume.my_vol",
+						"name",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.katapult_file_storage_volume.my_vol",
+						"data.katapult_legacy_file_storage_volume.my_vol",
 						"associations",
-						"katapult_file_storage_volume.my_vol",
+						"katapult_legacy_file_storage_volume.my_vol",
 						"associations",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.katapult_file_storage_volume.my_vol",
+						"data.katapult_legacy_file_storage_volume.my_vol",
 						"nsf_location",
-						"katapult_file_storage_volume.my_vol",
+						"katapult_legacy_file_storage_volume.my_vol",
 						"nsf_location",
 					),
 				),
@@ -188,7 +194,7 @@ func TestAccKatapultDataSourceFileStorageVolume_not_found(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
-					data "katapult_file_storage_volume" "my_vol" {
+					data "katapult_legacy_file_storage_volume" "my_vol" {
 						id = "fsv_nopethisgonebye"
 					}`,
 				),
@@ -214,7 +220,7 @@ func TestAccKatapultDataSourceFileStorageVolume_blank(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
-					data "katapult_file_storage_volume" "my_vol" {
+					data "katapult_legacy_file_storage_volume" "my_vol" {
 
 					}`,
 				),
