@@ -560,9 +560,6 @@ func testAccCheckKatapultLoadBalancerRuleExists(
 		if err != nil {
 			return err
 		}
-		if lbRes.JSON200 == nil {
-			return fmt.Errorf("load balancer rule not found: %s", rs.Primary.ID)
-		}
 
 		// Expose ID if provided by caller.
 		if id != nil {

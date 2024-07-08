@@ -2,7 +2,6 @@ package v6provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -35,10 +34,6 @@ func testSweepVirtualMachines(_ string) error {
 			return err
 		}
 
-		if res.JSON200 == nil {
-			return errors.New("unexpected nil response")
-		}
-
 		totalPages = res.JSON200.Pagination.TotalPages.MustGet()
 		vms = append(vms, res.JSON200.VirtualMachines...)
 	}
@@ -54,10 +49,6 @@ func testSweepVirtualMachines(_ string) error {
 			})
 		if err != nil {
 			return err
-		}
-
-		if vmRes.JSON200 == nil {
-			return errors.New("unexpected nil response")
 		}
 
 		vm := vmRes.JSON200.VirtualMachine
@@ -107,10 +98,6 @@ func testSweepVirtualMachines(_ string) error {
 
 					if err2 != nil {
 						return 0, "", err2
-					}
-
-					if res.JSON200 == nil {
-						return 0, "", errors.New("unexpected nil response")
 					}
 
 					return res.JSON200.VirtualMachine,

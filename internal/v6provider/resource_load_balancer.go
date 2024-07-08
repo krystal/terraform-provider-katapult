@@ -297,18 +297,9 @@ func (r *LoadBalancerResource) Update(
 		args.Properties.ResourceIds = &ids
 	}
 
-	res, err := r.M.Core.PatchLoadBalancerWithResponse(ctx, args)
+	_, err := r.M.Core.PatchLoadBalancerWithResponse(ctx, args)
 	if err != nil {
 		resp.Diagnostics.AddError("Load Balancer Update Error", err.Error())
-		return
-	}
-
-	if res.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Load Balancer Update Error",
-			"unexpected status code from API",
-		)
-
 		return
 	}
 

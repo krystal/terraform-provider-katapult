@@ -2,7 +2,6 @@ package v6provider
 
 import (
 	"context"
-	"errors"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -122,10 +121,6 @@ func getLBRules(
 			return nil, err
 		}
 
-		if res.JSON200 == nil {
-			return nil, errors.New("response body is nil")
-		}
-
 		var totalPagesError error
 		totalPages, totalPagesError = res.JSON200.Pagination.TotalPages.Get()
 		if totalPagesError != nil {
@@ -147,10 +142,6 @@ func getLBRules(
 				})
 		if err != nil {
 			return nil, err
-		}
-
-		if res.JSON200 == nil {
-			return nil, errors.New("response body is nil")
 		}
 
 		rules[i] = res.JSON200.LoadBalancerRule

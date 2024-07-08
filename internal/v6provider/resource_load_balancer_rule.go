@@ -490,14 +490,6 @@ func (r *LoadBalancerRuleResource) Update(
 		return
 	}
 
-	if res.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"LoadBalancerRule Update Error",
-			"response body is nil",
-		)
-		return
-	}
-
 	if plan.LoadBalancerID.IsNull() {
 		plan.LoadBalancerID = state.LoadBalancerID
 	}

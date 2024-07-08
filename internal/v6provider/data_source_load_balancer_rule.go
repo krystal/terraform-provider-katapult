@@ -160,13 +160,6 @@ func (ds LoadBalancerRuleDataSource) Read(
 		return
 	}
 
-	if res.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Load Balancer Rule GetByID Error",
-			"response body is nil",
-		)
-	}
-
 	lbr := res.JSON200.LoadBalancerRule
 
 	data.ID = types.StringPointerValue(lbr.Id)
