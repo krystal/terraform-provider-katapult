@@ -445,6 +445,7 @@ func testAccCheckKatapultFSVDestroy(
 				&core.GetFileStorageVolumeParams{
 					FileStorageVolumeId: &rs.Primary.ID,
 				})
+
 			if !errors.Is(err, core.ErrNotFound) {
 				if err != nil {
 					return err
@@ -458,9 +459,8 @@ func testAccCheckKatapultFSVDestroy(
 
 			_, err = tt.Meta.Core.GetTrashObjectWithResponse(tt.Ctx,
 				&core.GetTrashObjectParams{
-					TrashObjectId: &rs.Primary.ID,
+					TrashObjectObjectId: &rs.Primary.ID,
 				})
-
 			if !errors.Is(err, core.ErrNotFound) {
 				if err != nil {
 					return err
