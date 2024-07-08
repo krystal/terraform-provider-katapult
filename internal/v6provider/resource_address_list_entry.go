@@ -2,7 +2,6 @@ package v6provider
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -252,10 +251,6 @@ func (r *AddressListEntryResource) AddressListEntryRead(
 		}
 
 		return err
-	}
-
-	if res.JSON200 == nil {
-		return fmt.Errorf("no address list entry found with ID %s", id)
 	}
 
 	entry := res.JSON200.AddressListEntry

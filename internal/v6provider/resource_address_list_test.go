@@ -37,7 +37,7 @@ func testSweepAddressLists(_ string) error {
 
 		resp := res.JSON200
 
-		totalPages = *resp.Pagination.TotalPages
+		totalPages, _ = resp.Pagination.TotalPages.Get()
 		addressLists = append(addressLists, resp.AddressLists...)
 	}
 

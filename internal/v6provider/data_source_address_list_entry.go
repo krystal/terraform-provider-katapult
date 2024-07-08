@@ -2,7 +2,6 @@ package v6provider
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -91,15 +90,6 @@ func (ds *AddressListEntryDataSource) Read(
 		resp.Diagnostics.AddError(
 			"Address List Entry get by ID error",
 			err.Error())
-
-		return
-	}
-
-	if res.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"failed to get address list",
-			fmt.Sprintf("response code was %d", res.StatusCode()),
-		)
 
 		return
 	}

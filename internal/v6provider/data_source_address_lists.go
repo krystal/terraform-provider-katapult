@@ -2,7 +2,6 @@ package v6provider
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -102,17 +101,8 @@ func (ds *AddressListsDataSource) Read(
 			return
 		}
 
-		if res.JSON200 == nil {
-			resp.Diagnostics.AddError(
-				"failed to get address lists",
-				fmt.Sprintf("response code was %d", res.StatusCode()),
-			)
-
-			return
-		}
-
 		addressLists = append(addressLists, res.JSON200.AddressLists...)
-		totalPages = *res.JSON200.Pagination.TotalPages
+		totalPages, _ = res.JSON200.Pagination.TotalPages.Get()
 	}
 
 	listValueType := types.ObjectType{
