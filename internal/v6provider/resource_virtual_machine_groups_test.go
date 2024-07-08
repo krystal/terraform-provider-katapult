@@ -2,7 +2,6 @@ package v6provider
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -29,10 +28,6 @@ func testSweepVMGroups(_ string) error {
 		return err
 	}
 
-	if res.JSON200 == nil {
-		return errors.New("unexpected nil response")
-	}
-
 	vmgs := res.JSON200.VirtualMachineGroups
 
 	for _, vmg := range vmgs {
@@ -44,7 +39,7 @@ func testSweepVMGroups(_ string) error {
 			"deleting virtual machine group", "id", vmg.Id, "name", vmg.Name,
 		)
 
-		delRes, err := m.Core.DeleteVirtualMachineGroupWithResponse(ctx,
+		_, err := m.Core.DeleteVirtualMachineGroupWithResponse(ctx,
 			core.DeleteVirtualMachineGroupJSONRequestBody{
 				VirtualMachineGroup: core.VirtualMachineGroupLookup{
 					Id: vmg.Id,
@@ -52,9 +47,6 @@ func testSweepVMGroups(_ string) error {
 			})
 		if err != nil {
 			return err
-		}
-		if delRes.JSON200 == nil {
-			return errors.New("unexpected nil response")
 		}
 	}
 

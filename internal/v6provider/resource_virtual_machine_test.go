@@ -2,9 +2,7 @@ package v6provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
@@ -20,7 +18,6 @@ func init() { //nolint:gochecknoinits
 	})
 }
 
-//nolint:gocyclo // This function is expected to be complex.
 func testSweepVirtualMachines(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()
@@ -37,11 +34,7 @@ func testSweepVirtualMachines(_ string) error {
 			return err
 		}
 
-		if res.JSON200 == nil {
-			return errors.New("unexpected nil response")
-		}
-
-		totalPages = *res.JSON200.Pagination.TotalPages
+		totalPages = res.JSON200.Pagination.TotalPages.MustGet()
 		vms = append(vms, res.JSON200.VirtualMachines...)
 	}
 
@@ -58,10 +51,6 @@ func testSweepVirtualMachines(_ string) error {
 			return err
 		}
 
-		if vmRes.JSON200 == nil {
-			return errors.New("unexpected nil response")
-		}
-
 		vm := vmRes.JSON200.VirtualMachine
 
 		m.Logger.Info("deleting virtual machine", "id", vm.Id, "name", vm.Name)
@@ -69,7 +58,7 @@ func testSweepVirtualMachines(_ string) error {
 		stopped := false
 		switch *vm.State { //nolint:exhaustive
 		case core.Started:
-			stopRes, stopErr := m.Core.PostVirtualMachineStopWithResponse(ctx,
+			_, stopErr := m.Core.PostVirtualMachineStopWithResponse(ctx,
 				core.PostVirtualMachineStopJSONRequestBody{
 					VirtualMachine: core.VirtualMachineLookup{
 						Id: vm.Id,
@@ -77,11 +66,6 @@ func testSweepVirtualMachines(_ string) error {
 				})
 			if stopErr != nil {
 				return stopErr
-			}
-			if stopRes.StatusCode() < 200 || stopRes.StatusCode() >= 300 {
-				return fmt.Errorf(
-					"unexpected status code: %d", stopRes.StatusCode(),
-				)
 			}
 
 		case core.Stopping,
@@ -114,10 +98,6 @@ func testSweepVirtualMachines(_ string) error {
 
 					if err2 != nil {
 						return 0, "", err2
-					}
-
-					if res.JSON200 == nil {
-						return 0, "", errors.New("unexpected nil response")
 					}
 
 					return res.JSON200.VirtualMachine,
@@ -153,12 +133,9 @@ func testSweepVirtualMachines(_ string) error {
 			return err
 		}
 
-		if delRes.StatusCode() < 200 || delRes.StatusCode() >= 300 {
-			return fmt.Errorf("unexpected status code: %d", delRes.StatusCode())
-		}
 		trashObject := delRes.JSON200.TrashObject
 
-		trashRes, err := m.Core.DeleteTrashObjectWithResponse(ctx,
+		_, err = m.Core.DeleteTrashObjectWithResponse(ctx,
 			core.DeleteTrashObjectJSONRequestBody{
 				TrashObject: core.TrashObjectLookup{
 					Id: trashObject.Id,
@@ -168,26 +145,16 @@ func testSweepVirtualMachines(_ string) error {
 			return err
 		}
 
-		if trashRes.StatusCode() < 200 || trashRes.StatusCode() >= 300 {
-			return fmt.Errorf(
-				"unexpected status code: %d",
-				trashRes.StatusCode())
-		}
-
 		trashWaiter := &retry.StateChangeConf{
 			Pending: []string{"exists"},
 			Target:  []string{"not_found"},
 			Refresh: func() (interface{}, string, error) {
-				trashLookupRes, e := m.Core.GetTrashObjectWithResponse(ctx,
+				_, e := m.Core.GetTrashObjectWithResponse(ctx,
 					&core.GetTrashObjectParams{
 						TrashObjectId: trashObject.Id,
 					})
 				if e != nil {
 					return nil, "", e
-				}
-
-				if trashLookupRes.StatusCode() == http.StatusNotFound {
-					return 1, "not_found", nil
 				}
 
 				return nil, "exists", nil

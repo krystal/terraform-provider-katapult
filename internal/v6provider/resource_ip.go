@@ -3,7 +3,6 @@ package v6provider
 import (
 	"context"
 	"errors"
-	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -192,14 +191,6 @@ func (r *IPResource) Create(
 			return
 		}
 
-		if res.JSON200 == nil {
-			resp.Diagnostics.AddError(
-				"Default Network Error",
-				"no default network found",
-			)
-			return
-		}
-
 		networkID = res.JSON200.Network.Id
 	}
 
@@ -220,14 +211,19 @@ func (r *IPResource) Create(
 
 	res, err := r.M.Core.PostOrganizationIpAddressesWithResponse(ctx, args)
 	if err != nil {
-		resp.Diagnostics.AddError("IP Address Create Error", err.Error())
-		return
-	}
-	if res.StatusCode() < 200 || res.StatusCode() >= 300 {
-		resp.Diagnostics.AddError(
-			"IP Address Create Error",
-			string(res.Body),
-		)
+		// If we have a response, we can use the body to get the error
+		// message. If we don't have a response, we can use the error
+		// message.
+		if res != nil {
+			resp.Diagnostics.AddError(
+				"IP Address Create Error",
+				string(res.Body))
+		} else {
+			resp.Diagnostics.AddError(
+				"IP Address Create Error",
+				err.Error())
+		}
+
 		return
 	}
 
@@ -259,7 +255,7 @@ func (r *IPResource) Read(
 	}
 
 	if err := r.IPRead(ctx, state.ID.ValueString(), state); err != nil {
-		if errors.Is(err, ErrNotFound) {
+		if errors.Is(err, core.ErrNotFound) {
 			r.M.Logger.Info(
 				"IP Address not found, removing from state",
 				"id", state.ID.ValueString(),
@@ -360,10 +356,6 @@ func (r *IPResource) IPRead(
 			IpAddressId: &id,
 		},
 	)
-	if res.StatusCode() == http.StatusNotFound {
-		return ErrNotFound
-	}
-
 	if err != nil {
 		return err
 	}
@@ -377,28 +369,20 @@ func (r *IPResource) IPRead(
 	model.Address = types.StringPointerValue(ip.Address)
 	model.AddressWithMask = types.StringPointerValue(ip.AddressWithMask)
 	model.ReverseDNS = types.StringPointerValue(ip.ReverseDns)
-	if ip.Address != nil {
-		model.Version = types.Int64Value(flattenIPVersion(*ip.Address))
-	}
+	model.Version = types.Int64Value(flattenIPVersion(*ip.Address))
 	model.VIP = types.BoolPointerValue(ip.Vip)
 
-	if ip.Label != nil {
-		model.Label = types.StringPointerValue(ip.Label)
-	} else {
-		model.Label = types.StringValue("")
-	}
+	// We don't need to check the error on the below as we
+	// will get an empty string in the error case.
 
-	if ip.AllocationType != nil {
-		model.AllocationType = types.StringPointerValue(ip.AllocationType)
-	} else {
-		model.AllocationType = types.StringValue("")
-	}
+	label, _ := ip.Label.Get()
+	model.Label = types.StringValue(label)
 
-	if ip.AllocationId != nil {
-		model.AllocationID = types.StringPointerValue(ip.AllocationId)
-	} else {
-		model.AllocationID = types.StringValue("")
-	}
+	allocationType, _ := ip.AllocationType.Get()
+	model.AllocationType = types.StringValue(allocationType)
+
+	allocationID, _ := ip.AllocationId.Get()
+	model.AllocationID = types.StringValue(allocationID)
 
 	return nil
 }

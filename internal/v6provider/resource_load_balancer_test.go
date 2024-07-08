@@ -3,7 +3,6 @@ package v6provider
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
 	"testing"
@@ -38,17 +37,10 @@ func testSweepLoadBalancers(_ string) error {
 		if err != nil {
 			return err
 		}
-		if res.StatusCode() == http.StatusNotFound {
-			return nil
-		}
-
-		if res.JSON200 == nil {
-			return fmt.Errorf("nil JSON200 response")
-		}
 
 		resp := res.JSON200
 
-		totalPages = *resp.Pagination.TotalPages
+		totalPages = resp.Pagination.TotalPages.MustGet()
 		loadBalancers = append(loadBalancers, resp.LoadBalancers...)
 	}
 

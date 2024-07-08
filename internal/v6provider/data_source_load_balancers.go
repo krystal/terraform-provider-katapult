@@ -97,14 +97,7 @@ func (ds *LoadBalancersDataSource) Read(
 			return
 		}
 
-		if res.JSON200 == nil {
-			resp.Diagnostics.AddError(
-				"Load Balancer List Error",
-				"nil response")
-			return
-		}
-
-		totalPages = *res.JSON200.Pagination.TotalPages
+		totalPages, _ = res.JSON200.Pagination.TotalPages.Get()
 
 		lbs := res.JSON200.LoadBalancers
 
@@ -115,14 +108,6 @@ func (ds *LoadBalancersDataSource) Read(
 				resp.Diagnostics.AddError(
 					"Load Balancer Get Error",
 					err.Error())
-				return
-			}
-
-			if res.JSON200 == nil {
-				resp.Diagnostics.AddError(
-					"Load Balancer Get Error",
-					"nil response",
-				)
 				return
 			}
 

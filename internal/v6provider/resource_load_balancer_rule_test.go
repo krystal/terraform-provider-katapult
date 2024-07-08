@@ -560,9 +560,6 @@ func testAccCheckKatapultLoadBalancerRuleExists(
 		if err != nil {
 			return err
 		}
-		if lbRes.JSON200 == nil {
-			return fmt.Errorf("load balancer rule not found: %s", rs.Primary.ID)
-		}
 
 		// Expose ID if provided by caller.
 		if id != nil {
@@ -598,11 +595,11 @@ func testAccCheckKatapultLoadBalancerRuleAttrs(
 			return err
 		}
 
-		if lbRes.JSON200 == nil {
-			return fmt.Errorf("load balancer rule not found: %s", rs.Primary.ID)
-		}
-
 		lbr := lbRes.JSON200.LoadBalancerRule
+
+		checkHTTPStatuses, _ := lbr.CheckHttpStatuses.Get()
+
+		checkProtocol, _ := lbr.CheckProtocol.Get()
 
 		tfs := []resource.TestCheckFunc{
 			resource.TestCheckResourceAttr(
@@ -642,13 +639,13 @@ func testAccCheckKatapultLoadBalancerRuleAttrs(
 				res, "check_interval", strconv.Itoa(*lbr.CheckInterval),
 			),
 			resource.TestCheckResourceAttr(
-				res, "check_http_statuses", string(*lbr.CheckHttpStatuses),
+				res, "check_http_statuses", string(checkHTTPStatuses),
 			),
 			resource.TestCheckResourceAttr(
 				res, "check_path", *lbr.CheckPath,
 			),
 			resource.TestCheckResourceAttr(
-				res, "check_protocol", string(*lbr.CheckProtocol),
+				res, "check_protocol", string(checkProtocol),
 			),
 			resource.TestCheckResourceAttr(
 				res, "check_rise", strconv.Itoa(*lbr.CheckRise),

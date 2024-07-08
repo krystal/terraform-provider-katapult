@@ -38,16 +38,13 @@ func testSweepIPs(_ string) error {
 		if err != nil {
 			return err
 		}
-		if res.JSON200 == nil {
-			return fmt.Errorf("unexpected nil response")
-		}
 
-		totalPages = *res.JSON200.Pagination.TotalPages
+		totalPages = res.JSON200.Pagination.TotalPages.MustGet()
 		ips = append(ips, res.JSON200.IpAddresses...)
 	}
 
 	for _, ip := range ips {
-		if ip.AllocationId != nil && *ip.AllocationId != "" {
+		if !ip.AllocationId.IsNull() && ip.AllocationType.IsSpecified() {
 			m.Logger.Info(
 				"skipping IP address: has allocation",
 				"id", ip.Id,
@@ -516,14 +513,6 @@ func testAccCheckKatapultIPExists(
 	}
 }
 
-func defaultToEmpty[T any](v *T) *T {
-	if v == nil {
-		return new(T)
-	}
-
-	return v
-}
-
 func testAccCheckKatapultIPAttrs(
 	tt *testTools,
 	res string,
@@ -547,6 +536,9 @@ func testAccCheckKatapultIPAttrs(
 			return fmt.Errorf("IP address not found: %s", rs.Primary.ID)
 		}
 
+		allocationType, _ := ip.AllocationType.Get()
+		allocationID, _ := ip.AllocationId.Get()
+
 		tfs := []resource.TestCheckFunc{
 			resource.TestCheckResourceAttr(res, "id", *ip.Id),
 			resource.TestCheckResourceAttr(res, "address", *ip.Address),
@@ -563,10 +555,10 @@ func testAccCheckKatapultIPAttrs(
 				res, "vip", fmt.Sprintf("%t", *ip.Vip),
 			),
 			resource.TestCheckResourceAttr(
-				res, "allocation_type", *(defaultToEmpty(ip.AllocationType)),
+				res, "allocation_type", allocationType,
 			),
 			resource.TestCheckResourceAttr(
-				res, "allocation_id", *(defaultToEmpty(ip.AllocationId)),
+				res, "allocation_id", allocationID,
 			),
 		}
 
