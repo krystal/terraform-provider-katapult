@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -70,7 +71,7 @@ func TestAccKatapultDataSourceFileStorageVolume_minimal(t *testing.T) {
 func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName()
+	name := strings.ToLower(tt.ResourceName())
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -79,7 +80,7 @@ func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_legacy_ip" "web" {}
+					resource "katapult_ip" "web" {}
 					resource "katapult_virtual_machine" "web" {
 						hostname = "%s-web"
 						package       = "rock-3"
@@ -87,7 +88,7 @@ func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_legacy_ip.web.id]
+						ip_address_ids = [katapult_ip.web.id]
 					}
 
 					resource "katapult_file_storage_volume" "my_vol" {
@@ -126,7 +127,7 @@ func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_legacy_ip" "web" {}
+					resource "katapult_ip" "web" {}
 					resource "katapult_virtual_machine" "web" {
 						hostname = "%s-web"
 						package       = "rock-3"
@@ -134,10 +135,10 @@ func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_legacy_ip.web.id]
+						ip_address_ids = [katapult_ip.web.id]
 					}
 
-					resource "katapult_legacy_ip" "db" {}
+					resource "katapult_ip" "db" {}
 					resource "katapult_virtual_machine" "db" {
 						hostname = "%s-db"
 						package       = "rock-3"
@@ -145,7 +146,7 @@ func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_legacy_ip.db.id]
+						ip_address_ids = [katapult_ip.db.id]
 					}
 
 					resource "katapult_file_storage_volume" "my_vol" {
@@ -203,8 +204,7 @@ func TestAccKatapultDataSourceFileStorageVolume_not_found(t *testing.T) {
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
-						"katapult: not_found: file_storage_volume_not_found: " +
-							"No file storage volume",
+						"resource not found",
 					),
 				),
 			},

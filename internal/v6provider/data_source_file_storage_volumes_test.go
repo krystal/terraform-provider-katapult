@@ -12,6 +12,9 @@ func TestAccKatapultDataSourceFileStorageVolumes_default(t *testing.T) {
 
 	name := tt.ResourceName()
 
+	first := name + "-1"
+	second := name + "-2"
+
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: tt.ProviderFactories,
@@ -27,8 +30,10 @@ func TestAccKatapultDataSourceFileStorageVolumes_default(t *testing.T) {
 						name = "%s"
 						# Ensure consistent ordering for testing purposes.
 						depends_on = [katapult_file_storage_volume.first]
-					}`,
-					name+"-1", name+"-2",
+					}
+					`,
+					first,
+					second,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultFileStorageVolumeAttrs(
@@ -53,16 +58,16 @@ func TestAccKatapultDataSourceFileStorageVolumes_default(t *testing.T) {
 					}
 
 					data "katapult_file_storage_volumes" "all" {}`,
-					name+"-1", name+"-2",
+					first, second,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"data.katapult_file_storage_volumes.all",
-						"file_storage_volumes.0.name", name+"-1",
+						"file_storage_volumes.0.name", first,
 					),
 					resource.TestCheckResourceAttr(
 						"data.katapult_file_storage_volumes.all",
-						"file_storage_volumes.1.name", name+"-2",
+						"file_storage_volumes.1.name", second,
 					),
 				),
 			},

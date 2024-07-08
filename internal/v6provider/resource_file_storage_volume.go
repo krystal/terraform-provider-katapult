@@ -157,7 +157,7 @@ func (r *FileStorageVolumeResource) Create(
 		return
 	}
 
-	create, diags := plan.Timeouts.Create(ctx, 20*time.Minute)
+	create, diags := plan.Timeouts.Create(ctx, 1*time.Minute)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -233,7 +233,7 @@ func (r *FileStorageVolumeResource) Update(
 		return
 	}
 
-	ref := core.FileStorageVolumeLookup{Id: plan.ID.ValueStringPointer()}
+	ref := core.FileStorageVolumeLookup{Id: state.ID.ValueStringPointer()}
 	args := core.FileStorageVolumeArguments{}
 
 	if !plan.Name.Equal(state.Name) {
@@ -312,7 +312,7 @@ func (r *FileStorageVolumeResource) Delete(
 		return
 	}
 
-	deleteTime, diags := state.Timeouts.Delete(ctx, 20*time.Minute)
+	deleteTime, diags := state.Timeouts.Delete(ctx, 2*time.Minute)
 
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -411,7 +411,6 @@ func (r *FileStorageVolumeResource) Delete(
 			return
 		}
 	}
-
 }
 
 func (r *FileStorageVolumeResource) ImportState(

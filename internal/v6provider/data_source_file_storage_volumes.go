@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -144,6 +145,7 @@ func (r *FileStorageVolumesDataSource) Read(
 		totalPages, _ = res.JSON200.Pagination.TotalPages.Get()
 
 		for _, fsv := range res.JSON200.FileStorageVolumes {
+			fmt.Println(*fsv.Name)
 			associations := []attr.Value{}
 			NFSLocation, _ := fsv.NfsLocation.Get()
 			Size, _ := fsv.Size.Get()
