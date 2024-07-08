@@ -121,11 +121,7 @@ func getLBRules(
 			return nil, err
 		}
 
-		var totalPagesError error
-		totalPages, totalPagesError = res.JSON200.Pagination.TotalPages.Get()
-		if totalPagesError != nil {
-			return nil, totalPagesError
-		}
+		totalPages, _ = res.JSON200.Pagination.TotalPages.Get()
 
 		ruleList = append(ruleList, res.JSON200.LoadBalancerRules...)
 	}
