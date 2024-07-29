@@ -28,5 +28,4 @@ Required:
 
 Read-Only:
 
-- `color` (String) The color of the tag.
 - `name` (String) The name of the tag.
