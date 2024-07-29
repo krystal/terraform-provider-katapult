@@ -68,11 +68,11 @@ func (r TagsDataSource) Schema(
 							Description: "The name of the tag.",
 							Computed:    true,
 						},
-
-						"color": schema.StringAttribute{
-							Description: "The color of the tag.",
-							Computed:    true,
-						},
+						// TODO: color is not returned in the API response.
+						// "color": schema.StringAttribute{
+						// 	Description: "The color of the tag.",
+						// 	Computed:    true,
+						// },
 					},
 				},
 			},
@@ -115,9 +115,10 @@ func (r TagsDataSource) Read(
 	attrs := make([]attr.Value, len(tags))
 
 	attrType := map[string]attr.Type{
-		"id":    types.StringType,
-		"name":  types.StringType,
-		"color": types.StringType,
+		"id":   types.StringType,
+		"name": types.StringType,
+		// TODO: color is not returned in the API response.
+		// "color": types.StringType,
 	}
 
 	for i, tag := range tags {
