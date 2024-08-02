@@ -203,14 +203,6 @@ func (r *LoadBalancerResource) Create(
 		return
 	}
 
-	if res.JSON201 == nil {
-		resp.Diagnostics.AddError(
-			"Load Balancer Create Error",
-			"missing ID in response",
-		)
-		return
-	}
-
 	id := *res.JSON201.LoadBalancer.Id
 
 	if err := r.LoadBalancerRead(ctx, id, &plan); err != nil {
