@@ -121,54 +121,6 @@ func TestAccKatapultIP_minimal(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
-		},
-	})
-}
-
-func TestAccKatapultIP_import_by_addr(t *testing.T) {
-	tt := newTestTools(t)
-
-	res, err := tt.Meta.Core.GetDataCenterDefaultNetworkWithResponse(tt.Ctx,
-		&core.GetDataCenterDefaultNetworkParams{
-			DataCenterPermalink: &tt.Meta.confDataCenter,
-		})
-	require.NoError(t, err)
-	require.NotNil(t, res)
-	require.NotNil(t, res.JSON200)
-
-	network := res.JSON200.Network
-	require.NotNil(t, network.Id)
-
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: tt.ProviderFactories,
-
-		CheckDestroy: testAccCheckKatapultIPDestroy(tt),
-		Steps: []resource.TestStep{
-			{
-				Config: `resource "katapult_ip" "web" {}`,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultIPAttrs(tt, "katapult_ip.web"),
-					resource.TestCheckResourceAttr(
-						"katapult_ip.web", "network_id", *network.Id,
-					),
-					resource.TestMatchResourceAttr(
-						"katapult_ip.web",
-						"address", regexp.MustCompile(
-							`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`,
-						),
-					),
-					resource.TestCheckResourceAttr(
-						"katapult_ip.web", "version", "4",
-					),
-					resource.TestCheckResourceAttr(
-						"katapult_ip.web", "vip", "false",
-					),
-					resource.TestCheckResourceAttr(
-						"katapult_ip.web", "label", "",
-					),
-				),
-			},
 			{
 				ResourceName: "katapult_ip.web",
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
