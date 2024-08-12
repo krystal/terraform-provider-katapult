@@ -1,4 +1,4 @@
-package provider
+package v6provider
 
 import (
 	"context"
@@ -9,42 +9,41 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
-	"github.com/krystal/go-katapult"
-	"github.com/krystal/go-katapult/core"
+	"github.com/krystal/go-katapult/next/core"
 )
 
-//
-// Terraform Operations
-//
-
 func init() { //nolint:gochecknoinits
-	resource.AddTestSweepers("katapult_legacy_file_storage_volume",
-		&resource.Sweeper{
-			Name: "katapult_legacy_file_storage_volume",
-			F:    testSweepFileStorageVolumes,
-		})
+	resource.AddTestSweepers("katapult_file_storage_volume", &resource.Sweeper{
+		Name: "katapult_file_storage_volume",
+		F:    testSweepFileStorageVolumes,
+	})
 }
 
 func testSweepFileStorageVolumes(_ string) error {
 	m := sweepMeta()
 	ctx := context.Background()
 
-	toDelete := []*core.FileStorageVolume{}
+	//nolint:lll // generated type names are long
+	toDelete := []core.GetOrganizationFileStorageVolumes200ResponseFileStorageVolumes{}
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
-		pageResults, resp, err := m.Core.FileStorageVolumes.List(
-			ctx, m.OrganizationRef, &core.ListOptions{Page: pageNum},
-		)
+		res, err := m.Core.GetOrganizationFileStorageVolumesWithResponse(ctx,
+			&core.GetOrganizationFileStorageVolumesParams{
+				OrganizationSubDomain: &m.confOrganization,
+				Page:                  &pageNum,
+			})
 		if err != nil {
 			return err
 		}
 
-		totalPages = resp.Pagination.TotalPages
-		for _, fsv := range pageResults {
-			if strings.HasPrefix(fsv.Name, testAccResourceNamePrefix) {
+		totalPages, _ = res.JSON200.Pagination.TotalPages.Get()
+
+		for _, fsv := range res.JSON200.FileStorageVolumes {
+			if strings.HasPrefix(*fsv.Name, testAccResourceNamePrefix) {
 				toDelete = append(toDelete, fsv)
 			}
 		}
@@ -52,29 +51,43 @@ func testSweepFileStorageVolumes(_ string) error {
 
 	for _, fsv := range toDelete {
 		m.Logger.Info("deleting file storage volume",
-			"id", fsv.ID, "name", fsv.Name,
+			"id", fsv.Id, "name", fsv.Name,
 		)
-		_, trash, _, err := m.Core.FileStorageVolumes.Delete(ctx, fsv.Ref())
+
+		res, err := m.Core.DeleteFileStorageVolumeWithResponse(ctx,
+			core.DeleteFileStorageVolumeJSONRequestBody{
+				FileStorageVolume: core.FileStorageVolumeLookup{
+					Id: fsv.Id,
+				},
+			})
 		if err != nil {
 			return err
 		}
 
 		m.Logger.Info("purging file storage volume",
-			"id", fsv.ID, "name", fsv.Name,
+			"id", fsv.Id, "name", fsv.Name,
 		)
 
-		trashRef := trash.Ref()
-		_, _, err = m.Core.TrashObjects.Purge(ctx, trashRef)
+		_, err = m.Core.DeleteTrashObjectWithResponse(ctx,
+			core.DeleteTrashObjectJSONRequestBody{
+				TrashObject: core.TrashObjectLookup{
+					Id: res.JSON200.TrashObject.Id,
+				},
+			})
 		if err != nil {
 			return err
 		}
 
-		waiter := &resource.StateChangeConf{
+		waiter := &retry.StateChangeConf{
 			Pending: []string{"exists"},
 			Target:  []string{"not_found"},
 			Refresh: func() (interface{}, string, error) {
-				_, _, e := m.Core.TrashObjects.Get(ctx, trashRef)
-				if e != nil && errors.Is(e, katapult.ErrNotFound) {
+				_, e := m.Core.GetTrashObjectWithResponse(ctx,
+					&core.GetTrashObjectParams{
+						TrashObjectId: res.JSON200.TrashObject.Id,
+					})
+
+				if e != nil && errors.Is(e, core.ErrNotFound) {
 					return 1, "not_found", nil
 				}
 
@@ -105,29 +118,29 @@ func TestAccKatapultFileStorageVolume_minimal(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultFileStorageVolumeDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultFSVDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_legacy_file_storage_volume" "my_fsv" {
+					resource "katapult_file_storage_volume" "my_fsv" {
 						name = "%s"
 					}`,
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultFileStorageVolumeAttrs(
-						tt, "katapult_legacy_file_storage_volume.my_fsv",
+						tt, "katapult_file_storage_volume.my_fsv",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_file_storage_volume.my_fsv",
+						"katapult_file_storage_volume.my_fsv",
 						"associations.#", "0",
 					),
 				),
 			},
 			{
-				ResourceName:      "katapult_legacy_file_storage_volume.my_fsv",
+				ResourceName:      "katapult_file_storage_volume.my_fsv",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -141,46 +154,46 @@ func TestAccKatapultFileStorageVolume_update_name(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultFileStorageVolumeDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultFSVDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_legacy_file_storage_volume" "my_fsv" {
+					resource "katapult_file_storage_volume" "my_fsv" {
 						name = "%s"
 					}`,
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultFileStorageVolumeAttrs(
-						tt, "katapult_legacy_file_storage_volume.my_fsv",
+						tt, "katapult_file_storage_volume.my_fsv",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_file_storage_volume.my_fsv",
+						"katapult_file_storage_volume.my_fsv",
 						"associations.#", "0",
 					),
 				),
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_legacy_file_storage_volume" "my_fsv" {
+					resource "katapult_file_storage_volume" "my_fsv" {
 						name = "%s-foobar"
 					}`,
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultFileStorageVolumeAttrs(
-						tt, "katapult_legacy_file_storage_volume.my_fsv",
+						tt, "katapult_file_storage_volume.my_fsv",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_file_storage_volume.my_fsv",
+						"katapult_file_storage_volume.my_fsv",
 						"name", name+"-foobar",
 					),
 				),
 			},
 			{
-				ResourceName:      "katapult_legacy_file_storage_volume.my_fsv",
+				ResourceName:      "katapult_file_storage_volume.my_fsv",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -191,33 +204,33 @@ func TestAccKatapultFileStorageVolume_update_name(t *testing.T) {
 func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 	tt := newTestTools(t)
 
-	name := tt.ResourceName()
+	name := strings.ToLower(tt.ResourceName())
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultFileStorageVolumeDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultFSVDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_legacy_file_storage_volume" "data" {
+					resource "katapult_file_storage_volume" "data" {
 						name = "%s"
 					}`,
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultFileStorageVolumeAttrs(
-						tt, "katapult_legacy_file_storage_volume.data",
+						tt, "katapult_file_storage_volume.data",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_legacy_file_storage_volume.data",
+						"katapult_file_storage_volume.data",
 						"associations.#", "0",
 					),
 				),
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_legacy_ip" "web" {}
+					resource "katapult_ip" "web" {}
 
 					resource "katapult_virtual_machine" "web" {
 						hostname = "%s-web"
@@ -226,17 +239,17 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_legacy_ip.web.id]
+						ip_address_ids = [katapult_ip.web.id]
 					}
 
-					resource "katapult_legacy_file_storage_volume" "data" {
+					resource "katapult_file_storage_volume" "data" {
 						name = "%s"
 						associations = [
 							katapult_virtual_machine.web.id
 						]
 					}
 
-					resource "katapult_legacy_file_storage_volume" "cache" {
+					resource "katapult_file_storage_volume" "cache" {
 						name = "%s-cache"
 						associations = [
 							katapult_virtual_machine.web.id
@@ -246,16 +259,16 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultFileStorageVolumeAttrs(
-						tt, "katapult_legacy_file_storage_volume.data",
+						tt, "katapult_file_storage_volume.data",
 					),
 					testAccCheckKatapultFileStorageVolumeAttrs(
-						tt, "katapult_legacy_file_storage_volume.cache",
+						tt, "katapult_file_storage_volume.cache",
 					),
 				),
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_legacy_ip" "web" {}
+					resource "katapult_ip" "web" {}
 					resource "katapult_virtual_machine" "web" {
 						hostname = "%s-web"
 						package       = "rock-3"
@@ -263,10 +276,10 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_legacy_ip.web.id]
+						ip_address_ids = [katapult_ip.web.id]
 					}
 
-					resource "katapult_legacy_ip" "db" {}
+					resource "katapult_ip" "db" {}
 					resource "katapult_virtual_machine" "db" {
 						hostname = "%s-db"
 						package       = "rock-3"
@@ -274,17 +287,17 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_legacy_ip.db.id]
+						ip_address_ids = [katapult_ip.db.id]
 					}
 
-					resource "katapult_legacy_file_storage_volume" "data" {
+					resource "katapult_file_storage_volume" "data" {
 						name = "%s"
 						associations = [
 							katapult_virtual_machine.web.id
 						]
 					}
 
-					resource "katapult_legacy_file_storage_volume" "cache" {
+					resource "katapult_file_storage_volume" "cache" {
 						name = "%s-cache"
 						associations = [
 							katapult_virtual_machine.db.id
@@ -294,16 +307,16 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultFileStorageVolumeAttrs(
-						tt, "katapult_legacy_file_storage_volume.data",
+						tt, "katapult_file_storage_volume.data",
 					),
 					testAccCheckKatapultFileStorageVolumeAttrs(
-						tt, "katapult_legacy_file_storage_volume.cache",
+						tt, "katapult_file_storage_volume.cache",
 					),
 				),
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_legacy_ip" "web" {}
+					resource "katapult_ip" "web" {}
 					resource "katapult_virtual_machine" "web" {
 						hostname = "%s-web"
 						package       = "rock-3"
@@ -311,17 +324,17 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_legacy_ip.web.id]
+						ip_address_ids = [katapult_ip.web.id]
 					}
 
-					resource "katapult_legacy_file_storage_volume" "data" {
+					resource "katapult_file_storage_volume" "data" {
 						name = "%s"
 						associations = [
 							katapult_virtual_machine.web.id
 						]
 					}
 
-					resource "katapult_legacy_file_storage_volume" "cache" {
+					resource "katapult_file_storage_volume" "cache" {
 						name = "%s-cache"
 						associations = []
 					}`,
@@ -329,21 +342,21 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultFileStorageVolumeAttrs(
-						tt, "katapult_legacy_file_storage_volume.data",
+						tt, "katapult_file_storage_volume.data",
 					),
 					testAccCheckKatapultFileStorageVolumeAttrs(
-						tt, "katapult_legacy_file_storage_volume.cache",
+						tt, "katapult_file_storage_volume.cache",
 					),
 				),
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_legacy_file_storage_volume" "data" {
+					resource "katapult_file_storage_volume" "data" {
 						name = "%s"
 						associations = []
 					}
 
-					resource "katapult_legacy_file_storage_volume" "cache" {
+					resource "katapult_file_storage_volume" "cache" {
 						name = "%s-cache"
 						associations = []
 					}`,
@@ -351,20 +364,20 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultFileStorageVolumeAttrs(
-						tt, "katapult_legacy_file_storage_volume.data",
+						tt, "katapult_file_storage_volume.data",
 					),
 					testAccCheckKatapultFileStorageVolumeAttrs(
-						tt, "katapult_legacy_file_storage_volume.cache",
+						tt, "katapult_file_storage_volume.cache",
 					),
 				),
 			},
 			{
-				ResourceName:      "katapult_legacy_file_storage_volume.data",
+				ResourceName:      "katapult_file_storage_volume.data",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
 			{
-				ResourceName:      "katapult_legacy_file_storage_volume.cache",
+				ResourceName:      "katapult_file_storage_volume.cache",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -386,26 +399,30 @@ func testAccCheckKatapultFileStorageVolumeAttrs(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		var err error
-		fsv, _, err := tt.Meta.Core.FileStorageVolumes.GetByID(
-			tt.Ctx, rs.Primary.ID,
-		)
+		fsvRes, err := tt.Meta.Core.GetFileStorageVolumeWithResponse(tt.Ctx,
+			&core.GetFileStorageVolumeParams{
+				FileStorageVolumeId: &rs.Primary.ID,
+			})
 		if err != nil {
 			return err
 		}
 
+		fsv := fsvRes.JSON200.FileStorageVolume
+
+		NFSLocation, _ := fsv.NfsLocation.Get()
+
 		tfs := []resource.TestCheckFunc{
-			resource.TestCheckResourceAttr(res, "id", fsv.ID),
-			resource.TestCheckResourceAttr(res, "name", fsv.Name),
+			resource.TestCheckResourceAttr(res, "id", *fsv.Id),
+			resource.TestCheckResourceAttr(res, "name", *fsv.Name),
 			resource.TestCheckResourceAttr(
-				res, "associations.#", strconv.Itoa(len(fsv.Associations)),
+				res, "associations.#", strconv.Itoa(len(*fsv.Associations)),
 			),
 			resource.TestCheckResourceAttr(
-				res, "nfs_location", fsv.NFSLocation,
+				res, "nfs_location", NFSLocation,
 			),
 		}
 
-		for _, assoc := range fsv.Associations {
+		for _, assoc := range *fsv.Associations {
 			tfs = append(tfs, resource.TestCheckTypeSetElemAttr(
 				res, "associations.*", assoc,
 			))
@@ -415,42 +432,43 @@ func testAccCheckKatapultFileStorageVolumeAttrs(
 	}
 }
 
-func testAccCheckKatapultFileStorageVolumeDestroy(
+func testAccCheckKatapultFSVDestroy(
 	tt *testTools,
 ) resource.TestCheckFunc {
-	m := tt.Meta
-
 	return func(s *terraform.State) error {
 		for _, rs := range s.RootModule().Resources {
-			if rs.Type != "katapult_legacy_file_storage_volume" {
+			if rs.Type != "katapult_file_storage_volume" {
 				continue
 			}
 
-			_, _, err := m.Core.FileStorageVolumes.GetByID(
-				tt.Ctx, rs.Primary.ID,
-			)
-			if !errors.Is(err, katapult.ErrNotFound) {
+			_, err := tt.Meta.Core.GetFileStorageVolumeWithResponse(tt.Ctx,
+				&core.GetFileStorageVolumeParams{
+					FileStorageVolumeId: &rs.Primary.ID,
+				})
+
+			if !errors.Is(err, core.ErrNotFound) {
 				if err != nil {
 					return err
 				}
 
 				return fmt.Errorf(
-					"katapult_legacy_file_storage_volume %s was not destroyed",
+					"katapult_file_storage_volume %s was not destroyed",
 					rs.Primary.ID,
 				)
 			}
 
-			_, _, err = m.Core.TrashObjects.GetByObjectID(
-				tt.Ctx, rs.Primary.ID,
-			)
-			if !errors.Is(err, katapult.ErrNotFound) {
+			_, err = tt.Meta.Core.GetTrashObjectWithResponse(tt.Ctx,
+				&core.GetTrashObjectParams{
+					TrashObjectObjectId: &rs.Primary.ID,
+				})
+			if !errors.Is(err, core.ErrNotFound) {
 				if err != nil {
 					return err
 				}
 
 				return fmt.Errorf(
-					"katapult_legacy_file_storage_volume %s was deleted, "+
-						"but not purged from trash",
+					"katapult_file_storage_volume %s was deleted, but not "+
+						"purged from trash",
 					rs.Primary.ID,
 				)
 			}
