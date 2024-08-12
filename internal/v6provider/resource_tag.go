@@ -19,9 +19,9 @@ type (
 	}
 
 	TagResourceModel struct {
-		ID    types.String `json:"id"`
-		Name  types.String `json:"name"`
-		Color types.String `json:"color"`
+		ID    types.String `tfsdk:"id"`
+		Name  types.String `tfsdk:"name"`
+		Color types.String `tfsdk:"color"`
 	}
 )
 
@@ -75,7 +75,8 @@ func (r TagResource) Schema(
 				MarkdownDescription: "The name of the tag.",
 			},
 			"color": schema.StringAttribute{
-				Required: true,
+				Optional: true,
+				Computed: true,
 				Description: "The color of the tag. Refer to " +
 					"https://apidocs.k.io/katapult/enums/6808ef8ef6/ " +
 					"for available colors",
@@ -99,15 +100,20 @@ func (r *TagResource) Create(
 		return
 	}
 
+	tagArgs := core.TagArguments{
+		Name: plan.Name.ValueStringPointer(),
+	}
+
+	if !plan.Color.IsNull() && !plan.Color.IsUnknown() {
+		tagArgs.Color = (*core.TagColorsEnum)(plan.Color.ValueStringPointer())
+	}
+
 	res, err := r.M.Core.PostOrganizationTagsWithResponse(ctx,
 		core.PostOrganizationTagsJSONRequestBody{
 			Organization: core.OrganizationLookup{
 				SubDomain: &r.M.confOrganization,
 			},
-			Properties: core.TagArguments{
-				Name:  plan.Name.ValueStringPointer(),
-				Color: (*core.TagColorsEnum)(plan.Color.ValueStringPointer()),
-			},
+			Properties: tagArgs,
 		})
 	if err != nil {
 		resp.Diagnostics.AddError("Create Error", err.Error())

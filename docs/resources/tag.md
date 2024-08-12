@@ -17,8 +17,11 @@ description: |-
 
 ### Required
 
-- `color` (String) The color of the tag. Refer to [the API documentation](https://apidocs.k.io/katapult/enums/6808ef8ef6/) for available colors
 - `name` (String) The name of the tag.
+
+### Optional
+
+- `color` (String) The color of the tag. Refer to [the API documentation](https://apidocs.k.io/katapult/enums/6808ef8ef6/) for available colors
 
 ### Read-Only
 
