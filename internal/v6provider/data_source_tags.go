@@ -56,7 +56,7 @@ func (r TagsDataSource) Schema(
 ) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"rules": schema.ListNestedAttribute{
+			"tags": schema.ListNestedAttribute{
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -68,11 +68,10 @@ func (r TagsDataSource) Schema(
 							Description: "The name of the tag.",
 							Computed:    true,
 						},
-						// TODO: color is not returned in the API response.
-						// "color": schema.StringAttribute{
-						// 	Description: "The color of the tag.",
-						// 	Computed:    true,
-						// },
+						"color": schema.StringAttribute{
+							Description: "The color of the tag.",
+							Computed:    true,
+						},
 					},
 				},
 			},
@@ -115,21 +114,18 @@ func (r TagsDataSource) Read(
 	attrs := make([]attr.Value, len(tags))
 
 	attrType := map[string]attr.Type{
-		"id":   types.StringType,
-		"name": types.StringType,
-		// TODO: color is not returned in the API response.
-		// "color": types.StringType,
+		"id":    types.StringType,
+		"name":  types.StringType,
+		"color": types.StringType,
 	}
 
 	for i, tag := range tags {
 		attrs[i] = types.ObjectValueMust(
 			attrType,
 			map[string]attr.Value{
-				"id":   types.StringPointerValue(tag.Id),
-				"name": types.StringPointerValue(tag.Name),
-
-				// TODO: color is not returned in the API response.
-				// "color": types.StringValue(string(*tag.Color)),
+				"id":    types.StringPointerValue(tag.Id),
+				"name":  types.StringPointerValue(tag.Name),
+				"color": types.StringValue(string(*tag.Color)),
 			},
 		)
 	}

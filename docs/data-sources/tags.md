@@ -17,10 +17,10 @@ description: |-
 
 ### Read-Only
 
-- `rules` (Attributes List) (see [below for nested schema](#nestedatt--rules))
+- `tags` (Attributes List) (see [below for nested schema](#nestedatt--tags))
 
-<a id="nestedatt--rules"></a>
-### Nested Schema for `rules`
+<a id="nestedatt--tags"></a>
+### Nested Schema for `tags`
 
 Required:
 
@@ -28,4 +28,5 @@ Required:
 
 Read-Only:
 
+- `color` (String) The color of the tag.
 - `name` (String) The name of the tag.

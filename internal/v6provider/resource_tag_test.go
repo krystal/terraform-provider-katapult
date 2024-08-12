@@ -20,7 +20,7 @@ func init() { //nolint:gochecknoinits
 }
 
 func testSweepTags(_ string) error {
-	var pageSize int = 200
+	pageSize := 200
 
 	m := sweepMeta()
 	ctx := context.TODO()
@@ -120,11 +120,10 @@ func TestAccKatapultTag_update_color(t *testing.T) {
 
 			{
 				Config: undent.Stringf(`
-			resource "katapult_tag" "kv" {
-				name = "%s"
-				color = "yellow"
-
-			}`,
+				resource "katapult_tag" "kv" {
+					name = "%s"
+					color = "yellow"
+				}`,
 					name),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultTagAttrs(
@@ -193,7 +192,7 @@ func testAccCheckKatapultTagDestroy(
 			if err == nil && resp.JSON200 != nil {
 				return fmt.Errorf(
 					"katapult_tag %s (%s) was not destroyed",
-					rs.Primary.ID, string(*resp.JSON200.Tag.Name),
+					rs.Primary.ID, *resp.JSON200.Tag.Name,
 				)
 			}
 		}
