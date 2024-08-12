@@ -600,6 +600,7 @@ func TestAccKatapultLoadBalancer_tag(t *testing.T) {
 						name = "%s-1"
 						// TODO: Update hard-coded tag ID when katapult_tag
 						// resource is implemented.
+						// This is the 'web' tag ID.
 						tag_ids = ["tag_NqAjIfOyzSMyuFPS"]
 					}
 
