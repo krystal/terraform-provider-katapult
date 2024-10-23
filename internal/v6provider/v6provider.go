@@ -255,6 +255,9 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource {
 			return &AddressListEntryResource{}
 		},
+		func() resource.Resource {
+			return &ObjectStorageBucketResource{}
+		},
 	}
 }
 
