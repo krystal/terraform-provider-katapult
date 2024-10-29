@@ -228,6 +228,7 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 					),
 				),
 			},
+			// Associate both volumes with with VM.
 			{
 				Config: undent.Stringf(`
 					resource "katapult_ip" "web" {}
@@ -240,6 +241,17 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 							install_agent = true
 						}
 						ip_address_ids = [katapult_ip.web.id]
+					}
+
+					resource "katapult_ip" "db" {}
+					resource "katapult_virtual_machine" "db" {
+						hostname = "%s-db"
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_ip.db.id]
 					}
 
 					resource "katapult_file_storage_volume" "data" {
@@ -255,7 +267,7 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 							katapult_virtual_machine.web.id
 						]
 					}`,
-					name, name, name,
+					name, name, name, name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultFileStorageVolumeAttrs(
@@ -266,6 +278,7 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 					),
 				),
 			},
+			// Associate cache volume with different VM.
 			{
 				Config: undent.Stringf(`
 					resource "katapult_ip" "web" {}
@@ -314,6 +327,7 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 					),
 				),
 			},
+			// Disassociate cache volume by setting attributes to empty list.
 			{
 				Config: undent.Stringf(`
 					resource "katapult_ip" "web" {}
@@ -327,6 +341,17 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 						ip_address_ids = [katapult_ip.web.id]
 					}
 
+					resource "katapult_ip" "db" {}
+					resource "katapult_virtual_machine" "db" {
+						hostname = "%s-db"
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_ip.db.id]
+					}
+
 					resource "katapult_file_storage_volume" "data" {
 						name = "%s"
 						associations = [
@@ -338,7 +363,7 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 						name = "%s-cache"
 						associations = []
 					}`,
-					name, name, name,
+					name, name, name, name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultFileStorageVolumeAttrs(
@@ -347,27 +372,61 @@ func TestAccKatapultFileStorageVolume_associations(t *testing.T) {
 					testAccCheckKatapultFileStorageVolumeAttrs(
 						tt, "katapult_file_storage_volume.cache",
 					),
+					resource.TestCheckResourceAttr(
+						"katapult_file_storage_volume.cache",
+						"associations.#", "0",
+					),
 				),
 			},
+			// Disassociate both volumes by completely removing associations
+			// attribute in resource definitions.
 			{
 				Config: undent.Stringf(`
+					resource "katapult_ip" "web" {}
+					resource "katapult_virtual_machine" "web" {
+						hostname = "%s-web"
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_ip.web.id]
+					}
+
+					resource "katapult_ip" "db" {}
+					resource "katapult_virtual_machine" "db" {
+						hostname = "%s-db"
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_ip.db.id]
+					}
+
 					resource "katapult_file_storage_volume" "data" {
 						name = "%s"
-						associations = []
 					}
 
 					resource "katapult_file_storage_volume" "cache" {
 						name = "%s-cache"
-						associations = []
 					}`,
-					name, name,
+					name, name, name, name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultFileStorageVolumeAttrs(
 						tt, "katapult_file_storage_volume.data",
 					),
+					resource.TestCheckResourceAttr(
+						"katapult_file_storage_volume.data",
+						"associations.#", "0",
+					),
 					testAccCheckKatapultFileStorageVolumeAttrs(
 						tt, "katapult_file_storage_volume.cache",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_file_storage_volume.cache",
+						"associations.#", "0",
 					),
 				),
 			},
