@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/terraform-plugin-testing v1.5.1
 	github.com/jimeh/rands v0.3.0
 	github.com/jimeh/undent v1.1.1
-	github.com/krystal/go-katapult v0.2.9
+	github.com/krystal/go-katapult v0.2.12
 	github.com/stretchr/testify v1.9.0
 )
 
