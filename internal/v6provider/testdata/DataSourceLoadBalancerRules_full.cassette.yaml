@@ -9,7 +9,7 @@ interactions:
       - application/json
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/organizations/:organization/load_balancers
+    url: https://api.katapult.io/core/v1/organizations/organization/load_balancers
     method: POST
   response:
     body: '{"load_balancer":{"id":"lb_BRl5efgXEXhb7Ixu","name":"tf-acc-test-data-source-full-0QyweZxeKjxc","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_VOmYHZTgMIkUAeMs","address":"185.44.253.106"},"https_redirect":false,"backend_certificate":"-----BEGIN
@@ -50,7 +50,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_BRl5efgXEXhb7Ixu
+    url: https://api.katapult.io/core/v1/load_balancers/load_balancer?load_balancer%5Bid%5D=lb_BRl5efgXEXhb7Ixu
     method: GET
   response:
     body: '{"load_balancer":{"id":"lb_BRl5efgXEXhb7Ixu","name":"tf-acc-test-data-source-full-0QyweZxeKjxc","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_VOmYHZTgMIkUAeMs","address":"185.44.253.106"},"https_redirect":false,"backend_certificate":"-----BEGIN
@@ -93,7 +93,7 @@ interactions:
       - application/json
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer/rules
+    url: https://api.katapult.io/core/v1/load_balancers/load_balancer/rules
     method: POST
   response:
     body: '{"load_balancer_rule":{"id":"lbrule_oMc0w2fPJZChGkFW","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","proxy_protocol":true,"certificates":[],"backend_ssl":true,"passthrough_ssl":false,"check_enabled":false,"check_fall":3,"check_interval":30,"check_path":"/healthz","check_protocol":"HTTP","check_rise":3,"check_timeout":15,"check_http_statuses":"23","load_balancer":{"id":"lb_BRl5efgXEXhb7Ixu","name":"tf-acc-test-data-source-full-0QyweZxeKjxc"}}}'
@@ -131,7 +131,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/rules/:load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_oMc0w2fPJZChGkFW
+    url: https://api.katapult.io/core/v1/load_balancers/rules/load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_oMc0w2fPJZChGkFW
     method: GET
   response:
     body: '{"load_balancer_rule":{"id":"lbrule_oMc0w2fPJZChGkFW","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","proxy_protocol":true,"certificates":[],"backend_ssl":true,"passthrough_ssl":false,"check_enabled":false,"check_fall":3,"check_interval":30,"check_path":"/healthz","check_protocol":"HTTP","check_rise":3,"check_timeout":15,"check_http_statuses":"23","load_balancer":{"id":"lb_BRl5efgXEXhb7Ixu","name":"tf-acc-test-data-source-full-0QyweZxeKjxc"}}}'
@@ -169,7 +169,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer/rules?load_balancer%5Bid%5D=lb_BRl5efgXEXhb7Ixu&page=1
+    url: https://api.katapult.io/core/v1/load_balancers/load_balancer/rules?load_balancer%5Bid%5D=lb_BRl5efgXEXhb7Ixu&page=1
     method: GET
   response:
     body: '{"pagination":{"current_page":1,"total_pages":1,"total":1,"per_page":30,"large_set":false},"load_balancer_rules":[{"id":"lbrule_oMc0w2fPJZChGkFW","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","certificates":[],"check_enabled":false}]}'
@@ -207,7 +207,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/rules/:load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_oMc0w2fPJZChGkFW
+    url: https://api.katapult.io/core/v1/load_balancers/rules/load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_oMc0w2fPJZChGkFW
     method: GET
   response:
     body: '{"load_balancer_rule":{"id":"lbrule_oMc0w2fPJZChGkFW","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","proxy_protocol":true,"certificates":[],"backend_ssl":true,"passthrough_ssl":false,"check_enabled":false,"check_fall":3,"check_interval":30,"check_path":"/healthz","check_protocol":"HTTP","check_rise":3,"check_timeout":15,"check_http_statuses":"23","load_balancer":{"id":"lb_BRl5efgXEXhb7Ixu","name":"tf-acc-test-data-source-full-0QyweZxeKjxc"}}}'
@@ -245,7 +245,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer/rules?load_balancer%5Bid%5D=lb_BRl5efgXEXhb7Ixu&page=1
+    url: https://api.katapult.io/core/v1/load_balancers/load_balancer/rules?load_balancer%5Bid%5D=lb_BRl5efgXEXhb7Ixu&page=1
     method: GET
   response:
     body: '{"pagination":{"current_page":1,"total_pages":1,"total":1,"per_page":30,"large_set":false},"load_balancer_rules":[{"id":"lbrule_oMc0w2fPJZChGkFW","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","certificates":[],"check_enabled":false}]}'
@@ -283,7 +283,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/rules/:load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_oMc0w2fPJZChGkFW
+    url: https://api.katapult.io/core/v1/load_balancers/rules/load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_oMc0w2fPJZChGkFW
     method: GET
   response:
     body: '{"load_balancer_rule":{"id":"lbrule_oMc0w2fPJZChGkFW","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","proxy_protocol":true,"certificates":[],"backend_ssl":true,"passthrough_ssl":false,"check_enabled":false,"check_fall":3,"check_interval":30,"check_path":"/healthz","check_protocol":"HTTP","check_rise":3,"check_timeout":15,"check_http_statuses":"23","load_balancer":{"id":"lb_BRl5efgXEXhb7Ixu","name":"tf-acc-test-data-source-full-0QyweZxeKjxc"}}}'
@@ -321,7 +321,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_BRl5efgXEXhb7Ixu
+    url: https://api.katapult.io/core/v1/load_balancers/load_balancer?load_balancer%5Bid%5D=lb_BRl5efgXEXhb7Ixu
     method: GET
   response:
     body: '{"load_balancer":{"id":"lb_BRl5efgXEXhb7Ixu","name":"tf-acc-test-data-source-full-0QyweZxeKjxc","api_reference":null,"resource_type":"virtual_machines","resources":[],"resource_ids":[],"ip_address":{"id":"ip_VOmYHZTgMIkUAeMs","address":"185.44.253.106"},"https_redirect":false,"backend_certificate":"-----BEGIN
@@ -362,7 +362,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/rules/:load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_oMc0w2fPJZChGkFW
+    url: https://api.katapult.io/core/v1/load_balancers/rules/load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_oMc0w2fPJZChGkFW
     method: GET
   response:
     body: '{"load_balancer_rule":{"id":"lbrule_oMc0w2fPJZChGkFW","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","proxy_protocol":true,"certificates":[],"backend_ssl":true,"passthrough_ssl":false,"check_enabled":false,"check_fall":3,"check_interval":30,"check_path":"/healthz","check_protocol":"HTTP","check_rise":3,"check_timeout":15,"check_http_statuses":"23","load_balancer":{"id":"lb_BRl5efgXEXhb7Ixu","name":"tf-acc-test-data-source-full-0QyweZxeKjxc"}}}'
@@ -400,7 +400,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer/rules?load_balancer%5Bid%5D=lb_BRl5efgXEXhb7Ixu&page=1
+    url: https://api.katapult.io/core/v1/load_balancers/load_balancer/rules?load_balancer%5Bid%5D=lb_BRl5efgXEXhb7Ixu&page=1
     method: GET
   response:
     body: '{"pagination":{"current_page":1,"total_pages":1,"total":1,"per_page":30,"large_set":false},"load_balancer_rules":[{"id":"lbrule_oMc0w2fPJZChGkFW","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","certificates":[],"check_enabled":false}]}'
@@ -438,7 +438,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/rules/:load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_oMc0w2fPJZChGkFW
+    url: https://api.katapult.io/core/v1/load_balancers/rules/load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_oMc0w2fPJZChGkFW
     method: GET
   response:
     body: '{"load_balancer_rule":{"id":"lbrule_oMc0w2fPJZChGkFW","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","proxy_protocol":true,"certificates":[],"backend_ssl":true,"passthrough_ssl":false,"check_enabled":false,"check_fall":3,"check_interval":30,"check_path":"/healthz","check_protocol":"HTTP","check_rise":3,"check_timeout":15,"check_http_statuses":"23","load_balancer":{"id":"lb_BRl5efgXEXhb7Ixu","name":"tf-acc-test-data-source-full-0QyweZxeKjxc"}}}'
@@ -476,7 +476,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer/rules?load_balancer%5Bid%5D=lb_BRl5efgXEXhb7Ixu&page=1
+    url: https://api.katapult.io/core/v1/load_balancers/load_balancer/rules?load_balancer%5Bid%5D=lb_BRl5efgXEXhb7Ixu&page=1
     method: GET
   response:
     body: '{"pagination":{"current_page":1,"total_pages":1,"total":1,"per_page":30,"large_set":false},"load_balancer_rules":[{"id":"lbrule_oMc0w2fPJZChGkFW","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","certificates":[],"check_enabled":false}]}'
@@ -514,7 +514,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/rules/:load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_oMc0w2fPJZChGkFW
+    url: https://api.katapult.io/core/v1/load_balancers/rules/load_balancer_rule?load_balancer_rule%5Bid%5D=lbrule_oMc0w2fPJZChGkFW
     method: GET
   response:
     body: '{"load_balancer_rule":{"id":"lbrule_oMc0w2fPJZChGkFW","algorithm":"round_robin","destination_port":8080,"listen_port":80,"protocol":"HTTP","proxy_protocol":true,"certificates":[],"backend_ssl":true,"passthrough_ssl":false,"check_enabled":false,"check_fall":3,"check_interval":30,"check_path":"/healthz","check_protocol":"HTTP","check_rise":3,"check_timeout":15,"check_http_statuses":"23","load_balancer":{"id":"lb_BRl5efgXEXhb7Ixu","name":"tf-acc-test-data-source-full-0QyweZxeKjxc"}}}'
@@ -554,7 +554,7 @@ interactions:
       - application/json
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/rules/:load_balancer_rule
+    url: https://api.katapult.io/core/v1/load_balancers/rules/load_balancer_rule
     method: DELETE
   response:
     body: '{"load_balancer_rule":{"id":"lbrule_oMc0w2fPJZChGkFW"}}'
@@ -594,7 +594,7 @@ interactions:
       - application/json
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer
+    url: https://api.katapult.io/core/v1/load_balancers/load_balancer
     method: DELETE
   response:
     body: '{"load_balancer":{"id":"lb_BRl5efgXEXhb7Ixu","name":"tf-acc-test-data-source-full-0QyweZxeKjxc","api_reference":null}}'
@@ -632,7 +632,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/load_balancers/:load_balancer?load_balancer%5Bid%5D=lb_BRl5efgXEXhb7Ixu
+    url: https://api.katapult.io/core/v1/load_balancers/load_balancer?load_balancer%5Bid%5D=lb_BRl5efgXEXhb7Ixu
     method: GET
   response:
     body: '{"error":{"code":"load_balancer_not_found","description":"No load balancer
