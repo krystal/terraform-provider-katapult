@@ -66,17 +66,6 @@ func NetworkType() types.ObjectType {
 	}
 }
 
-func NetworkListType() types.ObjectType {
-	t := NetworkType()
-
-	// When fetching a list of Networks we do no include the "default"
-	// attribute, as it currently requires separate API calls for each data
-	// center.
-	delete(t.AttrTypes, "default")
-
-	return t
-}
-
 func networkDataSourceSchemaAttrs() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
