@@ -292,6 +292,9 @@ func (k *KatapultProvider) DataSources(
 		func() datasource.DataSource {
 			return &GlobalAddressListsDataSource{}
 		},
+		func() datasource.DataSource {
+			return &NetworkDataSource{}
+		},
 	}
 }
 
