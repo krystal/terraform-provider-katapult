@@ -74,7 +74,7 @@ make build
 
 ### Requirements
 
-- [Go](https://golang.org/dl/) 1.21 or later.
+- [Go](https://golang.org/dl/) 1.23 or later.
 - [Terraform](https://www.terraform.io/downloads.html) 1.3 or later.
 
 ### Rules
