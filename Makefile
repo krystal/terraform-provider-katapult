@@ -47,7 +47,7 @@ endef
 
 $(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62))
 $(eval $(call tool,gomod,github.com/Helcaraxan/gomod@latest))
-$(eval $(call tool,tfplugindocs,github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.19.4))
+$(eval $(call tool,tfplugindocs,github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.20.0))
 $(eval $(call tool,tfproviderlint,github.com/bflad/tfproviderlint/cmd/tfproviderlint@v0.30.0))
 
 .PHONY: tools
