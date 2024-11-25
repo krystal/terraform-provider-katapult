@@ -13,10 +13,10 @@ RUN set -e \
     && mkdir -p /terraform-provider-katapult
 WORKDIR /terraform-provider-katapult
 
-COPY .mise.toml /terraform-provider-katapult
+COPY mise.toml /terraform-provider-katapult
 RUN set -e \
     && curl https://mise.run | sh \
-    && "$HOME/.local/bin/mise" install \
+    && "$HOME/.local/bin/mise" install --yes \
     && echo 'export PS1="\u@go-alpine:\w\$ "' > /root/.bashrc \
     && echo 'alias ll="ls -lah"' >> /root/.bashrc \
     && echo 'alias ma="make"' >> /root/.bashrc \
