@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.15](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.14...v0.0.15) (2024-11-28)
+
+
+### Features
+
+* add support for address lists ([#129](https://github.com/krystal/terraform-provider-katapult/issues/129)) ([24fc994](https://github.com/krystal/terraform-provider-katapult/commit/24fc9941390f94b95808ce6838634bbf2a2f2235))
+* **core:** Switch core client in v6provider to use generated `next` client ([#127](https://github.com/krystal/terraform-provider-katapult/issues/127)) ([d313927](https://github.com/krystal/terraform-provider-katapult/commit/d3139271a4c9dd913f4ef19ef82f706c8c838a45))
+* **network:** add network data sources ([#154](https://github.com/krystal/terraform-provider-katapult/issues/154)) ([2a3d879](https://github.com/krystal/terraform-provider-katapult/commit/2a3d87928d022a062fd21c525264e3886d1fdd11))
+
 ## [0.0.14](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.13...v0.0.14) (2024-07-03)
 
 
