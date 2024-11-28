@@ -244,6 +244,9 @@ func (k *KatapultProvider) Resources(
 			return &IPResource{}
 		},
 		func() resource.Resource {
+			return &FileStorageVolumeResource{}
+		},
+		func() resource.Resource {
 			return &LoadBalancerResource{}
 		},
 		func() resource.Resource {
@@ -279,6 +282,12 @@ func (k *KatapultProvider) DataSources(
 		},
 		func() datasource.DataSource {
 			return &LoadBalancerDataSource{}
+		},
+		func() datasource.DataSource {
+			return &FileStorageVolumeDataSource{}
+		},
+		func() datasource.DataSource {
+			return &FileStorageVolumesDataSource{}
 		},
 		func() datasource.DataSource {
 			return &LoadBalancerRuleDataSource{}
