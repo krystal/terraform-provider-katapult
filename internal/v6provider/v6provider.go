@@ -255,6 +255,9 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource {
 			return &AddressListEntryResource{}
 		},
+		func() resource.Resource {
+			return &TagResource{}
+		},
 	}
 }
 
@@ -291,6 +294,12 @@ func (k *KatapultProvider) DataSources(
 		},
 		func() datasource.DataSource {
 			return &GlobalAddressListsDataSource{}
+		},
+		func() datasource.DataSource {
+			return &TagDataSource{}
+		},
+		func() datasource.DataSource {
+			return &TagsDataSource{}
 		},
 	}
 }
