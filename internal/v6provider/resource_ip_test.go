@@ -121,6 +121,19 @@ func TestAccKatapultIP_minimal(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			{
+				ResourceName: "katapult_ip.web",
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs := s.RootModule().Resources["katapult_ip.web"]
+					if rs == nil {
+						return "", fmt.Errorf("resource not found")
+					}
+
+					return rs.Primary.Attributes["address"], nil
+				},
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
