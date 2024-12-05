@@ -67,7 +67,7 @@ func TestAccKatapultDataSourceAddressListEntries_minimal(t *testing.T) {
 					}
 
 					resource "katapult_address_list_entry" "goog" {
- 					 depends_on = [katapult_address_list_entry.cf]
+					 depends_on = [katapult_address_list_entry.cf]
 					 address_list_id = katapult_address_list.main.id
 					 name            = "%s"
 					 address         = "8.8.8.8"
