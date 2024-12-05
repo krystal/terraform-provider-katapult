@@ -21,8 +21,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
 	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/rands/randsmust"
 
+	"github.com/krystal/go-katapult/next/core"
 	v5provider "github.com/krystal/terraform-provider-katapult/internal/provider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -258,6 +260,30 @@ func newVCRRecorder(t *testing.T) *recorder.Recorder {
 	return r
 }
 
+func getKatapultDataCenter(tt *testTools, permalink string) *core.DataCenter {
+	resp, err := tt.Meta.Core.GetDataCenterWithResponse(
+		tt.Ctx, &core.GetDataCenterParams{
+			DataCenterPermalink: &permalink,
+		},
+	)
+	if err != nil {
+		tt.T.Fatalf("error fetching data center: %s", err)
+	}
+
+	dc := resp.JSON200.DataCenter
+	country := dc.Country
+
+	return &core.DataCenter{
+		Id:        dc.Id,
+		Name:      dc.Name,
+		Permalink: dc.Permalink,
+		Country: &core.Country{
+			Id:   country.Id,
+			Name: country.Name,
+		},
+	}
+}
+
 // Terraform TestCheckFunc helpers
 //
 //nolint:unused // will be used eventually
@@ -290,6 +316,38 @@ func testCheckGeneratedHostnameName(
 			),
 		),
 	)
+}
+
+func testAccCheckResourceAttrChanged(
+	res, attr string,
+	oldValue, currentValue *string,
+) resource.TestCheckFunc {
+	return func(_ *terraform.State) error {
+		if *oldValue == *currentValue {
+			return fmt.Errorf(
+				"Expected resource %q attribute %q to change, but it did NOT",
+				res, attr,
+			)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckResourceAttrNotChanged(
+	res, attr string,
+	oldValue, currentValue *string,
+) resource.TestCheckFunc {
+	return func(_ *terraform.State) error {
+		if *oldValue != *currentValue {
+			return fmt.Errorf(
+				"Expected resource %q attribute %q to NOT change, but it did",
+				res, attr,
+			)
+		}
+
+		return nil
+	}
 }
 
 //
