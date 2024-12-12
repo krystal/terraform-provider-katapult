@@ -2,17 +2,17 @@
 version: 1
 interactions:
 - request:
-    body: '{"organization":{"sub_domain":"terraform-acc-test"},"properties":{"name":"tf-acc-test-minimal-qNMxS5sAjYrv-list"}}'
+    body: '{"organization":{"sub_domain":"terraform-acc-test"},"properties":{"name":"tf-acc-test-minimal-4guQCMLRv9Z4-list"}}'
     form: {}
     headers:
       Content-Type:
       - application/json
       User-Agent:
-      - go-katapult/0.2.0
-    url: https://api.katapult.io/core/v1/organizations/:organization/address_lists
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/organizations/organization/address_lists
     method: POST
   response:
-    body: '{"address_list":{"id":"adlst_Pvbau3oc3Qtjqlu8","name":"tf-acc-test-minimal-qNMxS5sAjYrv-list","global":false,"entries":[]}}'
+    body: '{"address_list":{"id":"adlst_UU9bDkGxZxHQvMQS","name":"tf-acc-test-minimal-4guQCMLRv9Z4-list","global":false,"entries":[]},"annotations":[]}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -23,21 +23,23 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "123"
+      - "140"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 14:12:08 GMT
+      - Thu, 12 Dec 2024 15:46:34 GMT
       Etag:
-      - W/"8b017368660056aa0d2abe4d47a429d7"
+      - W/"793ad66a28d4e00d005657afd9a86052"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
       - "999"
       X-Request-Id:
-      - 845ca269-a7a3-4f07-b2e8-3b7f27d4cc49
+      - 138fdd80-4de7-4a54-b3bd-de7f9854aa6b
     status: 201 Created
     code: 201
     duration: ""
@@ -46,11 +48,11 @@ interactions:
     form: {}
     headers:
       User-Agent:
-      - go-katapult/0.2.0
-    url: https://api.katapult.io/core/v1/address_lists/:address_list?address_list%5Bid%5D=adlst_Pvbau3oc3Qtjqlu8
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/address_lists/address_list?address_list%5Bid%5D=adlst_UU9bDkGxZxHQvMQS
     method: GET
   response:
-    body: '{"address_list":{"id":"adlst_Pvbau3oc3Qtjqlu8","name":"tf-acc-test-minimal-qNMxS5sAjYrv-list","global":false,"entries":[]}}'
+    body: '{"address_list":{"id":"adlst_UU9bDkGxZxHQvMQS","name":"tf-acc-test-minimal-4guQCMLRv9Z4-list","global":false,"entries":[]},"annotations":[]}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -61,188 +63,38 @@ interactions:
       Cache-Control:
       - max-age=0, private, must-revalidate
       Content-Length:
-      - "123"
+      - "140"
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 14:12:08 GMT
+      - Thu, 12 Dec 2024 15:46:34 GMT
       Etag:
-      - W/"8b017368660056aa0d2abe4d47a429d7"
+      - W/"793ad66a28d4e00d005657afd9a86052"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "998"
-      X-Request-Id:
-      - 16473e61-1eca-48e6-9317-f356d3d59a75
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: '{"address_list":{"id":"adlst_Pvbau3oc3Qtjqlu8"},"properties":{"address":"1.1.1.1","name":"tf-acc-test-minimal-qNMxS5sAjYrv-entry"}}'
-    form: {}
-    headers:
-      Content-Type:
-      - application/json
-      User-Agent:
-      - go-katapult/0.2.0
-    url: https://api.katapult.io/core/v1/address_lists/:address_list/entries
-    method: POST
-  response:
-    body: '{"address_list_entry":{"id":"adlste_NjH4uCZvaQNzPE3c","address":"1.1.1.1","name":"tf-acc-test-minimal-qNMxS5sAjYrv-entry"}}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "123"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 13 Jun 2024 14:12:08 GMT
-      Etag:
-      - W/"cccac3fddc7cd35542e2d31201844c34"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "997"
-      X-Request-Id:
-      - c1612c9c-36c2-4a22-906e-2e1adf8960da
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      User-Agent:
-      - go-katapult/0.2.0
-    url: https://api.katapult.io/core/v1/address_list_entries/:address_list_entry?address_list_entry%5Bid%5D=adlste_NjH4uCZvaQNzPE3c
-    method: GET
-  response:
-    body: '{"address_list_entry":{"id":"adlste_NjH4uCZvaQNzPE3c","address":"1.1.1.1","name":"tf-acc-test-minimal-qNMxS5sAjYrv-entry"}}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "123"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 13 Jun 2024 14:12:08 GMT
-      Etag:
-      - W/"cccac3fddc7cd35542e2d31201844c34"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "996"
-      X-Request-Id:
-      - 7250f80b-1f90-475f-aef9-98f708367d39
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      User-Agent:
-      - go-katapult/0.2.0
-    url: https://api.katapult.io/core/v1/address_list_entries/:address_list_entry?address_list_entry%5Bid%5D=adlste_NjH4uCZvaQNzPE3c
-    method: GET
-  response:
-    body: '{"address_list_entry":{"id":"adlste_NjH4uCZvaQNzPE3c","address":"1.1.1.1","name":"tf-acc-test-minimal-qNMxS5sAjYrv-entry"}}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "123"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 13 Jun 2024 14:12:08 GMT
-      Etag:
-      - W/"cccac3fddc7cd35542e2d31201844c34"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
       - "995"
       X-Request-Id:
-      - 85988be5-e884-473a-8032-9b3a6301f380
+      - a0598887-7c6f-42f1-8e2c-c7d868107905
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: ""
+    body: '{"address_list":{"id":"adlst_UU9bDkGxZxHQvMQS"},"properties":{"address":"1.1.1.1","name":"tf-acc-test-minimal-4guQCMLRv9Z4-entry"}}'
     form: {}
     headers:
-      User-Agent:
-      - go-katapult/0.2.0
-    url: https://api.katapult.io/core/v1/address_lists/:address_list?address_list%5Bid%5D=adlst_Pvbau3oc3Qtjqlu8
-    method: GET
-  response:
-    body: '{"address_list":{"id":"adlst_Pvbau3oc3Qtjqlu8","name":"tf-acc-test-minimal-qNMxS5sAjYrv-list","global":false,"entries":[{"id":"adlste_NjH4uCZvaQNzPE3c","address":"1.1.1.1","name":"tf-acc-test-minimal-qNMxS5sAjYrv-entry"}]}}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "223"
       Content-Type:
       - application/json
-      Date:
-      - Thu, 13 Jun 2024 14:12:08 GMT
-      Etag:
-      - W/"0a43914cda4c36810275e2369d1cb08e"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "994"
-      X-Request-Id:
-      - 3cd2369c-2083-4bb2-a127-c555b49726b1
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
       User-Agent:
-      - go-katapult/0.2.0
-    url: https://api.katapult.io/core/v1/address_list_entries/:address_list_entry?address_list_entry%5Bid%5D=adlste_NjH4uCZvaQNzPE3c
-    method: GET
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/address_lists/address_list/entries
+    method: POST
   response:
-    body: '{"address_list_entry":{"id":"adlste_NjH4uCZvaQNzPE3c","address":"1.1.1.1","name":"tf-acc-test-minimal-qNMxS5sAjYrv-entry"}}'
+    body: '{"address_list_entry":{"id":"adlste_kVMpa1Ok4U8n69WR","address":"1.1.1.1","name":"tf-acc-test-minimal-4guQCMLRv9Z4-entry"}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -257,110 +109,32 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 14:12:09 GMT
+      - Thu, 12 Dec 2024 15:46:34 GMT
       Etag:
-      - W/"cccac3fddc7cd35542e2d31201844c34"
+      - W/"b1618ded3556ad06c2fd32f332e34539"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "993"
-      X-Request-Id:
-      - 1f280895-1694-4fcc-94dd-bfddd996ab13
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      User-Agent:
-      - go-katapult/0.2.0
-    url: https://api.katapult.io/core/v1/address_lists/:address_list?address_list%5Bid%5D=adlst_Pvbau3oc3Qtjqlu8
-    method: GET
-  response:
-    body: '{"address_list":{"id":"adlst_Pvbau3oc3Qtjqlu8","name":"tf-acc-test-minimal-qNMxS5sAjYrv-list","global":false,"entries":[{"id":"adlste_NjH4uCZvaQNzPE3c","address":"1.1.1.1","name":"tf-acc-test-minimal-qNMxS5sAjYrv-entry"}]}}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "223"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 13 Jun 2024 14:12:09 GMT
-      Etag:
-      - W/"0a43914cda4c36810275e2369d1cb08e"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
-      X-Ratelimit-Permitted:
-      - "1000"
-      X-Ratelimit-Remaining:
-      - "992"
-      X-Request-Id:
-      - da6a057c-3018-47bd-879b-19b4227b5a76
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: '{"address_list_entry":{"id":"adlste_NjH4uCZvaQNzPE3c"}}'
-    form: {}
-    headers:
-      Content-Type:
-      - application/json
-      User-Agent:
-      - go-katapult/0.2.0
-    url: https://api.katapult.io/core/v1/address_list_entries/:address_list_entry
-    method: DELETE
-  response:
-    body: '{"address_list_entry":{"id":"adlste_NjH4uCZvaQNzPE3c","address":"1.1.1.1","name":"tf-acc-test-minimal-qNMxS5sAjYrv-entry"}}'
-    headers:
-      Access-Control-Allow-Headers:
-      - Authorization, Content-Type
-      Access-Control-Allow-Methods:
-      - GET, POST, PUT, PATCH, DELETE, OPTIONS
-      Access-Control-Allow-Origin:
-      - '*'
-      Cache-Control:
-      - max-age=0, private, must-revalidate
-      Content-Length:
-      - "123"
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 13 Jun 2024 14:12:09 GMT
-      Etag:
-      - W/"cccac3fddc7cd35542e2d31201844c34"
-      Strict-Transport-Security:
-      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
       - "991"
       X-Request-Id:
-      - 623ca9cd-7f52-468a-97a7-f16bc1d3b541
-    status: 200 OK
-    code: 200
+      - 8f697f43-4e65-4069-a4a1-2c7d16ce46be
+    status: 201 Created
+    code: 201
     duration: ""
 - request:
-    body: '{"address_list":{"id":"adlst_Pvbau3oc3Qtjqlu8"}}'
+    body: ""
     form: {}
     headers:
-      Content-Type:
-      - application/json
       User-Agent:
-      - go-katapult/0.2.0
-    url: https://api.katapult.io/core/v1/address_lists/:address_list
-    method: DELETE
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/address_list_entries/address_list_entry?address_list_entry%5Bid%5D=adlste_kVMpa1Ok4U8n69WR
+    method: GET
   response:
-    body: '{"address_list":{"id":"adlst_Pvbau3oc3Qtjqlu8","name":"tf-acc-test-minimal-qNMxS5sAjYrv-list","global":false,"entries":[]}}'
+    body: '{"address_list_entry":{"id":"adlste_kVMpa1Ok4U8n69WR","address":"1.1.1.1","name":"tf-acc-test-minimal-4guQCMLRv9Z4-entry"}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -375,17 +149,19 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 14:12:10 GMT
+      - Thu, 12 Dec 2024 15:46:34 GMT
       Etag:
-      - W/"8b017368660056aa0d2abe4d47a429d7"
+      - W/"b1618ded3556ad06c2fd32f332e34539"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "990"
+      - "986"
       X-Request-Id:
-      - cb9238de-9da6-4279-9596-be66843fa748
+      - 8f22e39f-28b5-4cf0-a7f7-15c28af96fde
     status: 200 OK
     code: 200
     duration: ""
@@ -394,8 +170,252 @@ interactions:
     form: {}
     headers:
       User-Agent:
-      - go-katapult/0.2.0
-    url: https://api.katapult.io/core/v1/address_list_entries/:address_list_entry?address_list_entry%5Bid%5D=adlste_NjH4uCZvaQNzPE3c
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/address_list_entries/address_list_entry?address_list_entry%5Bid%5D=adlste_kVMpa1Ok4U8n69WR
+    method: GET
+  response:
+    body: '{"address_list_entry":{"id":"adlste_kVMpa1Ok4U8n69WR","address":"1.1.1.1","name":"tf-acc-test-minimal-4guQCMLRv9Z4-entry"}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "123"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Dec 2024 15:46:35 GMT
+      Etag:
+      - W/"b1618ded3556ad06c2fd32f332e34539"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "985"
+      X-Request-Id:
+      - 75c81fdf-945e-4d93-aa5a-3cf4b123c3ad
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/address_lists/address_list?address_list%5Bid%5D=adlst_UU9bDkGxZxHQvMQS
+    method: GET
+  response:
+    body: '{"address_list":{"id":"adlst_UU9bDkGxZxHQvMQS","name":"tf-acc-test-minimal-4guQCMLRv9Z4-list","global":false,"entries":[{"id":"adlste_kVMpa1Ok4U8n69WR","address":"1.1.1.1","name":"tf-acc-test-minimal-4guQCMLRv9Z4-entry"}]},"annotations":[]}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "240"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Dec 2024 15:46:35 GMT
+      Etag:
+      - W/"12599d563c7a3f625790e61e5727d5f0"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "980"
+      X-Request-Id:
+      - 25db120f-2efc-4b9f-aeba-cac848bcd916
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/address_list_entries/address_list_entry?address_list_entry%5Bid%5D=adlste_kVMpa1Ok4U8n69WR
+    method: GET
+  response:
+    body: '{"address_list_entry":{"id":"adlste_kVMpa1Ok4U8n69WR","address":"1.1.1.1","name":"tf-acc-test-minimal-4guQCMLRv9Z4-entry"}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "123"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Dec 2024 15:46:35 GMT
+      Etag:
+      - W/"b1618ded3556ad06c2fd32f332e34539"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "979"
+      X-Request-Id:
+      - 65fcac0d-389f-42fc-9026-2f961624419d
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/address_lists/address_list?address_list%5Bid%5D=adlst_UU9bDkGxZxHQvMQS
+    method: GET
+  response:
+    body: '{"address_list":{"id":"adlst_UU9bDkGxZxHQvMQS","name":"tf-acc-test-minimal-4guQCMLRv9Z4-list","global":false,"entries":[{"id":"adlste_kVMpa1Ok4U8n69WR","address":"1.1.1.1","name":"tf-acc-test-minimal-4guQCMLRv9Z4-entry"}]},"annotations":[]}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "240"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Dec 2024 15:46:35 GMT
+      Etag:
+      - W/"12599d563c7a3f625790e61e5727d5f0"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "973"
+      X-Request-Id:
+      - 0dc34024-73e4-4341-8ecd-d991e9a14039
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"address_list_entry":{"id":"adlste_kVMpa1Ok4U8n69WR"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/address_list_entries/address_list_entry
+    method: DELETE
+  response:
+    body: '{"address_list_entry":{"id":"adlste_kVMpa1Ok4U8n69WR","address":"1.1.1.1","name":"tf-acc-test-minimal-4guQCMLRv9Z4-entry"}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "123"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Dec 2024 15:46:35 GMT
+      Etag:
+      - W/"b1618ded3556ad06c2fd32f332e34539"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "966"
+      X-Request-Id:
+      - 042a40ab-f083-446e-88db-cbf079add564
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"address_list":{"id":"adlst_UU9bDkGxZxHQvMQS"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/address_lists/address_list
+    method: DELETE
+  response:
+    body: '{"address_list":{"id":"adlst_UU9bDkGxZxHQvMQS","name":"tf-acc-test-minimal-4guQCMLRv9Z4-list","global":false,"entries":[]}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "123"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 12 Dec 2024 15:46:35 GMT
+      Etag:
+      - W/"255edaa1debb32bf84e39c74a5e692fa"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "964"
+      X-Request-Id:
+      - a3231328-1748-471a-bc06-59f1724123c8
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/address_list_entries/address_list_entry?address_list_entry%5Bid%5D=adlste_kVMpa1Ok4U8n69WR
     method: GET
   response:
     body: '{"error":{"code":"address_list_entry_not_found","description":"No address
@@ -414,17 +434,19 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 13 Jun 2024 14:12:10 GMT
+      - Thu, 12 Dec 2024 15:46:35 GMT
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
       X-Api-Schema:
       - json-error
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "989"
+      - "961"
       X-Request-Id:
-      - e0dcbab7-b941-4b93-a105-6282c73e563b
+      - b787b483-1084-430c-a1e3-d0e9fe4bf3f5
     status: 404 Not Found
     code: 404
     duration: ""

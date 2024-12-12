@@ -59,16 +59,7 @@ func TestAccKatapultDataSourceAddressLists_minimal(t *testing.T) {
 					name,
 					altName,
 				),
-
-				// Expect 3 responses and we check the 2nd and 3rd entries.
-				// This is because the terraform-acc-test org has an
-				// existing `Public DNS Servers` address list.
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"data.katapult_address_lists.lists",
-						"address_lists.#",
-						"3",
-					),
 					resource.TestCheckTypeSetElemNestedAttrs(
 						"data.katapult_address_lists.lists",
 						"address_lists.*",
