@@ -67,6 +67,11 @@ func testAccCheckKatapultNetworksAttrs(
 				"id":             *network.Id,
 				"name":           *network.Name,
 				"data_center_id": *network.DataCenter.Id,
+				"default":        "false",
+			}
+
+			if *network.Default {
+				attrs["default"] = "true"
 			}
 
 			if !network.Permalink.IsNull() {

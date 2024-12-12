@@ -30,6 +30,7 @@ data "katapult_networks" "all" {}
 Read-Only:
 
 - `data_center_id` (String) The ID of the data center this network belongs to.
+- `default` (Boolean) True if this is the default network for the data center it belongs to.
 - `id` (String) The ID of this resource.
 - `name` (String) The name of the network.
 - `permalink` (String) The permalink of the network.

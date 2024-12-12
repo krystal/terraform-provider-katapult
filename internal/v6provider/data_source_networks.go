@@ -48,14 +48,7 @@ func (nds *NetworksDataSource) Configure(
 }
 
 func NetworkListType() types.ObjectType {
-	t := NetworkType()
-
-	// When fetching a list of Networks we do not include the "default"
-	// attribute, as it currently requires separate API calls for each data
-	// center.
-	delete(t.AttrTypes, "default")
-
-	return t
+	return NetworkType()
 }
 
 func (nds *NetworksDataSource) Schema(
@@ -85,6 +78,11 @@ func (nds *NetworksDataSource) Schema(
 							Computed: true,
 							Description: "The ID of the data center this " +
 								"network belongs to.",
+						},
+						"default": schema.BoolAttribute{
+							Computed: true,
+							Description: "True if this is the default " +
+								"network for the data center it belongs to.",
 						},
 					},
 				},
@@ -129,6 +127,7 @@ func (nds *NetworksDataSource) Read(
 			"name":           types.StringPointerValue(network.Name),
 			"permalink":      types.StringValue(permalink),
 			"data_center_id": types.StringPointerValue(network.DataCenter.Id),
+			"default":        types.BoolPointerValue(network.Default),
 		}
 
 		list[i] = types.ObjectValueMust(NetworkListType().AttrTypes, attrs)
