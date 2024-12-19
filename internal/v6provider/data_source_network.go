@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -52,18 +51,6 @@ func (nds *NetworkDataSource) Configure(
 	}
 
 	nds.M = meta
-}
-
-func NetworkType() types.ObjectType {
-	return types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"id":             types.StringType,
-			"name":           types.StringType,
-			"permalink":      types.StringType,
-			"data_center_id": types.StringType,
-			"default":        types.BoolType,
-		},
-	}
 }
 
 func networkDataSourceSchemaAttrs() map[string]schema.Attribute {
@@ -153,7 +140,7 @@ func (nds *NetworkDataSource) Read(
 			return
 		}
 
-		nds.populate(ctx, resp, network, true)
+		nds.populate(ctx, resp, network)
 		return
 	}
 
@@ -178,55 +165,29 @@ func (nds *NetworkDataSource) Read(
 	}
 
 	network := res.JSON200.Network
-	nds.populate(ctx, resp, &network, false)
+	nds.populate(ctx, resp, &network)
 }
 
 func (nds *NetworkDataSource) populate(
 	ctx context.Context,
 	resp *datasource.ReadResponse,
 	network *core.Network,
-	usedDefault bool,
 ) {
-	var data NetworkDataSourceModel
-	data.ID = types.StringPointerValue(network.Id)
-	data.Name = types.StringPointerValue(network.Name)
-
-	if network.Permalink.IsSpecified() && !network.Permalink.IsNull() {
-		permalink, err := network.Permalink.Get()
-		if err != nil {
-			resp.Diagnostics.AddError("Network permalink error", err.Error())
-			return
-		}
-		data.Permalink = types.StringValue(permalink)
+	model := NetworkDataSourceModel{
+		ID:      types.StringPointerValue(network.Id),
+		Name:    types.StringPointerValue(network.Name),
+		Default: types.BoolPointerValue(network.Default),
 	}
 
-	if network.DataCenter == nil || network.DataCenter.Id == nil {
-		// This should never happen, but lets avoid a panic if it does.
-		resp.Diagnostics.AddError("returned data center ID is nil", "")
-		return
-	}
-	data.DataCenterID = types.StringPointerValue(network.DataCenter.Id)
-
-	// TODO: Remove this once the API returns a `default` attribute for
-	// networks.
-	if usedDefault {
-		// We know for sure its a default network.
-		data.Default = types.BoolValue(true)
-	} else {
-		// We need to check if this network is default or not.
-		defaultNetwork, err := nds.getDefaultNetwork(ctx,
-			&core.GetDataCenterDefaultNetworkParams{
-				DataCenterId: network.DataCenter.Id,
-			},
-		)
-		if err != nil {
-			resp.Diagnostics.AddError("Default network ID error", err.Error())
-			return
-		}
-		data.Default = types.BoolValue(*defaultNetwork.Id == *network.Id)
+	if v, err := network.Permalink.Get(); err == nil {
+		model.Permalink = types.StringValue(v)
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	if network.DataCenter != nil {
+		model.DataCenterID = types.StringPointerValue(network.DataCenter.Id)
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
 func (nds *NetworkDataSource) getDefaultNetwork(
@@ -244,6 +205,7 @@ func (nds *NetworkDataSource) getDefaultNetwork(
 		Id:        network.Id,
 		Name:      network.Name,
 		Permalink: network.Permalink,
+		Default:   ptr(true),
 		DataCenter: &core.DataCenter{
 			Id:        network.DataCenter.Id,
 			Name:      network.DataCenter.Name,
