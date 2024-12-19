@@ -3,7 +3,6 @@ package v6provider
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -15,7 +14,7 @@ type NetworksDataSource struct {
 }
 
 type NetworksDataSourceModel struct {
-	Networks types.List `tfsdk:"networks"`
+	Networks []NetworkDataSourceModel `tfsdk:"networks"`
 }
 
 func (nds NetworksDataSource) Metadata(
@@ -45,10 +44,6 @@ func (nds *NetworksDataSource) Configure(
 	}
 
 	nds.M = meta
-}
-
-func NetworkListType() types.ObjectType {
-	return NetworkType()
 }
 
 func (nds *NetworksDataSource) Schema(
@@ -113,30 +108,26 @@ func (nds *NetworksDataSource) Read(
 	}
 
 	networks := res.JSON200.Networks
-	list := make([]attr.Value, len(networks))
+	list := make([]NetworkDataSourceModel, len(networks))
 
 	for i, network := range networks {
-		permalink, err := network.Permalink.Get()
-		if err != nil {
-			resp.Diagnostics.AddError("Network permalink error", err.Error())
-			return
+		model := NetworkDataSourceModel{
+			ID:      types.StringPointerValue(network.Id),
+			Name:    types.StringPointerValue(network.Name),
+			Default: types.BoolPointerValue(network.Default),
 		}
 
-		attrs := map[string]attr.Value{
-			"id":             types.StringPointerValue(network.Id),
-			"name":           types.StringPointerValue(network.Name),
-			"permalink":      types.StringValue(permalink),
-			"data_center_id": types.StringPointerValue(network.DataCenter.Id),
-			"default":        types.BoolPointerValue(network.Default),
+		if v, err := network.Permalink.Get(); err == nil {
+			model.Permalink = types.StringValue(v)
 		}
 
-		list[i] = types.ObjectValueMust(NetworkListType().AttrTypes, attrs)
+		if network.DataCenter != nil {
+			model.DataCenterID = types.StringPointerValue(network.DataCenter.Id)
+		}
+
+		list[i] = model
 	}
 
-	data.Networks = types.ListValueMust(
-		NetworkListType(),
-		list,
-	)
-
+	data.Networks = list
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
