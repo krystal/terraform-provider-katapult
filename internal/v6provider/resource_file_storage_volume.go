@@ -72,6 +72,16 @@ func (r FileStorageVolumeResource) Schema(
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
+		MarkdownDescription: strings.TrimSpace(`
+
+The File Storage Volume resource allows you to manage File Storage Volumes in Katapult.
+
+-> **Note:** Volumes are not automatically mounted within associated virtual machines. This must be done manually or via a provisioning tool of some kind, using the ` + "`nfs_location`" + ` attribute value as the mount source.
+
+~> **Warning:** Deleting a file storage volume resource with Terraform will by default purge the volume from Katapult's trash, permanently deleting it. If you wish to instead keep a deleted volume in the trash, set the` + "`skip_trash_object_purge`" + ` provider option to ` + "`true`" + `. By default, objects in the trash are permanently deleted after 48 hours.
+
+`,
+		),
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,

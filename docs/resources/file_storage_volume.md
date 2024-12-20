@@ -3,12 +3,18 @@
 page_title: "katapult_file_storage_volume Resource - terraform-provider-katapult"
 subcategory: ""
 description: |-
-  
+  The File Storage Volume resource allows you to manage File Storage Volumes in Katapult.
+  -> Note: Volumes are not automatically mounted within associated virtual machines. This must be done manually or via a provisioning tool of some kind, using the nfs_location attribute value as the mount source.
+  ~> Warning: Deleting a file storage volume resource with Terraform will by default purge the volume from Katapult's trash, permanently deleting it. If you wish to instead keep a deleted volume in the trash, set theskip_trash_object_purge provider option to true. By default, objects in the trash are permanently deleted after 48 hours.
 ---
 
 # katapult_file_storage_volume (Resource)
 
+The File Storage Volume resource allows you to manage File Storage Volumes in Katapult.
 
+-> **Note:** Volumes are not automatically mounted within associated virtual machines. This must be done manually or via a provisioning tool of some kind, using the `nfs_location` attribute value as the mount source.
+
+~> **Warning:** Deleting a file storage volume resource with Terraform will by default purge the volume from Katapult's trash, permanently deleting it. If you wish to instead keep a deleted volume in the trash, set the`skip_trash_object_purge` provider option to `true`. By default, objects in the trash are permanently deleted after 48 hours.
 
 ## Example Usage
 

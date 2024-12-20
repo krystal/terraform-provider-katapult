@@ -3,12 +3,12 @@
 page_title: "katapult_file_storage_volume Data Source - terraform-provider-katapult"
 subcategory: ""
 description: |-
-  
+  Fetch details for a individual file storage volume.
 ---
 
 # katapult_file_storage_volume (Data Source)
 
-
+Fetch details for a individual file storage volume.
 
 ## Example Usage
 
