@@ -72,6 +72,7 @@ func (r FileStorageVolumeResource) Schema(
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
+		//nolint:lll
 		MarkdownDescription: strings.TrimSpace(`
 
 The File Storage Volume resource allows you to manage File Storage Volumes in Katapult.

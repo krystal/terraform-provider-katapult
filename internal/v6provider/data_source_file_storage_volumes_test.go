@@ -28,46 +28,29 @@ func TestAccKatapultDataSourceFileStorageVolumes_default(t *testing.T) {
 
 					resource "katapult_file_storage_volume" "second" {
 						name = "%s"
-						# Ensure consistent ordering for testing purposes.
-						depends_on = [katapult_file_storage_volume.first]
-					}
-					`,
-					first,
-					second,
-				),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultFileStorageVolumeAttrs(
-						tt, "katapult_file_storage_volume.first",
-					),
-					testAccCheckKatapultFileStorageVolumeAttrs(
-						tt, "katapult_file_storage_volume.second",
-					),
-				),
-			},
-			{
-				Config: undent.Stringf(`
-					resource "katapult_file_storage_volume" "first" {
-						name = "%s"
-					}
-
-					resource "katapult_file_storage_volume" "second" {
-						name = "%s"
 
 						# Ensure consistent ordering for testing purposes.
 						depends_on = [katapult_file_storage_volume.first]
 					}
 
-					data "katapult_file_storage_volumes" "all" {}`,
+					data "katapult_file_storage_volumes" "all" {
+						# Ensure consistent ordering for testing purposes.
+						depends_on = [katapult_file_storage_volume.second]
+					}`,
 					first, second,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(
+					resource.TestCheckTypeSetElemNestedAttrs(
 						"data.katapult_file_storage_volumes.all",
-						"file_storage_volumes.0.name", first,
+						"file_storage_volumes.*", map[string]string{
+							"name": first,
+						},
 					),
-					resource.TestCheckResourceAttr(
+					resource.TestCheckTypeSetElemNestedAttrs(
 						"data.katapult_file_storage_volumes.all",
-						"file_storage_volumes.1.name", second,
+						"file_storage_volumes.*", map[string]string{
+							"name": second,
+						},
 					),
 				),
 			},

@@ -2,28 +2,21 @@ package v6provider
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/krystal/go-katapult/next/core"
 )
 
-type (
-	FileStorageVolumesDataSource struct {
-		M *Meta
-	}
+type FileStorageVolumesDataSource struct {
+	M *Meta
+}
 
-	FileStorageVolumesDataSourceModel struct {
-		ID                 types.String `tfsdk:"id"`
-		FileStorageVolumes types.List   `tfsdk:"file_storage_volumes"`
-	}
-)
+//nolint:lll
+type FileStorageVolumesDataSourceModel struct {
+	FileStorageVolumes []FileStorageVolumeDataSourceModel `tfsdk:"file_storage_volumes"`
+}
 
 func (r FileStorageVolumesDataSource) Metadata(
 	_ context.Context,
@@ -62,12 +55,6 @@ func (r *FileStorageVolumesDataSource) Schema(
 	resp.Schema = schema.Schema{
 		Description: "Fetch all file storage volumes in the organization.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-				// lintignore:AT004 // false positive
-				MarkdownDescription: "Always set to provider " +
-					"organization value.",
-			},
 			"file_storage_volumes": schema.ListNestedAttribute{
 				Computed:            true,
 				MarkdownDescription: "A list of file storage volumes.",
@@ -75,44 +62,34 @@ func (r *FileStorageVolumesDataSource) Schema(
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
 							Computed: true,
+							MarkdownDescription: "The ID of the file storage " +
+								"volume.",
 						},
 						"name": schema.StringAttribute{
 							Computed: true,
 							MarkdownDescription: "Unique name to help " +
-								"identify the volume. " +
-								"Must be unique within the organization.",
-							Validators: []validator.String{
-								stringvalidator.LengthAtLeast(1),
-							},
+								"identify the volume. Must be unique within " +
+								"the organization.",
 						},
 						"associations": schema.SetAttribute{
 							Computed: true,
-							MarkdownDescription: "The resource IDs " +
-								"which can access " +
-								"this file storage volume. " +
-								"Currently only accepts " +
-								"virtual machine IDs.",
+							MarkdownDescription: "The resource IDs which can " +
+								"access this file storage volume. Currently " +
+								"only accepts virtual machine IDs.",
 							ElementType: types.StringType,
-							Validators: []validator.Set{
-								setvalidator.ValueStringsAre(
-									stringvalidator.LengthAtLeast(1),
-								),
-							},
 						},
 						"nfs_location": schema.StringAttribute{
 							Computed: true,
 							MarkdownDescription: "The NFS location " +
-								"indicating where " +
-								"to mount the volume from. This is " +
-								"where the volume " +
-								"must be mounted from inside " +
-								"of virtual machines " +
-								"referenced in `associations`.",
+								"indicating where to mount the volume from. " +
+								"This is where the volume must be mounted " +
+								"from inside of virtual machines referenced " +
+								"in `associations`.",
 						},
 						"size": schema.Int64Attribute{
 							Computed: true,
-							MarkdownDescription: "The size of the " +
-								"volume in bytes.",
+							MarkdownDescription: "The size of the volume in " +
+								"bytes.",
 						},
 					},
 				},
@@ -126,7 +103,8 @@ func (r *FileStorageVolumesDataSource) Read(
 	_ datasource.ReadRequest,
 	resp *datasource.ReadResponse,
 ) {
-	volumes := []attr.Value{}
+	var data FileStorageVolumesDataSourceModel
+	var volumes []FileStorageVolumeDataSourceModel
 	totalPages := 2
 
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {
@@ -147,52 +125,33 @@ func (r *FileStorageVolumesDataSource) Read(
 		totalPages, _ = res.JSON200.Pagination.TotalPages.Get()
 
 		for _, fsv := range res.JSON200.FileStorageVolumes {
-			fmt.Println(*fsv.Name)
-			associations := []attr.Value{}
-			NFSLocation, _ := fsv.NfsLocation.Get()
-			Size, _ := fsv.Size.Get()
-			vol := types.ObjectValueMust(
-				map[string]attr.Type{
-					"id":   types.StringType,
-					"name": types.StringType,
-					"associations": types.SetType{
-						ElemType: types.StringType,
-					},
-					"nfs_location": types.StringType,
-					"size":         types.Int64Type,
-				},
-				map[string]attr.Value{
-					"id":   types.StringPointerValue(fsv.Id),
-					"name": types.StringPointerValue(fsv.Name),
-					"associations": types.SetValueMust(
-						types.StringType,
-						associations,
-					),
-					"nfs_location": types.StringValue(NFSLocation),
-					"size":         types.Int64Value(int64(Size)),
-				},
+			vol := FileStorageVolumeDataSourceModel{
+				ID:   types.StringPointerValue(fsv.Id),
+				Name: types.StringPointerValue(fsv.Name),
+			}
+
+			if v, err := fsv.NfsLocation.Get(); err == nil {
+				vol.NFSLocation = types.StringValue(v)
+			}
+
+			if v, err := fsv.Size.Get(); err == nil {
+				vol.Size = types.Int64Value(int64(v))
+			}
+
+			elements, diags := types.SetValueFrom(
+				ctx, types.StringType, fsv.Associations,
 			)
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+
+			vol.Associations = elements
 
 			volumes = append(volumes, vol)
 		}
 	}
 
-	resp.Diagnostics.Append(
-		resp.State.Set(ctx, &FileStorageVolumesDataSourceModel{
-			ID: types.StringValue(r.M.confOrganization),
-			FileStorageVolumes: types.ListValueMust(
-				types.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"id":   types.StringType,
-						"name": types.StringType,
-						"associations": types.SetType{
-							ElemType: types.StringType,
-						},
-						"nfs_location": types.StringType,
-						"size":         types.Int64Type,
-					},
-				},
-				volumes,
-			),
-		})...)
+	data.FileStorageVolumes = volumes
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

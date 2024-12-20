@@ -3,12 +3,8 @@ package v6provider
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/krystal/go-katapult/next/core"
 )
@@ -73,9 +69,6 @@ func (r *FileStorageVolumeDataSource) Schema(
 				MarkdownDescription: "Unique name to help " +
 					"identify the volume. " +
 					"Must be unique within the organization.",
-				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(1),
-				},
 			},
 			"associations": schema.SetAttribute{
 				Computed: true,
@@ -83,11 +76,6 @@ func (r *FileStorageVolumeDataSource) Schema(
 					"this file storage volume. Currently only accepts " +
 					"virtual machine IDs.",
 				ElementType: types.StringType,
-				Validators: []validator.Set{
-					setvalidator.ValueStringsAre(
-						stringvalidator.LengthAtLeast(1),
-					),
-				},
 			},
 			"nfs_location": schema.StringAttribute{
 				Computed: true,
@@ -130,20 +118,26 @@ func (r *FileStorageVolumeDataSource) Read(
 
 	fsv := res.JSON200.FileStorageVolume
 
+	data.ID = types.StringPointerValue(fsv.Id)
 	data.Name = types.StringPointerValue(fsv.Name)
 
-	NFSLocation, _ := fsv.NfsLocation.Get()
-	data.NFSLocation = types.StringValue(NFSLocation)
-
-	Size, _ := fsv.Size.Get()
-	data.Size = types.Int64Value(int64(Size))
-
-	associations := []attr.Value{}
-	for _, a := range *fsv.Associations {
-		associations = append(associations, types.StringValue(a))
+	if v, err := fsv.NfsLocation.Get(); err == nil {
+		data.NFSLocation = types.StringValue(v)
 	}
 
-	data.Associations = types.SetValueMust(types.StringType, associations)
+	if v, err := fsv.Size.Get(); err == nil {
+		data.Size = types.Int64Value(int64(v))
+	}
+
+	elements, diags := types.SetValueFrom(
+		ctx, types.StringType, fsv.Associations,
+	)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	data.Associations = elements
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
