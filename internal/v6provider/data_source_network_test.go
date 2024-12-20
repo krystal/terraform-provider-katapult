@@ -139,18 +139,8 @@ func TestAccKatapultDataSourceNetwork_default(t *testing.T) {
 func TestAccKatapultDataSourceNetwork_default_other_data_center(t *testing.T) {
 	tt := newTestTools(t)
 
-	dcPermalink := "nl-ams-01" // "Public Network - AMS (eu-ams-01)
-	dcResp, err := tt.Meta.Core.GetDataCenterWithResponse(
-		tt.Ctx, &core.GetDataCenterParams{
-			DataCenterPermalink: &dcPermalink,
-		},
-	)
-	if err != nil {
-		t.Fatalf("error fetching data center: %s", err)
-	}
-
-	dc := dcResp.JSON200.DataCenter
-
+	// "Public Network - AMS (eu-ams-01)
+	dc := getKatapultDataCenter(tt, "nl-ams-01")
 	netResp, err := tt.Meta.Core.GetDataCenterDefaultNetworkWithResponse(
 		tt.Ctx, &core.GetDataCenterDefaultNetworkParams{
 			DataCenterId: dc.Id,
@@ -193,18 +183,8 @@ func TestAccKatapultDataSourceNetwork_default_other_data_center(t *testing.T) {
 func TestAccKatapultDataSourceNetwork_other_by_id(t *testing.T) {
 	tt := newTestTools(t)
 
-	dcPermalink := "nl-ams-01" // "Public Network - AMS (eu-ams-01)
-	dcResp, err := tt.Meta.Core.GetDataCenterWithResponse(
-		tt.Ctx, &core.GetDataCenterParams{
-			DataCenterPermalink: &dcPermalink,
-		},
-	)
-	if err != nil {
-		t.Fatalf("error fetching data center: %s", err)
-	}
-
-	dc := dcResp.JSON200.DataCenter
-
+	// "Public Network - AMS (eu-ams-01)
+	dc := getKatapultDataCenter(tt, "nl-ams-01")
 	netResp, err := tt.Meta.Core.GetDataCenterDefaultNetworkWithResponse(
 		tt.Ctx, &core.GetDataCenterDefaultNetworkParams{
 			DataCenterId: dc.Id,
@@ -248,18 +228,8 @@ func TestAccKatapultDataSourceNetwork_other_by_id(t *testing.T) {
 func TestAccKatapultDataSourceNetwork_other_by_permalink(t *testing.T) {
 	tt := newTestTools(t)
 
-	dcPermalink := "nl-ams-01" // "Public Network - AMS (eu-ams-01)
-	dcResp, err := tt.Meta.Core.GetDataCenterWithResponse(
-		tt.Ctx, &core.GetDataCenterParams{
-			DataCenterPermalink: &dcPermalink,
-		},
-	)
-	if err != nil {
-		t.Fatalf("error fetching data center: %s", err)
-	}
-
-	dc := dcResp.JSON200.DataCenter
-
+	// "Public Network - AMS (eu-ams-01)
+	dc := getKatapultDataCenter(tt, "nl-ams-01")
 	netResp, err := tt.Meta.Core.GetDataCenterDefaultNetworkWithResponse(
 		tt.Ctx, &core.GetDataCenterDefaultNetworkParams{
 			DataCenterId: dc.Id,
@@ -307,17 +277,7 @@ func TestAccKatapultDataSourceNetwork_other_by_permalink(t *testing.T) {
 func TestAccKatapultDataSourceNetwork_invalid_attributes(t *testing.T) {
 	tt := newTestTools(t)
 
-	dcResp, err := tt.Meta.Core.GetDataCenterWithResponse(
-		tt.Ctx, &core.GetDataCenterParams{
-			DataCenterPermalink: &tt.Meta.confDataCenter,
-		},
-	)
-	if err != nil {
-		t.Fatalf("error fetching data center: %s", err)
-	}
-
-	dc := dcResp.JSON200.DataCenter
-
+	dc := getKatapultDataCenter(tt, tt.Meta.confDataCenter)
 	resp, err := tt.Meta.Core.GetDataCenterDefaultNetworkWithResponse(
 		tt.Ctx, &core.GetDataCenterDefaultNetworkParams{
 			DataCenterPermalink: &tt.Meta.confDataCenter,
