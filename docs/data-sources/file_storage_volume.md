@@ -24,7 +24,7 @@ data "katapult_file_storage_volume" "web" {
 
 ### Required
 
-- `id` (String) The ID of this resource.
+- `id` (String) The ID of the file storage volume.
 
 ### Read-Only
 

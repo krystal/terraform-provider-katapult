@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -153,8 +154,8 @@ func testSweepVirtualMachines(_ string) error {
 					&core.GetTrashObjectParams{
 						TrashObjectId: trashObject.Id,
 					})
-				if e != nil {
-					return nil, "", e
+				if e != nil && errors.Is(e, core.ErrNotFound) {
+					return 1, "not_found", nil
 				}
 
 				return nil, "exists", nil
