@@ -8,6 +8,17 @@ description: Terraform provider for Katapult (https://katapult.io/)
 
 Terraform provider for [Katapult](https://katapult.io/).
 
+## Data Centers
+
+The Katapult provider requires a `data_center` to be specified. This determines where resources will be created. 
+
+These are the available data centers:
+- `uk-lon-01` - London, UK
+- `nl-ams-01` - Amsterdam, Netherlands
+- `us-nyc-01` - New York City, USA
+- `us-azp-01` - Phoenix, USA
+
+
 ## Example Usage
 
 ```terraform
