@@ -392,7 +392,26 @@ func (r *IPResource) ImportState(
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	if strings.HasPrefix(req.ID, "ip_") {
+		resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+		return
+	}
+
+	res, err := r.M.Core.GetIpAddressWithResponse(ctx, &core.GetIpAddressParams{
+		IpAddressAddress: &req.ID,
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("IP Address Import Error", err.Error())
+		return
+	}
+
+	resp.Diagnostics.Append(
+		resp.State.SetAttribute(
+			ctx,
+			path.Root("id"),
+			*res.JSON200.IpAddress.Id,
+		)...,
+	)
 }
 
 func unflattenIPVersion(ver int64) core.IPAddressVersionEnum {
