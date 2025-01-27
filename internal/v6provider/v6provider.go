@@ -240,24 +240,13 @@ func (k *KatapultProvider) Resources(
 	_ context.Context,
 ) []func() resource.Resource {
 	return []func() resource.Resource{
-		func() resource.Resource {
-			return &IPResource{}
-		},
-		func() resource.Resource {
-			return &FileStorageVolumeResource{}
-		},
-		func() resource.Resource {
-			return &LoadBalancerResource{}
-		},
-		func() resource.Resource {
-			return &LoadBalancerRuleResource{}
-		},
-		func() resource.Resource {
-			return &AddressListResource{}
-		},
-		func() resource.Resource {
-			return &AddressListEntryResource{}
-		},
+		func() resource.Resource { return &AddressListEntryResource{} },
+		func() resource.Resource { return &AddressListResource{} },
+		func() resource.Resource { return &FileStorageVolumeResource{} },
+		func() resource.Resource { return &IPResource{} },
+		func() resource.Resource { return &LoadBalancerResource{} },
+		func() resource.Resource { return &LoadBalancerRuleResource{} },
+		func() resource.Resource { return &VirtualNetworkResource{} },
 	}
 }
 
@@ -265,48 +254,22 @@ func (k *KatapultProvider) DataSources(
 	_ context.Context,
 ) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		func() datasource.DataSource {
-			return &IPDataSource{}
-		},
-		func() datasource.DataSource {
-			return &AddressListDataSource{}
-		},
-		func() datasource.DataSource {
-			return &AddressListsDataSource{}
-		},
-		func() datasource.DataSource {
-			return &AddressListEntryDataSource{}
-		},
-		func() datasource.DataSource {
-			return &AddressListEntriesDataSource{}
-		},
-		func() datasource.DataSource {
-			return &LoadBalancerDataSource{}
-		},
-		func() datasource.DataSource {
-			return &FileStorageVolumeDataSource{}
-		},
-		func() datasource.DataSource {
-			return &FileStorageVolumesDataSource{}
-		},
-		func() datasource.DataSource {
-			return &LoadBalancerRuleDataSource{}
-		},
-		func() datasource.DataSource {
-			return &LoadBalancerRulesDataSource{}
-		},
-		func() datasource.DataSource {
-			return &LoadBalancersDataSource{}
-		},
-		func() datasource.DataSource {
-			return &GlobalAddressListsDataSource{}
-		},
-		func() datasource.DataSource {
-			return &NetworkDataSource{}
-		},
-		func() datasource.DataSource {
-			return &NetworksDataSource{}
-		},
+		func() datasource.DataSource { return &AddressListDataSource{} },
+		func() datasource.DataSource { return &AddressListEntriesDataSource{} },
+		func() datasource.DataSource { return &AddressListEntryDataSource{} },
+		func() datasource.DataSource { return &AddressListsDataSource{} },
+		func() datasource.DataSource { return &FileStorageVolumeDataSource{} },
+		func() datasource.DataSource { return &GlobalAddressListsDataSource{} },
+		func() datasource.DataSource { return &FileStorageVolumesDataSource{} },
+		func() datasource.DataSource { return &IPDataSource{} },
+		func() datasource.DataSource { return &LoadBalancerDataSource{} },
+		func() datasource.DataSource { return &LoadBalancerRuleDataSource{} },
+		func() datasource.DataSource { return &LoadBalancerRulesDataSource{} },
+		func() datasource.DataSource { return &LoadBalancersDataSource{} },
+		func() datasource.DataSource { return &NetworkDataSource{} },
+		func() datasource.DataSource { return &NetworksDataSource{} },
+		func() datasource.DataSource { return &VirtualNetworkDataSource{} },
+		func() datasource.DataSource { return &VirtualNetworksDataSource{} },
 	}
 }
 
