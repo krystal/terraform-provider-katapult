@@ -5,12 +5,14 @@ import (
 	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
 	"github.com/krystal/go-katapult/namegenerator"
+	corenext "github.com/krystal/go-katapult/next/core"
 )
 
 type Meta struct {
-	Client *katapult.Client
-	Core   *core.Client
-	Logger hclog.Logger
+	Client   *katapult.Client
+	Core     *core.Client
+	CoreNext corenext.ClientWithResponsesInterface
+	Logger   hclog.Logger
 
 	GeneratedNamePrefix  string
 	SkipTrashObjectPurge bool

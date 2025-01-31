@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/buildspec"
 	"github.com/krystal/go-katapult/core"
+	corenext "github.com/krystal/go-katapult/next/core"
 )
 
 func resourceVirtualMachine() *schema.Resource { //nolint:funlen
@@ -128,11 +130,62 @@ The Virtual Machine resource allows you to create and manage Virtual Machines in
 					Type: schema.TypeString,
 				},
 			},
+			"virtual_network_ids": {
+				Type:        schema.TypeSet,
+				Description: "Virtual Networks attached to the VM.",
+				Optional:    true,
+				Computed:    true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"network_speed_profile": {
 				Type:        schema.TypeString,
 				Description: "Permalink of a Network Speed Profile.",
 				Computed:    true,
 				Optional:    true,
+			},
+			"network_interfaces": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Description: "Network interface details for the " +
+					"virtual machine.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The ID of the network interface.",
+						},
+						"network_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: "The ID of the network the " +
+								"interface is attached to.",
+						},
+						"virtual_network_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: "The ID of the virtual " +
+								"network the interface is attached to.",
+						},
+						"mac_address": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: "The MAC address of the " +
+								"interface.",
+						},
+						"ip_addresses": {
+							Type:     schema.TypeSet,
+							Computed: true,
+							Description: "The IP addresses " +
+								"allocated to the interface.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
 			},
 			"tags": {
 				Type:     schema.TypeSet,
@@ -263,6 +316,12 @@ func resourceVirtualMachineCreate(
 		}
 	}
 
+	var nsp *buildspec.NetworkSpeedProfile
+	if permalink := d.Get("network_speed_profile").(string); permalink != "" {
+		nsp = &buildspec.NetworkSpeedProfile{Permalink: permalink}
+	}
+
+	// ip_address_ids
 	ipGroups := map[string][]*core.IPAddress{}
 	ipIDs := schemaSetToSlice[string](d.Get("ip_address_ids").(*schema.Set))
 	for _, ipID := range ipIDs {
@@ -273,11 +332,6 @@ func resourceVirtualMachineCreate(
 		netID := ip.Network.ID
 
 		ipGroups[netID] = append(ipGroups[netID], ip)
-	}
-
-	var nsp *buildspec.NetworkSpeedProfile
-	if permalink := d.Get("network_speed_profile").(string); permalink != "" {
-		nsp = &buildspec.NetworkSpeedProfile{Permalink: permalink}
 	}
 
 	for netID, ips := range ipGroups {
@@ -297,6 +351,22 @@ func resourceVirtualMachineCreate(
 					IPAddress: &buildspec.IPAddress{ID: ip.ID},
 				},
 			)
+		}
+
+		spec.NetworkInterfaces = append(spec.NetworkInterfaces, iface)
+	}
+
+	// virtual_network_ids
+	virtualNetworkIDs := schemaSetToSlice[string](
+		d.Get("virtual_network_ids").(*schema.Set),
+	)
+	for _, vnID := range virtualNetworkIDs {
+		iface := &buildspec.NetworkInterface{
+			VirtualNetwork: &buildspec.VirtualNetwork{ID: vnID},
+		}
+
+		if nsp != nil {
+			iface.SpeedProfile = nsp
 		}
 
 		spec.NetworkInterfaces = append(spec.NetworkInterfaces, iface)
@@ -417,6 +487,7 @@ func resourceVirtualMachineCreate(
 	return resourceVirtualMachineRead(ctx, d, meta)
 }
 
+//nolint:funlen,gocyclo
 func resourceVirtualMachineRead(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -442,11 +513,54 @@ func resourceVirtualMachineRead(
 		return diag.FromErr(err)
 	}
 
+	ifaces, err := nextFetchAllVMNetworkInterfaces(ctx, m, vm.ID)
+	if err != nil {
+		return append(diags, diag.FromErr(err)...)
+	}
+
+	virtualNetworkIDs := make([]string, 0, len(ifaces))
+	for _, iface := range ifaces {
+		if iface.VirtualNetwork.IsSpecified() {
+			vnet, err2 := iface.VirtualNetwork.Get()
+			if err2 != nil {
+				continue
+			}
+
+			if *iface.State != "attached" {
+				continue
+			}
+
+			if id := *vnet.Id; id != "" {
+				virtualNetworkIDs = append(virtualNetworkIDs, id)
+			}
+		}
+	}
+
+	// As we set the speed profile for all interfaces on a VM, we only care
+	// about fetching details about any single interface.
+	var nsp string
+	if len(ifaces) > 0 {
+		vmnet, _, err2 := m.Core.VirtualMachineNetworkInterfaces.GetByID(
+			ctx, *ifaces[0].Id,
+		)
+		if err2 != nil {
+			return append(diags, diag.FromErr(err2)...)
+		}
+
+		if vmnet.SpeedProfile != nil {
+			nsp = vmnet.SpeedProfile.Permalink
+		}
+	}
+
 	_ = d.Set("name", vm.Name)
 	_ = d.Set("hostname", vm.Hostname)
 	_ = d.Set("description", vm.Description)
 	_ = d.Set("fqdn", vm.FQDN)
 	_ = d.Set("state", vm.State)
+
+	if nsp != "" {
+		_ = d.Set("network_speed_profile", nsp)
+	}
 
 	if vm.Group != nil {
 		_ = d.Set("group_id", vm.Group.ID)
@@ -472,22 +586,17 @@ func resourceVirtualMachineRead(
 		diags = append(diags, diag.FromErr(err)...)
 	}
 
-	// As we set the speed profile for all interfaces on a VM, we only care
-	// about fetching details about any single interface.
-	vmnets, _, err := m.Core.VirtualMachineNetworkInterfaces.List(
-		ctx, vm.Ref(), &core.ListOptions{Page: 1, PerPage: 1},
+	err = d.Set(
+		"virtual_network_ids",
+		stringSliceToSchemaSet(virtualNetworkIDs),
 	)
 	if err != nil {
 		diags = append(diags, diag.FromErr(err)...)
-	} else if len(vmnets) > 0 {
-		vmnet, _, err2 := m.Core.VirtualMachineNetworkInterfaces.Get(
-			ctx, vmnets[0].Ref(),
-		)
-		if err2 != nil {
-			diags = append(diags, diag.FromErr(err2)...)
-		} else if vmnet.SpeedProfile != nil {
-			_ = d.Set("network_speed_profile", vmnet.SpeedProfile.Permalink)
-		}
+	}
+
+	err = d.Set("network_interfaces", flattenNetworkInterfaces(ifaces))
+	if err != nil {
+		diags = append(diags, diag.FromErr(err)...)
 	}
 
 	err = d.Set("tags", stringSliceToSchemaSet(vm.TagNames))
@@ -498,6 +607,7 @@ func resourceVirtualMachineRead(
 	return diags
 }
 
+//nolint:gocyclo,funlen
 func resourceVirtualMachineUpdate(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -545,6 +655,85 @@ func resourceVirtualMachineUpdate(
 			if err != nil {
 				return diag.FromErr(err)
 			}
+		}
+	}
+	if d.HasChange("virtual_network_ids") {
+		targetIDs := schemaSetToSlice[string](
+			d.Get("virtual_network_ids").(*schema.Set),
+		)
+
+		ifaces, err := nextFetchAllVMNetworkInterfaces(ctx, m, vm.ID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		attachedVnetIDs := make([]string, 0, len(ifaces))
+		detachedVnets := make(map[string]string)
+		for _, iface := range ifaces {
+			if iface.VirtualNetwork.IsSpecified() {
+				vnet, err2 := iface.VirtualNetwork.Get()
+				if err2 != nil {
+					continue
+				}
+
+				if *iface.State == "attached" {
+					attachedVnetIDs = append(attachedVnetIDs, *vnet.Id)
+				} else if *iface.State == "detached" {
+					detachedVnets[*vnet.Id] = *iface.Id
+				}
+			}
+		}
+
+		missingVnetIDs := stringsDiff(targetIDs, attachedVnetIDs)
+		removeVnetIDs := stringsDiff(attachedVnetIDs, targetIDs)
+
+		var addVnetIDs []string
+		var attachIfaceIDs []string
+		for _, id := range missingVnetIDs {
+			if ifaceID, ok := detachedVnets[id]; ok {
+				attachIfaceIDs = append(attachIfaceIDs, ifaceID)
+			} else {
+				addVnetIDs = append(addVnetIDs, id)
+			}
+		}
+
+		err = addVirtualNetowrksToVirtualMachine(
+			ctx, d, m, vm.ID, addVnetIDs,
+			d.Get("network_speed_profile").(string),
+		)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		err = attachVirtualMachineNetworkInterfaces(
+			ctx, d, m, attachIfaceIDs,
+		)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		// Find network interface IDs for the virtual networks to remove.
+		var removeIfaceIDs []string
+		for _, id := range removeVnetIDs {
+			for _, iface := range ifaces {
+				if iface.VirtualNetwork.IsSpecified() {
+					vnet, err2 := iface.VirtualNetwork.Get()
+					if err2 != nil {
+						continue
+					}
+
+					if *vnet.Id == id {
+						removeIfaceIDs = append(removeIfaceIDs, *iface.Id)
+					}
+				}
+			}
+		}
+
+		err = removeNetworkInterfacesFromVirtualMachine(
+			ctx, d, m, removeIfaceIDs,
+		)
+		if err != nil {
+			return diag.FromErr(err)
 		}
 	}
 	if d.HasChange("network_speed_profile") {
@@ -625,7 +814,7 @@ func resourceVirtualMachineDelete(
 		}
 
 		if task != nil {
-			err = waitForTaskCompletion(ctx, m, timeout, task)
+			err = waitForTaskCompletion(ctx, m, timeout, task.ID)
 			if err != nil && !isErrNotFoundOrInTrash(err) {
 				return append(diags, diag.FromErr(
 					fmt.Errorf("failed to stop virtual machine: %w", err),
@@ -807,6 +996,45 @@ func flattenIPAddresses(ips []*core.IPAddress) []string {
 	return addresses
 }
 
+func flattenNetworkInterfaces(
+	ifaces []*corenext.GetVMNIVMNI200ResponseVirtualMachineNetworkInterface,
+) []map[string]any {
+	vmnis := make([]map[string]any, 0, len(ifaces))
+	for _, iface := range ifaces {
+		vmni := map[string]any{"id": iface.Id}
+
+		if iface.Network.IsSpecified() {
+			network, err2 := iface.Network.Get()
+			if err2 == nil && *network.Id != "" {
+				vmni["network_id"] = network.Id
+			}
+		}
+		if iface.VirtualNetwork.IsSpecified() {
+			vnet, err2 := iface.VirtualNetwork.Get()
+			if err2 == nil && *vnet.Id != "" {
+				vmni["virtual_network_id"] = vnet.Id
+			}
+		}
+
+		if iface.MacAddress != nil {
+			vmni["mac_address"] = *iface.MacAddress
+		}
+
+		if iface.IpAddresses != nil && len(*iface.IpAddresses) > 0 {
+			ipAddrs := make([]string, 0, len(*iface.IpAddresses))
+			for _, ip := range *iface.IpAddresses {
+				if ip.Address != nil {
+					ipAddrs = append(ipAddrs, *ip.Address)
+				}
+			}
+			vmni["ip_addresses"] = stringSliceToSchemaSet(ipAddrs)
+		}
+
+		vmnis = append(vmnis, vmni)
+	}
+	return vmnis
+}
+
 func unallocateAllVirtualMachineIPs(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -901,6 +1129,328 @@ func fetchAllVMNetworkInterfaces(
 	return vmnets, nil
 }
 
+//nolint:lll
+func nextFetchAllVMNetworkInterfaces(
+	ctx context.Context,
+	m *Meta,
+	vmID string,
+) ([]*corenext.GetVMNIVMNI200ResponseVirtualMachineNetworkInterface, error) {
+	results := make(map[string]*corenext.GetVMNIVMNI200ResponseVirtualMachineNetworkInterface)
+
+	totalPages := 2
+	for page := 1; page <= totalPages; page++ {
+		resp, err := m.CoreNext.GetVirtualMachineNetworkInterfacesWithResponse(
+			ctx, &corenext.GetVirtualMachineNetworkInterfacesParams{
+				VirtualMachineId: &vmID,
+			},
+		)
+		if err != nil {
+			if resp != nil {
+				return nil, genericAPIError(err, resp.Body)
+			}
+
+			return nil, err
+		}
+
+		if resp.JSON200 == nil {
+			return nil, fmt.Errorf("unexpected empty response")
+		}
+
+		body := resp.JSON200
+		if body.Pagination.Total.IsSpecified() {
+			n, _ := body.Pagination.Total.Get()
+			totalPages = n
+		}
+
+		for _, iface := range body.VirtualMachineNetworkInterfaces {
+			vmni, errGet := getVirtualMachineNetworkInterface(
+				ctx, m, *iface.Id,
+			)
+			if errGet != nil {
+				return nil, errGet
+			}
+
+			if id := *vmni.Id; id != "" {
+				results[id] = vmni
+			}
+		}
+	}
+
+	ifaces := make(
+		[]*corenext.GetVMNIVMNI200ResponseVirtualMachineNetworkInterface,
+		0,
+		len(results),
+	)
+	for _, iface := range results {
+		ifaces = append(ifaces, iface)
+	}
+
+	return ifaces, nil
+}
+
+func addVirtualNetowrksToVirtualMachine(
+	ctx context.Context,
+	d *schema.ResourceData,
+	m *Meta,
+	vmID string,
+	vnetIDs []string,
+	speedProfile string,
+) error {
+	for _, vnetID := range vnetIDs {
+		err := addVirtualNetowrkToVirtualMachine(
+			ctx, d, m, vmID, vnetID, speedProfile,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+//nolint:lll
+func addVirtualNetowrkToVirtualMachine(
+	ctx context.Context,
+	d *schema.ResourceData,
+	m *Meta,
+	vmID string,
+	vnetID string,
+	speedProfile string,
+) error {
+	createResp, err := m.CoreNext.PostVirtualMachineNetworkInterfacesWithResponse(
+		ctx,
+		corenext.PostVirtualMachineNetworkInterfacesJSONRequestBody{
+			VirtualMachine: corenext.VirtualMachineLookup{Id: &vmID},
+			VirtualNetwork: &corenext.VirtualNetworkLookup{Id: &vnetID},
+			SpeedProfile: corenext.NetworkSpeedProfileLookup{
+				Permalink: &speedProfile,
+			},
+		},
+	)
+	if err != nil {
+		if createResp != nil {
+			return genericAPIError(err, createResp.Body)
+		}
+
+		return err
+	}
+	if createResp.JSON200 == nil {
+		return fmt.Errorf("unexpected empty response")
+	}
+
+	iface := createResp.JSON200.VirtualMachineNetworkInterface
+
+	err = attachVirtualMachineNetworkInterface(
+		ctx, m, *iface.Id, d.Timeout(schema.TimeoutUpdate),
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func removeNetworkInterfacesFromVirtualMachine(
+	ctx context.Context,
+	d *schema.ResourceData,
+	m *Meta,
+	ifaceIDs []string,
+) error {
+	for _, vnetID := range ifaceIDs {
+		err := removeNetworkInterfaceFromVirtualMachine(ctx, d, m, vnetID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+//nolint:lll
+func removeNetworkInterfaceFromVirtualMachine(
+	ctx context.Context,
+	d *schema.ResourceData,
+	m *Meta,
+	ifaceID string,
+) error {
+	iface, err := getVirtualMachineNetworkInterface(ctx, m, ifaceID)
+	if err != nil {
+		if errors.Is(err, katapult.ErrNotFound) {
+			return nil
+		}
+
+		return err
+	}
+
+	state := *iface.State
+	if state == "attached" {
+		err = detatchVirtualMachineNetworkInterface(
+			ctx, m, ifaceID, d.Timeout(schema.TimeoutUpdate),
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	delResp, err := m.CoreNext.DeleteVirtualMachineNetworkInterfaceWithResponse(
+		ctx,
+		corenext.DeleteVirtualMachineNetworkInterfaceJSONRequestBody{
+			VirtualMachineNetworkInterface: corenext.VirtualMachineNetworkInterfaceLookup{
+				Id: &ifaceID,
+			},
+		},
+	)
+	if err != nil {
+		if delResp != nil {
+			if delResp.StatusCode() == http.StatusNotFound {
+				return nil
+			}
+
+			return genericAPIError(err, delResp.Body)
+		}
+
+		return err
+	}
+	if delResp.StatusCode() != http.StatusOK {
+		return fmt.Errorf("unexpected empty response")
+	}
+
+	return nil
+}
+
+func getVirtualMachineNetworkInterface(
+	ctx context.Context,
+	m *Meta,
+	ifaceID string,
+) (*corenext.GetVMNIVMNI200ResponseVirtualMachineNetworkInterface, error) {
+	getResp, err := m.CoreNext.GetVMNIVMNIWithResponse(ctx,
+		&corenext.GetVMNIVMNIParams{
+			VirtualMachineNetworkInterfaceId: &ifaceID,
+		},
+	)
+	if err != nil {
+		if getResp != nil {
+			if getResp.StatusCode() == http.StatusNotFound {
+				return nil, katapult.ErrNotFound
+			}
+
+			return nil, genericAPIError(err, getResp.Body)
+		}
+
+		return nil, err
+	}
+
+	if getResp.JSON200 == nil {
+		return nil, fmt.Errorf("unexpected empty response")
+	}
+
+	return &getResp.JSON200.VirtualMachineNetworkInterface, nil
+}
+
+func attachVirtualMachineNetworkInterfaces(
+	ctx context.Context,
+	d *schema.ResourceData,
+	m *Meta,
+	ifaceIDs []string,
+) error {
+	for _, ifaceID := range ifaceIDs {
+		err := attachVirtualMachineNetworkInterface(
+			ctx, m, ifaceID, d.Timeout(schema.TimeoutUpdate),
+		)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+//nolint:lll
+func attachVirtualMachineNetworkInterface(
+	ctx context.Context,
+	m *Meta,
+	ifaceID string,
+	timeout time.Duration,
+) error {
+	attachResp, err := m.CoreNext.PostVirtualMachineNetworkInterfaceAttachWithResponse(
+		ctx,
+		corenext.PostVirtualMachineNetworkInterfaceAttachJSONRequestBody{
+			VirtualMachineNetworkInterface: corenext.VirtualMachineNetworkInterfaceLookup{
+				Id: &ifaceID,
+			},
+		},
+	)
+	if err != nil {
+		if attachResp != nil {
+			return genericAPIError(err, attachResp.Body)
+		}
+
+		return err
+	}
+
+	if attachResp.JSON200 == nil || attachResp.JSON200.Task.Id == nil {
+		return fmt.Errorf("unexpected empty response")
+	}
+
+	taskID := *attachResp.JSON200.Task.Id
+
+	err = waitForTaskCompletion(ctx, m, timeout, taskID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+//nolint:lll
+func detatchVirtualMachineNetworkInterface(
+	ctx context.Context,
+	m *Meta,
+	ifaceID string,
+	timeout time.Duration,
+) error {
+	detatchResp, err := m.CoreNext.PostVirtualMachineNetworkInterfaceDetachWithResponse(
+		ctx,
+		corenext.PostVirtualMachineNetworkInterfaceDetachJSONRequestBody{
+			VirtualMachineNetworkInterface: corenext.VirtualMachineNetworkInterfaceLookup{
+				Id: &ifaceID,
+			},
+		},
+	)
+	if err != nil {
+		if detatchResp != nil {
+			if detatchResp.StatusCode() == http.StatusNotFound {
+				return nil
+			}
+
+			apiErr := parseGenericAPIError(detatchResp.Body)
+			if apiErr == nil {
+				return err
+			}
+
+			if apiErr.Code != "virtual_machine_network_interface_not_attached" {
+				return apiErr
+			}
+		}
+
+		return err
+	}
+
+	// Detach task is returned if the interface was attached, so we need to
+	// wait for the detatch task to complete.
+	if detatchResp.JSON200 == nil || detatchResp.JSON200.Task.Id == nil {
+		return fmt.Errorf("unexpected empty response")
+	}
+
+	taskID := *detatchResp.JSON200.Task.Id
+
+	err = waitForTaskCompletion(ctx, m, timeout, taskID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func updateVMNetworkSpeedProfile(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -933,7 +1483,7 @@ func updateVMNetworkSpeedProfile(
 		}
 
 		err = waitForTaskCompletion(
-			ctx, m, d.Timeout(schema.TimeoutUpdate), task,
+			ctx, m, d.Timeout(schema.TimeoutUpdate), task.ID,
 		)
 		if err != nil {
 			return err

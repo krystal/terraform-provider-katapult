@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
@@ -101,7 +102,7 @@ func waitForTaskCompletion(
 	ctx context.Context,
 	m *Meta,
 	timeout time.Duration,
-	task *core.Task,
+	taskID string,
 ) error {
 	taskWaiter := &retry.StateChangeConf{
 		Pending: []string{
@@ -112,7 +113,7 @@ func waitForTaskCompletion(
 			string(core.TaskCompleted),
 		},
 		Refresh: func() (interface{}, string, error) {
-			t, _, e := m.Core.Tasks.Get(ctx, task.ID)
+			t, _, e := m.Core.Tasks.Get(ctx, taskID)
 			if e != nil {
 				return t, "", e
 			}
@@ -137,26 +138,12 @@ func stringsDiff(a, b []string) []string {
 	r := []string{}
 
 	for _, v := range a {
-		if !stringsContain(b, v) {
+		if !slices.Contains(b, v) {
 			r = append(r, v)
 		}
 	}
 
 	return r
-}
-
-func stringsContain(strs []string, s string) bool {
-	if len(strs) == 0 || s == "" {
-		return false
-	}
-
-	for _, v := range strs {
-		if v == s {
-			return true
-		}
-	}
-
-	return false
 }
 
 func stringsEqual(a, b []string) bool {
