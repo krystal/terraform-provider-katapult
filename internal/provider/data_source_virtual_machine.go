@@ -29,6 +29,7 @@ func dataSourceVirtualMachine() *schema.Resource {
 	}
 }
 
+//nolint:funlen,gocyclo
 func dataSourceVirtualMachineRead(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -53,11 +54,54 @@ func dataSourceVirtualMachineRead(
 		return diag.FromErr(err)
 	}
 
+	ifaces, err := nextFetchAllVMNetworkInterfaces(ctx, m, vm.ID)
+	if err != nil {
+		return append(diags, diag.FromErr(err)...)
+	}
+
+	virtualNetworkIDs := make([]string, 0, len(ifaces))
+	for _, iface := range ifaces {
+		if iface.VirtualNetwork.IsSpecified() {
+			vnet, err2 := iface.VirtualNetwork.Get()
+			if err2 != nil {
+				continue
+			}
+
+			if *iface.State != "attached" {
+				continue
+			}
+
+			if id := *vnet.Id; id != "" {
+				virtualNetworkIDs = append(virtualNetworkIDs, id)
+			}
+		}
+	}
+
+	// As we set the speed profile for all interfaces on a VM, we only care
+	// about fetching details about any single interface.
+	var nsp string
+	if len(ifaces) > 0 {
+		vmnet, _, err2 := m.Core.VirtualMachineNetworkInterfaces.GetByID(
+			ctx, *ifaces[0].Id,
+		)
+		if err2 != nil {
+			return append(diags, diag.FromErr(err2)...)
+		}
+
+		if vmnet.SpeedProfile != nil {
+			nsp = vmnet.SpeedProfile.Permalink
+		}
+	}
+
 	_ = d.Set("name", vm.Name)
 	_ = d.Set("hostname", vm.Hostname)
 	_ = d.Set("description", vm.Description)
 	_ = d.Set("fqdn", vm.FQDN)
 	_ = d.Set("state", vm.State)
+
+	if nsp != "" {
+		_ = d.Set("network_speed_profile", nsp)
+	}
 
 	if grp := vm.Group; grp != nil {
 		_ = d.Set("group_id", grp.ID)
@@ -83,22 +127,17 @@ func dataSourceVirtualMachineRead(
 		diags = append(diags, diag.FromErr(err)...)
 	}
 
-	// As we set the speed profile for all interfaces on a VM, we only care
-	// about fetching details about any single interface.
-	vmnets, _, err := m.Core.VirtualMachineNetworkInterfaces.List(
-		ctx, vm.Ref(), &core.ListOptions{Page: 1, PerPage: 1},
+	err = d.Set(
+		"virtual_network_ids",
+		stringSliceToSchemaSet(virtualNetworkIDs),
 	)
 	if err != nil {
 		diags = append(diags, diag.FromErr(err)...)
-	} else if len(vmnets) > 0 {
-		vmnet, _, err2 := m.Core.VirtualMachineNetworkInterfaces.Get(
-			ctx, vmnets[0].Ref(),
-		)
-		if err2 != nil {
-			diags = append(diags, diag.FromErr(err2)...)
-		} else if vmnet.SpeedProfile != nil {
-			_ = d.Set("network_speed_profile", vmnet.SpeedProfile.Permalink)
-		}
+	}
+
+	err = d.Set("network_interfaces", flattenNetworkInterfaces(ifaces))
+	if err != nil {
+		diags = append(diags, diag.FromErr(err)...)
 	}
 
 	err = d.Set("tags", stringSliceToSchemaSet(vm.TagNames))

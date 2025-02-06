@@ -92,12 +92,14 @@ resource "katapult_virtual_machine" "base" {
 - `network_speed_profile` (String) Permalink of a Network Speed Profile.
 - `tags` (Set of String)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `virtual_network_ids` (Set of String) Virtual Networks attached to the VM.
 
 ### Read-Only
 
 - `fqdn` (String)
 - `id` (String) The ID of this resource.
 - `ip_addresses` (Set of String)
+- `network_interfaces` (List of Object) Network interface details for the virtual machine. (see [below for nested schema](#nestedatt--network_interfaces))
 - `state` (String)
 
 <a id="nestedblock--disk"></a>
@@ -120,3 +122,15 @@ Optional:
 - `create` (String)
 - `delete` (String)
 - `update` (String)
+
+
+<a id="nestedatt--network_interfaces"></a>
+### Nested Schema for `network_interfaces`
+
+Read-Only:
+
+- `id` (String)
+- `ip_addresses` (Set of String)
+- `mac_address` (String)
+- `network_id` (String)
+- `virtual_network_id` (String)

@@ -80,47 +80,6 @@ func Benchmark_stringsDiff(b *testing.B) {
 	}
 }
 
-func Test_stringsContain(t *testing.T) {
-	tests := []struct {
-		name string
-		strs []string
-		s    string
-		want bool
-	}{
-		{
-			name: "empty slice",
-			strs: []string{},
-			s:    "pompano",
-			want: false,
-		},
-		{
-			name: "empty string",
-			strs: []string{"roster", "wish", "pompano", "upscale", "pelf"},
-			s:    "",
-			want: false,
-		},
-		{
-			name: "present",
-			strs: []string{"roster", "wish", "pompano", "upscale", "pelf"},
-			s:    "pompano",
-			want: true,
-		},
-		{
-			name: "missing",
-			strs: []string{"roster", "wish", "pompano", "upscale", "pelf"},
-			s:    "bale",
-			want: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := stringsContain(tt.strs, tt.s)
-
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
 func Test_stringsEqual(t *testing.T) {
 	tests := []struct {
 		name string
@@ -170,6 +129,55 @@ func Test_stringsEqual(t *testing.T) {
 			got := stringsEqual(tt.a, tt.b)
 
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_mapKeys(t *testing.T) {
+	tests := []struct {
+		name string
+		m    map[string]any
+		want []string
+	}{
+		{
+			name: "empty map",
+			m:    map[string]any{},
+			want: []string{},
+		},
+		{
+			name: "map with string values",
+			m: map[string]any{
+				"name":     "John",
+				"age":      "30",
+				"location": "NY",
+			},
+			want: []string{"name", "age", "location"},
+		},
+		{
+			name: "map with mixed value types",
+			m: map[string]any{
+				"name":    "John",
+				"age":     42,
+				"active":  true,
+				"hobbies": []string{"reading", "coding"},
+				"address": map[string]string{"city": "NY"},
+				"nothing": nil,
+			},
+			want: []string{
+				"name",
+				"age",
+				"active",
+				"hobbies",
+				"address",
+				"nothing",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := mapKeys(tt.m)
+			assert.ElementsMatch(t, tt.want, got)
 		})
 	}
 }

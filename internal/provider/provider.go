@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
+	corenext "github.com/krystal/go-katapult/next/core"
 )
 
 const defaultGeneratedNamePrefix = "tf"
@@ -187,6 +188,7 @@ func boolOrEnv(in bool, env string) bool {
 	return false
 }
 
+//nolint:funlen
 func configure(
 	conf *Config,
 	p *schema.Provider,
@@ -268,6 +270,34 @@ func configure(
 
 		m.Client = c
 		m.Core = core.New(m.Client)
+
+		// Initialize CoreNext client following v6provider approach
+		baseURL := m.Client.BaseURL
+		if baseURL.Path == "" || baseURL.Path == "/" {
+			baseURL.Path = "/core/v1"
+		}
+
+		coreNextClient, err := corenext.NewClientWithResponses(
+			baseURL.String(),
+			m.confAPIKey,
+			corenext.WithHTTPClient(rhc.StandardClient()),
+			corenext.WithRequestEditorFn(
+				func(_ context.Context, req *http.Request) error {
+					req.Header.Set(
+						"User-Agent",
+						p.UserAgent(
+							"terraform-provider-katapult", conf.Version,
+						),
+					)
+					return nil
+				},
+			),
+		)
+		if err != nil {
+			return m, diag.FromErr(err)
+		}
+
+		m.CoreNext = coreNextClient
 
 		m.OrganizationRef = core.OrganizationRef{
 			SubDomain: m.confOrganization,
