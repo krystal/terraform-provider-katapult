@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.15](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.14...v0.0.15) (2025-02-06)
+
+
+### Features
+
+* add import via address for ip resources ([#145](https://github.com/krystal/terraform-provider-katapult/issues/145)) ([921caf7](https://github.com/krystal/terraform-provider-katapult/commit/921caf7d07db113ce5a973aa4754d7e1464bb623))
+* add support for address lists ([#129](https://github.com/krystal/terraform-provider-katapult/issues/129)) ([24fc994](https://github.com/krystal/terraform-provider-katapult/commit/24fc9941390f94b95808ce6838634bbf2a2f2235))
+* **core:** Switch core client in v6provider to use generated `next` client ([#127](https://github.com/krystal/terraform-provider-katapult/issues/127)) ([d313927](https://github.com/krystal/terraform-provider-katapult/commit/d3139271a4c9dd913f4ef19ef82f706c8c838a45))
+* **katapult_virtual_machine:** add virtual network management support ([#163](https://github.com/krystal/terraform-provider-katapult/issues/163)) ([8ebe300](https://github.com/krystal/terraform-provider-katapult/commit/8ebe300e20a449988320c12cf6d4b103dbd48043))
+* **network:** add network data sources ([#154](https://github.com/krystal/terraform-provider-katapult/issues/154)) ([2a3d879](https://github.com/krystal/terraform-provider-katapult/commit/2a3d87928d022a062fd21c525264e3886d1fdd11))
+* **networks:** add default value to networks data source ([#161](https://github.com/krystal/terraform-provider-katapult/issues/161)) ([13cc3a9](https://github.com/krystal/terraform-provider-katapult/commit/13cc3a90e4ce9a059c4bbb61862f44074e18f3d2))
+* **virtual-network:** add virtual network resource and data sources ([#159](https://github.com/krystal/terraform-provider-katapult/issues/159)) ([0c1bd1d](https://github.com/krystal/terraform-provider-katapult/commit/0c1bd1de9955a61adf864d61fa77de6368f51de3))
+
 ## [0.0.14](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.13...v0.0.14) (2024-07-03)
 
 
