@@ -77,6 +77,9 @@ func (r TagResource) Schema(
 			"color": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 				Description: "The color of the tag. Refer to " +
 					"https://apidocs.k.io/katapult/enums/6808ef8ef6/ " +
 					"for available colors",

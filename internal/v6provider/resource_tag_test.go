@@ -95,6 +95,50 @@ func TestAccKatapultTag_minimal(t *testing.T) {
 	})
 }
 
+func TestAccKatapultTag_update_name(t *testing.T) {
+	tt := newTestTools(t)
+	name := strings.ToLower(tt.ResourceName())
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultTagDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+				resource "katapult_tag" "db" {
+					name = "%s"
+				}`,
+					name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultTagAttrs(
+						tt, "katapult_tag.db",
+					),
+				),
+			},
+			// Updating name with no color value specified should succeed, as we
+			// use the color value from the previous state.
+			{
+				Config: undent.Stringf(`
+				resource "katapult_tag" "db" {
+					name = "%s-updated"
+				}`,
+					name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultTagAttrs(
+						tt, "katapult_tag.db",
+					),
+				),
+			},
+			{
+				ResourceName:      "katapult_tag.db",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccKatapultTag_update_color(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())
@@ -117,7 +161,6 @@ func TestAccKatapultTag_update_color(t *testing.T) {
 					),
 				),
 			},
-
 			{
 				Config: undent.Stringf(`
 				resource "katapult_tag" "kv" {
