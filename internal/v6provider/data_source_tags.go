@@ -99,10 +99,11 @@ func (r TagsDataSource) Read(
 				PerPage:               ptr(200),
 			})
 		if err != nil {
-			resp.Diagnostics.AddError(
-				"Tags Error",
-				err.Error(),
-			)
+			if res != nil {
+				err = genericAPIError(err, res.Body)
+			}
+
+			resp.Diagnostics.AddError("Tags Error", err.Error())
 			return
 		}
 

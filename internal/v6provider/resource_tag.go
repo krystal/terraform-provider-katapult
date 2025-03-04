@@ -119,6 +119,10 @@ func (r *TagResource) Create(
 			Properties: tagArgs,
 		})
 	if err != nil {
+		if res != nil {
+			err = genericAPIError(err, res.Body)
+		}
+
 		resp.Diagnostics.AddError("Create Error", err.Error())
 		return
 	}
@@ -202,8 +206,12 @@ func (r *TagResource) Update(
 		args.Properties.Color = (*core.TagColorsEnum)(plan.Color.ValueStringPointer())
 	}
 
-	_, err := r.M.Core.PatchTagWithResponse(ctx, args)
+	apiResp, err := r.M.Core.PatchTagWithResponse(ctx, args)
 	if err != nil {
+		if apiResp != nil {
+			err = genericAPIError(err, apiResp.Body)
+		}
+
 		resp.Diagnostics.AddError("Update Error", err.Error())
 		return
 	}
@@ -227,7 +235,7 @@ func (r *TagResource) Delete(
 		return
 	}
 
-	_, err := r.M.Core.DeleteTagWithResponse(ctx,
+	apiResp, err := r.M.Core.DeleteTagWithResponse(ctx,
 		core.DeleteTagJSONRequestBody{
 			Tag: core.TagLookup{
 				Id: state.ID.ValueStringPointer(),
@@ -235,6 +243,10 @@ func (r *TagResource) Delete(
 		},
 	)
 	if err != nil {
+		if apiResp != nil {
+			err = genericAPIError(err, apiResp.Body)
+		}
+
 		resp.Diagnostics.AddError("Delete Error", err.Error())
 		return
 	}
@@ -257,6 +269,10 @@ func (r *TagResource) TagRead(
 		TagId: id,
 	})
 	if err != nil {
+		if res != nil {
+			err = genericAPIError(err, res.Body)
+		}
+
 		return err
 	}
 

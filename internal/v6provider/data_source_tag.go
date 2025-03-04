@@ -89,10 +89,11 @@ func (r TagDataSource) Read(
 		TagId: data.ID.ValueStringPointer(),
 	})
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Tag Error",
-			err.Error(),
-		)
+		if res != nil {
+			err = genericAPIError(err, res.Body)
+		}
+
+		resp.Diagnostics.AddError("Tag Error", err.Error())
 		return
 	}
 
