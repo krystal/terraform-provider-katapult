@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.16](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.15...v0.0.16) (2025-03-04)
+
+
+### Features
+
+* **tags:** add tags data sources and resource. ([#144](https://github.com/krystal/terraform-provider-katapult/issues/144)) ([36f9677](https://github.com/krystal/terraform-provider-katapult/commit/36f9677319c5a3d268fb1211b3f629c118ba9fbf))
+
 ## [0.0.15](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.14...v0.0.15) (2025-02-06)
 
 
