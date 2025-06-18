@@ -104,7 +104,12 @@ func (nds *NetworksDataSource) Read(
 		},
 	)
 	if err != nil {
-		resp.Diagnostics.AddError("Networks get error", err.Error())
+		if res != nil {
+			err = genericAPIError(err, res.Body)
+		}
+
+		resp.Diagnostics.AddError("Networks Error", err.Error())
+		return
 	}
 
 	networks := res.JSON200.Networks

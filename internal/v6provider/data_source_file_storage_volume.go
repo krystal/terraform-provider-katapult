@@ -109,10 +109,11 @@ func (r *FileStorageVolumeDataSource) Read(
 			FileStorageVolumeId: data.ID.ValueStringPointer(),
 		})
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"File Storage Volume Error",
-			err.Error(),
-		)
+		if res != nil {
+			err = genericAPIError(err, res.Body)
+		}
+
+		resp.Diagnostics.AddError("File Storage Volume Error", err.Error())
 		return
 	}
 
