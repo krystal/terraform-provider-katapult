@@ -111,7 +111,11 @@ func (ds *LoadBalancerDataSource) Read(
 			LoadBalancerId: data.ID.ValueStringPointer(),
 		})
 	if err != nil {
-		resp.Diagnostics.AddError("Load Balancer GetByID Error", err.Error())
+		if res != nil {
+			err = genericAPIError(err, res.Body)
+		}
+
+		resp.Diagnostics.AddError("Load Balancer Error", err.Error())
 		return
 	}
 	lb := res.JSON200.LoadBalancer
