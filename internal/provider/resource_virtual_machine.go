@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -1184,6 +1185,10 @@ func nextFetchAllVMNetworkInterfaces(
 	for _, iface := range results {
 		ifaces = append(ifaces, iface)
 	}
+
+	sort.Slice(ifaces, func(i, j int) bool {
+		return *ifaces[i].Id < *ifaces[j].Id
+	})
 
 	return ifaces, nil
 }
