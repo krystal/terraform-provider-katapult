@@ -5,8 +5,8 @@ go 1.23
 require (
 	github.com/dnaeon/go-vcr v1.1.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
-	github.com/hashicorp/go-hclog v1.6.2
-	github.com/hashicorp/go-retryablehttp v0.7.5
+	github.com/hashicorp/go-hclog v1.6.3
+	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/hashicorp/terraform-plugin-framework v1.4.2
 	github.com/hashicorp/terraform-plugin-framework-timeouts v0.4.1
 	github.com/hashicorp/terraform-plugin-framework-validators v0.12.0
