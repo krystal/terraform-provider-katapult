@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.17](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.16...v0.0.17) (2026-02-10)
+
+
+### Bug Fixes
+
+* **resource/katapult_virtual_machine:** sort network interfaces by ID for consistent ordering ([#169](https://github.com/krystal/terraform-provider-katapult/issues/169)) ([6a7a028](https://github.com/krystal/terraform-provider-katapult/commit/6a7a0280e7d2ab1b8c03d6d41814cb5caba820d7))
+
 ## [0.0.16](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.15...v0.0.16) (2025-03-04)
 
 
