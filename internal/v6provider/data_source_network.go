@@ -158,6 +158,10 @@ func (nds *NetworkDataSource) Read(
 
 	res, err := nds.M.Core.GetNetworkWithResponse(ctx, params)
 	if err != nil {
+		if res != nil {
+			err = genericAPIError(err, res.Body)
+		}
+
 		resp.Diagnostics.AddError(
 			"Network get by "+getField+" error", err.Error(),
 		)
