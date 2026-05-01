@@ -2,9 +2,7 @@ package v6provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -16,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/krystal/go-katapult/next/core"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -247,9 +244,9 @@ func (r *ObjectStorageBucketResource) Create(
 
 	name := r.M.UseOrGenerateName(plan.Name.ValueString())
 
-	// Create the object storage account if it doesn't exist
-	if err := r.createObjStoreAccountIfNotExists(
+	if err := ensureObjectStorageAccount(
 		ctx,
+		r.M,
 		plan.Region.ValueString(),
 	); err != nil {
 		resp.Diagnostics.AddError(
@@ -540,105 +537,6 @@ func (r *ObjectStorageBucketResource) ObjectStorageBucketRead(
 
 	return nil
 }
-
-func (r *ObjectStorageBucketResource) objectStorageAccountGet(
-	ctx context.Context,
-	region string,
-) (core.ObjectStorageAccountProvisioningStateEnum, error) {
-	res, err := r.M.Core.
-		GetOrganizationObjectStorageObjectStorageClusterWithResponse(ctx,
-			&core.GetOrganizationObjectStorageObjectStorageClusterParams{
-				OrganizationSubDomain:      &r.M.confOrganization,
-				ObjectStorageClusterRegion: &region,
-			})
-	if err != nil {
-		return core.ObjectStorageAccountProvisioningStateEnumFailed,
-			fmt.Errorf("%w: %s", err, string(res.Body))
-	}
-
-	return *res.JSON200.ObjectStorageAccount.ProvisioningState, nil
-}
-
-func (r *ObjectStorageBucketResource) objectStorageAccountCreate(
-	ctx context.Context,
-	region string,
-) error {
-	res, err := r.M.Core.
-		PostOrganizationObjectStorageObjectStorageClusterWithResponse(ctx,
-			///nolint:lll // this is a generated type.
-			core.PostOrganizationObjectStorageObjectStorageClusterJSONRequestBody{
-				ObjectStorageCluster: core.ObjectStorageClusterLookup{
-					Region: &region,
-				},
-				Organization: core.OrganizationLookup{
-					SubDomain: &r.M.confOrganization,
-				},
-			})
-	if err != nil {
-		return fmt.Errorf("%w: %s", err, string(res.Body))
-	}
-
-	return nil
-}
-
-func (r *ObjectStorageBucketResource) createObjStoreAccountIfNotExists(
-	ctx context.Context,
-	region string,
-) error {
-	state, err := r.objectStorageAccountGet(ctx, region)
-	if err != nil {
-		if errors.Is(err, core.ErrNotFound) {
-			createErr := r.objectStorageAccountCreate(ctx, region)
-			if createErr != nil {
-				return createErr
-			}
-		} else {
-			return err
-		}
-	}
-
-	if state == core.ObjectStorageAccountProvisioningStateEnumProvisioned {
-		return nil
-	}
-
-	waiter := &retry.StateChangeConf{
-		Pending: []string{
-			string(core.ObjectStorageAccountProvisioningStateEnumFailed),
-			string(core.ObjectStorageAccountProvisioningStateEnumProvisioning),
-		},
-		Target: []string{
-			string(core.ObjectStorageAccountProvisioningStateEnumProvisioned),
-		},
-		Refresh: func() (interface{}, string, error) {
-			state, stateErr := r.objectStorageAccountGet(ctx, region)
-			if err != nil {
-				return 0, "", stateErr
-			}
-
-			return 1,
-				string(state),
-				nil
-		},
-		Timeout:                   5 * time.Minute,
-		Delay:                     2 * time.Second,
-		MinTimeout:                5 * time.Second,
-		ContinuousTargetOccurence: 1,
-	}
-
-	_, err = waiter.WaitForStateContext(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// func (r *ObjectStorageBucketResource) objectStorageAccountDelete(
-// 	_ context.Context,
-// 	_ string,
-// ) error {
-// 	return nil
-// }
 
 /// HELPERS
 
