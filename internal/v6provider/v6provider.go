@@ -249,6 +249,7 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource { return &VirtualNetworkResource{} },
 		func() resource.Resource { return &TagResource{} },
 		func() resource.Resource { return &ObjectStorageBucketResource{} },
+		func() resource.Resource { return &ObjectStorageAccessKeyResource{} },
 	}
 }
 
