@@ -11,8 +11,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/krystal/go-katapult/next/core"
@@ -82,6 +84,9 @@ func (r *ObjectStorageBucketResource) Schema(
 				Required: true,
 				Description: "The name of the bucket. " +
 					"This must globally unique.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"region": schema.StringAttribute{
 				Required:    true,
@@ -381,12 +386,13 @@ func (r *ObjectStorageBucketResource) Update(
 		},
 	}
 
-	if !plan.Name.Equal(state.Name) {
-		args.Properties.Name = plan.Name.ValueStringPointer()
-	}
-
 	if !plan.Label.Equal(state.Label) {
-		args.Properties.Label = plan.Label.ValueStringPointer()
+		if plan.Label.IsNull() {
+			empty := ""
+			args.Properties.Label = &empty
+		} else {
+			args.Properties.Label = plan.Label.ValueStringPointer()
+		}
 	}
 
 	if !plan.ServeStaticSite.Equal(state.ServeStaticSite) {
@@ -502,7 +508,7 @@ func (r *ObjectStorageBucketResource) ObjectStorageBucketRead(
 	model.Region = types.StringValue(region)
 	model.Name = types.StringPointerValue(b.Name)
 
-	if b.Label.IsSpecified() {
+	if b.Label.IsSpecified() && !b.Label.IsNull() && b.Label.MustGet() != "" {
 		model.Label = types.StringValue(b.Label.MustGet())
 	}
 
