@@ -22,8 +22,13 @@ func objectStorageAccountGet(
 				ObjectStorageClusterRegion: &region,
 			})
 	if err != nil {
+		body := ""
+		if res != nil {
+			body = string(res.Body)
+		}
+
 		return core.ObjectStorageAccountProvisioningStateEnumFailed,
-			fmt.Errorf("%w: %s", err, string(res.Body))
+			fmt.Errorf("%w: %s", err, body)
 	}
 
 	return *res.JSON200.ObjectStorageAccount.ProvisioningState, nil
@@ -47,7 +52,12 @@ func objectStorageAccountCreate(
 				},
 			})
 	if err != nil {
-		return fmt.Errorf("%w: %s", err, string(res.Body))
+		body := ""
+		if res != nil {
+			body = string(res.Body)
+		}
+
+		return fmt.Errorf("%w: %s", err, body)
 	}
 
 	return nil

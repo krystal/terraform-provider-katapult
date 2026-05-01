@@ -33,7 +33,7 @@ func TestAccKatapultObjectStorageAccessKey_minimal(t *testing.T) {
 					  region = "%s"
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageAccessKeyAttrs(
@@ -46,7 +46,7 @@ func TestAccKatapultObjectStorageAccessKey_minimal(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_object_storage_access_key.main",
-						"region", objectStorageRegion(),
+						"region", "uk-lon-1",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_object_storage_access_key.main",
@@ -96,7 +96,7 @@ func TestAccKatapultObjectStorageAccessKey_update_name(t *testing.T) {
 					  region = "%s"
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageAccessKeyAttrs(
@@ -116,7 +116,7 @@ func TestAccKatapultObjectStorageAccessKey_update_name(t *testing.T) {
 					  region = "%s"
 					}`,
 					name+"-updated",
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageAccessKeyAttrs(
@@ -173,9 +173,9 @@ func TestAccKatapultObjectStorageAccessKey_buckets(t *testing.T) {
 				  write_key_ids = [katapult_object_storage_access_key.main.id]
 				}`,
 					keyName,
-					objectStorageRegion(),
+					"uk-lon-1",
 					bucketName,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageAccessKeyAttrs(
@@ -204,9 +204,9 @@ func TestAccKatapultObjectStorageAccessKey_buckets(t *testing.T) {
 				  write_key_ids = [katapult_object_storage_access_key.main.id]
 				}`,
 					keyName,
-					objectStorageRegion(),
+					"uk-lon-1",
 					bucketName,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckTypeSetElemAttrPair(
@@ -248,7 +248,7 @@ func TestAccKatapultObjectStorageAccessKey_update_permissions(t *testing.T) {
 					  all_objects_write = true
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageAccessKeyAttrs(
@@ -277,7 +277,7 @@ func TestAccKatapultObjectStorageAccessKey_update_permissions(t *testing.T) {
 					  region = "%s"
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageAccessKeyAttrs(

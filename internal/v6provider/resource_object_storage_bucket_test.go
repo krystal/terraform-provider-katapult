@@ -2,7 +2,6 @@ package v6provider
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -13,16 +12,6 @@ import (
 	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/next/core"
 )
-
-// objectStorageRegion returns the region for object storage tests, preferring
-// KATAPULT_OBJECT_STORAGE_REGION and falling back to KATAPULT_DATA_CENTER.
-func objectStorageRegion() string {
-	if r := os.Getenv("KATAPULT_OBJECT_STORAGE_REGION"); r != "" {
-		return r
-	}
-
-	return os.Getenv("KATAPULT_DATA_CENTER")
-}
 
 //
 // Tests
@@ -46,7 +35,7 @@ func TestAccKatapultObjectStorageBucket_minimal(t *testing.T) {
 					  region = "%s"
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -58,7 +47,7 @@ func TestAccKatapultObjectStorageBucket_minimal(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_object_storage_bucket.main",
-						"region", objectStorageRegion(),
+						"region", "uk-lon-1",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_object_storage_bucket.main",
@@ -116,7 +105,7 @@ func TestAccKatapultObjectStorageBucket_update_name(t *testing.T) {
 					  region = "%s"
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -135,7 +124,7 @@ func TestAccKatapultObjectStorageBucket_update_name(t *testing.T) {
 					  region = "%s"
 					}`,
 					name+"-updated",
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -170,7 +159,7 @@ func TestAccKatapultObjectStorageBucket_update_label(t *testing.T) {
 					  label  = "My Bucket"
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -190,7 +179,7 @@ func TestAccKatapultObjectStorageBucket_update_label(t *testing.T) {
 					  label  = "Updated Bucket Label"
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -210,7 +199,7 @@ func TestAccKatapultObjectStorageBucket_update_label(t *testing.T) {
 					  region = "%s"
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -246,7 +235,7 @@ func TestAccKatapultObjectStorageBucket_acl(t *testing.T) {
 					  all_keys_write = true
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -279,7 +268,7 @@ func TestAccKatapultObjectStorageBucket_acl(t *testing.T) {
 					  public_read = true
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -330,7 +319,7 @@ func TestAccKatapultObjectStorageBucket_static_site(t *testing.T) {
 					  public_read       = true
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -371,7 +360,7 @@ func TestAccKatapultObjectStorageBucket_static_site(t *testing.T) {
 					  public_read       = true
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -400,7 +389,7 @@ func TestAccKatapultObjectStorageBucket_static_site(t *testing.T) {
 					  serve_static_site = false
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -439,7 +428,7 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_index(t *t
 					  public_read       = true
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
@@ -471,7 +460,7 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_lis
 					  public_read       = true
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
@@ -503,7 +492,7 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_rea
 					  public_list       = true
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
@@ -533,7 +522,7 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_index_forbidden(t *
 					  static_site_index = "index.html"
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
@@ -563,7 +552,7 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_error_forbidden(t *
 					  static_site_error = "error.html"
 					}`,
 					name,
-					objectStorageRegion(),
+					"uk-lon-1",
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
