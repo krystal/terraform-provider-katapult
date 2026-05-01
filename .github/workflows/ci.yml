@@ -85,6 +85,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
       - name: Validate documentation
         run: make check-docs
       - name: Ensure generated documentation is up to date
