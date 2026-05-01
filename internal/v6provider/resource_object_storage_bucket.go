@@ -3,6 +3,7 @@ package v6provider
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -18,6 +19,13 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+//nolint:lll
+var objectStorageBucketMarkdownDesc = strings.TrimSpace(`
+Manages an S3-compatible object storage bucket in a Katapult cluster. Credentials for S3 clients come from a ` + "`katapult_object_storage_access_key`" + ` resource.
+
+~> **Note:** ` + "`name`" + ` is globally unique and immutable — changing it forces a new resource.
+`)
 
 type (
 	ObjectStorageBucketResource struct {
@@ -76,88 +84,95 @@ func (r *ObjectStorageBucketResource) Schema(
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
+		MarkdownDescription: objectStorageBucketMarkdownDesc,
 		Attributes: map[string]schema.Attribute{
 			"name": schema.StringAttribute{
 				Required: true,
-				Description: "The name of the bucket. " +
-					"This must globally unique.",
+				MarkdownDescription: "Globally unique bucket name " +
+					"(lowercase alphanumeric and hyphens, " +
+					"3–63 chars). Changing forces replacement.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"region": schema.StringAttribute{
-				Required:    true,
-				Description: "The region in which the bucket will be created.",
+				Required: true,
+				MarkdownDescription: "Region permalink, e.g. " +
+					"`uk-lon-1`. Cannot be changed after creation.",
 			},
 			"label": schema.StringAttribute{
-				Optional:    true,
-				Description: "The label for the bucket.",
+				Optional:            true,
+				MarkdownDescription: "Optional bucket label in Katapult.",
 			},
 			"public_url": schema.StringAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "The public URL for the bucket.",
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Public base URL for " +
+					"accessing objects in this bucket.",
 			},
 			"serve_static_site": schema.BoolAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "Serve the bucket as a static site.",
-				Default:     booldefault.StaticBool(false),
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Serves the bucket as a static site; " +
+					"requires `static_site_index`. Defaults to `false`.",
+				Default: booldefault.StaticBool(false),
+			},
+			"static_site_index": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Default index doc, e.g. `index.html`. " +
+					"Required when `serve_static_site` is `true`.",
+				Default: stringdefault.StaticString(""),
 			},
 			"static_site_error": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
-				Description: "The static site error page. " +
-					"Errors will be redirected to " +
-					"[HTTP STATUS CODE][this value]",
-				Default: stringdefault.StaticString(
-					"",
-				),
-			},
-			"static_site_index": schema.StringAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "The static site index page.",
-				Default:     stringdefault.StaticString(""),
+				MarkdownDescription: "Error document suffix, e.g. `.html`. " +
+					"HTTP errors redirect to `/[STATUS_CODE][value]`.",
+				Default: stringdefault.StaticString(""),
 			},
 			"all_keys_read": schema.BoolAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "Allow all keys to read from the bucket.",
-				Default:     booldefault.StaticBool(false),
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Grant all access keys read " +
+					"permission on this bucket. Defaults to `false`.",
+				Default: booldefault.StaticBool(false),
 			},
 			"all_keys_write": schema.BoolAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "Allow all keys to write to the bucket.",
-				Default:     booldefault.StaticBool(false),
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Grant all access keys write " +
+					"permission on this bucket. Defaults to `false`.",
+				Default: booldefault.StaticBool(false),
 			},
 			"public_list": schema.BoolAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "Allow the bucket items to be listed publicly.",
-				Default:     booldefault.StaticBool(false),
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Allow unauthenticated object listing. " +
+					"Defaults to `false`.",
+				Default: booldefault.StaticBool(false),
 			},
 			"public_read": schema.BoolAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "Allow the bucket items to be read publicly.",
-				Default:     booldefault.StaticBool(false),
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Allow unauthenticated object reads. " +
+					"Defaults to `false`.",
+				Default: booldefault.StaticBool(false),
 			},
 			"read_key_ids": schema.SetAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "The key IDs that can read from the bucket.",
-				ElementType: types.StringType,
+				Optional:            true,
+				Computed:            true,
+				MarkdownDescription: "Access key IDs for reading this bucket.",
+				ElementType:         types.StringType,
 				Default: setdefault.StaticValue(
 					types.SetValueMust(types.StringType, []attr.Value{}),
 				),
 			},
 			"write_key_ids": schema.SetAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "The key IDs that can write to the bucket.",
-				ElementType: types.StringType,
+				Optional:            true,
+				Computed:            true,
+				MarkdownDescription: "Access key IDs for writing this bucket.",
+				ElementType:         types.StringType,
 				Default: setdefault.StaticValue(
 					types.SetValueMust(types.StringType, []attr.Value{}),
 				),

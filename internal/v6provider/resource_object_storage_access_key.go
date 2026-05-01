@@ -3,6 +3,7 @@ package v6provider
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -74,22 +75,30 @@ func (r *ObjectStorageAccessKeyResource) Schema(
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
+		//nolint:lll
+		MarkdownDescription: strings.TrimSpace(`
+Manages an S3-compatible access key for a Katapult object storage cluster.
+
+Use ` + "`s3_access_key_id`" + `, ` + "`s3_secret_access_key`" + `, and ` + "`server_url`" + ` to configure any S3-compatible client or SDK. Bucket-level permissions are managed via ` + "`read_key_ids`" + ` / ` + "`write_key_ids`" + ` on ` + "`katapult_object_storage_bucket`" + ` resources; ` + "`read_buckets`" + ` and ` + "`write_buckets`" + ` here reflect those associations.
+
+~> **Note:** ` + "`s3_secret_access_key`" + ` is only available at creation time and cannot be retrieved again — it will be empty after import. Changing ` + "`region`" + ` forces a new resource.
+`),
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed:    true,
-				Description: "The unique identifier of the access key.",
+				Computed:            true,
+				MarkdownDescription: "Internal Katapult ID of the access key.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{
-				Required:    true,
-				Description: "The name of the access key.",
+				Required:            true,
+				MarkdownDescription: "Human-readable name for the access key.",
 			},
 			"region": schema.StringAttribute{
 				Required: true,
-				Description: "The region of the object storage " +
-					"cluster.",
+				MarkdownDescription: "Region permalink, e.g. `uk-lon-1`. " +
+					"Changing this forces a new resource.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -97,41 +106,40 @@ func (r *ObjectStorageAccessKeyResource) Schema(
 			"all_buckets_read": schema.BoolAttribute{
 				Optional: true,
 				Computed: true,
-				Description: "Allow this key to list all " +
-					"buckets.",
+				MarkdownDescription: "Allow this key to list all buckets " +
+					"in the cluster. Defaults to `false`.",
 				Default: booldefault.StaticBool(false),
 			},
 			"all_objects_read": schema.BoolAttribute{
 				Optional: true,
 				Computed: true,
-				Description: "Allow this key to read objects " +
-					"across all buckets.",
+				MarkdownDescription: "Allow this key to read objects across " +
+					"all buckets in the cluster. Defaults to `false`.",
 				Default: booldefault.StaticBool(false),
 			},
 			"all_objects_write": schema.BoolAttribute{
 				Optional: true,
 				Computed: true,
-				Description: "Allow this key to write objects " +
-					"across all buckets.",
+				MarkdownDescription: "Allow this key to write objects across " +
+					"all buckets in the cluster. Defaults to `false`.",
 				Default: booldefault.StaticBool(false),
 			},
 			"read_buckets": schema.SetAttribute{
 				Computed: true,
-				Description: "Buckets this key has read " +
-					"access to. Managed via the bucket " +
-					"resource's read_key_ids.",
+				MarkdownDescription: "Bucket names this key can read from. " +
+					"Populated via a bucket's `read_key_ids`.",
 				ElementType: types.StringType,
 			},
 			"write_buckets": schema.SetAttribute{
 				Computed: true,
-				Description: "Buckets this key has write " +
-					"access to. Managed via the bucket " +
-					"resource's write_key_ids.",
+				MarkdownDescription: "Bucket names this key can write to. " +
+					"Populated via a bucket's `write_key_ids`.",
 				ElementType: types.StringType,
 			},
 			"s3_access_key_id": schema.StringAttribute{
-				Computed:    true,
-				Description: "The S3 access key ID.",
+				Computed: true,
+				MarkdownDescription: "S3 access key ID for " +
+					"authenticating S3 clients.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -139,16 +147,17 @@ func (r *ObjectStorageAccessKeyResource) Schema(
 			"s3_secret_access_key": schema.StringAttribute{
 				Computed:  true,
 				Sensitive: true,
-				Description: "The S3 secret access key. Only " +
-					"available at creation time; empty after " +
-					"import.",
+				MarkdownDescription: "S3 secret access key. Available " +
+					"only at creation; not retrievable " +
+					"via the API. Empty after import.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"server_url": schema.StringAttribute{
-				Computed:    true,
-				Description: "The S3 server URL.",
+				Computed: true,
+				MarkdownDescription: "S3-compatible endpoint URL " +
+					"for configuring S3 clients.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
