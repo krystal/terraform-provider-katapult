@@ -8,14 +8,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/dnaeon/go-vcr/cassette"
 	"github.com/dnaeon/go-vcr/recorder"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/assert"
@@ -245,36 +243,6 @@ func newVCRRecorder(t *testing.T) *recorder.Recorder {
 //
 // Terraform TestCheckFunc helpers
 //
-
-func testCheckGeneratedResourceName(
-	name string,
-	key string,
-) resource.TestCheckFunc {
-	return resource.TestMatchResourceAttr(
-		name, key,
-		regexp.MustCompile(
-			fmt.Sprintf(
-				"^%s-.+-.+$",
-				regexp.QuoteMeta(testAccResourceNamePrefix),
-			),
-		),
-	)
-}
-
-func testCheckGeneratedHostnameName(
-	name string,
-	key string,
-) resource.TestCheckFunc {
-	return resource.TestMatchResourceAttr(
-		name, key,
-		regexp.MustCompile(
-			fmt.Sprintf(
-				"^%s-.+-.+-.+$",
-				regexp.QuoteMeta(testAccResourceNamePrefix),
-			),
-		),
-	)
-}
 
 //
 // Provider Tests

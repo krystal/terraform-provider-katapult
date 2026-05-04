@@ -34,7 +34,7 @@ type Config struct {
 	GeneratedNamePrefix string
 }
 
-func New(c *Config) func() *schema.Provider { //nolint:funlen
+func New(c *Config) func() *schema.Provider {
 	once.Do(func() {
 		// Set descriptions to support markdown syntax, this will be used in
 		// document generation and the language server.
@@ -123,9 +123,8 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 			ResourcesMap: map[string]*schema.Resource{
 				"katapult_security_group":      resourceSecurityGroup(),
 				"katapult_security_group_rule": resourceSecurityGroupRule(),
-				"katapult_virtual_machine":     resourceVirtualMachine(),
 			},
-			//nolint:lll
+
 			DataSourcesMap: map[string]*schema.Resource{
 				"katapult_data_center":              dataSourceDataCenter(),
 				"katapult_disk_template":            dataSourceDiskTemplate(),
@@ -136,7 +135,6 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 				"katapult_security_group_rule":      dataSourceSecurityGroupRule(),
 				"katapult_security_group_rules":     dataSourceSecurityGroupRules(),
 				"katapult_security_groups":          dataSourceSecurityGroups(),
-				"katapult_virtual_machine":          dataSourceVirtualMachine(),
 				"katapult_virtual_machine_package":  dataSourceVirtualMachinePackage(),
 				"katapult_virtual_machine_packages": dataSourceVirtualMachinePackages(),
 			},
@@ -146,16 +144,23 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 			// TEST RESOURCES
 			p.ResourcesMap["katapult_legacy_ip"] = resourceIP()
 
-			//nolint:lll // This is a test resource.
 			p.ResourcesMap["katapult_legacy_file_storage_volume"] = resourceFileStorageVolume()
+
+			p.ResourcesMap["katapult_legacy_virtual_machine"] = resourceVirtualMachine()
+
+			p.ResourcesMap["katapult_legacy_virtual_machine_group"] = resourceVirtualMachineGroup()
 
 			// TEST DATA SOURCES
 
-			//nolint:lll // This is a test resource.
 			p.DataSourcesMap["katapult_legacy_file_storage_volume"] = dataSourceFileStorageVolume()
 
-			//nolint:lll // This is a test resource.
 			p.DataSourcesMap["katapult_legacy_file_storage_volumes"] = dataSourceFileStorageVolumes()
+
+			p.DataSourcesMap["katapult_legacy_virtual_machine"] = dataSourceVirtualMachine()
+
+			p.DataSourcesMap["katapult_legacy_virtual_machine_group"] = dataSourceVirtualMachineGroup()
+
+			p.DataSourcesMap["katapult_legacy_virtual_machine_groups"] = dataSourceVirtualMachineGroups()
 		}
 
 		p.ConfigureContextFunc = configure(c, p)
@@ -185,7 +190,6 @@ func boolOrEnv(in bool, env string) bool {
 	return false
 }
 
-//nolint:funlen
 func configure(
 	conf *Config,
 	p *schema.Provider,

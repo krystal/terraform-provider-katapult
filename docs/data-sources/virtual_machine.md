@@ -3,12 +3,12 @@
 page_title: "katapult_virtual_machine Data Source - terraform-provider-katapult"
 subcategory: ""
 description: |-
-  
+  Retrieve details of an existing Virtual Machine.
 ---
 
 # katapult_virtual_machine (Data Source)
 
-
+Retrieve details of an existing Virtual Machine.
 
 ## Example Usage
 
@@ -29,33 +29,31 @@ data "katapult_virtual_machine" "web-1" {
 
 ### Optional
 
-- `fqdn` (String)
-- `id` (String) The ID of this resource.
+- `fqdn` (String) The fully-qualified domain name of the Virtual Machine.
+- `id` (String) The unique identifier of the Virtual Machine.
 
 ### Read-Only
 
-- `description` (String)
-- `disk_template` (String) Permalink or ID of a Disk Template.
-- `disk_template_options` (Map of String)
-- `group_id` (String)
-- `hostname` (String)
-- `ip_address_ids` (Set of String) One or more IP IDs.
-- `ip_addresses` (Set of String)
-- `name` (String)
-- `network_interfaces` (List of Object) Network interface details for the virtual machine. (see [below for nested schema](#nestedatt--network_interfaces))
-- `network_speed_profile` (String) Permalink of a Network Speed Profile.
-- `package` (String) Permalink or ID of a Virtual Machine Package.
-- `state` (String)
-- `tags` (Set of String)
-- `virtual_network_ids` (Set of String) Virtual Networks attached to the VM.
+- `description` (String) A description for the Virtual Machine.
+- `group_id` (String) The ID of the Virtual Machine Group this Virtual Machine belongs to.
+- `hostname` (String) The hostname of the Virtual Machine.
+- `ip_address_ids` (Set of String) Set of IP address IDs allocated to the Virtual Machine.
+- `ip_addresses` (Set of String) Set of IP addresses allocated to the Virtual Machine.
+- `name` (String) The name of the Virtual Machine.
+- `network_interfaces` (Attributes List) Network interface details for the Virtual Machine. (see [below for nested schema](#nestedatt--network_interfaces))
+- `network_speed_profile` (String) Permalink of the Network Speed Profile applied to all network interfaces.
+- `package` (String) Permalink or ID of the Virtual Machine Package.
+- `state` (String) The current state of the Virtual Machine.
+- `tags` (Set of String) Set of tag names assigned to the Virtual Machine.
+- `virtual_network_ids` (Set of String) Set of Virtual Network IDs attached to the Virtual Machine.
 
 <a id="nestedatt--network_interfaces"></a>
 ### Nested Schema for `network_interfaces`
 
 Read-Only:
 
-- `id` (String)
-- `ip_addresses` (Set of String)
-- `mac_address` (String)
-- `network_id` (String)
-- `virtual_network_id` (String)
+- `id` (String) The ID of the network interface.
+- `ip_addresses` (Set of String) The IP addresses allocated to the interface.
+- `mac_address` (String) The MAC address of the interface.
+- `network_id` (String) The ID of the network the interface is on.
+- `virtual_network_id` (String) The ID of the virtual network the interface is on.

@@ -83,14 +83,14 @@ func TestAccKatapultDataSourceSecurityGroup_include_rules(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_virtual_machine_group" "web" {
+					resource "katapult_legacy_virtual_machine_group" "web" {
 						name = "%s"
 					}
 
 					resource "katapult_security_group" "my_sg" {
 						name = "%s"
 						associations = [
-							katapult_virtual_machine_group.web.id,
+							katapult_legacy_virtual_machine_group.web.id,
 						]
 						allow_all_inbound = false
 						allow_all_outbound = true
@@ -154,18 +154,18 @@ func TestAccKatapultDataSourceSecurityGroup_include_rules(t *testing.T) {
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_virtual_machine_group" "web" {
+					resource "katapult_legacy_virtual_machine_group" "web" {
 						name = "%s"
 					}
 
-					resource "katapult_virtual_machine_group" "db" {
+					resource "katapult_legacy_virtual_machine_group" "db" {
 						name = "%s"
 					}
 
 					resource "katapult_security_group" "my_sg" {
 						name = "%s"
 						associations = [
-							katapult_virtual_machine_group.web.id,
+							katapult_legacy_virtual_machine_group.web.id,
 						]
 						allow_all_inbound = false
 						allow_all_outbound = false
@@ -186,7 +186,7 @@ func TestAccKatapultDataSourceSecurityGroup_include_rules(t *testing.T) {
 						outbound_rule {
 							protocol = "tcp"
 							ports = "3306"
-							targets = [katapult_virtual_machine_group.db.id]
+							targets = [katapult_legacy_virtual_machine_group.db.id]
 							notes = "MySQL"
 						}
 						outbound_rule {
@@ -242,18 +242,18 @@ func TestAccKatapultDataSourceSecurityGroup_include_rules(t *testing.T) {
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_virtual_machine_group" "web" {
+					resource "katapult_legacy_virtual_machine_group" "web" {
 						name = "%s"
 					}
 
-					resource "katapult_virtual_machine_group" "db" {
+					resource "katapult_legacy_virtual_machine_group" "db" {
 						name = "%s"
 					}
 
 					resource "katapult_security_group" "my_sg" {
 						name = "%s"
 						associations = [
-							katapult_virtual_machine_group.web.id,
+							katapult_legacy_virtual_machine_group.web.id,
 						]
 						allow_all_inbound = true
 						allow_all_outbound = false
@@ -261,7 +261,7 @@ func TestAccKatapultDataSourceSecurityGroup_include_rules(t *testing.T) {
 						outbound_rule {
 							protocol = "tcp"
 							ports = "3306"
-							targets = [katapult_virtual_machine_group.db.id]
+							targets = [katapult_legacy_virtual_machine_group.db.id]
 							notes = "MySQL"
 						}
 						outbound_rule {
@@ -331,14 +331,14 @@ func TestAccKatapultDataSourceSecurityGroup_no_include_rules(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_virtual_machine_group" "web" {
+					resource "katapult_legacy_virtual_machine_group" "web" {
 						name = "%s"
 					}
 
 					resource "katapult_security_group" "my_sg" {
 						name = "%s"
 						associations = [
-							katapult_virtual_machine_group.web.id,
+							katapult_legacy_virtual_machine_group.web.id,
 						]
 						allow_all_inbound = false
 						allow_all_outbound = true
