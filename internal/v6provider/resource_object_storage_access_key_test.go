@@ -74,6 +74,14 @@ func TestAccKatapultObjectStorageAccessKey_minimal(t *testing.T) {
 					),
 				),
 			},
+			{
+				ResourceName:      "katapult_object_storage_access_key.main",
+				ImportState:       true,
+				ImportStateVerify: true,
+				// s3_secret_access_key is only returned by the API at
+				// creation time and cannot be retrieved again after import.
+				ImportStateVerifyIgnore: []string{"s3_secret_access_key"},
+			},
 		},
 	})
 }
