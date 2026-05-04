@@ -18,7 +18,7 @@ func init() { //nolint:gochecknoinits
 	resource.AddTestSweepers("katapult_legacy_ip", &resource.Sweeper{
 		Name:         "katapult_legacy_ip",
 		F:            testSweepIPs,
-		Dependencies: []string{"katapult_virtual_machine"},
+		Dependencies: []string{"katapult_legacy_virtual_machine"},
 	})
 }
 

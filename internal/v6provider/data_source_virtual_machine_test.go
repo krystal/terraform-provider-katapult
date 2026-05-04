@@ -1,10 +1,11 @@
-package provider
+package v6provider
 
 import (
 	"regexp"
+	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/jimeh/undent"
 )
 
@@ -14,8 +15,8 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckKatapultVirtualMachineDestroy(tt),
 			testAccCheckKatapultIPDestroy(tt),
@@ -23,7 +24,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_legacy_ip" "web" {}
+					resource "katapult_ip" "web" {}
 
 					resource "katapult_virtual_machine_group" "web" {
 						name = "%s"
@@ -38,7 +39,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_legacy_ip.web.id]
+						ip_address_ids = [katapult_ip.web.id]
 						group_id      = katapult_virtual_machine_group.web.id
 						tags = ["web", "public"]
 						network_speed_profile = "1gbps"
@@ -59,7 +60,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"data.katapult_virtual_machine.src",
-						"hostname", name+"-host",
+						"hostname", strings.ToLower(name+"-host"),
 					),
 					resource.TestCheckResourceAttr(
 						"data.katapult_virtual_machine.src",
@@ -73,34 +74,23 @@ func TestAccKatapultDataSourceVirtualMachine_by_id(t *testing.T) {
 						"data.katapult_virtual_machine.src", "tags.*", "web",
 					),
 					resource.TestCheckTypeSetElemAttr(
-						"data.katapult_virtual_machine.src",
-						"tags.*", "public",
+						"data.katapult_virtual_machine.src", "tags.*", "public",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_virtual_machine.src", "ip_address_ids.*",
-						"katapult_legacy_ip.web", "id",
+						"katapult_ip.web", "id",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_virtual_machine.src", "ip_addresses.*",
-						"katapult_legacy_ip.web", "address",
+						"katapult_ip.web", "address",
 					),
-					resource.TestCheckTypeSetElemAttrPair(
+					resource.TestCheckResourceAttrPair(
 						"data.katapult_virtual_machine.src", "group_id",
 						"katapult_virtual_machine_group.web", "id",
 					),
 					resource.TestCheckResourceAttr(
 						"data.katapult_virtual_machine.src",
 						"network_speed_profile", "1gbps",
-					),
-					// TODO: populate and check disk_template and options when
-					// supported by the API.
-					resource.TestCheckNoResourceAttr(
-						"data.katapult_virtual_machine.src",
-						"disk_template",
-					),
-					resource.TestCheckNoResourceAttr(
-						"data.katapult_virtual_machine.src",
-						"disk_template_options.%",
 					),
 				),
 			},
@@ -114,8 +104,8 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckKatapultVirtualMachineDestroy(tt),
 			testAccCheckKatapultIPDestroy(tt),
@@ -123,7 +113,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
-					resource "katapult_legacy_ip" "web" {}
+					resource "katapult_ip" "web" {}
 
 					resource "katapult_virtual_machine_group" "web" {
 						name = "%s"
@@ -138,7 +128,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 						disk_template_options = {
 							install_agent = true
 						}
-						ip_address_ids = [katapult_legacy_ip.web.id]
+						ip_address_ids = [katapult_ip.web.id]
 						group_id      = katapult_virtual_machine_group.web.id
 						tags = ["web", "public"]
 						network_speed_profile = "1gbps"
@@ -159,7 +149,7 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"data.katapult_virtual_machine.src",
-						"hostname", name+"-host",
+						"hostname", strings.ToLower(name+"-host"),
 					),
 					resource.TestCheckResourceAttr(
 						"data.katapult_virtual_machine.src",
@@ -173,34 +163,23 @@ func TestAccKatapultDataSourceVirtualMachine_by_fqdn(t *testing.T) {
 						"data.katapult_virtual_machine.src", "tags.*", "web",
 					),
 					resource.TestCheckTypeSetElemAttr(
-						"data.katapult_virtual_machine.src",
-						"tags.*", "public",
+						"data.katapult_virtual_machine.src", "tags.*", "public",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_virtual_machine.src", "ip_address_ids.*",
-						"katapult_legacy_ip.web", "id",
+						"katapult_ip.web", "id",
 					),
 					resource.TestCheckTypeSetElemAttrPair(
 						"data.katapult_virtual_machine.src", "ip_addresses.*",
-						"katapult_legacy_ip.web", "address",
+						"katapult_ip.web", "address",
 					),
-					resource.TestCheckTypeSetElemAttrPair(
+					resource.TestCheckResourceAttrPair(
 						"data.katapult_virtual_machine.src", "group_id",
 						"katapult_virtual_machine_group.web", "id",
 					),
 					resource.TestCheckResourceAttr(
 						"data.katapult_virtual_machine.src",
 						"network_speed_profile", "1gbps",
-					),
-					// TODO: populate and check disk_template and options when
-					// supported by the API.
-					resource.TestCheckNoResourceAttr(
-						"data.katapult_virtual_machine.src",
-						"disk_template",
-					),
-					resource.TestCheckNoResourceAttr(
-						"data.katapult_virtual_machine.src",
-						"disk_template_options.%",
 					),
 				),
 			},
@@ -212,13 +191,15 @@ func TestAccKatapultDataSourceVirtualMachine_blank(t *testing.T) {
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: `data "katapult_virtual_machine" "src" {}`,
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta("one of `fqdn,id` must be specified"),
+					regexp.QuoteMeta(
+						"At least one attribute out of [id,fqdn] must be specified",
+					),
 				),
 			},
 		},

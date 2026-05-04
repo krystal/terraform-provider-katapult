@@ -405,9 +405,7 @@ func getKatapultDataCenter(tt *testTools, permalink string) *core.DataCenter {
 	}
 }
 
-// Terraform TestCheckFunc helpers
-//
-//nolint:unused // will be used eventually
+// Terraform TestCheckFunc helpers.
 func testCheckGeneratedResourceName(
 	name string,
 	key string,
@@ -423,7 +421,6 @@ func testCheckGeneratedResourceName(
 	)
 }
 
-//nolint:unused // will be used eventually
 func testCheckGeneratedHostnameName(
 	name string,
 	key string,

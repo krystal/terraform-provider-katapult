@@ -256,6 +256,7 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource { return &ObjectStorageBucketResource{} },
 		func() resource.Resource { return &ObjectStorageAccessKeyResource{} },
 		func() resource.Resource { return &VirtualMachineGroupResource{} },
+		func() resource.Resource { return &VirtualMachineResource{} },
 	}
 }
 
@@ -289,6 +290,7 @@ func (k *KatapultProvider) DataSources(
 		func() datasource.DataSource {
 			return &VirtualMachineGroupsDataSource{}
 		},
+		func() datasource.DataSource { return &VirtualMachineDataSource{} },
 	}
 }
 
