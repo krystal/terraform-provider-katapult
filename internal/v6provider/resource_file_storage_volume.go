@@ -325,7 +325,6 @@ func (r *FileStorageVolumeResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
-//nolint:funlen // only a few more lines than the max
 func (r *FileStorageVolumeResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,

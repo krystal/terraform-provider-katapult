@@ -556,12 +556,16 @@ func (r *ObjectStorageBucketResource) ObjectStorageBucketRead(
 	model.PublicList = types.BoolPointerValue(acl.PublicList)
 	model.PublicRead = types.BoolPointerValue(acl.PublicRead)
 
-	if b.AccessControlList.ReadKeyIds != nil {
+	if acl.ReadKeyIds != nil {
 		model.ReadKeyIDs = buildStringSet(*acl.ReadKeyIds)
+	} else {
+		model.ReadKeyIDs = buildStringSet(nil)
 	}
 
-	if b.AccessControlList.WriteKeyIds != nil {
+	if acl.WriteKeyIds != nil {
 		model.WriteKeyIDs = buildStringSet(*acl.WriteKeyIds)
+	} else {
+		model.WriteKeyIDs = buildStringSet(nil)
 	}
 
 	return nil

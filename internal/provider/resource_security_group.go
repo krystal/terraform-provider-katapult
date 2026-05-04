@@ -15,7 +15,7 @@ import (
 	"github.com/krystal/go-katapult/core"
 )
 
-func resourceSecurityGroup() *schema.Resource { //nolint:funlen
+func resourceSecurityGroup() *schema.Resource {
 	ruleSchema := resourceSecurityGroupRule().Schema
 	delete(ruleSchema, "security_group_id")
 

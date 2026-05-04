@@ -35,7 +35,7 @@ type Config struct {
 	TestMode            bool
 }
 
-func New(c *Config) func() *schema.Provider { //nolint:funlen
+func New(c *Config) func() *schema.Provider {
 	once.Do(func() {
 		// Set descriptions to support markdown syntax, this will be used in
 		// document generation and the language server.
@@ -193,7 +193,6 @@ func boolOrEnv(in bool, env string) bool {
 	return false
 }
 
-//nolint:funlen
 func configure(
 	conf *Config,
 	p *schema.Provider,
