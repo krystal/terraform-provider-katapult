@@ -488,7 +488,7 @@ func resourceVirtualMachineCreate(
 	return resourceVirtualMachineRead(ctx, d, meta)
 }
 
-//nolint:funlen,gocyclo
+//nolint:gocyclo
 func resourceVirtualMachineRead(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -767,7 +767,7 @@ func resourceVirtualMachineUpdate(
 	return resourceVirtualMachineRead(ctx, d, meta)
 }
 
-//nolint:funlen,gocyclo
+//nolint:gocyclo
 func resourceVirtualMachineDelete(
 	ctx context.Context,
 	d *schema.ResourceData,
