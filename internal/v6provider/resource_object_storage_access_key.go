@@ -231,24 +231,32 @@ func (r *ObjectStorageAccessKeyResource) Create(
 						},
 					},
 				)
-			if credsRes != nil {
-				if credsRes.JSON200 != nil {
-					return nil
-				}
-				if credsRes.JSON404 != nil || credsRes.JSON403 != nil {
-					return retry.NonRetryableError(callErr)
-				}
-
-				return retry.RetryableError(
-					fmt.Errorf("provisioning in progress"),
-				)
-			}
-
 			if callErr != nil {
 				return retry.NonRetryableError(callErr)
 			}
 
-			return nil
+			if credsRes.JSON200 != nil {
+				return nil
+			}
+
+			// Retryable: credentials not yet provisioned, rate limited, or
+			// service temporarily unavailable.
+			if credsRes.JSON422 != nil || credsRes.JSON429 != nil ||
+				credsRes.JSON503 != nil {
+				return retry.RetryableError(
+					fmt.Errorf("%s: %s",
+						credsRes.HTTPResponse.Status,
+						string(credsRes.Body),
+					),
+				)
+			}
+
+			return retry.NonRetryableError(
+				fmt.Errorf("%s: %s",
+					credsRes.HTTPResponse.Status,
+					string(credsRes.Body),
+				),
+			)
 		},
 	)
 	if credErr != nil {
