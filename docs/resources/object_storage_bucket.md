@@ -75,3 +75,11 @@ resource "katapult_object_storage_bucket" "uploads" {
 ### Read-Only
 
 - `public_url` (String) Public base URL for accessing objects in this bucket.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+terraform import katapult_object_storage_bucket.example my-org-assets/uk-lon-1
+```
