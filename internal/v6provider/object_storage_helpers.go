@@ -88,9 +88,6 @@ func ensureObjectStorageAccount(
 	waiter := &retry.StateChangeConf{
 		Pending: []string{
 			string(
-				core.ObjectStorageAccountProvisioningStateEnumFailed,
-			),
-			string(
 				core.ObjectStorageAccountProvisioningStateEnumProvisioning,
 			),
 		},
@@ -103,6 +100,12 @@ func ensureObjectStorageAccount(
 			s, stateErr := objectStorageAccountGet(ctx, m, region)
 			if stateErr != nil {
 				return 0, "", stateErr
+			}
+
+			if s == core.ObjectStorageAccountProvisioningStateEnumFailed {
+				return 0, string(s), fmt.Errorf(
+					"object storage account provisioning failed",
+				)
 			}
 
 			return 1, string(s), nil
