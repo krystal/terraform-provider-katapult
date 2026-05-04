@@ -336,9 +336,14 @@ func (r *ObjectStorageAccessKeyResource) Update(
 		ctx, args,
 	)
 	if err != nil {
+		errorMessage := err.Error()
+		if res != nil {
+			errorMessage = fmt.Sprintf("%s: %s", errorMessage, string(res.Body))
+		}
+
 		resp.Diagnostics.AddError(
 			"Object Storage Access Key Update Error",
-			fmt.Sprintf("%s: %s", err.Error(), string(res.Body)),
+			errorMessage,
 		)
 
 		return
