@@ -24,7 +24,7 @@ func TestAccKatapultObjectStorageBucket_minimal(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: tt.ProviderFactories,
-		CheckDestroy: testAccCheckKatapultObjectStorageBucketDestroy( //nolint:lll
+		CheckDestroy: testAccCheckKatapultObjectStorageBucketDestroy(
 			tt,
 		),
 		Steps: []resource.TestStep{
@@ -94,7 +94,7 @@ func TestAccKatapultObjectStorageBucket_update_name(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: tt.ProviderFactories,
-		CheckDestroy: testAccCheckKatapultObjectStorageBucketDestroy( //nolint:lll
+		CheckDestroy: testAccCheckKatapultObjectStorageBucketDestroy(
 			tt,
 		),
 		Steps: []resource.TestStep{
@@ -147,7 +147,7 @@ func TestAccKatapultObjectStorageBucket_update_label(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: tt.ProviderFactories,
-		CheckDestroy: testAccCheckKatapultObjectStorageBucketDestroy( //nolint:lll
+		CheckDestroy: testAccCheckKatapultObjectStorageBucketDestroy(
 			tt,
 		),
 		Steps: []resource.TestStep{
@@ -222,7 +222,7 @@ func TestAccKatapultObjectStorageBucket_acl(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: tt.ProviderFactories,
-		CheckDestroy: testAccCheckKatapultObjectStorageBucketDestroy( //nolint:lll
+		CheckDestroy: testAccCheckKatapultObjectStorageBucketDestroy(
 			tt,
 		),
 		Steps: []resource.TestStep{
@@ -303,7 +303,7 @@ func TestAccKatapultObjectStorageBucket_static_site(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: tt.ProviderFactories,
-		CheckDestroy: testAccCheckKatapultObjectStorageBucketDestroy( //nolint:lll
+		CheckDestroy: testAccCheckKatapultObjectStorageBucketDestroy(
 			tt,
 		),
 		Steps: []resource.TestStep{
@@ -409,7 +409,6 @@ func TestAccKatapultObjectStorageBucket_static_site(t *testing.T) {
 // Validation Tests
 //
 
-//nolint:lll // long but descriptive test name
 func TestAccKatapultObjectStorageBucket_validate_static_site_requires_index(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())
@@ -441,7 +440,6 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_index(t *t
 	})
 }
 
-//nolint:lll // long but descriptive test name
 func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_list(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())
@@ -473,7 +471,6 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_lis
 	})
 }
 
-//nolint:lll // long but descriptive test name
 func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_read(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())
@@ -505,7 +502,6 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_rea
 	})
 }
 
-//nolint:lll // long but descriptive test name
 func TestAccKatapultObjectStorageBucket_validate_static_site_index_forbidden(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())
@@ -535,7 +531,6 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_index_forbidden(t *
 	})
 }
 
-//nolint:lll // long but descriptive test name
 func TestAccKatapultObjectStorageBucket_validate_static_site_error_forbidden(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())

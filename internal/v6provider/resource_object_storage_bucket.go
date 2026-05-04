@@ -201,7 +201,7 @@ func (r *ObjectStorageBucketResource) ValidateConfig(
 			resp.Diagnostics.AddAttributeError(
 				path.Root("static_site_index"),
 				"Missing Attribute Configuration",
-				//nolint:lll // minor
+
 				"Expected static_site_index to be present when serve_static_site is true",
 			)
 		}
@@ -212,7 +212,7 @@ func (r *ObjectStorageBucketResource) ValidateConfig(
 			resp.Diagnostics.AddAttributeError(
 				path.Root("public_list"),
 				"Missing Attribute Configuration",
-				//nolint:lll // minor
+
 				"Expected public_list to be true when serve_static_site is true",
 			)
 		}
@@ -223,7 +223,7 @@ func (r *ObjectStorageBucketResource) ValidateConfig(
 			resp.Diagnostics.AddAttributeError(
 				path.Root("public_read"),
 				"Missing Attribute Configuration",
-				//nolint:lll // minor
+
 				"Expected public_read to be true when serve_static_site is true",
 			)
 		}
@@ -232,7 +232,7 @@ func (r *ObjectStorageBucketResource) ValidateConfig(
 			resp.Diagnostics.AddAttributeError(
 				path.Root("static_site_index"),
 				"Invalid Attribute Configuration",
-				//nolint:lll // minor
+
 				"Expected static_site_index to not be present when serve_static_site is false",
 			)
 		}
@@ -241,7 +241,7 @@ func (r *ObjectStorageBucketResource) ValidateConfig(
 			resp.Diagnostics.AddAttributeError(
 				path.Root("static_site_error"),
 				"Invalid Attribute Configuration",
-				//nolint:lll // minor
+
 				"Expected static_site_error to not be present when serve_static_site is false",
 			)
 		}
@@ -316,7 +316,6 @@ func (r *ObjectStorageBucketResource) Create(
 		},
 	}
 
-	//nolint:lll // this is a generated function name.
 	res, err := r.M.Core.
 		PostOrganizationObjectStorageObjectStorageClusterBucketsWithResponse(ctx, args)
 	if err != nil {
@@ -523,19 +522,31 @@ func (r *ObjectStorageBucketResource) ObjectStorageBucketRead(
 	model.Region = types.StringValue(region)
 	model.Name = types.StringPointerValue(b.Name)
 
-	if b.Label.IsSpecified() && !b.Label.IsNull() && b.Label.MustGet() != "" {
-		model.Label = types.StringValue(b.Label.MustGet())
+	if b.Label.IsSpecified() {
+		if b.Label.IsNull() || b.Label.MustGet() == "" {
+			model.Label = types.StringNull()
+		} else {
+			model.Label = types.StringValue(b.Label.MustGet())
+		}
 	}
 
 	model.PublicURL = types.StringPointerValue(b.PublicUrl)
 	model.ServeStaticSite = types.BoolPointerValue(b.ServeStaticSite)
 
-	if b.StaticSiteError.IsSpecified() && !b.StaticSiteError.IsNull() {
-		model.StaticSiteError = types.StringValue(b.StaticSiteError.MustGet())
+	if b.StaticSiteError.IsSpecified() {
+		if b.StaticSiteError.IsNull() {
+			model.StaticSiteError = types.StringNull()
+		} else {
+			model.StaticSiteError = types.StringValue(b.StaticSiteError.MustGet())
+		}
 	}
 
-	if b.StaticSiteIndex.IsSpecified() && !b.StaticSiteIndex.IsNull() {
-		model.StaticSiteIndex = types.StringValue(b.StaticSiteIndex.MustGet())
+	if b.StaticSiteIndex.IsSpecified() {
+		if b.StaticSiteIndex.IsNull() {
+			model.StaticSiteIndex = types.StringNull()
+		} else {
+			model.StaticSiteIndex = types.StringValue(b.StaticSiteIndex.MustGet())
+		}
 	}
 
 	acl := b.AccessControlList

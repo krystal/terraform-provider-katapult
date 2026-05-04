@@ -159,7 +159,6 @@ func TestAccKatapultVMGroup_not_segregated(t *testing.T) {
 				),
 			},
 			{
-				//nolint:lll
 				ResourceName:      "katapult_virtual_machine_group.not-segregated",
 				ImportState:       true,
 				ImportStateVerify: true,
