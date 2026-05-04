@@ -66,9 +66,12 @@ resource "katapult_object_storage_bucket" "uploads" {
 - `label` (String) Optional bucket label in Katapult.
 - `public_list` (Boolean) Allow unauthenticated object listing. Defaults to `false`.
 - `public_read` (Boolean) Allow unauthenticated object reads. Defaults to `false`.
-- `public_url` (String) Public base URL for accessing objects in this bucket.
 - `read_key_ids` (Set of String) Access key IDs for reading this bucket.
 - `serve_static_site` (Boolean) Serves the bucket as a static site; requires `static_site_index`. Defaults to `false`.
 - `static_site_error` (String) Error document suffix, e.g. `.html`. HTTP errors redirect to `/[STATUS_CODE][value]`.
 - `static_site_index` (String) Default index doc, e.g. `index.html`. Required when `serve_static_site` is `true`.
 - `write_key_ids` (Set of String) Access key IDs for writing this bucket.
+
+### Read-Only
+
+- `public_url` (String) Public base URL for accessing objects in this bucket.

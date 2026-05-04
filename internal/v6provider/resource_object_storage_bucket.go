@@ -109,10 +109,8 @@ func (r *ObjectStorageBucketResource) Schema(
 				MarkdownDescription: "Optional bucket label in Katapult.",
 			},
 			"public_url": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
-				MarkdownDescription: "Public base URL for " +
-					"accessing objects in this bucket.",
+				Computed:            true,
+				MarkdownDescription: "Public base URL for accessing objects in this bucket.",
 			},
 			"serve_static_site": schema.BoolAttribute{
 				Optional: true,
