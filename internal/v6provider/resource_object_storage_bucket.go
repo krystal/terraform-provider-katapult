@@ -320,9 +320,15 @@ func (r *ObjectStorageBucketResource) Create(
 	res, err := r.M.Core.
 		PostOrganizationObjectStorageObjectStorageClusterBucketsWithResponse(ctx, args)
 	if err != nil {
+		errMsg := err.Error()
+		if res != nil {
+			errMsg = fmt.Sprintf("%s: %s", errMsg, string(res.Body))
+		}
+
 		resp.Diagnostics.AddError(
 			"error creating object storage bucket",
-			fmt.Sprintf("%s: %s", err.Error(), string(res.Body)))
+			errMsg,
+		)
 		return
 	}
 
