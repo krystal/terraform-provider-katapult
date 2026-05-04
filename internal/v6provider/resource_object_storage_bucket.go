@@ -468,7 +468,12 @@ func (r *ObjectStorageBucketResource) Update(
 
 	res, err := r.M.Core.PatchObjectStorageObjectStorageClusterBucketWithResponse(ctx, args)
 	if err != nil {
-		resp.Diagnostics.AddError("Object Storage Bucket Update Error", fmt.Sprintf("%s: %s", err.Error(), string(res.Body)))
+		errMsg := err.Error()
+		if res != nil {
+			errMsg = fmt.Sprintf("%s: %s", errMsg, string(res.Body))
+		}
+
+		resp.Diagnostics.AddError("Object Storage Bucket Update Error", errMsg)
 		return
 	}
 
