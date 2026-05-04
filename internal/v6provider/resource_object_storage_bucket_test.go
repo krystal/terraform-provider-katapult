@@ -83,6 +83,20 @@ func TestAccKatapultObjectStorageBucket_minimal(t *testing.T) {
 					),
 				),
 			},
+			{
+				ResourceName: "katapult_object_storage_bucket.main",
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs := s.RootModule().Resources["katapult_object_storage_bucket.main"]
+					if rs == nil {
+						return "", fmt.Errorf("resource not found")
+					}
+					return rs.Primary.Attributes["name"] + "/" +
+						rs.Primary.Attributes["region"], nil
+				},
+				ImportState:                          true,
+				ImportStateVerify:                    true,
+				ImportStateVerifyIdentifierAttribute: "name",
+			},
 		},
 	})
 }

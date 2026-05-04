@@ -509,6 +509,24 @@ func (r *ObjectStorageBucketResource) Delete(
 	}
 }
 
+func (r *ObjectStorageBucketResource) ImportState(
+	ctx context.Context,
+	req resource.ImportStateRequest,
+	resp *resource.ImportStateResponse,
+) {
+	parts := strings.SplitN(req.ID, "/", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		resp.Diagnostics.AddError(
+			"Invalid Import ID",
+			"Expected import ID in the format: name/region",
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("name"), parts[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("region"), parts[1])...)
+}
+
 func (r *ObjectStorageBucketResource) ObjectStorageBucketRead(
 	ctx context.Context,
 	name string,
