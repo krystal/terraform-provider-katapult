@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -359,6 +360,10 @@ func (r *ObjectStorageBucketResource) Read(
 		state.Region.ValueString(),
 		&state,
 	); err != nil {
+		if errors.Is(err, core.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Object Storage Bucket Read Error",
 			err.Error(),
