@@ -189,7 +189,6 @@ func (r *ObjectStorageAccessKeyResource) Create(
 		return
 	}
 
-	//nolint:lll // generated function and type names.
 	res, err := r.M.Core.PostOrganizationObjectStorageObjectStorageClusterAccessKeysWithResponse(
 		ctx,
 		core.PostOrganizationObjectStorageObjectStorageClusterAccessKeysJSONRequestBody{
@@ -218,7 +217,7 @@ func (r *ObjectStorageAccessKeyResource) Create(
 
 	keyID := res.JSON201.ObjectStorageAccessKey.Id
 
-	type credsResponse = core.PostObjectStorageAccessKeyGenerateCredentialsResponse //nolint:lll
+	type credsResponse = core.PostObjectStorageAccessKeyGenerateCredentialsResponse
 	var credsRes *credsResponse
 	credErr := retry.RetryContext(ctx, 5*time.Minute,
 		func() *retry.RetryError {
@@ -226,7 +225,7 @@ func (r *ObjectStorageAccessKeyResource) Create(
 			credsRes, callErr = r.M.Core.
 				PostObjectStorageAccessKeyGenerateCredentialsWithResponse(
 					ctx,
-					core.PostObjectStorageAccessKeyGenerateCredentialsJSONRequestBody{ //nolint:lll
+					core.PostObjectStorageAccessKeyGenerateCredentialsJSONRequestBody{
 						AccessKey: core.ObjectStorageAccessKeyLookup{
 							Id: keyID,
 						},

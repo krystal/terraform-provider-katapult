@@ -126,7 +126,7 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 				"katapult_virtual_machine":       resourceVirtualMachine(),
 				"katapult_virtual_machine_group": resourceVirtualMachineGroup(),
 			},
-			//nolint:lll
+
 			DataSourcesMap: map[string]*schema.Resource{
 				"katapult_data_center":              dataSourceDataCenter(),
 				"katapult_disk_template":            dataSourceDiskTemplate(),
@@ -149,15 +149,12 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 			// TEST RESOURCES
 			p.ResourcesMap["katapult_legacy_ip"] = resourceIP()
 
-			//nolint:lll // This is a test resource.
 			p.ResourcesMap["katapult_legacy_file_storage_volume"] = resourceFileStorageVolume()
 
 			// TEST DATA SOURCES
 
-			//nolint:lll // This is a test resource.
 			p.DataSourcesMap["katapult_legacy_file_storage_volume"] = dataSourceFileStorageVolume()
 
-			//nolint:lll // This is a test resource.
 			p.DataSourcesMap["katapult_legacy_file_storage_volumes"] = dataSourceFileStorageVolumes()
 		}
 

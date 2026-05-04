@@ -860,7 +860,6 @@ func TestAccKatapultSecurityGroup_dynamic_rules(t *testing.T) {
 		CheckDestroy:      testAccCheckKatapultSecurityGroupDestroy(tt),
 		Steps: []resource.TestStep{
 			{
-				//nolint:lll
 				Config: undent.Stringf(`
 					locals {
 						my_rules = {

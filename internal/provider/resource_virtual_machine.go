@@ -1130,7 +1130,6 @@ func fetchAllVMNetworkInterfaces(
 	return vmnets, nil
 }
 
-//nolint:lll
 func nextFetchAllVMNetworkInterfaces(
 	ctx context.Context,
 	m *Meta,
@@ -1213,7 +1212,6 @@ func addVirtualNetowrksToVirtualMachine(
 	return nil
 }
 
-//nolint:lll
 func addVirtualNetowrkToVirtualMachine(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -1271,7 +1269,6 @@ func removeNetworkInterfacesFromVirtualMachine(
 	return nil
 }
 
-//nolint:lll
 func removeNetworkInterfaceFromVirtualMachine(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -1369,7 +1366,6 @@ func attachVirtualMachineNetworkInterfaces(
 	return nil
 }
 
-//nolint:lll
 func attachVirtualMachineNetworkInterface(
 	ctx context.Context,
 	m *Meta,
@@ -1406,7 +1402,6 @@ func attachVirtualMachineNetworkInterface(
 	return nil
 }
 
-//nolint:lll
 func detatchVirtualMachineNetworkInterface(
 	ctx context.Context,
 	m *Meta,

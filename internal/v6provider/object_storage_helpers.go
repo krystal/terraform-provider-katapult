@@ -42,7 +42,7 @@ func objectStorageAccountCreate(
 	res, err := m.Core.
 		PostOrganizationObjectStorageObjectStorageClusterWithResponse(
 			ctx,
-			//nolint:lll // generated type name.
+
 			core.PostOrganizationObjectStorageObjectStorageClusterJSONRequestBody{
 				ObjectStorageCluster: core.ObjectStorageClusterLookup{
 					Region: &region,

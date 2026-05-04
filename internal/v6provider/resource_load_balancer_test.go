@@ -25,7 +25,6 @@ func testSweepLoadBalancers(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()
 
-	//nolint:lll // type is generated
 	var loadBalancers []core.GetOrganizationLoadBalancers200ResponseLoadBalancers
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {

@@ -19,7 +19,7 @@ func TestAccKatapultAddressListEntry_minimal(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:             testAccCheckKatapultAddressListEntryDestroy(tt), //nolint:lll // helper
+		CheckDestroy:             testAccCheckKatapultAddressListEntryDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -66,7 +66,7 @@ func TestAccKatapultAddressListEntry_update(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:             testAccCheckKatapultAddressListEntryDestroy(tt), //nolint:lll // helper
+		CheckDestroy:             testAccCheckKatapultAddressListEntryDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`

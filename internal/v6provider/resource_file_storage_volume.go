@@ -528,6 +528,5 @@ func waitForFileStorageVolumeToBeReady(
 		return nil, err
 	}
 
-	//nolint:lll // Generated type names are long.
 	return readyFSV.(*core.GetFileStorageVolume200ResponseFileStorageVolume), err
 }
