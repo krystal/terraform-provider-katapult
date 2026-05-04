@@ -99,6 +99,9 @@ func (r *ObjectStorageBucketResource) Schema(
 				Required: true,
 				MarkdownDescription: "Region permalink, e.g. " +
 					"`uk-lon-1`. Cannot be changed after creation.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"label": schema.StringAttribute{
 				Optional:            true,
