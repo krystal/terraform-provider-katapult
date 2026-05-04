@@ -534,19 +534,19 @@ func (r *ObjectStorageBucketResource) ObjectStorageBucketRead(
 	model.ServeStaticSite = types.BoolPointerValue(b.ServeStaticSite)
 
 	if b.StaticSiteError.IsSpecified() {
-		if b.StaticSiteError.IsNull() {
-			model.StaticSiteError = types.StringNull()
-		} else {
-			model.StaticSiteError = types.StringValue(b.StaticSiteError.MustGet())
+		v := ""
+		if !b.StaticSiteError.IsNull() {
+			v = b.StaticSiteError.MustGet()
 		}
+		model.StaticSiteError = types.StringValue(v)
 	}
 
 	if b.StaticSiteIndex.IsSpecified() {
-		if b.StaticSiteIndex.IsNull() {
-			model.StaticSiteIndex = types.StringNull()
-		} else {
-			model.StaticSiteIndex = types.StringValue(b.StaticSiteIndex.MustGet())
+		v := ""
+		if !b.StaticSiteIndex.IsNull() {
+			v = b.StaticSiteIndex.MustGet()
 		}
+		model.StaticSiteIndex = types.StringValue(v)
 	}
 
 	acl := b.AccessControlList
