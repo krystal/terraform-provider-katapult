@@ -121,10 +121,9 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"katapult_security_group":        resourceSecurityGroup(),
-				"katapult_security_group_rule":   resourceSecurityGroupRule(),
-				"katapult_virtual_machine":       resourceVirtualMachine(),
-				"katapult_virtual_machine_group": resourceVirtualMachineGroup(),
+				"katapult_security_group":      resourceSecurityGroup(),
+				"katapult_security_group_rule": resourceSecurityGroupRule(),
+				"katapult_virtual_machine":     resourceVirtualMachine(),
 			},
 			//nolint:lll
 			DataSourcesMap: map[string]*schema.Resource{
@@ -138,8 +137,6 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 				"katapult_security_group_rules":     dataSourceSecurityGroupRules(),
 				"katapult_security_groups":          dataSourceSecurityGroups(),
 				"katapult_virtual_machine":          dataSourceVirtualMachine(),
-				"katapult_virtual_machine_group":    dataSourceVirtualMachineGroup(),
-				"katapult_virtual_machine_groups":   dataSourceVirtualMachineGroups(),
 				"katapult_virtual_machine_package":  dataSourceVirtualMachinePackage(),
 				"katapult_virtual_machine_packages": dataSourceVirtualMachinePackages(),
 			},

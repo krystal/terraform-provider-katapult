@@ -3,12 +3,12 @@
 page_title: "katapult_virtual_machine_group Data Source - terraform-provider-katapult"
 subcategory: ""
 description: |-
-  
+  Retrieve details of an existing Virtual Machine Group by ID.
 ---
 
 # katapult_virtual_machine_group (Data Source)
 
-
+Retrieve details of an existing Virtual Machine Group by ID.
 
 ## Example Usage
 
@@ -24,9 +24,9 @@ data "katapult_virtual_machine_group" "group-1" {
 
 ### Required
 
-- `id` (String) The ID of this resource.
+- `id` (String) The unique identifier of the Virtual Machine Group to retrieve.
 
 ### Read-Only
 
-- `name` (String)
-- `segregate` (Boolean)
+- `name` (String) The name of the Virtual Machine Group.
+- `segregate` (Boolean) Whether Virtual Machines in this group are segregated across separate host machines.
