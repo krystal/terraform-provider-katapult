@@ -120,8 +120,8 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 		MarkdownDescription: "Manages a Virtual Machine in Katapult.\n\n" +
 			"~> **Warning:** Deleting a virtual machine resource will by " +
 			"default purge the VM from Katapult's trash, permanently " +
-			"deleting it. Set `skip_trash_object_purge` on the provider " +
-			"to keep it in the trash instead.",
+			"deleting it. Set `skip_trash_object_purge` on the " +
+			"provider to keep it in the trash instead.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
