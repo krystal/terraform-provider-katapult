@@ -247,7 +247,7 @@ func newVCRRecorder(t *testing.T) *recorder.Recorder {
 		t.Fatal(err)
 	}
 
-	r.AddFilter(func(i *cassette.Interaction) error {
+	r.AddSaveFilter(func(i *cassette.Interaction) error {
 		delete(i.Request.Headers, "Authorization")
 
 		return nil

@@ -231,7 +231,7 @@ func (r *ObjectStorageAccessKeyResource) Create(
 						},
 					},
 				)
-			if callErr != nil {
+			if credsRes == nil {
 				return retry.NonRetryableError(callErr)
 			}
 
