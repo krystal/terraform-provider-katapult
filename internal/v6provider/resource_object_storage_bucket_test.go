@@ -578,7 +578,6 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_error_forbidden(t *
 // Helpers
 //
 
-//nolint:unparam // res is designed to accept different resource names
 func testAccCheckKatapultObjectStorageBucketAttrs(
 	tt *testTools,
 	res string,
