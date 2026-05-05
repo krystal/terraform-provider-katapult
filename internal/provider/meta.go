@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"time"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
@@ -16,6 +18,7 @@ type Meta struct {
 
 	GeneratedNamePrefix  string
 	SkipTrashObjectPurge bool
+	testMode             bool
 
 	// Raw provider attribute string values
 	confAPIKey       string
@@ -25,6 +28,24 @@ type Meta struct {
 	// Internal cache of shallow lookup reference objects
 	DataCenterRef   core.DataCenterRef
 	OrganizationRef core.OrganizationRef
+}
+
+// stateChangeDelay returns 0 in test mode (VCR replay), or d in production.
+func (m *Meta) stateChangeDelay(d time.Duration) time.Duration {
+	if m.testMode {
+		return 0
+	}
+	return d
+}
+
+// stateChangePollInterval returns 1ms in test mode so the SDK uses a fixed fast
+// interval instead of its exponential backoff between poll iterations.
+// Returns 0 in production so the SDK's default backoff applies.
+func (m *Meta) stateChangePollInterval() time.Duration {
+	if m.testMode {
+		return time.Millisecond
+	}
+	return 0
 }
 
 func (m *Meta) UseOrGenerateName(name string) string {

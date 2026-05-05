@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/dnaeon/go-vcr/cassette"
@@ -107,24 +108,24 @@ func newTestTools(t *testing.T) *testTools {
 		testAccResourceNamePrefix, v6config.HTTPClient, "", "")
 	require.NoError(t, err)
 
+	if r != nil && r.Mode() == recorder.ModeReplaying {
+		meta.testMode = true
+		meta.retryClient.RetryMax = 0
+		meta.retryClient.RetryWaitMin = 0
+		meta.retryClient.RetryWaitMax = 0
+		v5Config.TestMode = true
+	}
+
 	v6config.m = meta
 
-	upgradedSDKServer, err := tf5to6server.UpgradeServer(
-		ctx, v5provider.New(v5Config)().GRPCProvider,
+	// UpgradeServer and NewMuxServer call GetProviderSchema on each sub-provider
+	// to build a routing table. Deferred into the factory so this work runs
+	// in parallel (after t.Parallel()) rather than serially during setup.
+	var (
+		muxOnce     sync.Once
+		muxedServer tfprotov6.ProviderServer
+		muxErr      error
 	)
-	if err != nil {
-		require.NoError(t, err)
-	}
-
-	providers := []func() tfprotov6.ProviderServer{
-		func() tfprotov6.ProviderServer { return upgradedSDKServer },
-		providerserver.NewProtocol6(New(v6config)()),
-	}
-
-	muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	return &testTools{
 		T:        t,
@@ -134,7 +135,31 @@ func newTestTools(t *testing.T) *testTools {
 		ProviderFactories: providerFactoryList{
 			//nolint:unparam // must return an error to match the map signature
 			"katapult": func() (tfprotov6.ProviderServer, error) {
-				return muxServer.ProviderServer(), nil
+				muxOnce.Do(func() {
+					upgradedSDKServer, err := tf5to6server.UpgradeServer(
+						ctx, v5provider.New(v5Config)().GRPCProvider,
+					)
+					if err != nil {
+						muxErr = err
+						return
+					}
+
+					providers := []func() tfprotov6.ProviderServer{
+						func() tfprotov6.ProviderServer { return upgradedSDKServer },
+						providerserver.NewProtocol6(New(v6config)()),
+					}
+
+					mux, err := tf6muxserver.NewMuxServer(ctx, providers...)
+					if err != nil {
+						muxErr = err
+						return
+					}
+					muxedServer = mux.ProviderServer()
+				})
+				if muxErr != nil {
+					log.Fatal(muxErr)
+				}
+				return muxedServer, nil
 			},
 		},
 	}
