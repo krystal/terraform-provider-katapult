@@ -1628,7 +1628,7 @@ func allocateIPsToVM(
 			)
 		}
 
-		_, err = m.Core.
+		resp, err := m.Core.
 			PostVirtualMachineNetworkInterfaceAllocateIpWithResponse(
 				ctx,
 				core.PostVirtualMachineNetworkInterfaceAllocateIpJSONRequestBody{
@@ -1640,6 +1640,9 @@ func allocateIPsToVM(
 				},
 			)
 		if err != nil {
+			if resp != nil {
+				return genericAPIError(err, resp.Body)
+			}
 			return err
 		}
 	}
