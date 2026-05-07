@@ -979,7 +979,21 @@ func testAccCheckKatapultVirtualMachineDestroy(
 				&core.GetTrashObjectParams{
 					TrashObjectObjectId: &rs.Primary.ID,
 				})
-			if err == nil && trashRes.JSON200 != nil {
+			if err != nil {
+				if trashRes != nil && trashRes.JSON404 != nil {
+					continue
+				}
+				if errors.Is(err, core.ErrNotFound) {
+					continue
+				}
+
+				return fmt.Errorf(
+					"error looking up trashed katapult_virtual_machine %s: %w",
+					rs.Primary.ID,
+					err,
+				)
+			}
+			if trashRes.JSON200 != nil {
 				return fmt.Errorf(
 					"katapult_virtual_machine %s was deleted "+
 						"but not purged from trash",
