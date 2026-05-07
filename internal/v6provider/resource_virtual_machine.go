@@ -776,16 +776,25 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		state.GroupID.ValueString() != ""
 	setGroup := !plan.GroupID.IsNull() &&
 		!plan.GroupID.IsUnknown() &&
-		!plan.GroupID.Equal(state.GroupID)
+		!plan.GroupID.Equal(state.GroupID) &&
+		plan.GroupID.ValueString() != ""
 
 	// Build a custom PATCH body so we can send "group": null when clearing.
 	props := vmGroupPatchProperties{
 		VirtualMachineArguments: args,
 	}
-	if clearGroup {
+
+	switch {
+	case clearGroup:
 		nullGroup := json.RawMessage(`null`)
 		props.Group = &nullGroup
-	} else if setGroup {
+	case !plan.GroupID.IsNull() &&
+		!plan.GroupID.IsUnknown() &&
+		!plan.GroupID.Equal(state.GroupID) &&
+		plan.GroupID.ValueString() == "":
+		nullGroup := json.RawMessage(`null`)
+		props.Group = &nullGroup
+	case setGroup:
 		groupBytes, _ := json.Marshal(
 			core.VirtualMachineGroupLookup{Id: plan.GroupID.ValueStringPointer()},
 		)
@@ -1275,6 +1284,13 @@ func (r *VirtualMachineResource) vmRead(
 		)
 		model.IPAddresses = types.SetValueMust(
 			types.StringType, ipAddrs,
+		)
+	} else {
+		model.IPAddressIDs = types.SetValueMust(
+			types.StringType, make([]attr.Value, 0),
+		)
+		model.IPAddresses = types.SetValueMust(
+			types.StringType, make([]attr.Value, 0),
 		)
 	}
 
