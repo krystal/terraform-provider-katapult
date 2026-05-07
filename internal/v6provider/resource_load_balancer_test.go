@@ -34,9 +34,11 @@ func testSweepLoadBalancers(_ string) error {
 				Page:           &pageNum,
 			})
 		if err != nil {
+			if res.JSON404 != nil {
+				return nil
+			}
 			return err
 		}
-
 		resp := res.JSON200
 
 		totalPages = resp.Pagination.TotalPages.MustGet()

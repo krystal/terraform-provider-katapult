@@ -48,6 +48,7 @@ type (
 		Disk                types.List   `tfsdk:"disk"`
 		IPAddressIDs        types.Set    `tfsdk:"ip_address_ids"`
 		IPAddresses         types.Set    `tfsdk:"ip_addresses"`
+		DiskIDs             types.Set    `tfsdk:"disk_ids"`
 		VirtualNetworkIDs   types.Set    `tfsdk:"virtual_network_ids"`
 		NetworkSpeedProfile types.String `tfsdk:"network_speed_profile"`
 		NetworkInterfaces   types.List   `tfsdk:"network_interfaces"`
@@ -202,6 +203,20 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 				ElementType: types.StringType,
 				MarkdownDescription: "Set of IP addresses allocated to " +
 					"the Virtual Machine.",
+			},
+			"disk_ids": schema.SetAttribute{
+				Optional:    true,
+				Computed:    true,
+				ElementType: types.StringType,
+				MarkdownDescription: "Set of additional disk IDs to attach " +
+					"to the Virtual Machine. Managed as `katapult_disk` " +
+					"resources. Destroying the VM detaches these disks " +
+					"but does **not** delete them. Use the " +
+					"`katapult_virtual_machine_disks` data source to read " +
+					"the full list of disks currently attached to a VM.",
+				PlanModifiers: []planmodifier.Set{
+					NullToEmptySetPlanModifier(),
+				},
 			},
 			"virtual_network_ids": schema.SetAttribute{
 				Optional:    true,
@@ -686,6 +701,18 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 		return
 	}
 
+	if !plan.DiskIDs.IsNull() && !plan.DiskIDs.IsUnknown() {
+		var diskIDs []string
+		resp.Diagnostics.Append(plan.DiskIDs.ElementsAs(ctx, &diskIDs, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		if err := assignAndAttachDisksToVM(ctx, r.M, vmID, diskIDs, timeout); err != nil {
+			resp.Diagnostics.AddError("Create Error", err.Error())
+			return
+		}
+	}
+
 	if err := r.vmRead(ctx, &plan); err != nil {
 		resp.Diagnostics.AddError("Read Error", err.Error())
 		return
@@ -737,6 +764,7 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 
 	timeout := 10 * time.Minute
 	vmID := state.ID.ValueString()
+	desiredNetworkSpeedProfile := plan.NetworkSpeedProfile
 
 	args := core.VirtualMachineArguments{}
 
@@ -866,6 +894,40 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		}
 	}
 
+	targetDiskIDs := plan.DiskIDs
+	if targetDiskIDs.IsUnknown() {
+		resp.Diagnostics.Append(
+			req.Config.GetAttribute(
+				ctx,
+				path.Root("disk_ids"),
+				&targetDiskIDs,
+			)...,
+		)
+	}
+	if !targetDiskIDs.IsUnknown() && !targetDiskIDs.Equal(state.DiskIDs) {
+		targetIDs, diags := stringSetValueStrings(ctx, targetDiskIDs)
+		resp.Diagnostics.Append(diags...)
+
+		stateIDs, diags := stringSetValueStrings(ctx, state.DiskIDs)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		for _, id := range stringsDiff(stateIDs, targetIDs) {
+			if err := detachAndUnassignDisk(ctx, r.M, id, timeout); err != nil {
+				resp.Diagnostics.AddError("Update Error", err.Error())
+				return
+			}
+		}
+		if err := assignAndAttachDisksToVM(
+			ctx, r.M, vmID, stringsDiff(targetIDs, stateIDs), timeout,
+		); err != nil {
+			resp.Diagnostics.AddError("Update Error", err.Error())
+			return
+		}
+	}
+
 	targetVnetIDs := plan.VirtualNetworkIDs
 	if targetVnetIDs.IsUnknown() {
 		resp.Diagnostics.Append(
@@ -876,98 +938,104 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 			)...,
 		)
 	}
-	if !targetVnetIDs.IsUnknown() &&
-		!targetVnetIDs.Equal(state.VirtualNetworkIDs) {
+	if !targetVnetIDs.IsUnknown() {
 		targetIDs, diags := stringSetValueStrings(ctx, targetVnetIDs)
+		resp.Diagnostics.Append(diags...)
+
+		stateVnetIDs, diags := stringSetValueStrings(
+			ctx, state.VirtualNetworkIDs,
+		)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		ifaces, err := fetchAllVMNetworkInterfaces(ctx, r.M, vmID)
-		if err != nil {
-			resp.Diagnostics.AddError("Update Error", err.Error())
-			return
-		}
-
-		attachedVnetIDs := make([]string, 0)
-		detachedVnets := make(map[string]string)
-		for _, iface := range ifaces {
-			if !iface.VirtualNetwork.IsSpecified() || iface.Id == nil {
-				continue
-			}
-			vnet, err2 := iface.VirtualNetwork.Get()
-			if err2 != nil || vnet.Id == nil {
-				continue
-			}
-			if iface.State == nil {
-				continue
-			}
-			if *iface.State == "attached" {
-				attachedVnetIDs = append(
-					attachedVnetIDs, *vnet.Id,
-				)
-			} else if *iface.State == "detached" {
-				detachedVnets[*vnet.Id] = *iface.Id
-			}
-		}
-
-		missingVnetIDs := stringsDiff(targetIDs, attachedVnetIDs)
-		removeVnetIDs := stringsDiff(attachedVnetIDs, targetIDs)
-
-		var addVnetIDs, attachIfaceIDs []string
-		for _, id := range missingVnetIDs {
-			if ifaceID, ok := detachedVnets[id]; ok {
-				attachIfaceIDs = append(attachIfaceIDs, ifaceID)
-			} else {
-				addVnetIDs = append(addVnetIDs, id)
-			}
-		}
-
-		nsp := plan.NetworkSpeedProfile.ValueString()
-		for _, vnID := range addVnetIDs {
-			if e := addVirtualNetworkToVM(
-				ctx, r.M, vmID, vnID, nsp, timeout,
-			); e != nil {
-				resp.Diagnostics.AddError("Update Error", e.Error())
+		if len(stringsDiff(targetIDs, stateVnetIDs)) != 0 ||
+			len(stringsDiff(stateVnetIDs, targetIDs)) != 0 {
+			ifaces, err := fetchAllVMNetworkInterfaces(ctx, r.M, vmID)
+			if err != nil {
+				resp.Diagnostics.AddError("Update Error", err.Error())
 				return
 			}
-		}
 
-		for _, ifaceID := range attachIfaceIDs {
-			if e := attachVMNetworkInterface(
-				ctx, r.M, ifaceID, timeout,
-			); e != nil {
-				resp.Diagnostics.AddError("Update Error", e.Error())
-				return
-			}
-		}
-
-		var removeIfaceIDs []string
-		for _, id := range removeVnetIDs {
+			attachedVnetIDs := make([]string, 0)
+			detachedVnets := make(map[string]string)
 			for _, iface := range ifaces {
-				if !iface.VirtualNetwork.IsSpecified() ||
-					iface.Id == nil {
+				if !iface.VirtualNetwork.IsSpecified() || iface.Id == nil {
 					continue
 				}
 				vnet, err2 := iface.VirtualNetwork.Get()
 				if err2 != nil || vnet.Id == nil {
 					continue
 				}
-				if *vnet.Id == id {
-					removeIfaceIDs = append(
-						removeIfaceIDs, *iface.Id,
+				if iface.State == nil {
+					continue
+				}
+				if *iface.State == "attached" {
+					attachedVnetIDs = append(
+						attachedVnetIDs, *vnet.Id,
 					)
+				} else if *iface.State == "detached" {
+					detachedVnets[*vnet.Id] = *iface.Id
 				}
 			}
-		}
 
-		for _, ifaceID := range removeIfaceIDs {
-			if e := removeVMNetworkInterface(
-				ctx, r.M, ifaceID, timeout,
-			); e != nil {
-				resp.Diagnostics.AddError("Update Error", e.Error())
-				return
+			missingVnetIDs := stringsDiff(targetIDs, attachedVnetIDs)
+			removeVnetIDs := stringsDiff(attachedVnetIDs, targetIDs)
+
+			var addVnetIDs, attachIfaceIDs []string
+			for _, id := range missingVnetIDs {
+				if ifaceID, ok := detachedVnets[id]; ok {
+					attachIfaceIDs = append(attachIfaceIDs, ifaceID)
+				} else {
+					addVnetIDs = append(addVnetIDs, id)
+				}
+			}
+
+			nsp := plan.NetworkSpeedProfile.ValueString()
+			for _, vnID := range addVnetIDs {
+				if e := addVirtualNetworkToVM(
+					ctx, r.M, vmID, vnID, nsp, timeout,
+				); e != nil {
+					resp.Diagnostics.AddError("Update Error", e.Error())
+					return
+				}
+			}
+
+			for _, ifaceID := range attachIfaceIDs {
+				if e := attachVMNetworkInterface(
+					ctx, r.M, ifaceID, timeout,
+				); e != nil {
+					resp.Diagnostics.AddError("Update Error", e.Error())
+					return
+				}
+			}
+
+			var removeIfaceIDs []string
+			for _, id := range removeVnetIDs {
+				for _, iface := range ifaces {
+					if !iface.VirtualNetwork.IsSpecified() ||
+						iface.Id == nil {
+						continue
+					}
+					vnet, err2 := iface.VirtualNetwork.Get()
+					if err2 != nil || vnet.Id == nil {
+						continue
+					}
+					if *vnet.Id == id {
+						removeIfaceIDs = append(
+							removeIfaceIDs, *iface.Id,
+						)
+					}
+				}
+			}
+
+			for _, ifaceID := range removeIfaceIDs {
+				if e := removeVMNetworkInterface(
+					ctx, r.M, ifaceID, timeout,
+				); e != nil {
+					resp.Diagnostics.AddError("Update Error", e.Error())
+					return
+				}
 			}
 		}
 	}
@@ -986,12 +1054,27 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		resp.Diagnostics.AddError("Read Error", err.Error())
 		return
 	}
-	if !plan.NetworkSpeedProfile.Equal(state.NetworkSpeedProfile) &&
-		plan.NetworkSpeedProfile.ValueString() == "" {
-		plan.NetworkSpeedProfile = types.StringNull()
+	if !desiredNetworkSpeedProfile.Equal(state.NetworkSpeedProfile) {
+		if desiredNetworkSpeedProfile.ValueString() == "" {
+			plan.NetworkSpeedProfile = types.StringNull()
+		} else {
+			plan.NetworkSpeedProfile = targetNetworkSpeedProfile(
+				desiredNetworkSpeedProfile,
+			)
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+}
+
+func targetNetworkSpeedProfile(
+	target types.String,
+) types.String {
+	if target.ValueString() == "" {
+		return types.StringNull()
+	}
+
+	return types.StringValue(target.ValueString())
 }
 
 func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
@@ -1007,6 +1090,18 @@ func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 
 	timeout := 10 * time.Minute
 	vmID := state.ID.ValueString()
+
+	var diskIDs []string
+	resp.Diagnostics.Append(state.DiskIDs.ElementsAs(ctx, &diskIDs, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	for _, id := range diskIDs {
+		if err := detachAndUnassignDisk(ctx, r.M, id, timeout); err != nil {
+			resp.Diagnostics.AddError("Delete Error", err.Error())
+			return
+		}
+	}
 
 	vmRes, err := r.M.Core.GetVirtualMachineWithResponse(ctx,
 		&core.GetVirtualMachineParams{VirtualMachineId: &vmID})
@@ -1201,6 +1296,10 @@ func (r *VirtualMachineResource) vmRead(
 		return err
 	}
 
+	if e := refreshManagedDiskIDs(ctx, r.M, vmID, model); e != nil {
+		return e
+	}
+
 	vnetIDs := make([]attr.Value, 0)
 	for _, iface := range ifaces {
 		if !iface.VirtualNetwork.IsSpecified() || iface.Id == nil {
@@ -1317,6 +1416,59 @@ func (r *VirtualMachineResource) vmRead(
 		return err
 	}
 	model.NetworkInterfaces = niList
+
+	return nil
+}
+
+// refreshManagedDiskIDs intersects the disk_ids currently in state (the disks
+// Terraform manages on this VM) with the disks the API reports as attached.
+// This detects drift for managed disks (e.g. detached out-of-band) without
+// re-adopting them: if a managed disk is detached out-of-band, the next
+// refresh removes it from disk_ids in state. This also avoids adopting
+// unmanaged disks (inline `disk` block system disks or disks attached
+// via the UI). When state has no managed disk_ids configured, disk_ids is
+// normalized to an explicit empty set so the post-apply state is known.
+func refreshManagedDiskIDs(
+	ctx context.Context,
+	m *Meta,
+	vmID string,
+	model *VirtualMachineResourceModel,
+) error {
+	disks, err := fetchAllVMDisks(ctx, m, vmID)
+	if err != nil {
+		return err
+	}
+
+	if model.DiskIDs.IsNull() || model.DiskIDs.IsUnknown() ||
+		len(model.DiskIDs.Elements()) == 0 {
+		model.DiskIDs = types.SetValueMust(
+			types.StringType, make([]attr.Value, 0),
+		)
+		return nil
+	}
+
+	attached := make(map[string]struct{}, len(disks))
+	for _, attachment := range disks {
+		if !isAdditionalDiskAttachment(attachment) {
+			continue
+		}
+		if attachment.Disk != nil && attachment.Disk.Id != nil {
+			attached[*attachment.Disk.Id] = struct{}{}
+		}
+	}
+
+	var managed []string
+	if d := model.DiskIDs.ElementsAs(ctx, &managed, false); d.HasError() {
+		return fmt.Errorf("reading disk_ids from state: %s", d)
+	}
+
+	stillAttached := make([]attr.Value, 0, len(managed))
+	for _, id := range managed {
+		if _, ok := attached[id]; ok {
+			stillAttached = append(stillAttached, types.StringValue(id))
+		}
+	}
+	model.DiskIDs = types.SetValueMust(types.StringType, stillAttached)
 
 	return nil
 }

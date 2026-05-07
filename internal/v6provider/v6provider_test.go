@@ -195,6 +195,7 @@ func (tt *testTools) RandID() string {
 
 	rand := randsmust.Alphanumeric(12)
 	if tt.Recorder == nil {
+		tt.randID = rand
 		return rand
 	}
 
@@ -211,6 +212,7 @@ func (tt *testTools) RandID() string {
 		require.NoError(tt.T, err, "failed to write rand VCR resource ID")
 	}
 
+	tt.randID = rand
 	return rand
 }
 

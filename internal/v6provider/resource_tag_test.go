@@ -35,6 +35,9 @@ func testSweepTags(_ string) error {
 				PerPage:        &pageSize,
 			})
 		if err != nil {
+			if res.JSON404 != nil {
+				return nil
+			}
 			return err
 		}
 
