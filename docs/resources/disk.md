@@ -50,5 +50,5 @@ resource "katapult_disk" "data" {
 Import is supported using the following syntax:
 
 ```shell
-terraform import katapult_disk.example disk_xxxxxxxxxxx
+terraform import katapult_disk.data disk_xxxxxxxxxxx
 ```
