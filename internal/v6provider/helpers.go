@@ -128,8 +128,12 @@ func waitForTrashObjectNotFound(
 				params.TrashObjectObjectId = trashObject.ObjectId
 			}
 			_, e := m.Core.GetTrashObjectWithResponse(ctx, params)
-			if e != nil && errors.Is(e, core.ErrNotFound) {
-				return 1, "not_found", nil
+			if e != nil {
+				if errors.Is(e, core.ErrNotFound) {
+					return 1, "not_found", nil
+				}
+
+				return nil, "", e
 			}
 
 			return nil, "exists", nil
