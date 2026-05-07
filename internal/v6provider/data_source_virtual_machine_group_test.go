@@ -1,10 +1,10 @@
-package provider
+package v6provider
 
 import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/jimeh/undent"
 )
 
@@ -14,11 +14,9 @@ func TestAccKatapultDataSourceVMGroup_basic(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
-			testAccCheckKatapultVMGroupDestroy(tt),
-		),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultVMGroupDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -55,11 +53,9 @@ func TestAccKatapultDataSourceVMGroup_not_segregated(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
-			testAccCheckKatapultVMGroupDestroy(tt),
-		),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultVMGroupDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -95,17 +91,15 @@ func TestAccKatapultDataSourceVMGroup_blank(t *testing.T) {
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: `data "katapult_virtual_machine_group" "src" {}`,
-				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta(
-						"The argument \"id\" is required, but no definition " +
-							"was found.",
-					),
-				),
+				ExpectError: regexp.MustCompile(regexp.QuoteMeta(
+					`The argument "id" is required, ` +
+						`but no definition was found.`,
+				)),
 			},
 		},
 	})

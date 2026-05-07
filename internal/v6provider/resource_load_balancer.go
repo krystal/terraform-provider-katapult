@@ -409,7 +409,6 @@ func extractLoadBalancerResourceTypeAndIDs(
 	var list []attr.Value
 	ids := []string{}
 
-	//nolint:lll
 	switch {
 	case !model.VirtualMachineIDs.IsNull() && len(model.VirtualMachineIDs.Elements()) > 0:
 		t = core.VirtualMachines

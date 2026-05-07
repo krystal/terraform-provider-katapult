@@ -3,15 +3,15 @@
 page_title: "katapult_virtual_machine Resource - terraform-provider-katapult"
 subcategory: ""
 description: |-
-  The Virtual Machine resource allows you to create and manage Virtual Machines in Katapult.
-  ~> Warning: Deleting a virtual machine resource with Terraform will by default purge the VM from Katapult's trash, permanently deleting it. If you wish to instead keep a deleted VM in the trash, set theskip_trash_object_purge provider option to true. By default, objects in the trash are permanently deleted after 48 hours.
+  Manages a Virtual Machine in Katapult.
+  ~> Warning: Deleting a virtual machine resource will by default purge the VM from Katapult's trash, permanently deleting it. Set skip_trash_object_purge on the provider to keep it in the trash instead.
 ---
 
 # katapult_virtual_machine (Resource)
 
-The Virtual Machine resource allows you to create and manage Virtual Machines in Katapult.
+Manages a Virtual Machine in Katapult.
 
-~> **Warning:** Deleting a virtual machine resource with Terraform will by default purge the VM from Katapult's trash, permanently deleting it. If you wish to instead keep a deleted VM in the trash, set the`skip_trash_object_purge` provider option to `true`. By default, objects in the trash are permanently deleted after 48 hours.
+~> **Warning:** Deleting a virtual machine resource will by default purge the VM from Katapult's trash, permanently deleting it. Set `skip_trash_object_purge` on the provider to keep it in the trash instead.
 
 ## Example Usage
 
@@ -77,30 +77,29 @@ resource "katapult_virtual_machine" "base" {
 
 ### Required
 
-- `disk_template` (String) Permalink or ID of a Disk Template.
-- `ip_address_ids` (Set of String) One or more IP IDs.
-- `package` (String) Permalink or ID of a Virtual Machine Package.
+- `disk_template` (String) Permalink or ID of the Disk Template to use.
+- `ip_address_ids` (Set of String) Set of IP address IDs to allocate to the Virtual Machine.
+- `package` (String) Permalink or ID of the Virtual Machine Package to use.
 
 ### Optional
 
-- `description` (String)
-- `disk` (Block List) Specify one or more disks with custom sizes to create and attach to the Virtual Machine during creation. First defined disk will be used as the boot disk. If no disks are defined, a single disk will be created based on the chosen package. (see [below for nested schema](#nestedblock--disk))
-- `disk_template_options` (Map of String)
-- `group_id` (String)
-- `hostname` (String)
-- `name` (String)
-- `network_speed_profile` (String) Permalink of a Network Speed Profile.
-- `tags` (Set of String)
-- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-- `virtual_network_ids` (Set of String) Virtual Networks attached to the VM.
+- `description` (String) A description for the Virtual Machine.
+- `disk` (Block List) One or more disks with custom sizes to create and attach during creation. The first disk is the boot disk. If omitted, a single disk is created from the chosen package. (see [below for nested schema](#nestedblock--disk))
+- `disk_template_options` (Map of String) Options to pass to the Disk Template during creation.
+- `group_id` (String) The ID of the Virtual Machine Group to assign this Virtual Machine to.
+- `hostname` (String) The hostname of the Virtual Machine. If not provided, a hostname is generated.
+- `name` (String) The name of the Virtual Machine. If not provided, a name is generated automatically.
+- `network_speed_profile` (String) Permalink of the Network Speed Profile to apply to all network interfaces.
+- `tags` (Set of String) Set of tag names to assign to the Virtual Machine.
+- `virtual_network_ids` (Set of String) Set of Virtual Network IDs to attach to the Virtual Machine.
 
 ### Read-Only
 
-- `fqdn` (String)
-- `id` (String) The ID of this resource.
-- `ip_addresses` (Set of String)
-- `network_interfaces` (List of Object) Network interface details for the virtual machine. (see [below for nested schema](#nestedatt--network_interfaces))
-- `state` (String)
+- `fqdn` (String) The fully-qualified domain name of the Virtual Machine.
+- `id` (String) The unique identifier of the Virtual Machine.
+- `ip_addresses` (Set of String) Set of IP addresses allocated to the Virtual Machine.
+- `network_interfaces` (Attributes List) Network interface details for the Virtual Machine. (see [below for nested schema](#nestedatt--network_interfaces))
+- `state` (String) The current state of the Virtual Machine.
 
 <a id="nestedblock--disk"></a>
 ### Nested Schema for `disk`
@@ -111,17 +110,7 @@ Required:
 
 Optional:
 
-- `name` (String) Name of the disk.
-
-
-<a id="nestedblock--timeouts"></a>
-### Nested Schema for `timeouts`
-
-Optional:
-
-- `create` (String)
-- `delete` (String)
-- `update` (String)
+- `name` (String) Name of the disk. Defaults to "System Disk" for the first disk.
 
 
 <a id="nestedatt--network_interfaces"></a>
@@ -129,8 +118,8 @@ Optional:
 
 Read-Only:
 
-- `id` (String)
-- `ip_addresses` (Set of String)
-- `mac_address` (String)
-- `network_id` (String)
-- `virtual_network_id` (String)
+- `id` (String) The ID of the network interface.
+- `ip_addresses` (Set of String) The IP addresses allocated to the interface.
+- `mac_address` (String) The MAC address of the interface.
+- `network_id` (String) The ID of the network the interface is on.
+- `virtual_network_id` (String) The ID of the virtual network the interface is on.

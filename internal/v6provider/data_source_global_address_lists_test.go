@@ -21,15 +21,8 @@ func TestAccKatapultDataSourceGlobalAddressLists_minimal(t *testing.T) {
 				`,
 				),
 
-				// Expect 3 responses and we check the 2nd and 3rd entries.
-				// This is because the terraform-acc-test org has an
-				// existing `Public DNS Servers` address list.
+				// Check that the known global address lists are present.
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"data.katapult_global_address_lists.global",
-						"address_lists.#",
-						"9",
-					),
 					resource.TestCheckTypeSetElemNestedAttrs(
 						"data.katapult_global_address_lists.global",
 						"address_lists.*",

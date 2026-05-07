@@ -27,7 +27,6 @@ func testSweepFileStorageVolumes(_ string) error {
 	m := sweepMeta()
 	ctx := context.Background()
 
-	//nolint:lll // generated type names are long
 	toDelete := []core.GetOrganizationFileStorageVolumes200ResponseFileStorageVolumes{}
 	totalPages := 2
 	for pageNum := 1; pageNum <= totalPages; pageNum++ {

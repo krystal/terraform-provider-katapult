@@ -3,24 +3,26 @@
 page_title: "katapult_virtual_machine_group Resource - terraform-provider-katapult"
 subcategory: ""
 description: |-
-  
+  Manages a Virtual Machine Group in Katapult. Virtual Machine Groups allow you to organize Virtual Machines together and optionally segregate them across different host machines for improved availability.
 ---
 
 # katapult_virtual_machine_group (Resource)
 
-
+Manages a Virtual Machine Group in Katapult. Virtual Machine Groups allow you to organize Virtual Machines together and optionally segregate them across different host machines for improved availability.
 
 ## Example Usage
 
 ```terraform
-# Create a segregated virtual machine group
-resource "katapult_virtual_machine_group" "web-1" {
-  name = "vm group"
+# Create a segregated virtual machine group.
+# Virtual Machines in this group will be placed on separate host machines
+# where possible, improving availability.
+resource "katapult_virtual_machine_group" "web" {
+  name = "web"
 }
 
-# Create a non-segregated virtual machine group
-resource "katapult_virtual_machine_group" "web-1" {
-  name      = "vm group"
+# Create a non-segregated virtual machine group.
+resource "katapult_virtual_machine_group" "batch" {
+  name      = "batch"
   segregate = false
 }
 ```
@@ -30,12 +32,12 @@ resource "katapult_virtual_machine_group" "web-1" {
 
 ### Required
 
-- `name` (String)
+- `name` (String) The name of the Virtual Machine Group.
 
 ### Optional
 
-- `segregate` (Boolean) Defaults to `true`.
+- `segregate` (Boolean) When `true`, Katapult will attempt to place Virtual Machines in this group on separate host machines, providing hardware-level isolation for improved availability. Defaults to `true`.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) The unique identifier of the Virtual Machine Group.

@@ -37,10 +37,18 @@ func (m nullToEmptySetPlanModifier) PlanModifySet(
 	req planmodifier.SetRequest,
 	resp *planmodifier.SetResponse,
 ) {
-	// When plan is unknown, the resource does not yet exist, so we should
-	// set it to a null set to avoid unknown type errors.
+	// Leave unknown plans untouched so other modifiers such as
+	// UseStateForUnknown() can preserve state.
 	if req.PlanValue.IsUnknown() {
-		resp.PlanValue = types.SetNull(req.PlanValue.ElementType(ctx))
+		return
+	}
+
+	// When plan is null (attribute not set in config), normalize it to an empty
+	// set so the provider can remove any existing remote values.
+	if req.PlanValue.IsNull() {
+		resp.PlanValue = types.SetValueMust(
+			req.PlanValue.ElementType(ctx), []attr.Value{},
+		)
 		return
 	}
 

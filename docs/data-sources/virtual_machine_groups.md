@@ -3,12 +3,12 @@
 page_title: "katapult_virtual_machine_groups Data Source - terraform-provider-katapult"
 subcategory: ""
 description: |-
-  
+  Retrieve a list of all Virtual Machine Groups in the organization.
 ---
 
 # katapult_virtual_machine_groups (Data Source)
 
-
+Retrieve a list of all Virtual Machine Groups in the organization.
 
 ## Example Usage
 
@@ -22,14 +22,14 @@ data "katapult_virtual_machine_groups" "all" {}
 
 ### Read-Only
 
-- `groups` (List of Object) (see [below for nested schema](#nestedatt--groups))
-- `id` (String) Always set to provider organization value.
+- `groups` (Attributes List) A list of all Virtual Machine Groups in the organization. (see [below for nested schema](#nestedatt--groups))
+- `id` (String) Always set to the organization sub-domain.
 
 <a id="nestedatt--groups"></a>
 ### Nested Schema for `groups`
 
 Read-Only:
 
-- `id` (String)
-- `name` (String)
-- `segregate` (Boolean)
+- `id` (String) The unique identifier of the Virtual Machine Group.
+- `name` (String) The name of the Virtual Machine Group.
+- `segregate` (Boolean) Whether Virtual Machines in this group are segregated across separate host machines.

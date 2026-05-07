@@ -148,13 +148,19 @@ func (r *FileStorageVolumeResource) Create(
 		return
 	}
 
-	associations := []string{}
-	resp.Diagnostics.Append(
-		plan.Associations.ElementsAs(
-			ctx,
-			&associations,
-			false,
-		)...)
+	targetAssociations := plan.Associations
+	if targetAssociations.IsUnknown() {
+		resp.Diagnostics.Append(
+			req.Config.GetAttribute(
+				ctx,
+				path.Root("associations"),
+				&targetAssociations,
+			)...,
+		)
+	}
+
+	associations, diags := stringSetValueStrings(ctx, targetAssociations)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -265,14 +271,21 @@ func (r *FileStorageVolumeResource) Update(
 		args.Name = plan.Name.ValueStringPointer()
 	}
 
-	if !plan.Associations.Equal(state.Associations) {
-		associations := []string{}
+	targetAssociations := plan.Associations
+	if targetAssociations.IsUnknown() {
 		resp.Diagnostics.Append(
-			plan.Associations.ElementsAs(
+			req.Config.GetAttribute(
 				ctx,
-				&associations,
-				false,
-			)...)
+				path.Root("associations"),
+				&targetAssociations,
+			)...,
+		)
+	}
+
+	if !targetAssociations.IsUnknown() &&
+		!targetAssociations.Equal(state.Associations) {
+		associations, diags := stringSetValueStrings(ctx, targetAssociations)
+		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -325,7 +338,6 @@ func (r *FileStorageVolumeResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
-//nolint:funlen // only a few more lines than the max
 func (r *FileStorageVolumeResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -470,6 +482,7 @@ func (r *FileStorageVolumeResource) FileStorageVolumeRead(
 
 	model.ID = types.StringPointerValue(fsv.Id)
 	model.Name = types.StringPointerValue(fsv.Name)
+	model.Associations = types.SetValueMust(types.StringType, []attr.Value{})
 
 	NFSLocation, _ := fsv.NfsLocation.Get()
 	model.NFSLocation = types.StringValue(NFSLocation)
@@ -528,6 +541,5 @@ func waitForFileStorageVolumeToBeReady(
 		return nil, err
 	}
 
-	//nolint:lll // Generated type names are long.
 	return readyFSV.(*core.GetFileStorageVolume200ResponseFileStorageVolume), err
 }

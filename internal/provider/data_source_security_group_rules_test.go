@@ -106,7 +106,7 @@ func TestAccKatapultDataSourceSecurityGroupRules_rules(t *testing.T) {
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_virtual_machine_group" "db" {
+					resource "katapult_legacy_virtual_machine_group" "db" {
 						name = "%s"
 					}
 
@@ -131,7 +131,7 @@ func TestAccKatapultDataSourceSecurityGroupRules_rules(t *testing.T) {
 						outbound_rule {
 							protocol = "tcp"
 							ports = "3306"
-							targets = [katapult_virtual_machine_group.db.id]
+							targets = [katapult_legacy_virtual_machine_group.db.id]
 							notes = "MySQL"
 						}
 						outbound_rule {
@@ -167,7 +167,7 @@ func TestAccKatapultDataSourceSecurityGroupRules_rules(t *testing.T) {
 			},
 			{
 				Config: undent.Stringf(`
-					resource "katapult_virtual_machine_group" "db" {
+					resource "katapult_legacy_virtual_machine_group" "db" {
 						name = "%s"
 					}
 
@@ -179,7 +179,7 @@ func TestAccKatapultDataSourceSecurityGroupRules_rules(t *testing.T) {
 						outbound_rule {
 							protocol = "tcp"
 							ports = "3306"
-							targets = [katapult_virtual_machine_group.db.id]
+							targets = [katapult_legacy_virtual_machine_group.db.id]
 							notes = "MySQL"
 						}
 						outbound_rule {

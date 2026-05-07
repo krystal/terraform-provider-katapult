@@ -1,4 +1,4 @@
-package provider
+package v6provider
 
 import (
 	"context"
@@ -6,9 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
+	"github.com/krystal/go-katapult/next/core"
 )
 
 func init() { //nolint:gochecknoinits
@@ -23,22 +24,29 @@ func testSweepVMGroups(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()
 
-	vmgs, _, err := m.Core.VirtualMachineGroups.List(
-		ctx, m.OrganizationRef,
-	)
+	res, err := m.Core.GetOrganizationVirtualMachineGroupsWithResponse(ctx,
+		&core.GetOrganizationVirtualMachineGroupsParams{
+			OrganizationSubDomain: &m.confOrganization,
+		})
 	if err != nil {
 		return err
 	}
 
-	for _, vmg := range vmgs {
-		if !strings.HasPrefix(vmg.Name, testAccResourceNamePrefix) {
+	for _, vmg := range res.JSON200.VirtualMachineGroups {
+		if !strings.HasPrefix(*vmg.Name, testAccResourceNamePrefix) {
 			continue
 		}
 
 		m.Logger.Info(
-			"deleting virtual machine group", "id", vmg.ID, "name", vmg.Name,
+			"deleting virtual machine group", "id", vmg.Id, "name", vmg.Name,
 		)
-		_, err := m.Core.VirtualMachineGroups.Delete(ctx, vmg.Ref())
+
+		_, err := m.Core.DeleteVirtualMachineGroupWithResponse(ctx,
+			core.DeleteVirtualMachineGroupJSONRequestBody{
+				VirtualMachineGroup: core.VirtualMachineGroupLookup{
+					Id: vmg.Id,
+				},
+			})
 		if err != nil {
 			return err
 		}
@@ -53,9 +61,9 @@ func TestAccKatapultVMGroup_minimal(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultVMGroupDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultVMGroupDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -70,8 +78,7 @@ func TestAccKatapultVMGroup_minimal(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine_group.minimal",
-						"name",
-						name,
+						"name", name,
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine_group.minimal",
@@ -94,15 +101,15 @@ func TestAccKatapultVMGroup_segregated(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultVMGroupDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultVMGroupDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
 					resource "katapult_virtual_machine_group" "segregated" {
-						segregate = true
 						name = "%s"
+						segregate = true
 					}`,
 					name,
 				),
@@ -135,19 +142,22 @@ func TestAccKatapultVMGroup_not_segregated(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultVMGroupDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultVMGroupDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
 					resource "katapult_virtual_machine_group" "not-segregated" {
-					  segregate = false
 						name = "%s"
+						segregate = false
 					}`,
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultVMGroupExists(
+						tt, "katapult_virtual_machine_group.not-segregated",
+					),
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine_group.not-segregated",
 						"segregate", "false",
@@ -159,7 +169,6 @@ func TestAccKatapultVMGroup_not_segregated(t *testing.T) {
 				),
 			},
 			{
-				//nolint:lll
 				ResourceName:      "katapult_virtual_machine_group.not-segregated",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -174,9 +183,9 @@ func TestAccKatapultVMGroup_update(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultVMGroupDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultVMGroupDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -256,52 +265,56 @@ func TestAccKatapultVMGroup_update(t *testing.T) {
 // Helpers
 //
 
-func testAccCheckKatapultVMGroupDestroy(
-	tt *testTools,
-) resource.TestCheckFunc {
-	m := tt.Meta
-
-	return func(s *terraform.State) error {
-		for _, rs := range s.RootModule().Resources {
-			if rs.Type != "katapult_virtual_machine_group" {
-				continue
-			}
-
-			vmg, _, err := m.Core.VirtualMachineGroups.GetByID(
-				tt.Ctx, rs.Primary.ID,
-			)
-
-			if err == nil && vmg != nil {
-				return fmt.Errorf(
-					"katapult_virtual_machine_group %s (%s) was not destroyed",
-					rs.Primary.ID, vmg.Name,
-				)
-			}
-		}
-
-		return nil
-	}
-}
-
 func testAccCheckKatapultVMGroupExists(
 	tt *testTools,
 	res string,
 ) resource.TestCheckFunc {
-	m := tt.Meta
-
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[res]
 		if !ok {
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		ip, _, err := m.Core.VirtualMachineGroups.GetByID(
-			tt.Ctx, rs.Primary.ID,
+		resp, err := tt.Meta.Core.GetVirtualMachineGroupWithResponse(
+			tt.Ctx,
+			&core.GetVirtualMachineGroupParams{
+				VirtualMachineGroupId: &rs.Primary.ID,
+			},
 		)
 		if err != nil {
 			return err
 		}
 
-		return resource.TestCheckResourceAttr(res, "id", ip.ID)(s)
+		vmg := resp.JSON200.VirtualMachineGroup
+
+		return resource.TestCheckResourceAttr(res, "id", *vmg.Id)(s)
+	}
+}
+
+func testAccCheckKatapultVMGroupDestroy(
+	tt *testTools,
+) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "katapult_virtual_machine_group" {
+				continue
+			}
+
+			resp, err := tt.Meta.Core.GetVirtualMachineGroupWithResponse(
+				tt.Ctx,
+				&core.GetVirtualMachineGroupParams{
+					VirtualMachineGroupId: &rs.Primary.ID,
+				},
+			)
+
+			if err == nil && resp.JSON200 != nil {
+				return fmt.Errorf(
+					"katapult_virtual_machine_group %s (%s) was not destroyed",
+					rs.Primary.ID, *resp.JSON200.VirtualMachineGroup.Name,
+				)
+			}
+		}
+
+		return nil
 	}
 }
