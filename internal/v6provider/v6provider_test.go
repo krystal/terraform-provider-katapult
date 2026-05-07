@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -133,7 +132,6 @@ func newTestTools(t *testing.T) *testTools {
 		Recorder: r,
 		Meta:     meta,
 		ProviderFactories: providerFactoryList{
-			//nolint:unparam // must return an error to match the map signature
 			"katapult": func() (tfprotov6.ProviderServer, error) {
 				muxOnce.Do(func() {
 					upgradedSDKServer, err := tf5to6server.UpgradeServer(
@@ -157,7 +155,7 @@ func newTestTools(t *testing.T) *testTools {
 					muxedServer = mux.ProviderServer()
 				})
 				if muxErr != nil {
-					log.Fatal(muxErr)
+					return nil, muxErr
 				}
 				return muxedServer, nil
 			},
