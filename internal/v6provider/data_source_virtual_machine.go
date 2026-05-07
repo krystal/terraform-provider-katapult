@@ -106,7 +106,7 @@ func (d *VirtualMachineDataSource) Schema(
 				MarkdownDescription: "The fully-qualified domain name of " +
 					"the Virtual Machine.",
 			},
-			"state": schema.StringAttribute{
+			stateAttributeName: schema.StringAttribute{
 				Computed: true,
 				MarkdownDescription: "The current state of the " +
 					"Virtual Machine.",

@@ -156,7 +156,7 @@ func boolOrEnv(in *bool, env string) bool {
 	}
 
 	switch strings.ToLower(os.Getenv(env)) {
-	case "true", "1", "yes", "on", "y", "t":
+	case "true", "1", "yes", "on", "y", "t": //nolint:goconst
 		return true
 	}
 
@@ -256,6 +256,7 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource { return &ObjectStorageBucketResource{} },
 		func() resource.Resource { return &ObjectStorageAccessKeyResource{} },
 		func() resource.Resource { return &VirtualMachineGroupResource{} },
+		func() resource.Resource { return &DiskResource{} },
 		func() resource.Resource { return &VirtualMachineResource{} },
 	}
 }
@@ -291,6 +292,7 @@ func (k *KatapultProvider) DataSources(
 			return &VirtualMachineGroupsDataSource{}
 		},
 		func() datasource.DataSource { return &VirtualMachineDataSource{} },
+		func() datasource.DataSource { return &VirtualMachineDisksDataSource{} },
 	}
 }
 

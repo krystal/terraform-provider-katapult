@@ -1008,6 +1008,9 @@ func virtualMachineTestState(
 	if model.IPAddresses.IsNull() {
 		model.IPAddresses = types.SetNull(types.StringType)
 	}
+	if model.DiskIDs.IsNull() {
+		model.DiskIDs = types.SetNull(types.StringType)
+	}
 	if model.VirtualNetworkIDs.IsNull() {
 		model.VirtualNetworkIDs = types.SetNull(types.StringType)
 	}

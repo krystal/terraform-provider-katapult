@@ -50,6 +50,7 @@ type (
 		Disk                types.List     `tfsdk:"disk"`
 		IPAddressIDs        types.Set      `tfsdk:"ip_address_ids"`
 		IPAddresses         types.Set      `tfsdk:"ip_addresses"`
+		DiskIDs             types.Set      `tfsdk:"disk_ids"`
 		VirtualNetworkIDs   types.Set      `tfsdk:"virtual_network_ids"`
 		NetworkSpeedProfile types.String   `tfsdk:"network_speed_profile"`
 		NetworkInterfaces   types.List     `tfsdk:"network_interfaces"`
@@ -245,7 +246,7 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 				MarkdownDescription: "The fully-qualified domain name of " +
 					"the Virtual Machine.",
 			},
-			"state": schema.StringAttribute{
+			stateAttributeName: schema.StringAttribute{
 				Computed: true,
 				MarkdownDescription: "The current state of the " +
 					"Virtual Machine.",
@@ -305,6 +306,20 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 				ElementType: types.StringType,
 				MarkdownDescription: "Set of IP addresses allocated to " +
 					"the Virtual Machine.",
+			},
+			"disk_ids": schema.SetAttribute{
+				Optional:    true,
+				Computed:    true,
+				ElementType: types.StringType,
+				MarkdownDescription: "Set of additional disk IDs to attach " +
+					"to the Virtual Machine. Managed as `katapult_disk` " +
+					"resources. Destroying the VM detaches these disks " +
+					"but does **not** delete them. Use the " +
+					"`katapult_virtual_machine_disks` data source to read " +
+					"the full list of disks currently attached to a VM.",
+				PlanModifiers: []planmodifier.Set{
+					NullToEmptySetPlanModifier(),
+				},
 			},
 			"virtual_network_ids": schema.SetAttribute{
 				Optional:    true,
@@ -825,6 +840,20 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 		return
 	}
 
+	if !plan.DiskIDs.IsNull() && !plan.DiskIDs.IsUnknown() {
+		var diskIDs []string
+		resp.Diagnostics.Append(plan.DiskIDs.ElementsAs(ctx, &diskIDs, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		if err = assignAndAttachDisksToVM(
+			ctx, r.M, vmID, diskIDs, timeout,
+		); err != nil {
+			resp.Diagnostics.AddError("Create Error", err.Error())
+			return
+		}
+	}
+
 	if !configuredPoweredOn.IsNull() &&
 		!configuredPoweredOn.IsUnknown() &&
 		!configuredPoweredOn.ValueBool() {
@@ -1069,6 +1098,44 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		}
 	}
 
+	targetDiskIDs := plan.DiskIDs
+	if targetDiskIDs.IsUnknown() {
+		resp.Diagnostics.Append(
+			req.Config.GetAttribute(
+				ctx,
+				path.Root("disk_ids"),
+				&targetDiskIDs,
+			)...,
+		)
+	}
+	if !targetDiskIDs.IsUnknown() && !targetDiskIDs.Equal(state.DiskIDs) {
+		targetIDs, diags := stringSetValueStrings(
+			ctx, "disk_ids", targetDiskIDs,
+		)
+		resp.Diagnostics.Append(diags...)
+
+		stateIDs, diags := stringSetValueStrings(
+			ctx, "disk_ids", state.DiskIDs,
+		)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		for _, id := range stringsDiff(stateIDs, targetIDs) {
+			if err := detachAndUnassignDisk(ctx, r.M, id, timeout); err != nil {
+				resp.Diagnostics.AddError("Update Error", err.Error())
+				return
+			}
+		}
+		if err := assignAndAttachDisksToVM(
+			ctx, r.M, vmID, stringsDiff(targetIDs, stateIDs), timeout,
+		); err != nil {
+			resp.Diagnostics.AddError("Update Error", err.Error())
+			return
+		}
+	}
+
 	targetVnetIDs := plan.VirtualNetworkIDs
 	if targetVnetIDs.IsUnknown() {
 		resp.Diagnostics.Append(
@@ -1223,6 +1290,18 @@ func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 		return
 	}
 	vmID := state.ID.ValueString()
+
+	var diskIDs []string
+	resp.Diagnostics.Append(state.DiskIDs.ElementsAs(ctx, &diskIDs, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	for _, id := range diskIDs {
+		if err := detachAndUnassignDisk(ctx, r.M, id, timeout); err != nil {
+			resp.Diagnostics.AddError("Delete Error", err.Error())
+			return
+		}
+	}
 
 	vmRes, err := r.M.Core.GetVirtualMachineWithResponse(ctx,
 		&core.GetVirtualMachineParams{VirtualMachineId: &vmID})
@@ -1418,7 +1497,7 @@ func (r *VirtualMachineResource) ImportState(
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,funlen
 func (r *VirtualMachineResource) vmRead(
 	ctx context.Context,
 	model *VirtualMachineResourceModel,
@@ -1447,6 +1526,10 @@ func (r *VirtualMachineResource) vmRead(
 	ifaces, err := fetchAllVMNetworkInterfaces(ctx, r.M, vmID)
 	if err != nil {
 		return err
+	}
+
+	if diskErr := refreshManagedDiskIDs(ctx, r.M, vmID, model); diskErr != nil {
+		return diskErr
 	}
 
 	vnetIDs := make([]attr.Value, 0)
@@ -2163,6 +2246,59 @@ func normalizeVirtualMachinePackageForState(
 	}
 
 	return ""
+}
+
+// refreshManagedDiskIDs intersects the disk_ids currently in state (the disks
+// Terraform manages on this VM) with the disks the API reports as attached.
+// This detects drift for managed disks (e.g. detached out-of-band) without
+// re-adopting them: if a managed disk is detached out-of-band, the next
+// refresh removes it from disk_ids in state. This also avoids adopting
+// unmanaged disks (inline `disk` block system disks or disks attached
+// via the UI). When state has no managed disk_ids configured, disk_ids is
+// normalized to an explicit empty set so the post-apply state is known.
+func refreshManagedDiskIDs(
+	ctx context.Context,
+	m *Meta,
+	vmID string,
+	model *VirtualMachineResourceModel,
+) error {
+	if model.DiskIDs.IsNull() || model.DiskIDs.IsUnknown() ||
+		len(model.DiskIDs.Elements()) == 0 {
+		model.DiskIDs = types.SetValueMust(
+			types.StringType, make([]attr.Value, 0),
+		)
+		return nil
+	}
+
+	disks, err := fetchAllVMDisks(ctx, m, vmID)
+	if err != nil {
+		return err
+	}
+
+	attached := make(map[string]struct{}, len(disks))
+	for _, attachment := range disks {
+		if !isAdditionalDiskAttachment(attachment) {
+			continue
+		}
+		if attachment.Disk != nil && attachment.Disk.Id != nil {
+			attached[*attachment.Disk.Id] = struct{}{}
+		}
+	}
+
+	var managed []string
+	if diags := model.DiskIDs.ElementsAs(ctx, &managed, false); diags.HasError() {
+		return fmt.Errorf("reading disk_ids from state: %s", diags)
+	}
+
+	stillAttached := make([]attr.Value, 0, len(managed))
+	for _, id := range managed {
+		if _, ok := attached[id]; ok {
+			stillAttached = append(stillAttached, types.StringValue(id))
+		}
+	}
+	model.DiskIDs = types.SetValueMust(types.StringType, stillAttached)
+
+	return nil
 }
 
 func buildVMNetworkInterfaceList(
