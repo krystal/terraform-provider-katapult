@@ -848,7 +848,7 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 				core.PostIpAddressUnallocateJSONRequestBody{
 					IpAddress: core.IPAddressLookup{Id: &id},
 				})
-			if e != nil {
+			if e != nil && !errors.Is(e, core.ErrNotFound) {
 				resp.Diagnostics.AddError("Update Error", e.Error())
 				return
 			}
@@ -1253,6 +1253,8 @@ func (r *VirtualMachineResource) vmRead(
 
 	if nsp != "" {
 		model.NetworkSpeedProfile = types.StringValue(nsp)
+	} else {
+		model.NetworkSpeedProfile = types.StringNull()
 	}
 
 	if vm.IpAddresses != nil {
@@ -1503,17 +1505,21 @@ func addVirtualNetworkToVM(
 	vmID, vnetID, speedProfilePermalink string,
 	timeout time.Duration,
 ) error {
+	req := core.PostVirtualMachineNetworkInterfacesJSONRequestBody{
+		VirtualMachine: core.VirtualMachineLookup{Id: &vmID},
+		VirtualNetwork: &core.VirtualNetworkLookup{
+			Id: &vnetID,
+		},
+	}
+	if speedProfilePermalink != "" {
+		req.SpeedProfile = core.NetworkSpeedProfileLookup{
+			Permalink: &speedProfilePermalink,
+		}
+	}
+
 	createResp, err := m.Core.
 		PostVirtualMachineNetworkInterfacesWithResponse(ctx,
-			core.PostVirtualMachineNetworkInterfacesJSONRequestBody{
-				VirtualMachine: core.VirtualMachineLookup{Id: &vmID},
-				VirtualNetwork: &core.VirtualNetworkLookup{
-					Id: &vnetID,
-				},
-				SpeedProfile: core.NetworkSpeedProfileLookup{
-					Permalink: &speedProfilePermalink,
-				},
-			},
+			req,
 		)
 	if err != nil {
 		if createResp != nil {
@@ -1720,16 +1726,6 @@ func allocateIPsToVM(
 				return genericAPIError(err, resp.Body)
 			}
 			return err
-		}
-
-		if resp.StatusCode() != http.StatusOK {
-			return genericAPIError(
-				fmt.Errorf(
-					"allocate IP request failed with status %s",
-					resp.Status(),
-				),
-				resp.Body,
-			)
 		}
 	}
 
