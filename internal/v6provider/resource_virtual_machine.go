@@ -1338,6 +1338,7 @@ func fetchAllVMNetworkInterfaces(
 			ctx,
 			&core.GetVirtualMachineNetworkInterfacesParams{
 				VirtualMachineId: &vmID,
+				Page:             &page,
 			},
 		)
 		if err != nil {
