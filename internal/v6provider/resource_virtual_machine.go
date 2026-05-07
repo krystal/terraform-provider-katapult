@@ -13,6 +13,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -22,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/jimeh/rands"
 	"github.com/krystal/go-katapult/buildspec"
@@ -330,14 +332,18 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 		spec.Description = desc
 	}
 
-	var planTags []string
-	if !plan.Tags.IsNull() && !plan.Tags.IsUnknown() {
+	targetTags := plan.Tags
+	if targetTags.IsUnknown() {
 		resp.Diagnostics.Append(
-			plan.Tags.ElementsAs(ctx, &planTags, false)...,
+			req.Config.GetAttribute(ctx, path.Root("tags"), &targetTags)...,
 		)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+	}
+	planTags, diags := stringSetValueStrings(ctx, targetTags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if len(planTags) > 0 {
 		spec.Tags = planTags
 	}
 
@@ -410,10 +416,18 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 		nsp = &buildspec.NetworkSpeedProfile{Permalink: nspPermalink}
 	}
 
-	var ipIDs []string
-	resp.Diagnostics.Append(
-		plan.IPAddressIDs.ElementsAs(ctx, &ipIDs, false)...,
-	)
+	targetIPIDs := plan.IPAddressIDs
+	if targetIPIDs.IsUnknown() {
+		resp.Diagnostics.Append(
+			req.Config.GetAttribute(
+				ctx,
+				path.Root("ip_address_ids"),
+				&targetIPIDs,
+			)...,
+		)
+	}
+	ipIDs, diags := stringSetValueStrings(ctx, targetIPIDs)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -470,15 +484,22 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 		spec.NetworkInterfaces = append(spec.NetworkInterfaces, iface)
 	}
 
-	if !plan.VirtualNetworkIDs.IsNull() &&
-		!plan.VirtualNetworkIDs.IsUnknown() {
-		var vnetIDs []string
+	targetVnetIDs := plan.VirtualNetworkIDs
+	if targetVnetIDs.IsUnknown() {
 		resp.Diagnostics.Append(
-			plan.VirtualNetworkIDs.ElementsAs(ctx, &vnetIDs, false)...,
+			req.Config.GetAttribute(
+				ctx,
+				path.Root("virtual_network_ids"),
+				&targetVnetIDs,
+			)...,
 		)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+	}
+	vnetIDs, diags := stringSetValueStrings(ctx, targetVnetIDs)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if len(vnetIDs) > 0 {
 		for _, vnID := range vnetIDs {
 			iface := &buildspec.NetworkInterface{
 				VirtualNetwork: &buildspec.VirtualNetwork{ID: vnID},
@@ -726,11 +747,15 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 	if !plan.Description.Equal(state.Description) {
 		args.Description = plan.Description.ValueStringPointer()
 	}
-	if !plan.Tags.Equal(state.Tags) {
-		var tags []string
+	targetTags := plan.Tags
+	if targetTags.IsUnknown() {
 		resp.Diagnostics.Append(
-			plan.Tags.ElementsAs(ctx, &tags, false)...,
+			req.Config.GetAttribute(ctx, path.Root("tags"), &targetTags)...,
 		)
+	}
+	if !targetTags.IsUnknown() && !targetTags.Equal(state.Tags) {
+		tags, diags := stringSetValueStrings(ctx, targetTags)
+		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -789,13 +814,22 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 	}
 
 	if !plan.IPAddressIDs.Equal(state.IPAddressIDs) {
-		var targetIDs, stateIDs []string
-		resp.Diagnostics.Append(
-			plan.IPAddressIDs.ElementsAs(ctx, &targetIDs, false)...,
-		)
-		resp.Diagnostics.Append(
-			state.IPAddressIDs.ElementsAs(ctx, &stateIDs, false)...,
-		)
+		targetIPIDs := plan.IPAddressIDs
+		if targetIPIDs.IsUnknown() {
+			resp.Diagnostics.Append(
+				req.Config.GetAttribute(
+					ctx,
+					path.Root("ip_address_ids"),
+					&targetIPIDs,
+				)...,
+			)
+		}
+
+		targetIDs, diags := stringSetValueStrings(ctx, targetIPIDs)
+		resp.Diagnostics.Append(diags...)
+
+		stateIDs, diags := stringSetValueStrings(ctx, state.IPAddressIDs)
+		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -821,11 +855,20 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		}
 	}
 
-	if !plan.VirtualNetworkIDs.Equal(state.VirtualNetworkIDs) {
-		var targetIDs []string
+	targetVnetIDs := plan.VirtualNetworkIDs
+	if targetVnetIDs.IsUnknown() {
 		resp.Diagnostics.Append(
-			plan.VirtualNetworkIDs.ElementsAs(ctx, &targetIDs, false)...,
+			req.Config.GetAttribute(
+				ctx,
+				path.Root("virtual_network_ids"),
+				&targetVnetIDs,
+			)...,
 		)
+	}
+	if !targetVnetIDs.IsUnknown() &&
+		!targetVnetIDs.Equal(state.VirtualNetworkIDs) {
+		targetIDs, diags := stringSetValueStrings(ctx, targetVnetIDs)
+		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -1327,6 +1370,39 @@ func buildVMNetworkInterfaceList(
 	return list, nil
 }
 
+func stringSetValueStrings(
+	ctx context.Context,
+	set basetypes.SetValue,
+) ([]string, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if set.IsNull() {
+		return []string{}, diags
+	}
+
+	values := []types.String{}
+	diags.Append(set.ElementsAs(ctx, &values, true)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	strings := make([]string, 0, len(values))
+	for _, value := range values {
+		if value.IsNull() {
+			continue
+		}
+		if value.IsUnknown() {
+			diags.AddError(
+				"Value Conversion Error",
+				"ip_address_ids contains unknown values during update",
+			)
+			return nil, diags
+		}
+		strings = append(strings, value.ValueString())
+	}
+
+	return strings, diags
+}
+
 // fetchAllVMNetworkInterfaces returns all network interfaces for a VM,
 // fetching full interface details and deduplicating by ID.
 func fetchAllVMNetworkInterfaces(
@@ -1644,6 +1720,16 @@ func allocateIPsToVM(
 				return genericAPIError(err, resp.Body)
 			}
 			return err
+		}
+
+		if resp.StatusCode() != http.StatusOK {
+			return genericAPIError(
+				fmt.Errorf(
+					"allocate IP request failed with status %s",
+					resp.Status(),
+				),
+				resp.Body,
+			)
 		}
 	}
 
