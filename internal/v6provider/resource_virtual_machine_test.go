@@ -112,6 +112,7 @@ func testSweepVirtualMachines(_ string) error {
 				Timeout:                   5 * time.Minute,
 				Delay:                     m.stateChangeDelay(2 * time.Second),
 				MinTimeout:                m.stateChangeDelay(5 * time.Second),
+				PollInterval:              m.stateChangePollInterval(),
 				ContinuousTargetOccurence: 1,
 			}
 
