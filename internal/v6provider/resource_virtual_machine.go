@@ -1052,9 +1052,15 @@ func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 			VirtualMachine: &core.VirtualMachineLookup{Id: &vmID},
 		})
 	if err != nil {
-		if delRes != nil {
-			err = genericAPIError(err, delRes.Body)
+		if delRes == nil {
+			resp.Diagnostics.AddError(
+				"Delete Error",
+				fmt.Sprintf("failed to delete VM: %s", err),
+			)
+			return
 		}
+
+		err = genericAPIError(err, delRes.Body)
 		if !isErrNotFoundOrInTrash(err, delRes.JSON406) {
 			resp.Diagnostics.AddError(
 				"Delete Error",
