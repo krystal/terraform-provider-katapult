@@ -984,6 +984,10 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		resp.Diagnostics.AddError("Read Error", err.Error())
 		return
 	}
+	if !plan.NetworkSpeedProfile.Equal(state.NetworkSpeedProfile) &&
+		plan.NetworkSpeedProfile.ValueString() == "" {
+		plan.NetworkSpeedProfile = types.StringNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
