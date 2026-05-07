@@ -202,6 +202,7 @@ func (r *TagResource) Update(
 	}
 
 	if !plan.Color.Equal(state.Color) {
+		//nolint:lll // Generated enum conversion sucks
 		args.Properties.Color = (*core.TagColorsEnum)(plan.Color.ValueStringPointer())
 	}
 
