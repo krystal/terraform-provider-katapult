@@ -84,6 +84,9 @@ func (d *VirtualMachineDataSource) Schema(
 						path.MatchRoot("id"),
 						path.MatchRoot("fqdn"),
 					),
+					stringvalidator.ConflictsWith(
+						path.MatchRoot("fqdn"),
+					),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -103,6 +106,11 @@ func (d *VirtualMachineDataSource) Schema(
 				Computed: true,
 				MarkdownDescription: "The fully-qualified domain name of " +
 					"the Virtual Machine.",
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(
+						path.MatchRoot("id"),
+					),
+				},
 			},
 			"state": schema.StringAttribute{
 				Computed: true,
