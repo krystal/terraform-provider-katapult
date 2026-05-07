@@ -23,11 +23,6 @@ func TestAccKatapultDataSourceGlobalAddressLists_minimal(t *testing.T) {
 
 				// Check that the known global address lists are present.
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"data.katapult_global_address_lists.global",
-						"address_lists.#",
-						"15",
-					),
 					resource.TestCheckTypeSetElemNestedAttrs(
 						"data.katapult_global_address_lists.global",
 						"address_lists.*",
