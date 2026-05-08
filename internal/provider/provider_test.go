@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/dnaeon/go-vcr/cassette"
 	"github.com/dnaeon/go-vcr/recorder"
@@ -64,16 +65,17 @@ func testAccPreCheck(t *testing.T) {
 type providerFactoryList map[string]func() (*schema.Provider, error)
 
 func providerFactories(
-	r *recorder.Recorder,
+	httpClient *http.Client,
 ) providerFactoryList {
 	conf := &Config{
 		Version:             testAccProviderVersion,
 		GeneratedNamePrefix: testAccResourceNamePrefix,
 	}
 
-	if r != nil {
-		conf.HTTPClient = &http.Client{Transport: r}
-		if r.Mode() == recorder.ModeReplaying {
+	if httpClient != nil {
+		conf.HTTPClient = httpClient
+		if r, ok := httpClient.Transport.(*recorder.Recorder); ok &&
+			r.Mode() == recorder.ModeReplaying {
 			conf.TestMode = true
 		}
 	}
@@ -100,6 +102,7 @@ type testTools struct {
 	T                 *testing.T
 	Ctx               context.Context
 	Recorder          *recorder.Recorder
+	HTTPClient        *http.Client
 	Meta              *Meta
 	ProviderFactories providerFactoryList
 	noHTTP            bool
@@ -108,7 +111,12 @@ type testTools struct {
 
 func newTestTools(t *testing.T) *testTools {
 	r := newVCRRecorder(t)
-	factories := providerFactories(r)
+	httpClient := &http.Client{Timeout: 60 * time.Second}
+	if r != nil {
+		httpClient.Transport = r
+	}
+
+	factories := providerFactories(httpClient)
 	ctx := context.Background()
 
 	p, err := factories["katapult"]()
@@ -123,6 +131,7 @@ func newTestTools(t *testing.T) *testTools {
 		T:                 t,
 		Ctx:               ctx,
 		Recorder:          r,
+		HTTPClient:        httpClient,
 		Meta:              m,
 		ProviderFactories: factories,
 	}
@@ -155,6 +164,9 @@ func (tt *testTools) ResourceName(name ...string) string {
 
 func (tt *testTools) NoHTTP() *testTools {
 	tt.noHTTP = true
+	if tt.HTTPClient != nil {
+		tt.HTTPClient.Transport = &stopRequests{}
+	}
 	if tt.Recorder != nil {
 		tt.Recorder.SetTransport(&stopRequests{})
 	}
