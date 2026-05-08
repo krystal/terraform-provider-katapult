@@ -32,6 +32,7 @@ type Config struct {
 	HTTPClient *http.Client
 
 	GeneratedNamePrefix string
+	TestMode            bool
 }
 
 func New(c *Config) func() *schema.Provider {
@@ -229,6 +230,7 @@ func configure(
 				"KATAPULT_SKIP_TRASH_OBJECT_PURGE",
 			),
 			GeneratedNamePrefix: conf.GeneratedNamePrefix,
+			testMode:            conf.TestMode,
 		}
 
 		if m.GeneratedNamePrefix == "" {
@@ -267,6 +269,11 @@ func configure(
 		}
 
 		rhc := newRetryableHTTPClient(httpClient, m.Logger)
+		if conf.TestMode {
+			rhc.RetryMax = 0
+			rhc.RetryWaitMin = 0
+			rhc.RetryWaitMax = 0
+		}
 		c.HTTPClient = rhc.StandardClient()
 
 		m.Client = c

@@ -5,8 +5,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-retryablehttp"
 
 	"github.com/krystal/go-katapult"
 	core "github.com/krystal/go-katapult/next/core"
@@ -15,17 +17,39 @@ import (
 )
 
 type Meta struct {
-	Client *katapult.Client
-	Core   core.ClientWithResponsesInterface
-	Logger hclog.Logger
+	Client      *katapult.Client
+	Core        core.ClientWithResponsesInterface
+	Logger      hclog.Logger
+	retryClient *retryablehttp.Client
 
 	GeneratedNamePrefix  string
 	SkipTrashObjectPurge bool
+	testMode             bool
 
 	// Raw provider attribute string values
 	confAPIKey       string
 	confDataCenter   string
 	confOrganization string
+}
+
+// stateChangeDelay returns 0 in test mode (VCR replay), or d in production.
+// Use for Delay and MinTimeout in StateChangeConf waiters.
+func (m *Meta) stateChangeDelay(d time.Duration) time.Duration {
+	if m.testMode {
+		return 0
+	}
+	return d
+}
+
+// stateChangePollInterval returns 1ms in test mode so the SDK uses a fixed fast
+// interval instead of its exponential backoff, which fires between every
+// cassette-recorded intermediate poll state (pending→running→completed).
+// Returns 0 in production so the SDK's default backoff applies.
+func (m *Meta) stateChangePollInterval() time.Duration {
+	if m.testMode {
+		return time.Millisecond
+	}
+	return 0
 }
 
 func (m *Meta) UseOrGenerateName(name string) string {
@@ -117,6 +141,7 @@ func NewMeta(
 	}
 
 	rhc := newRetryableHTTPClient(httpClient, m.Logger)
+	m.retryClient = rhc
 
 	coreClient, err := core.NewClientWithResponses(
 		serverURL.String(),

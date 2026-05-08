@@ -70,6 +70,9 @@ func providerFactories(
 
 	if r != nil {
 		conf.HTTPClient = &http.Client{Transport: r}
+		if r.Mode() == recorder.ModeReplaying {
+			conf.TestMode = true
+		}
 	}
 
 	return providerFactoryList{

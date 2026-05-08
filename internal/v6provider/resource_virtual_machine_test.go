@@ -110,8 +110,9 @@ func testSweepVirtualMachines(_ string) error {
 						nil
 				},
 				Timeout:                   5 * time.Minute,
-				Delay:                     2 * time.Second,
-				MinTimeout:                5 * time.Second,
+				Delay:                     m.stateChangeDelay(2 * time.Second),
+				MinTimeout:                m.stateChangeDelay(5 * time.Second),
+				PollInterval:              m.stateChangePollInterval(),
 				ContinuousTargetOccurence: 1,
 			}
 
@@ -165,8 +166,9 @@ func testSweepVirtualMachines(_ string) error {
 				return nil, "exists", nil
 			},
 			Timeout:                   5 * time.Minute,
-			Delay:                     2 * time.Second,
-			MinTimeout:                5 * time.Second,
+			Delay:                     m.stateChangeDelay(2 * time.Second),
+			MinTimeout:                m.stateChangeDelay(5 * time.Second),
+			PollInterval:              m.stateChangePollInterval(),
 			ContinuousTargetOccurence: 1,
 		}
 

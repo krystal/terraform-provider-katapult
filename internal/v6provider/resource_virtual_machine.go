@@ -587,8 +587,9 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 			return b, string(*b.State), nil
 		},
 		Timeout:                   timeout,
-		Delay:                     2 * time.Second,
-		MinTimeout:                5 * time.Second,
+		Delay:                     r.M.stateChangeDelay(2 * time.Second),
+		MinTimeout:                r.M.stateChangeDelay(5 * time.Second),
+		PollInterval:              r.M.stateChangePollInterval(),
 		ContinuousTargetOccurence: 1,
 	}
 
@@ -668,8 +669,9 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 			return v, string(*v.State), nil
 		},
 		Timeout:                   timeout,
-		Delay:                     2 * time.Second,
-		MinTimeout:                5 * time.Second,
+		Delay:                     r.M.stateChangeDelay(2 * time.Second),
+		MinTimeout:                r.M.stateChangeDelay(5 * time.Second),
+		PollInterval:              r.M.stateChangePollInterval(),
 		ContinuousTargetOccurence: 1,
 	}
 
@@ -1848,8 +1850,9 @@ func waitForVMToStop(
 			return v, string(*v.State), nil
 		},
 		Timeout:                   timeout,
-		Delay:                     1 * time.Second,
-		MinTimeout:                5 * time.Second,
+		Delay:                     m.stateChangeDelay(1 * time.Second),
+		MinTimeout:                m.stateChangeDelay(5 * time.Second),
+		PollInterval:              m.stateChangePollInterval(),
 		ContinuousTargetOccurence: 1,
 	}
 

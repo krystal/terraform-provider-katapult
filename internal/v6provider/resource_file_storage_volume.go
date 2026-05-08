@@ -530,8 +530,9 @@ func waitForFileStorageVolumeToBeReady(
 			return f, string(*f.State), nil
 		},
 		Timeout:                   timeout,
-		Delay:                     delay,
-		MinTimeout:                5 * time.Second,
+		Delay:                     m.stateChangeDelay(delay),
+		MinTimeout:                m.stateChangeDelay(5 * time.Second),
+		PollInterval:              m.stateChangePollInterval(),
 		ContinuousTargetOccurence: 1,
 	}
 

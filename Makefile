@@ -132,7 +132,7 @@ test:
 
 .PHONY: testacc
 testacc:
-	TF_ACC=1 go test $(V) $(TESTARGS) $(TEST) -timeout=120m
+	TF_ACC=1 go test $(V) $(TESTARGS) $(TEST) -timeout=120m -parallel=16
 
 .PHONY: test-deps
 test-deps:
