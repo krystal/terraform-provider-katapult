@@ -79,6 +79,7 @@ type testTools struct {
 	T                 *testing.T
 	Ctx               context.Context
 	Recorder          *recorder.Recorder
+	HTTPClient        *http.Client
 	Meta              *Meta
 	ProviderFactories providerFactoryList
 	noHTTP            bool
@@ -89,23 +90,25 @@ func newTestTools(t *testing.T) *testTools {
 	ctx := context.Background()
 
 	r := newVCRRecorder(t)
+	httpClient := &http.Client{}
+	if r != nil {
+		httpClient.Transport = r
+	}
+
 	v6config := &KatapultProvider{
 		Version:             testAccProviderVersion,
 		GeneratedNamePrefix: testAccResourceNamePrefix,
+		HTTPClient:          httpClient,
 	}
 
 	v5Config := &v5provider.Config{
-		Version: testAccProviderVersion,
-		Commit:  testAccResourceNamePrefix,
-	}
-
-	if r != nil {
-		v5Config.HTTPClient = &http.Client{Transport: r}
-		v6config.HTTPClient = &http.Client{Transport: r}
+		Version:    testAccProviderVersion,
+		Commit:     testAccResourceNamePrefix,
+		HTTPClient: httpClient,
 	}
 
 	meta, err := NewMeta("", "", "", nil, "",
-		testAccResourceNamePrefix, v6config.HTTPClient, "", "")
+		testAccResourceNamePrefix, httpClient, "", "")
 	require.NoError(t, err)
 
 	v6config.m = meta
@@ -128,10 +131,11 @@ func newTestTools(t *testing.T) *testTools {
 	}
 
 	return &testTools{
-		T:        t,
-		Ctx:      ctx,
-		Recorder: r,
-		Meta:     meta,
+		T:          t,
+		Ctx:        ctx,
+		Recorder:   r,
+		HTTPClient: httpClient,
+		Meta:       meta,
 		ProviderFactories: providerFactoryList{
 			//nolint:unparam // must return an error to match the map signature
 			"katapult": func() (tfprotov6.ProviderServer, error) {
@@ -170,6 +174,9 @@ func (tt *testTools) ResourceName(name ...string) string {
 // and makes any unexpected HTTP attempt fail immediately instead of recording.
 func (tt *testTools) NoHTTP() *testTools {
 	tt.noHTTP = true
+	if tt.HTTPClient != nil {
+		tt.HTTPClient.Transport = &stopRequests{}
+	}
 	if tt.Recorder != nil {
 		tt.Recorder.SetTransport(&stopRequests{})
 	}
