@@ -1590,14 +1590,19 @@ func fetchAllVMNetworkInterfaces(
 		map[string]*core.GetVMNIVMNI200ResponseVirtualMachineNetworkInterface,
 	)
 
-	totalPages := 2
+	totalPages := 1
 	for page := 1; page <= totalPages; page++ {
+		params := &core.GetVirtualMachineNetworkInterfacesParams{
+			VirtualMachineId: &vmID,
+		}
+		if page > 1 {
+			p := page
+			params.Page = &p
+		}
+
 		resp, err := m.Core.GetVirtualMachineNetworkInterfacesWithResponse(
 			ctx,
-			&core.GetVirtualMachineNetworkInterfacesParams{
-				VirtualMachineId: &vmID,
-				Page:             &page,
-			},
+			params,
 		)
 		if err != nil {
 			if resp != nil {
