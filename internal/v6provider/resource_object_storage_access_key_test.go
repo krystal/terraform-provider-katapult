@@ -1,6 +1,7 @@
 package v6provider
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -370,7 +371,23 @@ func testAccCheckKatapultObjectStorageAccessKeyDestroy(
 						AccessKeyId: &id,
 					},
 				)
-			if err == nil && resp.JSON404 == nil {
+			if errors.Is(err, core.ErrNotFound) ||
+				(resp != nil && resp.JSON404 != nil) {
+				continue
+			}
+
+			if err != nil {
+				return err
+			}
+
+			if resp == nil || resp.JSON200 == nil {
+				return fmt.Errorf(
+					"katapult_object_storage_access_key %s returned unexpected response during destroy check",
+					id,
+				)
+			}
+
+			if resp.JSON404 == nil {
 				return fmt.Errorf(
 					"katapult_object_storage_access_key "+
 						"%s still exists",

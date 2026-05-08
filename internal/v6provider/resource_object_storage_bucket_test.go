@@ -1,6 +1,7 @@
 package v6provider
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -424,7 +425,7 @@ func TestAccKatapultObjectStorageBucket_static_site(t *testing.T) {
 //
 
 func TestAccKatapultObjectStorageBucket_validate_static_site_requires_index(t *testing.T) {
-	tt := newTestTools(t)
+	tt := newTestTools(t).NoHTTP()
 	name := strings.ToLower(tt.ResourceName())
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -455,7 +456,7 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_index(t *t
 }
 
 func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_list(t *testing.T) {
-	tt := newTestTools(t)
+	tt := newTestTools(t).NoHTTP()
 	name := strings.ToLower(tt.ResourceName())
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -486,7 +487,7 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_lis
 }
 
 func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_read(t *testing.T) {
-	tt := newTestTools(t)
+	tt := newTestTools(t).NoHTTP()
 	name := strings.ToLower(tt.ResourceName())
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -517,7 +518,7 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_rea
 }
 
 func TestAccKatapultObjectStorageBucket_validate_static_site_index_forbidden(t *testing.T) {
-	tt := newTestTools(t)
+	tt := newTestTools(t).NoHTTP()
 	name := strings.ToLower(tt.ResourceName())
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -546,7 +547,7 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_index_forbidden(t *
 }
 
 func TestAccKatapultObjectStorageBucket_validate_static_site_error_forbidden(t *testing.T) {
-	tt := newTestTools(t)
+	tt := newTestTools(t).NoHTTP()
 	name := strings.ToLower(tt.ResourceName())
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -712,7 +713,23 @@ func testAccCheckKatapultObjectStorageBucketDestroy(
 						ObjectStorageClusterRegion: &region,
 					},
 				)
-			if err == nil && resp.JSON404 == nil {
+			if errors.Is(err, core.ErrNotFound) ||
+				(resp != nil && resp.JSON404 != nil) {
+				continue
+			}
+
+			if err != nil {
+				return err
+			}
+
+			if resp == nil || resp.JSON200 == nil {
+				return fmt.Errorf(
+					"katapult_object_storage_bucket %s returned unexpected response during destroy check",
+					name,
+				)
+			}
+
+			if resp.JSON404 == nil {
 				return fmt.Errorf(
 					"katapult_object_storage_bucket %s still exists",
 					name,

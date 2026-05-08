@@ -207,9 +207,14 @@ func (r *ObjectStorageAccessKeyResource) Create(
 		},
 	)
 	if err != nil {
+		body := "<no response>"
+		if res != nil {
+			body = string(res.Body)
+		}
+
 		resp.Diagnostics.AddError(
 			"Object Storage Access Key Create Error",
-			fmt.Sprintf("%s: %s", err.Error(), string(res.Body)),
+			fmt.Sprintf("%s: %s", err.Error(), body),
 		)
 
 		return

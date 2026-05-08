@@ -196,7 +196,9 @@ func (r *ObjectStorageBucketResource) ValidateConfig(
 	}
 
 	if data.ServeStaticSite.ValueBool() {
-		if data.StaticSiteIndex.IsNull() || data.StaticSiteIndex.IsUnknown() {
+		if data.StaticSiteIndex.IsNull() ||
+			data.StaticSiteIndex.IsUnknown() ||
+			data.StaticSiteIndex.ValueString() == "" {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("static_site_index"),
 				"Missing Attribute Configuration",
@@ -507,6 +509,10 @@ func (r *ObjectStorageBucketResource) Delete(
 				},
 			})
 	if err != nil {
+		if errors.Is(err, core.ErrNotFound) {
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Object Storage Bucket Delete Error",
 			err.Error(),
@@ -553,6 +559,7 @@ func (r *ObjectStorageBucketResource) ObjectStorageBucketRead(
 
 	model.Region = types.StringValue(region)
 	model.Name = types.StringPointerValue(b.Name)
+	model.Label = types.StringNull()
 
 	if b.Label.IsSpecified() {
 		if b.Label.IsNull() || b.Label.MustGet() == "" {
@@ -564,6 +571,8 @@ func (r *ObjectStorageBucketResource) ObjectStorageBucketRead(
 
 	model.PublicURL = types.StringPointerValue(b.PublicUrl)
 	model.ServeStaticSite = types.BoolPointerValue(b.ServeStaticSite)
+	model.StaticSiteError = types.StringNull()
+	model.StaticSiteIndex = types.StringNull()
 
 	if b.StaticSiteError.IsSpecified() {
 		v := ""

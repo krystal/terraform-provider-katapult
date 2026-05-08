@@ -102,6 +102,7 @@ type testTools struct {
 	Recorder          *recorder.Recorder
 	Meta              *Meta
 	ProviderFactories providerFactoryList
+	noHTTP            bool
 	randID            string
 }
 
@@ -152,12 +153,26 @@ func (tt *testTools) ResourceName(name ...string) string {
 	)
 }
 
+func (tt *testTools) NoHTTP() *testTools {
+	tt.noHTTP = true
+	if tt.Recorder != nil {
+		tt.Recorder.SetTransport(&stopRequests{})
+	}
+
+	return tt
+}
+
 func (tt *testTools) RandID() string {
 	if tt.randID != "" {
 		return tt.randID
 	}
 
 	rand := acctest.RandString(12)
+	if tt.noHTTP {
+		tt.randID = rand
+		return rand
+	}
+
 	if tt.Recorder == nil {
 		return rand
 	}
