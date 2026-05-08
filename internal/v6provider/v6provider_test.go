@@ -81,6 +81,7 @@ type testTools struct {
 	Recorder          *recorder.Recorder
 	Meta              *Meta
 	ProviderFactories providerFactoryList
+	noHTTP            bool
 	randID            string
 }
 
@@ -165,12 +166,28 @@ func (tt *testTools) ResourceName(name ...string) string {
 	)
 }
 
+// NoHTTP marks the test as config-validation-only: it keeps RandID in memory
+// and makes any unexpected HTTP attempt fail immediately instead of recording.
+func (tt *testTools) NoHTTP() *testTools {
+	tt.noHTTP = true
+	if tt.Recorder != nil {
+		tt.Recorder.SetTransport(&stopRequests{})
+	}
+
+	return tt
+}
+
 func (tt *testTools) RandID() string {
 	if tt.randID != "" {
 		return tt.randID
 	}
 
 	rand := randsmust.Alphanumeric(12)
+	if tt.noHTTP {
+		tt.randID = rand
+		return rand
+	}
+
 	if tt.Recorder == nil {
 		return rand
 	}
