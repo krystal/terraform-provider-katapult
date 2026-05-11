@@ -14,7 +14,7 @@ resource "katapult_object_storage_access_key" "admin" {
   all_objects_write = true
 }
 
-# Use the credentials to configure an S3 client (e.g. AWS provider)
+# Use the credentials to configure an object storage client
 resource "katapult_object_storage_access_key" "backup" {
   name   = "backup-agent"
   region = "uk-lon-1"
@@ -27,12 +27,12 @@ resource "katapult_object_storage_bucket" "backups" {
   write_key_ids = [katapult_object_storage_access_key.backup.id]
 }
 
-output "backup_s3_access_key_id" {
-  value = katapult_object_storage_access_key.backup.s3_access_key_id
+output "backup_access_key_id" {
+  value = katapult_object_storage_access_key.backup.access_key_id
 }
 
-output "backup_s3_secret_access_key" {
-  value     = katapult_object_storage_access_key.backup.s3_secret_access_key
+output "backup_secret_access_key" {
+  value     = katapult_object_storage_access_key.backup.secret_access_key
   sensitive = true
 }
 

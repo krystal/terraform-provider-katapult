@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/krystal/go-katapult/next/core"
@@ -25,17 +26,17 @@ type (
 	}
 
 	ObjectStorageAccessKeyResourceModel struct {
-		ID                types.String `tfsdk:"id"`
-		Name              types.String `tfsdk:"name"`
-		Region            types.String `tfsdk:"region"`
-		AllBucketsRead    types.Bool   `tfsdk:"all_buckets_read"`
-		AllObjectsRead    types.Bool   `tfsdk:"all_objects_read"`
-		AllObjectsWrite   types.Bool   `tfsdk:"all_objects_write"`
-		ReadBuckets       types.Set    `tfsdk:"read_buckets"`
-		WriteBuckets      types.Set    `tfsdk:"write_buckets"`
-		S3AccessKeyID     types.String `tfsdk:"s3_access_key_id"`
-		S3SecretAccessKey types.String `tfsdk:"s3_secret_access_key"`
-		ServerURL         types.String `tfsdk:"server_url"`
+		ID              types.String `tfsdk:"id"`
+		Name            types.String `tfsdk:"name"`
+		Region          types.String `tfsdk:"region"`
+		AllBucketsRead  types.Bool   `tfsdk:"all_buckets_read"`
+		AllObjectsRead  types.Bool   `tfsdk:"all_objects_read"`
+		AllObjectsWrite types.Bool   `tfsdk:"all_objects_write"`
+		ReadBuckets     types.Set    `tfsdk:"read_buckets"`
+		WriteBuckets    types.Set    `tfsdk:"write_buckets"`
+		AccessKeyID     types.String `tfsdk:"access_key_id"`
+		SecretAccessKey types.String `tfsdk:"secret_access_key"`
+		ServerURL       types.String `tfsdk:"server_url"`
 	}
 )
 
@@ -77,11 +78,11 @@ func (r *ObjectStorageAccessKeyResource) Schema(
 	resp.Schema = schema.Schema{
 		//nolint:lll
 		MarkdownDescription: strings.TrimSpace(`
-Manages an S3-compatible access key for a Katapult object storage cluster.
+Manages an access key for a Katapult object storage cluster.
 
-Use ` + "`s3_access_key_id`" + `, ` + "`s3_secret_access_key`" + `, and ` + "`server_url`" + ` to configure any S3-compatible client or SDK. Bucket-level permissions are managed via ` + "`read_key_ids`" + ` / ` + "`write_key_ids`" + ` on ` + "`katapult_object_storage_bucket`" + ` resources; ` + "`read_buckets`" + ` and ` + "`write_buckets`" + ` here reflect those associations.
+Use ` + "`access_key_id`" + `, ` + "`secret_access_key`" + `, and ` + "`server_url`" + ` to configure an object storage client or SDK. Bucket-level permissions are managed via ` + "`read_key_ids`" + ` / ` + "`write_key_ids`" + ` on ` + "`katapult_object_storage_bucket`" + ` resources; ` + "`read_buckets`" + ` and ` + "`write_buckets`" + ` here reflect those associations.
 
-~> **Note:** ` + "`s3_secret_access_key`" + ` is only available at creation time and cannot be retrieved again — it will be empty after import. Changing ` + "`region`" + ` forces a new resource.
+~> **Note:** ` + "`secret_access_key`" + ` is only available at creation time and cannot be retrieved again — it will be empty after import. Changing ` + "`region`" + ` forces a new resource.
 `),
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -96,9 +97,12 @@ Use ` + "`s3_access_key_id`" + `, ` + "`s3_secret_access_key`" + `, and ` + "`se
 				MarkdownDescription: "Human-readable name for the access key.",
 			},
 			"region": schema.StringAttribute{
-				Required: true,
-				MarkdownDescription: "Region permalink, e.g. `uk-lon-1`. " +
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Region permalink, e.g. " +
+					"`uk-lon-1`. Defaults to `uk-lon-1`. " +
 					"Changing this forces a new resource.",
+				Default: stringdefault.StaticString("uk-lon-1"),
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -136,18 +140,18 @@ Use ` + "`s3_access_key_id`" + `, ` + "`s3_secret_access_key`" + `, and ` + "`se
 					"Populated via a bucket's `write_key_ids`.",
 				ElementType: types.StringType,
 			},
-			"s3_access_key_id": schema.StringAttribute{
+			"access_key_id": schema.StringAttribute{
 				Computed: true,
-				MarkdownDescription: "S3 access key ID for " +
-					"authenticating S3 clients.",
+				MarkdownDescription: "Access key ID for " +
+					"authenticating object storage clients.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"s3_secret_access_key": schema.StringAttribute{
+			"secret_access_key": schema.StringAttribute{
 				Computed:  true,
 				Sensitive: true,
-				MarkdownDescription: "S3 secret access key. Available " +
+				MarkdownDescription: "Secret access key. Available " +
 					"only at creation; not retrievable " +
 					"via the API. Empty after import.",
 				PlanModifiers: []planmodifier.String{
@@ -156,8 +160,8 @@ Use ` + "`s3_access_key_id`" + `, ` + "`s3_secret_access_key`" + `, and ` + "`se
 			},
 			"server_url": schema.StringAttribute{
 				Computed: true,
-				MarkdownDescription: "S3-compatible endpoint URL " +
-					"for configuring S3 clients.",
+				MarkdownDescription: "Endpoint URL for " +
+					"configuring object storage clients.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -365,7 +369,7 @@ func (r *ObjectStorageAccessKeyResource) Update(
 	r.populateModel(
 		&plan, &res.JSON200.ObjectStorageAccessKey, false,
 	)
-	plan.S3SecretAccessKey = state.S3SecretAccessKey
+	plan.SecretAccessKey = state.SecretAccessKey
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -439,7 +443,7 @@ func (r *ObjectStorageAccessKeyResource) populateModel(
 	}
 
 	if key.S3AccessKeyId.IsSpecified() && !key.S3AccessKeyId.IsNull() {
-		model.S3AccessKeyID = types.StringValue(
+		model.AccessKeyID = types.StringValue(
 			key.S3AccessKeyId.MustGet(),
 		)
 	}
@@ -451,7 +455,7 @@ func (r *ObjectStorageAccessKeyResource) populateModel(
 	if includeSecret &&
 		key.S3SecretAccessKey.IsSpecified() &&
 		!key.S3SecretAccessKey.IsNull() {
-		model.S3SecretAccessKey = types.StringValue(
+		model.SecretAccessKey = types.StringValue(
 			key.S3SecretAccessKey.MustGet(),
 		)
 	}

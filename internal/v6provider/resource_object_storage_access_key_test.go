@@ -63,11 +63,11 @@ func TestAccKatapultObjectStorageAccessKey_minimal(t *testing.T) {
 					),
 					resource.TestCheckResourceAttrSet(
 						"katapult_object_storage_access_key.main",
-						"s3_access_key_id",
+						"access_key_id",
 					),
 					resource.TestCheckResourceAttrSet(
 						"katapult_object_storage_access_key.main",
-						"s3_secret_access_key",
+						"secret_access_key",
 					),
 					resource.TestCheckResourceAttrSet(
 						"katapult_object_storage_access_key.main",
@@ -79,9 +79,9 @@ func TestAccKatapultObjectStorageAccessKey_minimal(t *testing.T) {
 				ResourceName:      "katapult_object_storage_access_key.main",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// s3_secret_access_key is only returned by the API at
+				// secret_access_key is only returned by the API at
 				// creation time and cannot be retrieved again after import.
-				ImportStateVerifyIgnore: []string{"s3_secret_access_key"},
+				ImportStateVerifyIgnore: []string{"secret_access_key"},
 			},
 		},
 	})
@@ -138,11 +138,11 @@ func TestAccKatapultObjectStorageAccessKey_update_name(t *testing.T) {
 					),
 					resource.TestCheckResourceAttrSet(
 						"katapult_object_storage_access_key.main",
-						"s3_access_key_id",
+						"access_key_id",
 					),
 					resource.TestCheckResourceAttrSet(
 						"katapult_object_storage_access_key.main",
-						"s3_secret_access_key",
+						"secret_access_key",
 					),
 					resource.TestCheckResourceAttrSet(
 						"katapult_object_storage_access_key.main",

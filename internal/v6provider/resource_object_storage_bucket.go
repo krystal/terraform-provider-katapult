@@ -23,7 +23,7 @@ import (
 
 //nolint:lll
 var objectStorageBucketMarkdownDesc = strings.TrimSpace(`
-Manages an S3-compatible object storage bucket in a Katapult cluster. Credentials for S3 clients come from a ` + "`katapult_object_storage_access_key`" + ` resource.
+Manages an object storage bucket in a Katapult cluster. Credentials for object storage clients come from a ` + "`katapult_object_storage_access_key`" + ` resource.
 
 ~> **Note:** ` + "`name`" + ` is globally unique and immutable — changing it forces a new resource.
 `)
@@ -97,9 +97,12 @@ func (r *ObjectStorageBucketResource) Schema(
 				},
 			},
 			"region": schema.StringAttribute{
-				Required: true,
+				Optional: true,
+				Computed: true,
 				MarkdownDescription: "Region permalink, e.g. " +
-					"`uk-lon-1`. Cannot be changed after creation.",
+					"`uk-lon-1`. Defaults to `uk-lon-1`. " +
+					"Cannot be changed after creation.",
+				Default: stringdefault.StaticString("uk-lon-1"),
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
