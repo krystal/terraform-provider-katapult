@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -303,6 +304,12 @@ func (r *ObjectStorageAccessKeyResource) Read(
 		},
 	)
 	if err != nil {
+		if errors.Is(err, core.ErrNotFound) {
+			resp.State.RemoveResource(ctx)
+
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Object Storage Access Key Read Error",
 			err.Error(),
