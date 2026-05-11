@@ -173,20 +173,26 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 				},
 			},
 			"disk_template": schema.StringAttribute{
-				Required: true,
+				Optional: true,
 				MarkdownDescription: "Permalink or ID of the Disk " +
-					"Template to use.",
+					"Template to use. Required when creating a new VM. " +
+					"Cannot be read back from the API on import; supply " +
+					"the original value in config to avoid replacement.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+					ImportAdoptStringPlanModifier(),
 				},
 			},
 			"disk_template_options": schema.MapAttribute{
 				Optional:    true,
 				ElementType: types.StringType,
 				MarkdownDescription: "Options to pass to the Disk " +
-					"Template during creation.",
+					"Template during creation. Cannot be read back from " +
+					"the API on import; supply the original value in " +
+					"config to avoid replacement.",
 				PlanModifiers: []planmodifier.Map{
 					mapplanmodifier.RequiresReplace(),
+					ImportAdoptMapPlanModifier(),
 				},
 			},
 			"ip_address_ids": schema.SetAttribute{
@@ -290,9 +296,13 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 				MarkdownDescription: "One or more disks with custom sizes " +
 					"to create and attach during creation. The first " +
 					"disk is the boot disk. If omitted, a single disk " +
-					"is created from the chosen package.",
+					"is created from the chosen package. On import, only " +
+					"the boot disk is populated; any additional " +
+					"creation-time disks must be re-declared in config to " +
+					"avoid replacement.",
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.RequiresReplace(),
+					ImportAdoptListPlanModifier(),
 				},
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
@@ -324,6 +334,16 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 	var plan VirtualMachineResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if plan.DiskTemplate.IsNull() || plan.DiskTemplate.IsUnknown() ||
+		plan.DiskTemplate.ValueString() == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("disk_template"),
+			"Missing required attribute",
+			"disk_template must be set when creating a Virtual Machine.",
+		)
 		return
 	}
 
@@ -713,7 +733,7 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 		}
 	}
 
-	if err := r.vmRead(ctx, &plan); err != nil {
+	if _, err := r.vmRead(ctx, &plan); err != nil {
 		resp.Diagnostics.AddError("Read Error", err.Error())
 		return
 	}
@@ -732,7 +752,13 @@ func (r *VirtualMachineResource) Read(
 		return
 	}
 
-	err := r.vmRead(ctx, &state)
+	// ImportStatePassthroughID writes only the resource ID into state; every
+	// other attribute is null on entry to the first Read. Use Package (a
+	// required attribute) as the signal that this Read is the post-import
+	// adoption pass and the `disk` block should be hydrated from the API.
+	isImport := state.Package.IsNull()
+
+	disks, err := r.vmRead(ctx, &state)
 	if err != nil {
 		if errors.Is(err, core.ErrNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -740,6 +766,13 @@ func (r *VirtualMachineResource) Read(
 		}
 		resp.Diagnostics.AddError("Read Error", err.Error())
 		return
+	}
+
+	if isImport {
+		if err := populateBootDisk(ctx, disks, &state); err != nil {
+			resp.Diagnostics.AddError("Read Error", err.Error())
+			return
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
@@ -1050,7 +1083,7 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		}
 	}
 
-	if err := r.vmRead(ctx, &plan); err != nil {
+	if _, err := r.vmRead(ctx, &plan); err != nil {
 		resp.Diagnostics.AddError("Read Error", err.Error())
 		return
 	}
@@ -1275,7 +1308,7 @@ func (r *VirtualMachineResource) ImportState(
 func (r *VirtualMachineResource) vmRead(
 	ctx context.Context,
 	model *VirtualMachineResourceModel,
-) error {
+) ([]core.GetVirtualMachineDisks200ResponseDisks, error) {
 	vmID := model.ID.ValueString()
 
 	vmRes, err := r.M.Core.GetVirtualMachineWithResponse(ctx,
@@ -1284,20 +1317,25 @@ func (r *VirtualMachineResource) vmRead(
 		if vmRes != nil {
 			err = genericAPIError(err, vmRes.Body)
 		}
-		return err
+		return nil, err
 	}
 	if vmRes.JSON200 == nil {
-		return fmt.Errorf("unexpected empty response fetching VM")
+		return nil, fmt.Errorf("unexpected empty response fetching VM")
 	}
 	vm := vmRes.JSON200.VirtualMachine
 
 	ifaces, err := fetchAllVMNetworkInterfaces(ctx, r.M, vmID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if e := refreshManagedDiskIDs(ctx, r.M, vmID, model); e != nil {
-		return e
+	disks, err := fetchAllVMDisks(ctx, r.M, vmID)
+	if err != nil {
+		return nil, err
+	}
+
+	if e := refreshManagedDiskIDs(ctx, disks, model); e != nil {
+		return nil, e
 	}
 
 	vnetIDs := make([]attr.Value, 0)
@@ -1413,11 +1451,11 @@ func (r *VirtualMachineResource) vmRead(
 
 	niList, err := buildVMNetworkInterfaceList(ifaces)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	model.NetworkInterfaces = niList
 
-	return nil
+	return disks, nil
 }
 
 // refreshManagedDiskIDs intersects the disk_ids currently in state (the disks
@@ -1430,15 +1468,9 @@ func (r *VirtualMachineResource) vmRead(
 // normalized to an explicit empty set so the post-apply state is known.
 func refreshManagedDiskIDs(
 	ctx context.Context,
-	m *Meta,
-	vmID string,
+	disks []core.GetVirtualMachineDisks200ResponseDisks,
 	model *VirtualMachineResourceModel,
 ) error {
-	disks, err := fetchAllVMDisks(ctx, m, vmID)
-	if err != nil {
-		return err
-	}
-
 	if model.DiskIDs.IsNull() || model.DiskIDs.IsUnknown() ||
 		len(model.DiskIDs.Elements()) == 0 {
 		model.DiskIDs = types.SetValueMust(
@@ -1470,6 +1502,56 @@ func refreshManagedDiskIDs(
 	}
 	model.DiskIDs = types.SetValueMust(types.StringType, stillAttached)
 
+	return nil
+}
+
+// populateBootDisk fills the `disk` block list with a single entry for the
+// VM's boot disk if state is empty (e.g. post-import). Existing entries are
+// preserved so disks declared at create time are not clobbered. Non-boot
+// disks are intentionally not populated: they belong in `disk_ids` and
+// should be imported as `katapult_disk` resources separately.
+func populateBootDisk(
+	_ context.Context,
+	disks []core.GetVirtualMachineDisks200ResponseDisks,
+	model *VirtualMachineResourceModel,
+) error {
+	diskObjType := types.ObjectType{AttrTypes: map[string]attr.Type{
+		"name": types.StringType,
+		"size": types.Int64Type,
+	}}
+
+	if !model.Disk.IsNull() && !model.Disk.IsUnknown() {
+		return nil
+	}
+
+	for _, a := range disks {
+		if a.Boot == nil || !*a.Boot || a.Disk == nil {
+			continue
+		}
+		name := types.StringNull()
+		if a.Disk.Name != nil {
+			name = types.StringValue(*a.Disk.Name)
+		}
+		size := types.Int64Null()
+		if a.Disk.SizeInGb != nil {
+			size = types.Int64Value(int64(*a.Disk.SizeInGb))
+		}
+		obj, diags := types.ObjectValue(diskObjType.AttrTypes, map[string]attr.Value{
+			"name": name,
+			"size": size,
+		})
+		if diags.HasError() {
+			return fmt.Errorf("building boot disk object: %s", diags)
+		}
+		list, diags := types.ListValue(diskObjType, []attr.Value{obj})
+		if diags.HasError() {
+			return fmt.Errorf("building boot disk list: %s", diags)
+		}
+		model.Disk = list
+		return nil
+	}
+
+	model.Disk = types.ListNull(diskObjType)
 	return nil
 }
 
