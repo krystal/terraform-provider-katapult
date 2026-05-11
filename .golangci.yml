@@ -1,23 +1,9 @@
-linters-settings:
-  funlen:
-    lines: 150
-    statements: 200
-  goconst:
-    min-occurrences: 5
-  gocyclo:
-    min-complexity: 20
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment
-  lll:
-    line-length: 120
-    tab-width: 4
-  misspell:
-    locale: US
-
+version: "2"
+run:
+  modules-download-mode: readonly
+  allow-parallel-runners: true
 linters:
-  disable-all: true
+  default: none
   enable:
     - asciicheck
     - bodyclose
@@ -33,11 +19,8 @@ linters:
     - gocritic
     - gocyclo
     - godot
-    - gofumpt
-    - goimports
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
     - importas
     - ineffassign
@@ -53,34 +36,73 @@ linters:
     - sqlclosecheck
     - staticcheck
     - tparallel
-    - typecheck
     - unconvert
     - unparam
     - unused
     - wastedassign
     - whitespace
-
-issues:
-  exclude:
-    - Using the variable on range scope `tt` in function literal
-    - Using the variable on range scope `tc` in function literal
-  exclude-rules:
-    - linters:
-        - staticcheck
-      text: "SA1019: resource.StateChangeConf is deprecated"
-    - path: "_test\\.go"
-      linters:
-        - funlen
-        - dupl
-        - goconst
-    - source: "^//go:generate "
-      linters:
-        - lll
-    - source: "`json:"
-      linters:
-        - lll
-
-run:
-  timeout: 2m
-  allow-parallel-runners: true
-  modules-download-mode: readonly
+  settings:
+    funlen:
+      lines: 150
+      statements: 200
+    goconst:
+      min-occurrences: 60
+    gocyclo:
+      min-complexity: 20
+    govet:
+      disable:
+        - fieldalignment
+      enable-all: true
+    lll:
+      line-length: 120
+      tab-width: 4
+    misspell:
+      locale: US
+    staticcheck:
+      # Keep parity with golangci-lint v1.x: skip the stylecheck (ST1*) and
+      # quickfix (QF1*) families that v2 enables by default.
+      checks:
+        - all
+        - -ST1*
+        - -QF1*
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - staticcheck
+        text: 'SA1019: resource.StateChangeConf is deprecated'
+      - linters:
+          - dupl
+          - funlen
+          - goconst
+          - prealloc
+        path: _test\.go
+      - linters:
+          - lll
+        source: '^//go:generate '
+      - linters:
+          - lll
+        source: '`json:'
+      - path: (.+)\.go$
+        text: Using the variable on range scope `tt` in function literal
+      - path: (.+)\.go$
+        text: Using the variable on range scope `tc` in function literal
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
