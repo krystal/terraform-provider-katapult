@@ -33,10 +33,8 @@ func TestAccKatapultObjectStorageBucket_minimal(t *testing.T) {
 				Config: undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
 					  name   = "%s"
-					  region = "%s"
 					}`,
 					name,
-					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(

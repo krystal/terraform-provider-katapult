@@ -56,8 +56,10 @@ func (d *ObjectStorageBucketDataSource) Schema(
 				MarkdownDescription: "Globally unique bucket name.",
 			},
 			"region": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "Region permalink, e.g. `uk-lon-1`.",
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Region permalink, e.g. " +
+					"`uk-lon-1`. Defaults to `uk-lon-1`.",
 			},
 			"label": schema.StringAttribute{
 				Computed:            true,
@@ -119,6 +121,10 @@ func (d *ObjectStorageBucketDataSource) Read(
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if data.Region.IsNull() || data.Region.ValueString() == "" {
+		data.Region = types.StringValue("uk-lon-1")
 	}
 
 	r := &ObjectStorageBucketResource{M: d.M}

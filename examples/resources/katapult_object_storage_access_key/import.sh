@@ -1,0 +1,1 @@
+terraform import katapult_object_storage_access_key.example objkey_aBcDeFg1234567
