@@ -92,6 +92,10 @@ func isAdditionalDiskAttachment(
 }
 
 // assignAndAttachDisksToVM assigns then attaches each disk in diskIDs to vmID.
+// Disks already attached to the VM are skipped so the operation is idempotent;
+// this matters for workflows like importing a VM and its disks separately and
+// then declaring `disk_ids` on the VM, where the resulting Update otherwise
+// re-attaches disks the API already reports as attached.
 func assignAndAttachDisksToVM(
 	ctx context.Context,
 	m *Meta,
@@ -99,7 +103,27 @@ func assignAndAttachDisksToVM(
 	diskIDs []string,
 	timeout time.Duration,
 ) error {
+	if len(diskIDs) == 0 {
+		return nil
+	}
+	existing, err := fetchAllVMDisks(ctx, m, vmID)
+	if err != nil {
+		return err
+	}
+	attached := make(map[string]struct{}, len(existing))
+	for _, a := range existing {
+		if a.Disk == nil || a.Disk.Id == nil || a.State == nil {
+			continue
+		}
+		if *a.State == core.VirtualMachineDiskAttachmentStateEnumAttached {
+			attached[*a.Disk.Id] = struct{}{}
+		}
+	}
+
 	for _, id := range diskIDs {
+		if _, ok := attached[id]; ok {
+			continue
+		}
 		diskID := id
 		assignRes, err := m.Core.PostDiskAssignWithResponse(ctx,
 			core.PostDiskAssignJSONRequestBody{
