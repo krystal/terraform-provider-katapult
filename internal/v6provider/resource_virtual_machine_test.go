@@ -920,6 +920,185 @@ func TestAccKatapultVirtualMachine_update_network_speed_profile(t *testing.T) {
 	})
 }
 
+func TestAccKatapultVirtualMachine_disk_ids(t *testing.T) {
+	tt := newTestTools(t)
+
+	diskName := tt.ResourceName("disk")
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultDiskDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+					resource "katapult_ip" "web" {}
+
+					resource "katapult_disk" "data" {
+					  name       = "%s"
+					  size_in_gb = 20
+					}
+
+					resource "katapult_virtual_machine" "base" {
+					  package       = "rock-3"
+					  disk_template = "ubuntu-18-04"
+					  disk_template_options = {
+					    install_agent = true
+					  }
+					  ip_address_ids = [katapult_ip.web.id]
+					  disk_ids       = [katapult_disk.data.id]
+					}`, diskName,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultVirtualMachineExists(
+						tt, "katapult_virtual_machine.base",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "disk_ids.#", "1",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"katapult_virtual_machine.base", "disk_ids.*",
+						"katapult_disk.data", "id",
+					),
+				),
+			},
+			{
+				// Remove the VM but keep the disk — disk should survive.
+				Config: undent.Stringf(`
+					resource "katapult_ip" "web" {}
+
+					resource "katapult_disk" "data" {
+					  name       = "%s"
+					  size_in_gb = 20
+					}`, diskName,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultDiskExists(
+						tt, "katapult_disk.data",
+					),
+				),
+			},
+		},
+	})
+}
+
+func TestAccKatapultVirtualMachine_update_disk_ids(t *testing.T) {
+	tt := newTestTools(t)
+
+	diskAName := tt.ResourceName("disk-a")
+	diskBName := tt.ResourceName("disk-b")
+
+	// depends_on serializes the disk create requests so VCR replay can match
+	// otherwise-identical PostOrganizationDisks calls in a deterministic order.
+	disksConfig := undent.Stringf(`
+		resource "katapult_disk" "a" {
+		  name       = "%s"
+		  size_in_gb = 20
+		}
+
+		resource "katapult_disk" "b" {
+		  depends_on = [katapult_disk.a]
+		  name       = "%s"
+		  size_in_gb = 20
+		}
+	`, diskAName, diskBName)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultDiskDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: disksConfig + undent.String(`
+					resource "katapult_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+					  package       = "rock-3"
+					  disk_template = "ubuntu-18-04"
+					  disk_template_options = {
+					    install_agent = true
+					  }
+					  ip_address_ids = [katapult_ip.web.id]
+					  disk_ids       = [katapult_disk.a.id]
+					}`,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "disk_ids.#", "1",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"katapult_virtual_machine.base", "disk_ids.*",
+						"katapult_disk.a", "id",
+					),
+				),
+			},
+			{
+				Config: disksConfig + undent.String(`
+					resource "katapult_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+					  package       = "rock-3"
+					  disk_template = "ubuntu-18-04"
+					  disk_template_options = {
+					    install_agent = true
+					  }
+					  ip_address_ids = [katapult_ip.web.id]
+					  disk_ids = [
+					    katapult_disk.a.id,
+					    katapult_disk.b.id,
+					  ]
+					}`,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "disk_ids.#", "2",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"katapult_virtual_machine.base", "disk_ids.*",
+						"katapult_disk.a", "id",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"katapult_virtual_machine.base", "disk_ids.*",
+						"katapult_disk.b", "id",
+					),
+				),
+			},
+			{
+				Config: disksConfig + undent.String(`
+					resource "katapult_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+					  package       = "rock-3"
+					  disk_template = "ubuntu-18-04"
+					  disk_template_options = {
+					    install_agent = true
+					  }
+					  ip_address_ids = [katapult_ip.web.id]
+					  disk_ids       = [katapult_disk.b.id]
+					}`,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "disk_ids.#", "1",
+					),
+					resource.TestCheckTypeSetElemAttrPair(
+						"katapult_virtual_machine.base", "disk_ids.*",
+						"katapult_disk.b", "id",
+					),
+				),
+			},
+		},
+	})
+}
+
 //
 // Helpers
 //

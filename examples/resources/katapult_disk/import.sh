@@ -1,0 +1,1 @@
+terraform import katapult_disk.data disk_xxxxxxxxxxx

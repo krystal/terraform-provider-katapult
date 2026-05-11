@@ -85,6 +85,7 @@ resource "katapult_virtual_machine" "base" {
 
 - `description` (String) A description for the Virtual Machine.
 - `disk` (Block List) One or more disks with custom sizes to create and attach during creation. The first disk is the boot disk. If omitted, a single disk is created from the chosen package. (see [below for nested schema](#nestedblock--disk))
+- `disk_ids` (Set of String) Set of additional disk IDs to attach to the Virtual Machine. Managed as `katapult_disk` resources. Destroying the VM detaches these disks but does **not** delete them. Use the `katapult_virtual_machine_disks` data source to read the full list of disks currently attached to a VM.
 - `disk_template_options` (Map of String) Options to pass to the Disk Template during creation.
 - `group_id` (String) The ID of the Virtual Machine Group to assign this Virtual Machine to.
 - `hostname` (String) The hostname of the Virtual Machine. If not provided, a hostname is generated.

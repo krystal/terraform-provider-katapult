@@ -7,9 +7,200 @@ import (
 	"slices"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/krystal/go-katapult/next/core"
 )
+
+// requiresReplaceIfDecreased triggers replace when size_in_gb decreases
+// because disks cannot be shrunk — only grown or replaced.
+type requiresReplaceIfDecreasedModifier struct{}
+
+func RequiresReplaceIfDecreased() planmodifier.Int64 {
+	return requiresReplaceIfDecreasedModifier{}
+}
+
+func (m requiresReplaceIfDecreasedModifier) Description(
+	_ context.Context,
+) string {
+	return "Requires replace if the value decreases."
+}
+
+func (m requiresReplaceIfDecreasedModifier) MarkdownDescription(
+	_ context.Context,
+) string {
+	return "Requires replace if the value decreases."
+}
+
+func (m requiresReplaceIfDecreasedModifier) PlanModifyInt64(
+	_ context.Context,
+	req planmodifier.Int64Request,
+	resp *planmodifier.Int64Response,
+) {
+	if req.PlanValue.IsUnknown() || req.StateValue.IsNull() {
+		return
+	}
+	if req.PlanValue.ValueInt64() < req.StateValue.ValueInt64() {
+		resp.RequiresReplace = true
+	}
+}
+
+// fetchAllVMDisks returns every disk attachment for a given VM, paging as needed.
+func fetchAllVMDisks(
+	ctx context.Context,
+	m *Meta,
+	vmID string,
+) ([]core.GetVirtualMachineDisks200ResponseDisks, error) {
+	var all []core.GetVirtualMachineDisks200ResponseDisks
+	totalPages := 1
+	for page := 1; page <= totalPages; page++ {
+		p := page
+		res, err := m.Core.GetVirtualMachineDisksWithResponse(ctx,
+			&core.GetVirtualMachineDisksParams{
+				VirtualMachineId: &vmID,
+				Page:             &p,
+			})
+		if err != nil {
+			if res != nil {
+				return nil, genericAPIError(err, res.Body)
+			}
+			return nil, err
+		}
+		if res.JSON200 == nil {
+			return nil, fmt.Errorf("unexpected empty response fetching VM disks")
+		}
+		body := res.JSON200
+		if body.Pagination.TotalPages.IsSpecified() {
+			n, _ := body.Pagination.TotalPages.Get()
+			totalPages = n
+		}
+		all = append(all, body.Disks...)
+	}
+	return all, nil
+}
+
+// isAdditionalDiskAttachment reports whether an attachment should be treated as
+// a user-managed additional disk. The VM disks endpoint has historically
+// omitted the boot flag for the system disk on some responses, so a nil boot
+// flag is treated conservatively as boot and excluded from disk_ids state.
+// Without that guard, the system disk can be misclassified as a user-managed
+// additional disk.
+func isAdditionalDiskAttachment(
+	attachment core.GetVirtualMachineDisks200ResponseDisks,
+) bool {
+	return attachment.Boot != nil && !*attachment.Boot
+}
+
+// assignAndAttachDisksToVM assigns then attaches each disk in diskIDs to vmID.
+// Disks already attached to the VM are skipped so the operation is idempotent;
+// this matters for workflows like importing a VM and its disks separately and
+// then declaring `disk_ids` on the VM, where the resulting Update otherwise
+// re-attaches disks the API already reports as attached.
+func assignAndAttachDisksToVM(
+	ctx context.Context,
+	m *Meta,
+	vmID string,
+	diskIDs []string,
+	timeout time.Duration,
+) error {
+	if len(diskIDs) == 0 {
+		return nil
+	}
+	existing, err := fetchAllVMDisks(ctx, m, vmID)
+	if err != nil {
+		return err
+	}
+	attached := make(map[string]struct{}, len(existing))
+	for _, a := range existing {
+		if a.Disk == nil || a.Disk.Id == nil || a.State == nil {
+			continue
+		}
+		if *a.State == core.VirtualMachineDiskAttachmentStateEnumAttached {
+			attached[*a.Disk.Id] = struct{}{}
+		}
+	}
+
+	for _, id := range diskIDs {
+		if _, ok := attached[id]; ok {
+			continue
+		}
+		diskID := id
+		assignRes, err := m.Core.PostDiskAssignWithResponse(ctx,
+			core.PostDiskAssignJSONRequestBody{
+				Disk:           core.DiskLookup{Id: &diskID},
+				VirtualMachine: core.VirtualMachineLookup{Id: &vmID},
+			})
+		if err != nil {
+			if assignRes != nil {
+				return genericAPIError(err, assignRes.Body)
+			}
+			return err
+		}
+
+		attachRes, err := m.Core.PostDiskAttachWithResponse(ctx,
+			core.PostDiskAttachJSONRequestBody{
+				Disk: core.DiskLookup{Id: &diskID},
+			})
+		if err != nil {
+			if attachRes != nil {
+				return genericAPIError(err, attachRes.Body)
+			}
+			return err
+		}
+		if attachRes.JSON200 == nil || attachRes.JSON200.Task.Id == nil {
+			return fmt.Errorf("unexpected empty response attaching disk %s", diskID)
+		}
+		if err := waitForTaskCompletion(
+			ctx, m, timeout, *attachRes.JSON200.Task.Id,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// detachAndUnassignDisk detaches then unassigns a disk from its VM.
+// A 422 from detach (already detached) is silently ignored.
+func detachAndUnassignDisk(
+	ctx context.Context,
+	m *Meta,
+	diskID string,
+	timeout time.Duration,
+) error {
+	detachRes, err := m.Core.PostDiskDetachWithResponse(ctx,
+		core.PostDiskDetachJSONRequestBody{
+			Disk: core.DiskLookup{Id: &diskID},
+		})
+	switch {
+	case err == nil:
+		if detachRes.JSON200 != nil && detachRes.JSON200.Task.Id != nil {
+			if e := waitForTaskCompletion(
+				ctx, m, timeout, *detachRes.JSON200.Task.Id,
+			); e != nil {
+				return e
+			}
+		}
+	case detachRes != nil && detachRes.JSON422 != nil:
+		// disk already detached — skip gracefully
+	case detachRes != nil:
+		return genericAPIError(err, detachRes.Body)
+	default:
+		return err
+	}
+
+	unassignRes, err := m.Core.PostDiskUnassignWithResponse(ctx,
+		core.PostDiskUnassignJSONRequestBody{
+			Disk: core.DiskLookup{Id: &diskID},
+		})
+	if err != nil {
+		if unassignRes != nil {
+			return genericAPIError(err, unassignRes.Body)
+		}
+		return err
+	}
+
+	return nil
+}
 
 func isErrNotFoundOrInTrash(err error, res *core.ObjectInTrashResponse) bool {
 	return errors.Is(err, core.ErrNotFound) ||
@@ -40,11 +231,14 @@ func purgeTrashObject(
 		lookup.ObjectId = trashObject.ObjectId
 	}
 
-	_, err := m.Core.DeleteTrashObjectWithResponse(ctx,
+	res, err := m.Core.DeleteTrashObjectWithResponse(ctx,
 		core.DeleteTrashObjectJSONRequestBody{
 			TrashObject: lookup,
 		})
 	if err != nil {
+		if res.JSON404 != nil {
+			return nil
+		}
 		return err
 	}
 
