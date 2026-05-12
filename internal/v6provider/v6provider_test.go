@@ -3,6 +3,7 @@ package v6provider
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -89,11 +90,19 @@ type testTools struct {
 func newTestTools(t *testing.T) *testTools {
 	ctx := context.Background()
 
+	tt := &testTools{T: t, Ctx: ctx}
+
 	r := newVCRRecorder(t)
+	tt.Recorder = r
+	if r != nil {
+		r.AddSaveFilter(redactObjectStorageSecret(tt))
+	}
+
 	httpClient := &http.Client{}
 	if r != nil {
 		httpClient.Transport = r
 	}
+	tt.HTTPClient = httpClient
 
 	v6config := &KatapultProvider{
 		Version:             testAccProviderVersion,
@@ -130,18 +139,51 @@ func newTestTools(t *testing.T) *testTools {
 		log.Fatal(err)
 	}
 
-	return &testTools{
-		T:          t,
-		Ctx:        ctx,
-		Recorder:   r,
-		HTTPClient: httpClient,
-		Meta:       meta,
-		ProviderFactories: providerFactoryList{
-			//nolint:unparam // must return an error to match the map signature
-			"katapult": func() (tfprotov6.ProviderServer, error) {
-				return muxServer.ProviderServer(), nil
-			},
+	tt.Meta = meta
+	tt.ProviderFactories = providerFactoryList{
+		//nolint:unparam // must return an error to match the map signature
+		"katapult": func() (tfprotov6.ProviderServer, error) {
+			return muxServer.ProviderServer(), nil
 		},
+	}
+
+	return tt
+}
+
+// redactObjectStorageSecret returns a save filter that rewrites any
+// s3_secret_access_key value in the cassette response body to a deterministic
+// placeholder derived from the test's rand ID. The provider still sees the
+// real value at record time; only the persisted cassette is redacted.
+func redactObjectStorageSecret(tt *testTools) func(*cassette.Interaction) error {
+	return func(i *cassette.Interaction) error {
+		if !strings.Contains(i.Response.Body, `"s3_secret_access_key"`) {
+			return nil
+		}
+
+		var body map[string]any
+		if err := json.Unmarshal([]byte(i.Response.Body), &body); err != nil {
+			return err
+		}
+
+		key, ok := body["object_storage_access_key"].(map[string]any)
+		if !ok {
+			return nil
+		}
+
+		secret, ok := key["s3_secret_access_key"].(string)
+		if !ok || secret == "" {
+			return nil
+		}
+
+		key["s3_secret_access_key"] = "redacted-" + tt.randID
+
+		b, err := json.Marshal(body)
+		if err != nil {
+			return err
+		}
+
+		i.Response.Body = string(b)
+		return nil
 	}
 }
 
