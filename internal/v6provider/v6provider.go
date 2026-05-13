@@ -248,6 +248,9 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource { return &LoadBalancerRuleResource{} },
 		func() resource.Resource { return &VirtualNetworkResource{} },
 		func() resource.Resource { return &TagResource{} },
+		func() resource.Resource { return &ObjectStorageAccountResource{} },
+		func() resource.Resource { return &ObjectStorageBucketResource{} },
+		func() resource.Resource { return &ObjectStorageAccessKeyResource{} },
 	}
 }
 
@@ -269,6 +272,8 @@ func (k *KatapultProvider) DataSources(
 		func() datasource.DataSource { return &LoadBalancersDataSource{} },
 		func() datasource.DataSource { return &NetworkDataSource{} },
 		func() datasource.DataSource { return &NetworksDataSource{} },
+		func() datasource.DataSource { return &ObjectStorageAccountDataSource{} },
+		func() datasource.DataSource { return &ObjectStorageBucketDataSource{} },
 		func() datasource.DataSource { return &VirtualNetworkDataSource{} },
 		func() datasource.DataSource { return &VirtualNetworksDataSource{} },
 		func() datasource.DataSource { return &TagDataSource{} },

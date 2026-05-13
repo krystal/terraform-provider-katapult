@@ -3,6 +3,7 @@ package v6provider
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -79,32 +80,44 @@ type testTools struct {
 	T                 *testing.T
 	Ctx               context.Context
 	Recorder          *recorder.Recorder
+	HTTPClient        *http.Client
 	Meta              *Meta
 	ProviderFactories providerFactoryList
+	noHTTP            bool
 	randID            string
 }
 
 func newTestTools(t *testing.T) *testTools {
 	ctx := context.Background()
 
+	tt := &testTools{T: t, Ctx: ctx}
+
 	r := newVCRRecorder(t)
+	tt.Recorder = r
+	if r != nil {
+		r.AddSaveFilter(redactObjectStorageSecret(tt))
+	}
+
+	httpClient := &http.Client{}
+	if r != nil {
+		httpClient.Transport = r
+	}
+	tt.HTTPClient = httpClient
+
 	v6config := &KatapultProvider{
 		Version:             testAccProviderVersion,
 		GeneratedNamePrefix: testAccResourceNamePrefix,
+		HTTPClient:          httpClient,
 	}
 
 	v5Config := &v5provider.Config{
-		Version: testAccProviderVersion,
-		Commit:  testAccResourceNamePrefix,
-	}
-
-	if r != nil {
-		v5Config.HTTPClient = &http.Client{Transport: r}
-		v6config.HTTPClient = &http.Client{Transport: r}
+		Version:    testAccProviderVersion,
+		Commit:     testAccResourceNamePrefix,
+		HTTPClient: httpClient,
 	}
 
 	meta, err := NewMeta("", "", "", nil, "",
-		testAccResourceNamePrefix, v6config.HTTPClient, "", "")
+		testAccResourceNamePrefix, httpClient, "", "")
 	require.NoError(t, err)
 
 	v6config.m = meta
@@ -126,17 +139,51 @@ func newTestTools(t *testing.T) *testTools {
 		log.Fatal(err)
 	}
 
-	return &testTools{
-		T:        t,
-		Ctx:      ctx,
-		Recorder: r,
-		Meta:     meta,
-		ProviderFactories: providerFactoryList{
-			//nolint:unparam // must return an error to match the map signature
-			"katapult": func() (tfprotov6.ProviderServer, error) {
-				return muxServer.ProviderServer(), nil
-			},
+	tt.Meta = meta
+	tt.ProviderFactories = providerFactoryList{
+		//nolint:unparam // must return an error to match the map signature
+		"katapult": func() (tfprotov6.ProviderServer, error) {
+			return muxServer.ProviderServer(), nil
 		},
+	}
+
+	return tt
+}
+
+// redactObjectStorageSecret returns a save filter that rewrites any
+// s3_secret_access_key value in the cassette response body to a deterministic
+// placeholder derived from the test's rand ID. The provider still sees the
+// real value at record time; only the persisted cassette is redacted.
+func redactObjectStorageSecret(tt *testTools) func(*cassette.Interaction) error {
+	return func(i *cassette.Interaction) error {
+		if !strings.Contains(i.Response.Body, `"s3_secret_access_key"`) {
+			return nil
+		}
+
+		var body map[string]any
+		if err := json.Unmarshal([]byte(i.Response.Body), &body); err != nil {
+			return err
+		}
+
+		key, ok := body["object_storage_access_key"].(map[string]any)
+		if !ok {
+			return nil
+		}
+
+		secret, ok := key["s3_secret_access_key"].(string)
+		if !ok || secret == "" {
+			return nil
+		}
+
+		key["s3_secret_access_key"] = "redacted-" + tt.randID
+
+		b, err := json.Marshal(body)
+		if err != nil {
+			return err
+		}
+
+		i.Response.Body = string(b)
+		return nil
 	}
 }
 
@@ -145,7 +192,14 @@ func newTestTools(t *testing.T) *testTools {
 // the acceptance test suite.
 func (tt *testTools) ResourceName(name ...string) string {
 	if len(name) == 0 && strings.HasPrefix(tt.T.Name(), "TestAcc") {
-		if parts := strings.Split(tt.T.Name(), "_"); len(parts) > 1 {
+		// For nested subtests, derive the name from the leaf t.Name()
+		// (the part after the last '/'). This keeps generated resource
+		// names stable across parent-test renames.
+		testName := tt.T.Name()
+		if idx := strings.LastIndex(testName, "/"); idx >= 0 {
+			testName = testName[idx+1:]
+		}
+		if parts := strings.Split(testName, "_"); len(parts) > 1 {
 			if strings.Contains(parts[0], "DataSource") {
 				name = append(name, "data-source")
 			}
@@ -165,12 +219,31 @@ func (tt *testTools) ResourceName(name ...string) string {
 	)
 }
 
+// NoHTTP marks the test as config-validation-only: it keeps RandID in memory
+// and makes any unexpected HTTP attempt fail immediately instead of recording.
+func (tt *testTools) NoHTTP() *testTools {
+	tt.noHTTP = true
+	if tt.HTTPClient != nil {
+		tt.HTTPClient.Transport = &stopRequests{}
+	}
+	if tt.Recorder != nil {
+		tt.Recorder.SetTransport(&stopRequests{})
+	}
+
+	return tt
+}
+
 func (tt *testTools) RandID() string {
 	if tt.randID != "" {
 		return tt.randID
 	}
 
 	rand := randsmust.Alphanumeric(12)
+	if tt.noHTTP {
+		tt.randID = rand
+		return rand
+	}
+
 	if tt.Recorder == nil {
 		return rand
 	}
@@ -247,7 +320,7 @@ func newVCRRecorder(t *testing.T) *recorder.Recorder {
 		t.Fatal(err)
 	}
 
-	r.AddFilter(func(i *cassette.Interaction) error {
+	r.AddSaveFilter(func(i *cassette.Interaction) error {
 		delete(i.Request.Headers, "Authorization")
 
 		return nil
