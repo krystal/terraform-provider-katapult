@@ -12,19 +12,28 @@ Manages an access key for a Katapult object storage cluster.
 
 Use `access_key_id`, `secret_access_key`, and `server_url` to configure an object storage client or SDK. Bucket-level permissions are managed via `read_key_ids` / `write_key_ids` on `katapult_object_storage_bucket` resources; `read_buckets` and `write_buckets` here reflect those associations.
 
-~> **Note:** `secret_access_key` is only available at creation time and cannot be retrieved again — it will be empty after import. Changing `region` forces a new resource.
+The key is scoped to the region of the `katapult_object_storage_account` it references via `object_storage_account_id`.
+
+~> **Note:** `secret_access_key` is only available at creation time and cannot be retrieved again — it will be empty after import. Changing `object_storage_account_id` forces a new resource.
 
 An access key is the credential a workload uses to talk to Katapult's
 object storage API. It pairs with one or more
 [`katapult_object_storage_bucket`](./object_storage_bucket.md) resources to
 control what the workload can read or write.
 
+The key is scoped to a single object storage account via
+`object_storage_account_id`. You must declare a
+[`katapult_object_storage_account`](./object_storage_account.md) resource (or
+look one up via the
+[data source](../data-sources/object_storage_account.md)) before declaring
+any access keys.
+
 ## Regions
 
 Object storage is currently available in a single region, `uk-lon-1`
-(London, UK). `region` defaults to this value and can be omitted. An access
-key is scoped to one region and can only authenticate against buckets in the
-same region.
+(London, UK). The account's region is inherited through
+`object_storage_account_id`; an access key can only authenticate against
+buckets that live in the same account.
 
 ## Credential Lifecycle
 
@@ -70,16 +79,21 @@ The three attributes you typically pass to an object storage client are:
 ## Example Usage
 
 ```terraform
+# Required entrypoint: one account per (organization, region).
+resource "katapult_object_storage_account" "main" {
+  region = "uk-lon-1"
+}
+
 # Minimal — key with no global permissions
 resource "katapult_object_storage_access_key" "app" {
-  name   = "app-server"
-  region = "uk-lon-1"
+  name                      = "app-server"
+  object_storage_account_id = katapult_object_storage_account.main.id
 }
 
 # Key with cluster-wide read/write access
 resource "katapult_object_storage_access_key" "admin" {
-  name   = "ci-admin"
-  region = "uk-lon-1"
+  name                      = "ci-admin"
+  object_storage_account_id = katapult_object_storage_account.main.id
 
   all_buckets_read  = true
   all_objects_read  = true
@@ -88,15 +102,15 @@ resource "katapult_object_storage_access_key" "admin" {
 
 # Use the credentials to configure an object storage client
 resource "katapult_object_storage_access_key" "backup" {
-  name   = "backup-agent"
-  region = "uk-lon-1"
+  name                      = "backup-agent"
+  object_storage_account_id = katapult_object_storage_account.main.id
 }
 
 resource "katapult_object_storage_bucket" "backups" {
-  name          = "my-org-backups"
-  region        = "uk-lon-1"
-  read_key_ids  = [katapult_object_storage_access_key.backup.id]
-  write_key_ids = [katapult_object_storage_access_key.backup.id]
+  name                      = "my-org-backups"
+  object_storage_account_id = katapult_object_storage_account.main.id
+  read_key_ids              = [katapult_object_storage_access_key.backup.id]
+  write_key_ids             = [katapult_object_storage_access_key.backup.id]
 }
 
 output "backup_access_key_id" {
@@ -119,13 +133,13 @@ output "backup_server_url" {
 ### Required
 
 - `name` (String) Human-readable name for the access key.
+- `object_storage_account_id` (String) ID of the `katapult_object_storage_account` resource this key is scoped to. The account ID is the region permalink, e.g. `uk-lon-1`. Changing this forces a new resource.
 
 ### Optional
 
 - `all_buckets_read` (Boolean) Allow this key to list all buckets in the cluster. Defaults to `false`.
 - `all_objects_read` (Boolean) Allow this key to read objects across all buckets in the cluster. Defaults to `false`.
 - `all_objects_write` (Boolean) Allow this key to write objects across all buckets in the cluster. Defaults to `false`.
-- `region` (String) Region permalink, e.g. `uk-lon-1`. Defaults to `uk-lon-1`. Changing this forces a new resource.
 
 ### Read-Only
 
@@ -179,5 +193,7 @@ the old key does not produce a usable secret to rotate from.
 
 ## Related Resources
 
+* [`katapult_object_storage_account`](./object_storage_account.md) — the
+  account this key authenticates against.
 * [`katapult_object_storage_bucket`](./object_storage_bucket.md) — the bucket
   that an access key reads from or writes to.

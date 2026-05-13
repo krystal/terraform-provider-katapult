@@ -12,11 +12,17 @@ import (
 	"github.com/krystal/go-katapult/next/core"
 )
 
-//
-// Tests
-//
+// objectStorageAccountDataBlock is the canonical reference to the shared
+// account from inside subtest configs.
+const objectStorageAccountDataBlock = `
+data "katapult_object_storage_account" "main" {
+  region = "uk-lon-1"
+}
+`
 
-func TestAccKatapultObjectStorageAccessKey_minimal(t *testing.T) {
+// accObjectStorageAccessKeyMinimal exercises the minimal create + import
+// path for an access key against the shared object storage account.
+func accObjectStorageAccessKeyMinimal(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())
 
@@ -28,13 +34,12 @@ func TestAccKatapultObjectStorageAccessKey_minimal(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: undent.Stringf(`
+				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_access_key" "main" {
-					  name   = "%s"
-					  region = "%s"
+					  name                      = "%s"
+					  object_storage_account_id = data.katapult_object_storage_account.main.id
 					}`,
 					name,
-					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageAccessKeyAttrs(
@@ -47,7 +52,8 @@ func TestAccKatapultObjectStorageAccessKey_minimal(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_object_storage_access_key.main",
-						"region", "uk-lon-1",
+						"object_storage_account_id",
+						objectStorageAccTestRegion,
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_object_storage_access_key.main",
@@ -87,9 +93,19 @@ func TestAccKatapultObjectStorageAccessKey_minimal(t *testing.T) {
 	})
 }
 
-func TestAccKatapultObjectStorageAccessKey_update_name(t *testing.T) {
+func accObjectStorageAccessKeyUpdateName(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())
+
+	cfg := func(n string) string {
+		return objectStorageAccountDataBlock + undent.Stringf(`
+			resource "katapult_object_storage_access_key" "main" {
+			  name                      = "%s"
+			  object_storage_account_id = data.katapult_object_storage_account.main.id
+			}`,
+			n,
+		)
+	}
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -99,14 +115,7 @@ func TestAccKatapultObjectStorageAccessKey_update_name(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: undent.Stringf(`
-					resource "katapult_object_storage_access_key" "main" {
-					  name   = "%s"
-					  region = "%s"
-					}`,
-					name,
-					"uk-lon-1",
-				),
+				Config: cfg(name),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageAccessKeyAttrs(
 						tt,
@@ -119,14 +128,7 @@ func TestAccKatapultObjectStorageAccessKey_update_name(t *testing.T) {
 				),
 			},
 			{
-				Config: undent.Stringf(`
-					resource "katapult_object_storage_access_key" "main" {
-					  name   = "%s"
-					  region = "%s"
-					}`,
-					name+"-updated",
-					"uk-lon-1",
-				),
+				Config: cfg(name + "-updated"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageAccessKeyAttrs(
 						tt,
@@ -154,11 +156,27 @@ func TestAccKatapultObjectStorageAccessKey_update_name(t *testing.T) {
 	})
 }
 
-func TestAccKatapultObjectStorageAccessKey_buckets(t *testing.T) {
+func accObjectStorageAccessKeyBuckets(t *testing.T) {
 	tt := newTestTools(t)
 	baseName := strings.ToLower(tt.ResourceName())
 	keyName := baseName
 	bucketName := baseName + "-bkt"
+
+	cfg := objectStorageAccountDataBlock + undent.Stringf(`
+		resource "katapult_object_storage_access_key" "main" {
+		  name                      = "%s"
+		  object_storage_account_id = data.katapult_object_storage_account.main.id
+		}
+
+		resource "katapult_object_storage_bucket" "main" {
+		  name                      = "%s"
+		  object_storage_account_id = data.katapult_object_storage_account.main.id
+		  read_key_ids              = [katapult_object_storage_access_key.main.id]
+		  write_key_ids             = [katapult_object_storage_access_key.main.id]
+		}`,
+		keyName,
+		bucketName,
+	)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -169,23 +187,7 @@ func TestAccKatapultObjectStorageAccessKey_buckets(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: undent.Stringf(`
-				resource "katapult_object_storage_access_key" "main" {
-				  name   = "%s"
-				  region = "%s"
-				}
-
-				resource "katapult_object_storage_bucket" "main" {
-				  name          = "%s"
-				  region        = "%s"
-				  read_key_ids  = [katapult_object_storage_access_key.main.id]
-				  write_key_ids = [katapult_object_storage_access_key.main.id]
-				}`,
-					keyName,
-					"uk-lon-1",
-					bucketName,
-					"uk-lon-1",
-				),
+				Config: cfg,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageAccessKeyAttrs(
 						tt,
@@ -200,23 +202,7 @@ func TestAccKatapultObjectStorageAccessKey_buckets(t *testing.T) {
 			// Re-apply same config to trigger a Read refresh and verify
 			// read_buckets/write_buckets are populated on the key.
 			{
-				Config: undent.Stringf(`
-				resource "katapult_object_storage_access_key" "main" {
-				  name   = "%s"
-				  region = "%s"
-				}
-
-				resource "katapult_object_storage_bucket" "main" {
-				  name          = "%s"
-				  region        = "%s"
-				  read_key_ids  = [katapult_object_storage_access_key.main.id]
-				  write_key_ids = [katapult_object_storage_access_key.main.id]
-				}`,
-					keyName,
-					"uk-lon-1",
-					bucketName,
-					"uk-lon-1",
-				),
+				Config: cfg,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_object_storage_access_key.main",
@@ -236,7 +222,7 @@ func TestAccKatapultObjectStorageAccessKey_buckets(t *testing.T) {
 	})
 }
 
-func TestAccKatapultObjectStorageAccessKey_update_permissions(t *testing.T) {
+func accObjectStorageAccessKeyUpdatePermissions(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())
 
@@ -248,16 +234,15 @@ func TestAccKatapultObjectStorageAccessKey_update_permissions(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: undent.Stringf(`
+				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_access_key" "main" {
-					  name              = "%s"
-					  region            = "%s"
-					  all_buckets_read  = true
-					  all_objects_read  = true
-					  all_objects_write = true
+					  name                      = "%s"
+					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  all_buckets_read          = true
+					  all_objects_read          = true
+					  all_objects_write         = true
 					}`,
 					name,
-					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageAccessKeyAttrs(
@@ -280,13 +265,12 @@ func TestAccKatapultObjectStorageAccessKey_update_permissions(t *testing.T) {
 			},
 			// Revoke all global permissions.
 			{
-				Config: undent.Stringf(`
+				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_access_key" "main" {
-					  name   = "%s"
-					  region = "%s"
+					  name                      = "%s"
+					  object_storage_account_id = data.katapult_object_storage_account.main.id
 					}`,
 					name,
-					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageAccessKeyAttrs(
@@ -312,7 +296,7 @@ func TestAccKatapultObjectStorageAccessKey_update_permissions(t *testing.T) {
 }
 
 //
-// Helpers
+// Shared helpers
 //
 
 //nolint:unparam // res is designed to accept different resource names
@@ -382,7 +366,8 @@ func testAccCheckKatapultObjectStorageAccessKeyDestroy(
 
 			if resp == nil || resp.JSON200 == nil {
 				return fmt.Errorf(
-					"katapult_object_storage_access_key %s returned unexpected response during destroy check",
+					"katapult_object_storage_access_key %s "+
+						"returned unexpected response during destroy check",
 					id,
 				)
 			}

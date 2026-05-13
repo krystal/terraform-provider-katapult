@@ -14,11 +14,7 @@ import (
 	"github.com/krystal/go-katapult/next/core"
 )
 
-//
-// Tests
-//
-
-func TestAccKatapultObjectStorageBucket_minimal(t *testing.T) {
+func accObjectStorageBucketMinimal(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())
 
@@ -30,9 +26,10 @@ func TestAccKatapultObjectStorageBucket_minimal(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: undent.Stringf(`
+				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name   = "%s"
+					  name                      = "%s"
+					  object_storage_account_id = data.katapult_object_storage_account.main.id
 					}`,
 					name,
 				),
@@ -46,7 +43,8 @@ func TestAccKatapultObjectStorageBucket_minimal(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_object_storage_bucket.main",
-						"region", "uk-lon-1",
+						"object_storage_account_id",
+						objectStorageAccTestRegion,
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_object_storage_bucket.main",
@@ -90,7 +88,7 @@ func TestAccKatapultObjectStorageBucket_minimal(t *testing.T) {
 						return "", fmt.Errorf("resource not found")
 					}
 					return rs.Primary.Attributes["name"] + "/" +
-						rs.Primary.Attributes["region"], nil
+						rs.Primary.Attributes["object_storage_account_id"], nil
 				},
 				ImportState:                          true,
 				ImportStateVerify:                    true,
@@ -100,9 +98,19 @@ func TestAccKatapultObjectStorageBucket_minimal(t *testing.T) {
 	})
 }
 
-func TestAccKatapultObjectStorageBucket_update_name(t *testing.T) {
+func accObjectStorageBucketUpdateName(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())
+
+	cfg := func(n string) string {
+		return objectStorageAccountDataBlock + undent.Stringf(`
+			resource "katapult_object_storage_bucket" "main" {
+			  name                      = "%s"
+			  object_storage_account_id = data.katapult_object_storage_account.main.id
+			}`,
+			n,
+		)
+	}
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -112,14 +120,7 @@ func TestAccKatapultObjectStorageBucket_update_name(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: undent.Stringf(`
-					resource "katapult_object_storage_bucket" "main" {
-					  name   = "%s"
-					  region = "%s"
-					}`,
-					name,
-					"uk-lon-1",
-				),
+				Config: cfg(name),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
 						tt, "katapult_object_storage_bucket.main",
@@ -131,14 +132,7 @@ func TestAccKatapultObjectStorageBucket_update_name(t *testing.T) {
 				),
 			},
 			{
-				Config: undent.Stringf(`
-					resource "katapult_object_storage_bucket" "main" {
-					  name   = "%s"
-					  region = "%s"
-					}`,
-					name+"-updated",
-					"uk-lon-1",
-				),
+				Config: cfg(name + "-updated"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
 						tt, "katapult_object_storage_bucket.main",
@@ -153,9 +147,28 @@ func TestAccKatapultObjectStorageBucket_update_name(t *testing.T) {
 	})
 }
 
-func TestAccKatapultObjectStorageBucket_update_label(t *testing.T) {
+func accObjectStorageBucketUpdateLabel(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())
+
+	withLabel := func(label string) string {
+		return objectStorageAccountDataBlock + undent.Stringf(`
+			resource "katapult_object_storage_bucket" "main" {
+			  name                      = "%s"
+			  object_storage_account_id = data.katapult_object_storage_account.main.id
+			  label                     = "%s"
+			}`,
+			name, label,
+		)
+	}
+
+	noLabel := objectStorageAccountDataBlock + undent.Stringf(`
+		resource "katapult_object_storage_bucket" "main" {
+		  name                      = "%s"
+		  object_storage_account_id = data.katapult_object_storage_account.main.id
+		}`,
+		name,
+	)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -165,15 +178,7 @@ func TestAccKatapultObjectStorageBucket_update_label(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: undent.Stringf(`
-					resource "katapult_object_storage_bucket" "main" {
-					  name   = "%s"
-					  region = "%s"
-					  label  = "My Bucket"
-					}`,
-					name,
-					"uk-lon-1",
-				),
+				Config: withLabel("My Bucket"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
 						tt, "katapult_object_storage_bucket.main",
@@ -185,15 +190,7 @@ func TestAccKatapultObjectStorageBucket_update_label(t *testing.T) {
 				),
 			},
 			{
-				Config: undent.Stringf(`
-					resource "katapult_object_storage_bucket" "main" {
-					  name   = "%s"
-					  region = "%s"
-					  label  = "Updated Bucket Label"
-					}`,
-					name,
-					"uk-lon-1",
-				),
+				Config: withLabel("Updated Bucket Label"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
 						tt, "katapult_object_storage_bucket.main",
@@ -204,16 +201,8 @@ func TestAccKatapultObjectStorageBucket_update_label(t *testing.T) {
 					),
 				),
 			},
-			// Remove the label entirely.
 			{
-				Config: undent.Stringf(`
-					resource "katapult_object_storage_bucket" "main" {
-					  name   = "%s"
-					  region = "%s"
-					}`,
-					name,
-					"uk-lon-1",
-				),
+				Config: noLabel,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
 						tt, "katapult_object_storage_bucket.main",
@@ -228,7 +217,7 @@ func TestAccKatapultObjectStorageBucket_update_label(t *testing.T) {
 	})
 }
 
-func TestAccKatapultObjectStorageBucket_acl(t *testing.T) {
+func accObjectStorageBucketACL(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())
 
@@ -240,15 +229,14 @@ func TestAccKatapultObjectStorageBucket_acl(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: undent.Stringf(`
+				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name           = "%s"
-					  region         = "%s"
-					  all_keys_read  = true
-					  all_keys_write = true
+					  name                      = "%s"
+					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  all_keys_read             = true
+					  all_keys_write            = true
 					}`,
 					name,
-					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -273,15 +261,14 @@ func TestAccKatapultObjectStorageBucket_acl(t *testing.T) {
 				),
 			},
 			{
-				Config: undent.Stringf(`
+				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name        = "%s"
-					  region      = "%s"
-					  public_list = true
-					  public_read = true
+					  name                      = "%s"
+					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  public_list               = true
+					  public_read               = true
 					}`,
 					name,
-					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -309,7 +296,7 @@ func TestAccKatapultObjectStorageBucket_acl(t *testing.T) {
 	})
 }
 
-func TestAccKatapultObjectStorageBucket_static_site(t *testing.T) {
+func accObjectStorageBucketStaticSite(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())
 
@@ -321,18 +308,17 @@ func TestAccKatapultObjectStorageBucket_static_site(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: undent.Stringf(`
+				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name              = "%s"
-					  region            = "%s"
-					  serve_static_site = true
-					  static_site_index = "index.html"
-					  static_site_error = "error.html"
-					  public_list       = true
-					  public_read       = true
+					  name                      = "%s"
+					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  serve_static_site         = true
+					  static_site_index         = "index.html"
+					  static_site_error         = "error.html"
+					  public_list               = true
+					  public_read               = true
 					}`,
 					name,
-					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -362,18 +348,17 @@ func TestAccKatapultObjectStorageBucket_static_site(t *testing.T) {
 			},
 			// Update index and error pages while still serving.
 			{
-				Config: undent.Stringf(`
+				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name              = "%s"
-					  region            = "%s"
-					  serve_static_site = true
-					  static_site_index = "home.html"
-					  static_site_error = "404.html"
-					  public_list       = true
-					  public_read       = true
+					  name                      = "%s"
+					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  serve_static_site         = true
+					  static_site_index         = "home.html"
+					  static_site_error         = "404.html"
+					  public_list               = true
+					  public_read               = true
 					}`,
 					name,
-					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -395,14 +380,13 @@ func TestAccKatapultObjectStorageBucket_static_site(t *testing.T) {
 			},
 			// Disable static site serving.
 			{
-				Config: undent.Stringf(`
+				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name              = "%s"
-					  region            = "%s"
-					  serve_static_site = false
+					  name                      = "%s"
+					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  serve_static_site         = false
 					}`,
 					name,
-					"uk-lon-1",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageBucketAttrs(
@@ -419,10 +403,10 @@ func TestAccKatapultObjectStorageBucket_static_site(t *testing.T) {
 }
 
 //
-// Validation Tests
+// Validation Tests (no HTTP)
 //
 
-func TestAccKatapultObjectStorageBucket_validate_static_site_requires_index(t *testing.T) {
+func accObjectStorageBucketValidateStaticSiteRequiresIndex(t *testing.T) {
 	tt := newTestTools(t).NoHTTP()
 	name := strings.ToLower(tt.ResourceName())
 
@@ -433,14 +417,13 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_index(t *t
 			{
 				Config: undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name              = "%s"
-					  region            = "%s"
-					  serve_static_site = true
-					  public_list       = true
-					  public_read       = true
+					  name                      = "%s"
+					  object_storage_account_id = "%s"
+					  serve_static_site         = true
+					  public_list               = true
+					  public_read               = true
 					}`,
-					name,
-					"uk-lon-1",
+					name, objectStorageAccTestRegion,
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
@@ -453,7 +436,7 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_index(t *t
 	})
 }
 
-func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_list(t *testing.T) {
+func accObjectStorageBucketValidateStaticSiteRequiresPublicList(t *testing.T) {
 	tt := newTestTools(t).NoHTTP()
 	name := strings.ToLower(tt.ResourceName())
 
@@ -464,14 +447,13 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_lis
 			{
 				Config: undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name              = "%s"
-					  region            = "%s"
-					  serve_static_site = true
-					  static_site_index = "index.html"
-					  public_read       = true
+					  name                      = "%s"
+					  object_storage_account_id = "%s"
+					  serve_static_site         = true
+					  static_site_index         = "index.html"
+					  public_read               = true
 					}`,
-					name,
-					"uk-lon-1",
+					name, objectStorageAccTestRegion,
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
@@ -484,7 +466,7 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_lis
 	})
 }
 
-func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_read(t *testing.T) {
+func accObjectStorageBucketValidateStaticSiteRequiresPublicRead(t *testing.T) {
 	tt := newTestTools(t).NoHTTP()
 	name := strings.ToLower(tt.ResourceName())
 
@@ -495,14 +477,13 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_rea
 			{
 				Config: undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name              = "%s"
-					  region            = "%s"
-					  serve_static_site = true
-					  static_site_index = "index.html"
-					  public_list       = true
+					  name                      = "%s"
+					  object_storage_account_id = "%s"
+					  serve_static_site         = true
+					  static_site_index         = "index.html"
+					  public_list               = true
 					}`,
-					name,
-					"uk-lon-1",
+					name, objectStorageAccTestRegion,
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
@@ -515,7 +496,7 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_requires_public_rea
 	})
 }
 
-func TestAccKatapultObjectStorageBucket_validate_static_site_index_forbidden(t *testing.T) {
+func accObjectStorageBucketValidateStaticSiteIndexForbidden(t *testing.T) {
 	tt := newTestTools(t).NoHTTP()
 	name := strings.ToLower(tt.ResourceName())
 
@@ -526,12 +507,11 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_index_forbidden(t *
 			{
 				Config: undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name              = "%s"
-					  region            = "%s"
-					  static_site_index = "index.html"
+					  name                      = "%s"
+					  object_storage_account_id = "%s"
+					  static_site_index         = "index.html"
 					}`,
-					name,
-					"uk-lon-1",
+					name, objectStorageAccTestRegion,
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
@@ -544,7 +524,7 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_index_forbidden(t *
 	})
 }
 
-func TestAccKatapultObjectStorageBucket_validate_static_site_error_forbidden(t *testing.T) {
+func accObjectStorageBucketValidateStaticSiteErrorForbidden(t *testing.T) {
 	tt := newTestTools(t).NoHTTP()
 	name := strings.ToLower(tt.ResourceName())
 
@@ -555,12 +535,11 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_error_forbidden(t *
 			{
 				Config: undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name              = "%s"
-					  region            = "%s"
-					  static_site_error = "error.html"
+					  name                      = "%s"
+					  object_storage_account_id = "%s"
+					  static_site_error         = "error.html"
 					}`,
-					name,
-					"uk-lon-1",
+					name, objectStorageAccTestRegion,
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
@@ -574,7 +553,7 @@ func TestAccKatapultObjectStorageBucket_validate_static_site_error_forbidden(t *
 }
 
 //
-// Helpers
+// Shared helpers
 //
 
 func testAccCheckKatapultObjectStorageBucketAttrs(
@@ -588,7 +567,7 @@ func testAccCheckKatapultObjectStorageBucketAttrs(
 		}
 
 		name := rs.Primary.Attributes["name"]
-		region := rs.Primary.Attributes["region"]
+		region := rs.Primary.Attributes["object_storage_account_id"]
 
 		resp, err := tt.Meta.Core.
 			GetObjectStorageObjectStorageClusterBucketWithResponse(
@@ -606,7 +585,9 @@ func testAccCheckKatapultObjectStorageBucketAttrs(
 
 		checks := []resource.TestCheckFunc{
 			resource.TestCheckResourceAttr(res, "name", *b.Name),
-			resource.TestCheckResourceAttr(res, "region", region),
+			resource.TestCheckResourceAttr(
+				res, "object_storage_account_id", region,
+			),
 		}
 
 		if b.Label.IsSpecified() && !b.Label.IsNull() {
@@ -701,7 +682,7 @@ func testAccCheckKatapultObjectStorageBucketDestroy(
 			}
 
 			name := rs.Primary.Attributes["name"]
-			region := rs.Primary.Attributes["region"]
+			region := rs.Primary.Attributes["object_storage_account_id"]
 
 			resp, err := tt.Meta.Core.
 				GetObjectStorageObjectStorageClusterBucketWithResponse(
@@ -722,17 +703,16 @@ func testAccCheckKatapultObjectStorageBucketDestroy(
 
 			if resp == nil || resp.JSON200 == nil {
 				return fmt.Errorf(
-					"katapult_object_storage_bucket %s returned unexpected response during destroy check",
-					name,
+					"katapult_object_storage_bucket %s/%s "+
+						"returned unexpected response during destroy check",
+					name, region,
 				)
 			}
 
-			if resp.JSON404 == nil {
-				return fmt.Errorf(
-					"katapult_object_storage_bucket %s still exists",
-					name,
-				)
-			}
+			return fmt.Errorf(
+				"katapult_object_storage_bucket %s/%s still exists",
+				name, region,
+			)
 		}
 
 		return nil

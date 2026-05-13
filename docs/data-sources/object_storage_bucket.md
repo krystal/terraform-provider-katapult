@@ -15,8 +15,9 @@ example, to reference a bucket managed by another Terraform configuration,
 or to wire its `public_url` into application config without managing the
 bucket itself.
 
-A bucket is identified uniquely by `name`. `region` defaults to `uk-lon-1`
-(the only region currently available) and can be omitted.
+A bucket is identified uniquely by `name`. `object_storage_account_id`
+defaults to `uk-lon-1` (the only region currently available) and can be
+omitted.
 
 If no matching bucket exists, reading the data source fails with a "not
 found" error rather than producing an empty result, so callers can rely on
@@ -39,8 +40,8 @@ attributes are always in sync with the plan.
 
 ```terraform
 data "katapult_object_storage_bucket" "assets" {
-  name   = "my-org-assets"
-  region = "uk-lon-1"
+  name                      = "my-org-assets"
+  object_storage_account_id = "uk-lon-1"
 }
 ```
 
@@ -53,7 +54,7 @@ data "katapult_object_storage_bucket" "assets" {
 
 ### Optional
 
-- `region` (String) Region permalink, e.g. `uk-lon-1`. Defaults to `uk-lon-1`.
+- `object_storage_account_id` (String) ID of the `katapult_object_storage_account` resource the bucket lives in. The account ID is the region permalink, e.g. `uk-lon-1`. Defaults to `uk-lon-1`.
 
 ### Read-Only
 
@@ -71,6 +72,8 @@ data "katapult_object_storage_bucket" "assets" {
 
 ## Related Resources
 
+* [`katapult_object_storage_account`](../resources/object_storage_account.md)
+  resource — the account that owns the bucket.
 * [`katapult_object_storage_bucket`](../resources/object_storage_bucket.md)
   resource — manage a bucket.
 * [`katapult_object_storage_access_key`](../resources/object_storage_access_key.md)

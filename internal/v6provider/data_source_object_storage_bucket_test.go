@@ -9,7 +9,7 @@ import (
 	"github.com/jimeh/undent"
 )
 
-func TestAccKatapultDataSourceObjectStorageBucket_minimal(t *testing.T) {
+func accDataSourceObjectStorageBucketMinimal(t *testing.T) {
 	tt := newTestTools(t)
 	name := strings.ToLower(tt.ResourceName())
 
@@ -19,20 +19,20 @@ func TestAccKatapultDataSourceObjectStorageBucket_minimal(t *testing.T) {
 		CheckDestroy:             testAccCheckKatapultObjectStorageBucketDestroy(tt),
 		Steps: []resource.TestStep{
 			{
-				Config: undent.Stringf(`
+				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name   = "%s"
-					  region = "uk-lon-1"
+					  name                      = "%s"
+					  object_storage_account_id = data.katapult_object_storage_account.main.id
 					}
 
 					data "katapult_object_storage_bucket" "main" {
-					  name   = katapult_object_storage_bucket.main.name
-					  region = katapult_object_storage_bucket.main.region
+					  name                      = katapult_object_storage_bucket.main.name
+					  object_storage_account_id = katapult_object_storage_bucket.main.object_storage_account_id
 					}`,
 					name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultDataSourceObjectStorageBucketAttrs(
+					testAccCheckKatapultObjectStorageBucketAttrs(
 						tt, "data.katapult_object_storage_bucket.main",
 					),
 					resource.TestCheckResourceAttrPair(
@@ -40,8 +40,10 @@ func TestAccKatapultDataSourceObjectStorageBucket_minimal(t *testing.T) {
 						"katapult_object_storage_bucket.main", "name",
 					),
 					resource.TestCheckResourceAttrPair(
-						"data.katapult_object_storage_bucket.main", "region",
-						"katapult_object_storage_bucket.main", "region",
+						"data.katapult_object_storage_bucket.main",
+						"object_storage_account_id",
+						"katapult_object_storage_bucket.main",
+						"object_storage_account_id",
 					),
 					resource.TestCheckResourceAttrPair(
 						"data.katapult_object_storage_bucket.main", "public_url",
@@ -73,7 +75,7 @@ func TestAccKatapultDataSourceObjectStorageBucket_minimal(t *testing.T) {
 	})
 }
 
-func TestAccKatapultDataSourceObjectStorageBucket_not_found(t *testing.T) {
+func accDataSourceObjectStorageBucketNotFound(t *testing.T) {
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -81,11 +83,12 @@ func TestAccKatapultDataSourceObjectStorageBucket_not_found(t *testing.T) {
 		ProtoV6ProviderFactories: tt.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: undent.String(`
+				Config: undent.Stringf(`
 					data "katapult_object_storage_bucket" "main" {
-					  name   = "this-bucket-does-not-exist"
-					  region = "uk-lon-1"
+					  name                      = "this-bucket-does-not-exist"
+					  object_storage_account_id = "%s"
 					}`,
+					objectStorageAccTestRegion,
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta("resource not found"),
@@ -93,11 +96,4 @@ func TestAccKatapultDataSourceObjectStorageBucket_not_found(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccCheckKatapultDataSourceObjectStorageBucketAttrs(
-	tt *testTools,
-	res string,
-) resource.TestCheckFunc {
-	return testAccCheckKatapultObjectStorageBucketAttrs(tt, res)
 }

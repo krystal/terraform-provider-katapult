@@ -15,8 +15,9 @@ example, to reference a bucket managed by another Terraform configuration,
 or to wire its `public_url` into application config without managing the
 bucket itself.
 
-A bucket is identified uniquely by `name`. `region` defaults to `uk-lon-1`
-(the only region currently available) and can be omitted.
+A bucket is identified uniquely by `name`. `object_storage_account_id`
+defaults to `uk-lon-1` (the only region currently available) and can be
+omitted.
 
 If no matching bucket exists, reading the data source fails with a "not
 found" error rather than producing an empty result, so callers can rely on
@@ -45,6 +46,8 @@ attributes are always in sync with the plan.
 
 ## Related Resources
 
+* [`katapult_object_storage_account`](../resources/object_storage_account.md)
+  resource — the account that owns the bucket.
 * [`katapult_object_storage_bucket`](../resources/object_storage_bucket.md)
   resource — manage a bucket.
 * [`katapult_object_storage_access_key`](../resources/object_storage_access_key.md)
