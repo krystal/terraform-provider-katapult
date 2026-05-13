@@ -12,8 +12,6 @@ Manages the object storage account for an organization in a given region.
 
 A Katapult organization has at most one object storage account per region. This resource creates the account (if it does not already exist) and waits for it to reach the `provisioned` state. All `katapult_object_storage_bucket` and `katapult_object_storage_access_key` resources must reference this resource via `object_storage_account_id`, which ties their lifecycle to the account and gives Terraform a way to clean the account up when no longer needed.
 
-~> **Only declare one of these per (organization, region).** If your organization already has object storage enabled via the Katapult dashboard, declare this resource anyway and import the existing account — otherwise Terraform cannot clean it up on destroy, and your organization will continue to be billed.
-
 ~> **Only one of these resources may exist per (organization, region).**
 The Katapult API enforces this — a second `katapult_object_storage_account`
 block for the same region will fail to create. If your organization already

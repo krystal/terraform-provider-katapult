@@ -390,7 +390,7 @@ func (r *ObjectStorageAccessKeyResource) Delete(
 			},
 		},
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, core.ErrNotFound) {
 		resp.Diagnostics.AddError(
 			"Object Storage Access Key Delete Error",
 			err.Error(),
