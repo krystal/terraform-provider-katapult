@@ -15,12 +15,19 @@ object storage API. It pairs with one or more
 [`katapult_object_storage_bucket`](./object_storage_bucket.md) resources to
 control what the workload can read or write.
 
+The key is scoped to a single object storage account via
+`object_storage_account_id`. You must declare a
+[`katapult_object_storage_account`](./object_storage_account.md) resource (or
+look one up via the
+[data source](../data-sources/object_storage_account.md)) before declaring
+any access keys.
+
 ## Regions
 
 Object storage is currently available in a single region, `uk-lon-1`
-(London, UK). `region` defaults to this value and can be omitted. An access
-key is scoped to one region and can only authenticate against buckets in the
-same region.
+(London, UK). The account's region is inherited through
+`object_storage_account_id`; an access key can only authenticate against
+buckets that live in the same account.
 
 ## Credential Lifecycle
 
@@ -114,5 +121,7 @@ the old key does not produce a usable secret to rotate from.
 
 ## Related Resources
 
+* [`katapult_object_storage_account`](./object_storage_account.md) — the
+  account this key authenticates against.
 * [`katapult_object_storage_bucket`](./object_storage_bucket.md) — the bucket
   that an access key reads from or writes to.

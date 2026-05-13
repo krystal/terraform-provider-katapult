@@ -13,16 +13,23 @@ Manages an object storage bucket in a Katapult cluster. Credentials for object s
 ~> **Note:** `name` is globally unique and immutable — changing it forces a new resource.
 
 Buckets are containers for objects in Katapult's object storage service.
-Each bucket lives inside a region and is accessed via the credentials and
+Each bucket lives inside an object storage account, referenced via
+`object_storage_account_id`, and is accessed via the credentials and
 endpoint exposed by a
 [`katapult_object_storage_access_key`](./object_storage_access_key.md).
+
+You must declare a
+[`katapult_object_storage_account`](./object_storage_account.md) resource
+(or look one up via the
+[data source](../data-sources/object_storage_account.md)) before declaring
+any buckets.
 
 ## Regions
 
 Object storage is currently available in a single region, `uk-lon-1`
-(London, UK). `region` defaults to this value and can be omitted; it is kept
-as an explicit attribute so additional regions can be opted into without a
-breaking change in the future.
+(London, UK). The bucket's region is inherited through the account it
+references; the data source's region attribute defaults to `uk-lon-1` and
+can be omitted.
 
 ## Bucket Naming
 
@@ -84,16 +91,21 @@ Setting `serve_static_site = true` turns the bucket into a static website:
 ## Example Usage
 
 ```terraform
+# Required entrypoint: one account per (organization, region).
+resource "katapult_object_storage_account" "main" {
+  region = "uk-lon-1"
+}
+
 # Minimal — private bucket
 resource "katapult_object_storage_bucket" "assets" {
-  name   = "my-org-assets"
-  region = "uk-lon-1"
+  name                      = "my-org-assets"
+  object_storage_account_id = katapult_object_storage_account.main.id
 }
 
 # Public static site
 resource "katapult_object_storage_bucket" "site" {
-  name   = "my-org-static-site"
-  region = "uk-lon-1"
+  name                      = "my-org-static-site"
+  object_storage_account_id = katapult_object_storage_account.main.id
 
   serve_static_site = true
   static_site_index = "index.html"
@@ -105,13 +117,13 @@ resource "katapult_object_storage_bucket" "site" {
 
 # Bucket with per-key access control
 resource "katapult_object_storage_access_key" "app" {
-  name   = "app-server"
-  region = "uk-lon-1"
+  name                      = "app-server"
+  object_storage_account_id = katapult_object_storage_account.main.id
 }
 
 resource "katapult_object_storage_bucket" "uploads" {
-  name   = "my-org-uploads"
-  region = "uk-lon-1"
+  name                      = "my-org-uploads"
+  object_storage_account_id = katapult_object_storage_account.main.id
 
   # Grant the app key read and write access.
   read_key_ids  = [katapult_object_storage_access_key.app.id]
@@ -125,6 +137,7 @@ resource "katapult_object_storage_bucket" "uploads" {
 ### Required
 
 - `name` (String) Globally unique bucket name (lowercase alphanumeric and hyphens, 3–63 chars). Changing forces replacement.
+- `object_storage_account_id` (String) ID of the `katapult_object_storage_account` resource the bucket lives in. The account ID is the region permalink, e.g. `uk-lon-1`. Cannot be changed after creation.
 
 ### Optional
 
@@ -134,7 +147,6 @@ resource "katapult_object_storage_bucket" "uploads" {
 - `public_list` (Boolean) Allow unauthenticated object listing. Defaults to `false`.
 - `public_read` (Boolean) Allow unauthenticated object reads. Defaults to `false`.
 - `read_key_ids` (Set of String) Access key IDs for reading this bucket.
-- `region` (String) Region permalink, e.g. `uk-lon-1`. Defaults to `uk-lon-1`. Cannot be changed after creation.
 - `serve_static_site` (Boolean) Serves the bucket as a static site; requires `static_site_index`. Defaults to `false`.
 - `static_site_error` (String) Error document suffix, e.g. `.html`. HTTP errors redirect to `/[STATUS_CODE][value]`.
 - `static_site_index` (String) Default index doc, e.g. `index.html`. Required when `serve_static_site` is `true`.
@@ -146,8 +158,9 @@ resource "katapult_object_storage_bucket" "uploads" {
 
 ## Import
 
-A bucket is imported using its `name` and `region`, separated by a `/`. The
-region is required so the importer knows which regional endpoint to read
+A bucket is imported using its `name` and the `object_storage_account_id` it
+belongs to (currently always the region permalink), separated by a `/`. The
+account ID is required so the importer knows which regional endpoint to read
 from; bucket names themselves are globally unique.
 
 Import is supported using the following syntax:
@@ -158,6 +171,8 @@ terraform import katapult_object_storage_bucket.example my-org-assets/uk-lon-1
 
 ## Related Resources
 
+* [`katapult_object_storage_account`](./object_storage_account.md) — the
+  account this bucket lives in.
 * [`katapult_object_storage_access_key`](./object_storage_access_key.md) —
   the credentials used by clients to access this bucket.
 * [`katapult_object_storage_bucket`](../data-sources/object_storage_bucket.md)

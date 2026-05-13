@@ -55,11 +55,13 @@ func (d *ObjectStorageBucketDataSource) Schema(
 				Required:            true,
 				MarkdownDescription: "Globally unique bucket name.",
 			},
-			"region": schema.StringAttribute{
+			"object_storage_account_id": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
-				MarkdownDescription: "Region permalink, e.g. " +
-					"`uk-lon-1`. Defaults to `uk-lon-1`.",
+				MarkdownDescription: "ID of the " +
+					"`katapult_object_storage_account` resource the " +
+					"bucket lives in. The account ID is the region " +
+					"permalink, e.g. `uk-lon-1`. Defaults to `uk-lon-1`.",
 			},
 			"label": schema.StringAttribute{
 				Computed:            true,
@@ -123,15 +125,16 @@ func (d *ObjectStorageBucketDataSource) Read(
 		return
 	}
 
-	if data.Region.IsNull() || data.Region.ValueString() == "" {
-		data.Region = types.StringValue("uk-lon-1")
+	if data.ObjectStorageAccountID.IsNull() ||
+		data.ObjectStorageAccountID.ValueString() == "" {
+		data.ObjectStorageAccountID = types.StringValue("uk-lon-1")
 	}
 
 	r := &ObjectStorageBucketResource{M: d.M}
 	if err := r.ObjectStorageBucketRead(
 		ctx,
 		data.Name.ValueString(),
-		data.Region.ValueString(),
+		data.ObjectStorageAccountID.ValueString(),
 		&data,
 	); err != nil {
 		if errors.Is(err, core.ErrNotFound) {

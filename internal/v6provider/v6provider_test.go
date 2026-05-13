@@ -192,7 +192,14 @@ func redactObjectStorageSecret(tt *testTools) func(*cassette.Interaction) error 
 // the acceptance test suite.
 func (tt *testTools) ResourceName(name ...string) string {
 	if len(name) == 0 && strings.HasPrefix(tt.T.Name(), "TestAcc") {
-		if parts := strings.Split(tt.T.Name(), "_"); len(parts) > 1 {
+		// For nested subtests, derive the name from the leaf t.Name()
+		// (the part after the last '/'). This keeps generated resource
+		// names stable across parent-test renames.
+		testName := tt.T.Name()
+		if idx := strings.LastIndex(testName, "/"); idx >= 0 {
+			testName = testName[idx+1:]
+		}
+		if parts := strings.Split(testName, "_"); len(parts) > 1 {
 			if strings.Contains(parts[0], "DataSource") {
 				name = append(name, "data-source")
 			}

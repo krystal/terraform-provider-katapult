@@ -1,13 +1,18 @@
+# Required entrypoint: one account per (organization, region).
+resource "katapult_object_storage_account" "main" {
+  region = "uk-lon-1"
+}
+
 # Minimal — key with no global permissions
 resource "katapult_object_storage_access_key" "app" {
-  name   = "app-server"
-  region = "uk-lon-1"
+  name                      = "app-server"
+  object_storage_account_id = katapult_object_storage_account.main.id
 }
 
 # Key with cluster-wide read/write access
 resource "katapult_object_storage_access_key" "admin" {
-  name   = "ci-admin"
-  region = "uk-lon-1"
+  name                      = "ci-admin"
+  object_storage_account_id = katapult_object_storage_account.main.id
 
   all_buckets_read  = true
   all_objects_read  = true
@@ -16,15 +21,15 @@ resource "katapult_object_storage_access_key" "admin" {
 
 # Use the credentials to configure an object storage client
 resource "katapult_object_storage_access_key" "backup" {
-  name   = "backup-agent"
-  region = "uk-lon-1"
+  name                      = "backup-agent"
+  object_storage_account_id = katapult_object_storage_account.main.id
 }
 
 resource "katapult_object_storage_bucket" "backups" {
-  name          = "my-org-backups"
-  region        = "uk-lon-1"
-  read_key_ids  = [katapult_object_storage_access_key.backup.id]
-  write_key_ids = [katapult_object_storage_access_key.backup.id]
+  name                      = "my-org-backups"
+  object_storage_account_id = katapult_object_storage_account.main.id
+  read_key_ids              = [katapult_object_storage_access_key.backup.id]
+  write_key_ids             = [katapult_object_storage_access_key.backup.id]
 }
 
 output "backup_access_key_id" {
