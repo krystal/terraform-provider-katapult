@@ -45,7 +45,7 @@ resource "katapult_object_storage_bucket" "assets" {
 }
 ```
 
-## Example: Attach a Bucket to an Existing Account
+## Example Usage
 
 ```terraform
 data "katapult_object_storage_account" "main" {
