@@ -77,16 +77,16 @@ resource "katapult_virtual_machine" "base" {
 
 ### Required
 
-- `disk_template` (String) Permalink or ID of the Disk Template to use.
 - `ip_address_ids` (Set of String) Set of IP address IDs to allocate to the Virtual Machine.
 - `package` (String) Permalink or ID of the Virtual Machine Package to use.
 
 ### Optional
 
 - `description` (String) A description for the Virtual Machine.
-- `disk` (Block List) One or more disks with custom sizes to create and attach during creation. The first disk is the boot disk. If omitted, a single disk is created from the chosen package. (see [below for nested schema](#nestedblock--disk))
+- `disk` (Block List) One or more disks with custom sizes to create and attach during creation. The first disk is the boot disk. If omitted, a single disk is created from the chosen package. On import, only the boot disk is populated; any additional creation-time disks must be re-declared in config to avoid replacement. (see [below for nested schema](#nestedblock--disk))
 - `disk_ids` (Set of String) Set of additional disk IDs to attach to the Virtual Machine. Managed as `katapult_disk` resources. Destroying the VM detaches these disks but does **not** delete them. Use the `katapult_virtual_machine_disks` data source to read the full list of disks currently attached to a VM.
-- `disk_template_options` (Map of String) Options to pass to the Disk Template during creation.
+- `disk_template` (String) Permalink or ID of the Disk Template to use. Required when creating a new VM. Cannot be read back from the API on import; supply the original value in config to avoid replacement.
+- `disk_template_options` (Map of String) Options to pass to the Disk Template during creation. Cannot be read back from the API on import; supply the original value in config to avoid replacement.
 - `group_id` (String) The ID of the Virtual Machine Group to assign this Virtual Machine to.
 - `hostname` (String) The hostname of the Virtual Machine. If not provided, a hostname is generated.
 - `name` (String) The name of the Virtual Machine. If not provided, a name is generated automatically.
@@ -124,3 +124,11 @@ Read-Only:
 - `mac_address` (String) The MAC address of the interface.
 - `network_id` (String) The ID of the network the interface is on.
 - `virtual_network_id` (String) The ID of the virtual network the interface is on.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+terraform import katapult_virtual_machine.web vm_xxxxxxxxxxxxxxx
+```

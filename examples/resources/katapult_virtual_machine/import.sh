@@ -1,0 +1,1 @@
+terraform import katapult_virtual_machine.web vm_xxxxxxxxxxxxxxx

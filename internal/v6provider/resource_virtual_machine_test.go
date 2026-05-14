@@ -254,6 +254,22 @@ func TestAccKatapultVirtualMachine_minimal(t *testing.T) {
 					),
 				),
 			},
+			{
+				ResourceName:      "katapult_virtual_machine.base",
+				ImportState:       true,
+				ImportStateVerify: true,
+				// disk_template and disk_template_options are
+				// config-only values that cannot be recovered from
+				// the API. The `disk` block is hydrated from the API
+				// on import (boot disk only) but the freshly-created
+				// state for this test will not contain it because the
+				// user did not declare any `disk` blocks in config.
+				ImportStateVerifyIgnore: []string{
+					"disk_template",
+					"disk_template_options",
+					"disk",
+				},
+			},
 		},
 	})
 }
