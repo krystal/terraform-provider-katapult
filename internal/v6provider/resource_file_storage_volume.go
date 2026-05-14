@@ -188,7 +188,7 @@ func (r *FileStorageVolumeResource) Create(
 		return
 	}
 
-	create, diags := plan.Timeouts.Create(ctx, 1*time.Minute)
+	create, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -203,6 +203,7 @@ func (r *FileStorageVolumeResource) Create(
 				"volume to become ready.",
 			err.Error(),
 		)
+		return
 	}
 
 	if err := r.FileStorageVolumeRead(

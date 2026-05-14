@@ -190,6 +190,7 @@ func userAgent(name string, terraformVersion string, version string) string {
 		add = strings.TrimSpace(add)
 		if len(add) > 0 {
 			ua += " " + add
+			//nolint:gosec // G706: ua suffix is operator-supplied env input, debug logging is intended.
 			log.Printf("[DEBUG] Using modified User-Agent: %s", ua)
 		}
 	}

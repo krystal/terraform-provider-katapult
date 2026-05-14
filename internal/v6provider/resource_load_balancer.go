@@ -407,7 +407,6 @@ func extractLoadBalancerResourceTypeAndIDs(
 ) (core.LoadBalancerResourceTypesEnum, []string) {
 	var t core.LoadBalancerResourceTypesEnum = core.VirtualMachines
 	var list []attr.Value
-	ids := []string{}
 
 	switch {
 	case !model.VirtualMachineIDs.IsNull() && len(model.VirtualMachineIDs.Elements()) > 0:
@@ -421,6 +420,7 @@ func extractLoadBalancerResourceTypeAndIDs(
 		list = model.TagIDs.Elements()
 	}
 
+	ids := make([]string, 0, len(list))
 	for _, item := range list {
 		i := item.(types.String)
 
