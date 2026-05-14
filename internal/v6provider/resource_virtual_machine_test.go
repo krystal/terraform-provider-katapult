@@ -254,6 +254,22 @@ func TestAccKatapultVirtualMachine_minimal(t *testing.T) {
 					),
 				),
 			},
+			{
+				ResourceName:      "katapult_virtual_machine.base",
+				ImportState:       true,
+				ImportStateVerify: true,
+				// disk_template and disk_template_options are
+				// config-only values that cannot be recovered from
+				// the API. The `disk` block is hydrated from the API
+				// on import (boot disk only) but the freshly-created
+				// state for this test will not contain it because the
+				// user did not declare any `disk` blocks in config.
+				ImportStateVerifyIgnore: []string{
+					"disk_template",
+					"disk_template_options",
+					"disk",
+				},
+			},
 		},
 	})
 }
@@ -1185,54 +1201,4 @@ func testAccCheckKatapultVirtualMachineDestroy(
 
 		return nil
 	}
-}
-
-func TestAccKatapultVirtualMachine_import(t *testing.T) {
-	tt := newTestTools(t)
-
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: tt.ProviderFactories,
-		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
-			testAccCheckKatapultVirtualMachineDestroy(tt),
-			testAccCheckKatapultIPDestroy(tt),
-		),
-		Steps: []resource.TestStep{
-			{
-				Config: undent.String(`
-					resource "katapult_ip" "web" {}
-
-					resource "katapult_virtual_machine" "base" {
-						package       = "rock-3"
-						disk_template = "ubuntu-18-04"
-						disk_template_options = {
-							install_agent = true
-						}
-						ip_address_ids = [katapult_ip.web.id]
-					}`,
-				),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckKatapultVirtualMachineExists(
-						tt, "katapult_virtual_machine.base",
-					),
-				),
-			},
-			{
-				ResourceName:      "katapult_virtual_machine.base",
-				ImportState:       true,
-				ImportStateVerify: true,
-				// disk_template and disk_template_options are
-				// config-only values that cannot be recovered from
-				// the API. The `disk` block is hydrated from the API
-				// on import (boot disk only) but the freshly-created
-				// state for this test will not contain it because the
-				// user did not declare any `disk` blocks in config.
-				ImportStateVerifyIgnore: []string{
-					"disk_template",
-					"disk_template_options",
-					"disk",
-				},
-			},
-		},
-	})
 }
