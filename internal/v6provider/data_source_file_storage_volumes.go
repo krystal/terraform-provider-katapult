@@ -114,11 +114,11 @@ func (r *FileStorageVolumesDataSource) Read(
 				Page:                  &pageNum,
 			})
 		if err != nil {
-			resp.Diagnostics.AddError(
-				"FileStorageVolumes Error",
-				err.Error(),
-			)
+			if res != nil {
+				err = genericAPIError(err, res.Body)
+			}
 
+			resp.Diagnostics.AddError("File Storage Volumes Error", err.Error())
 			return
 		}
 

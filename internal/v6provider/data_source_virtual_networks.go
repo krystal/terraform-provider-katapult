@@ -95,7 +95,12 @@ func (nds *VirtualNetworksDataSource) Read(
 		},
 	)
 	if err != nil {
-		resp.Diagnostics.AddError("VirtualNetworks get error", err.Error())
+		if res != nil {
+			err = genericAPIError(err, res.Body)
+		}
+
+		resp.Diagnostics.AddError("Virtual Networks Error", err.Error())
+		return
 	}
 
 	virtualNetworks := res.JSON200.VirtualNetworks

@@ -97,7 +97,11 @@ func (ds *VirtualNetworkDataSource) Read(
 		ctx, &core.GetVirtualNetworkParams{VirtualNetworkId: &id},
 	)
 	if err != nil {
-		resp.Diagnostics.AddError("Error reading virtual network", err.Error())
+		if res != nil {
+			err = genericAPIError(err, res.Body)
+		}
+
+		resp.Diagnostics.AddError("Virtual Networks Error", err.Error())
 		return
 	}
 

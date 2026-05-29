@@ -93,7 +93,11 @@ func (ds *LoadBalancersDataSource) Read(
 				Page:                  &pageNum,
 			})
 		if err != nil {
-			resp.Diagnostics.AddError("Load Balancer List Error", err.Error())
+			if res != nil {
+				err = genericAPIError(err, res.Body)
+			}
+
+			resp.Diagnostics.AddError("Load Balancers Error", err.Error())
 			return
 		}
 
@@ -105,9 +109,11 @@ func (ds *LoadBalancersDataSource) Read(
 			res, err := ds.M.Core.GetLoadBalancerWithResponse(ctx,
 				&core.GetLoadBalancerParams{LoadBalancerId: lb.Id})
 			if err != nil {
-				resp.Diagnostics.AddError(
-					"Load Balancer Get Error",
-					err.Error())
+				if res != nil {
+					err = genericAPIError(err, res.Body)
+				}
+
+				resp.Diagnostics.AddError("Load Balancer Error", err.Error())
 				return
 			}
 

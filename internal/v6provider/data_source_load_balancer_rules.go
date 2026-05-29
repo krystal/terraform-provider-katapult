@@ -87,7 +87,6 @@ func (ds *LoadBalancerRulesDataSource) Read(
 	)
 	if err != nil {
 		resp.Diagnostics.AddError("Load Balancer Rules Error", err.Error())
-
 		return
 	}
 
@@ -118,6 +117,10 @@ func getLBRules(
 			},
 		)
 		if err != nil {
+			if res != nil {
+				err = genericAPIError(err, res.Body)
+			}
+
 			return nil, err
 		}
 
@@ -137,6 +140,10 @@ func getLBRules(
 					LoadBalancerRuleId: rl.Id,
 				})
 		if err != nil {
+			if res != nil {
+				err = genericAPIError(err, res.Body)
+			}
+
 			return nil, err
 		}
 

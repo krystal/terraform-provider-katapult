@@ -102,10 +102,11 @@ func (ds *AddressListEntriesDataSource) Read(
 				AddressListId: data.AddressListID.ValueStringPointer(),
 			})
 		if err != nil {
-			resp.Diagnostics.AddError(
-				"Address List Entries get by ID error",
-				err.Error())
+			if res != nil {
+				err = genericAPIError(err, res.Body)
+			}
 
+			resp.Diagnostics.AddError("Address List Entries Error", err.Error())
 			return
 		}
 

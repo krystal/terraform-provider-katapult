@@ -152,11 +152,11 @@ func (ds LoadBalancerRuleDataSource) Read(
 			LoadBalancerRuleId: data.ID.ValueStringPointer(),
 		})
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Load Balancer Rule GetByID Error",
-			err.Error(),
-		)
+		if res != nil {
+			err = genericAPIError(err, res.Body)
+		}
 
+		resp.Diagnostics.AddError("Load Balancer Rule Error", err.Error())
 		return
 	}
 
