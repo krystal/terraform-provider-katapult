@@ -44,7 +44,7 @@ data "katapult_virtual_machine" "web-1" {
 - `name` (String)
 - `network_interfaces` (List of Object) Network interface details for the virtual machine. (see [below for nested schema](#nestedatt--network_interfaces))
 - `network_speed_profile` (String) Permalink of a Network Speed Profile.
-- `package` (String) Permalink or ID of a Virtual Machine Package.
+- `package` (String) Permalink or ID of a Virtual Machine Package. Changing this will resize the Virtual Machine to the new package in place. Note: Downgrades (to packages with fewer vCPUs or memory) require the Virtual Machine to be stopped before the change can be applied.
 - `state` (String)
 - `tags` (Set of String)
 - `virtual_network_ids` (Set of String) Virtual Networks attached to the VM.

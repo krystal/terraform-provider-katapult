@@ -68,10 +68,13 @@ The Virtual Machine resource allows you to create and manage Virtual Machines in
 				Computed: true,
 			},
 			"package": {
-				Type:         schema.TypeString,
-				Description:  "Permalink or ID of a Virtual Machine Package.",
+				Type: schema.TypeString,
+				Description: "Permalink or ID of a Virtual Machine Package. " +
+					"Changing this will resize the Virtual Machine to the " +
+					"new package in place. Note: Downgrades (to packages " +
+					"with fewer vCPUs or memory) require the Virtual " +
+					"Machine to be stopped before the change can be applied.",
 				Required:     true,
-				ForceNew:     true, // TODO: Add support for changing package
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			"disk_template": {
@@ -567,8 +570,12 @@ func resourceVirtualMachineRead(
 		_ = d.Set("group_id", vm.Group.ID)
 	}
 
-	if pkg := normalizeVirtualMachinePackage(vm.Package); pkg != "" {
-		_ = d.Set("package", pkg)
+	configuredPkg := d.Get("package").(string)
+	normalizedPkg := normalizeVirtualMachinePackageForState(
+		configuredPkg, vm.Package,
+	)
+	if normalizedPkg != "" {
+		_ = d.Set("package", normalizedPkg)
 	}
 
 	err = d.Set(
@@ -756,6 +763,59 @@ func resourceVirtualMachineUpdate(
 			args.Group = core.NullVirtualMachineGroupRef
 		} else {
 			args.Group = &core.VirtualMachineGroupRef{ID: groupID}
+		}
+	}
+
+	if d.HasChange("package") {
+		pkgRef := d.Get("package").(string)
+		pkg := core.VirtualMachinePackageRef{}
+		if strings.HasPrefix(pkgRef, "vmpkg_") {
+			pkg.ID = pkgRef
+		} else {
+			pkg.Permalink = pkgRef
+		}
+
+		// Fetch current VM to check if running and get current package
+		currentVM, _, err := m.Core.VirtualMachines.GetByID(ctx, vm.ID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		// Validate that downgrades aren't attempted while VM is running
+		if currentVM.State == "started" && currentVM.Package != nil {
+			newPkg, _, err3 := m.Core.VirtualMachinePackages.Get(ctx, pkg)
+			if err3 == nil && newPkg != nil {
+				// Check if this is a downgrade (fewer vCPUs or memory)
+				if (newPkg.CPUCores < currentVM.Package.CPUCores) ||
+					(newPkg.MemoryInGB < currentVM.Package.MemoryInGB) {
+					return diag.Errorf(
+						"cannot downgrade package while Virtual Machine "+
+							"is running: current package has %d vCPU(s) "+
+							"and %dGB memory, new package has %d vCPU(s) "+
+							"and %dGB memory. Stop the Virtual Machine "+
+							"before downgrading.",
+						currentVM.Package.CPUCores,
+						currentVM.Package.MemoryInGB,
+						newPkg.CPUCores, newPkg.MemoryInGB,
+					)
+				}
+			}
+		}
+
+		task, _, err := m.Core.VirtualMachines.ChangePackage(
+			ctx, vm.Ref(), pkg,
+		)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if task != nil {
+			err = waitForTaskCompletion(
+				ctx, m, d.Timeout(schema.TimeoutUpdate), task.ID,
+			)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 		}
 	}
 
@@ -972,6 +1032,31 @@ func normalizeVirtualMachinePackage(
 		return ""
 	}
 
+	if pkg.Permalink != "" {
+		return pkg.Permalink
+	}
+
+	return pkg.ID
+}
+
+// normalizeVirtualMachinePackageForState returns the package value to store in
+// state, preserving whichever format (ID or permalink) the user configured.
+// This prevents perpetual diffs when config uses IDs but the API returns
+// permalinks (or vice versa).
+func normalizeVirtualMachinePackageForState(
+	configured string,
+	pkg *core.VirtualMachinePackage,
+) string {
+	if pkg == nil {
+		return ""
+	}
+
+	// If the user configured an ID and the API knows the ID, return the ID.
+	if strings.HasPrefix(configured, "vmpkg_") && pkg.ID != "" {
+		return pkg.ID
+	}
+
+	// Otherwise prefer the permalink, falling back to ID.
 	if pkg.Permalink != "" {
 		return pkg.Permalink
 	}

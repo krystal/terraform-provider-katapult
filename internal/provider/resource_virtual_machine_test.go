@@ -627,6 +627,233 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 	})
 }
 
+func TestAccKatapultVirtualMachine_update_package(t *testing.T) {
+	tt := newTestTools(t)
+
+	name := tt.ResourceName()
+
+	// Capture the VM ID across steps to assert the package change resizes
+	// the VM in place rather than destroying and recreating it.
+	var vmID string
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+					resource "katapult_legacy_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+						name          = "%s"
+						hostname      = "%s"
+						package       = "rock-1"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_legacy_ip.web.id]
+					}`,
+					name, name+"-host",
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultVirtualMachineExists(
+						tt, "katapult_virtual_machine.base",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"package", "rock-1",
+					),
+					extractResourceAttr(
+						"katapult_virtual_machine.base", "id", &vmID,
+					),
+				),
+			},
+			{
+				Config: undent.Stringf(`
+					resource "katapult_legacy_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+						name          = "%s"
+						hostname      = "%s"
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_legacy_ip.web.id]
+					}`,
+					name, name+"-host",
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultVirtualMachineExists(
+						tt, "katapult_virtual_machine.base",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"package", "rock-3",
+					),
+					// The VM must keep the same ID; a package change is an
+					// in-place resize, not a destroy/recreate.
+					resource.TestCheckResourceAttrPtr(
+						"katapult_virtual_machine.base", "id", &vmID,
+					),
+				),
+			},
+		},
+	})
+}
+
+func TestAccKatapultVirtualMachine_update_package_by_id(t *testing.T) {
+	tt := newTestTools(t)
+
+	name := tt.ResourceName()
+
+	// Capture the VM ID across steps to assert the package change resizes
+	// the VM in place rather than destroying and recreating it.
+	var vmID string
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+					resource "katapult_legacy_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+						name          = "%s"
+						hostname      = "%s"
+						package       = "vmpkg_dhG25G5SX3HrA5j5"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_legacy_ip.web.id]
+					}`,
+					name, name+"-host",
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultVirtualMachineExists(
+						tt, "katapult_virtual_machine.base",
+					),
+					// State mirrors the format used in config: ID in, ID out.
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"package", "vmpkg_dhG25G5SX3HrA5j5",
+					),
+					extractResourceAttr(
+						"katapult_virtual_machine.base", "id", &vmID,
+					),
+				),
+			},
+			{
+				Config: undent.Stringf(`
+					resource "katapult_legacy_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+						name          = "%s"
+						hostname      = "%s"
+						package       = "vmpkg_Eh5LYVKScVHpj7sM"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_legacy_ip.web.id]
+					}`,
+					name, name+"-host",
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultVirtualMachineExists(
+						tt, "katapult_virtual_machine.base",
+					),
+					// State mirrors the format used in config: ID in, ID out.
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"package", "vmpkg_Eh5LYVKScVHpj7sM",
+					),
+					// The VM must keep the same ID; a package change is an
+					// in-place resize, not a destroy/recreate.
+					resource.TestCheckResourceAttrPtr(
+						"katapult_virtual_machine.base", "id", &vmID,
+					),
+				),
+			},
+		},
+	})
+}
+
+func TestAccKatapultVirtualMachine_update_package_downgrade_error(t *testing.T) { //nolint:lll
+	tt := newTestTools(t)
+
+	name := tt.ResourceName()
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+					resource "katapult_legacy_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+						name          = "%s"
+						hostname      = "%s"
+						package       = "rock-3"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_legacy_ip.web.id]
+					}`,
+					name, name+"-host",
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultVirtualMachineExists(
+						tt, "katapult_virtual_machine.base",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"package", "rock-3",
+					),
+				),
+			},
+			{
+				Config: undent.Stringf(`
+					resource "katapult_legacy_ip" "web" {}
+
+					resource "katapult_virtual_machine" "base" {
+						name          = "%s"
+						hostname      = "%s"
+						package       = "rock-1"
+						disk_template = "ubuntu-18-04"
+						disk_template_options = {
+							install_agent = true
+						}
+						ip_address_ids = [katapult_legacy_ip.web.id]
+					}`,
+					name, name+"-host",
+				),
+				ExpectError: regexp.MustCompile(
+					"cannot downgrade package while Virtual Machine is running",
+				),
+			},
+		},
+	})
+}
+
 func TestAccKatapultVirtualMachine_update_ips(t *testing.T) {
 	tt := newTestTools(t)
 
@@ -966,6 +1193,30 @@ func TestAccKatapultVirtualMachine_update_network_speed_profile(t *testing.T) {
 //
 // Helpers
 //
+
+// extractResourceAttr captures the value of a resource attribute into target
+// so it can be compared against in a later test step.
+func extractResourceAttr(
+	res string,
+	attr string,
+	target *string,
+) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[res]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", res)
+		}
+
+		value, ok := rs.Primary.Attributes[attr]
+		if !ok {
+			return fmt.Errorf("attribute not found: %s.%s", res, attr)
+		}
+
+		*target = value
+
+		return nil
+	}
+}
 
 func testAccCheckKatapultVirtualMachineExists(
 	tt *testTools,

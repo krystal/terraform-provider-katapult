@@ -79,7 +79,7 @@ resource "katapult_virtual_machine" "base" {
 
 - `disk_template` (String) Permalink or ID of a Disk Template.
 - `ip_address_ids` (Set of String) One or more IP IDs.
-- `package` (String) Permalink or ID of a Virtual Machine Package.
+- `package` (String) Permalink or ID of a Virtual Machine Package. Changing this will resize the Virtual Machine to the new package in place. Note: Downgrades (to packages with fewer vCPUs or memory) require the Virtual Machine to be stopped before the change can be applied.
 
 ### Optional
 

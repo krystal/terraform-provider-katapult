@@ -59,6 +59,9 @@ func New(c *Config) func() *schema.Provider { //nolint:funlen
 					Type:      schema.TypeString,
 					Optional:  true,
 					Sensitive: true,
+					DefaultFunc: schema.EnvDefaultFunc(
+						"KATAPULT_API_KEY", "",
+					),
 					Description: "**REQUIRED** via config or " +
 						"environment variable. " +
 						"API Key for Katapult Core API. Can be " +
@@ -68,7 +71,9 @@ func New(c *Config) func() *schema.Provider { //nolint:funlen
 				"organization": {
 					Type:     schema.TypeString,
 					Optional: true,
-
+					DefaultFunc: schema.EnvDefaultFunc(
+						"KATAPULT_ORGANIZATION", "",
+					),
 					Description: "**REQUIRED** via config or " +
 						"environment variable. " +
 						"Organization sub-domain. Can be " +
@@ -78,7 +83,9 @@ func New(c *Config) func() *schema.Provider { //nolint:funlen
 				"data_center": {
 					Type:     schema.TypeString,
 					Optional: true,
-
+					DefaultFunc: schema.EnvDefaultFunc(
+						"KATAPULT_DATA_CENTER", "",
+					),
 					Description: "**REQUIRED** via config or " +
 						"environment variable. " +
 						"Data center permalink. Can be " +
