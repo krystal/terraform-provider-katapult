@@ -783,8 +783,14 @@ func resourceVirtualMachineUpdate(
 
 		// Validate that downgrades aren't attempted while VM is running
 		if currentVM.State == "started" && currentVM.Package != nil {
-			newPkg, _, err3 := m.Core.VirtualMachinePackages.Get(ctx, pkg)
-			if err3 == nil && newPkg != nil {
+			newPkg, _, errVMPKG := m.Core.VirtualMachinePackages.Get(ctx, pkg)
+			if errVMPKG != nil {
+				return diag.FromErr(fmt.Errorf(
+					"failed to fetch new package details: %w", errVMPKG,
+				))
+			}
+
+			if newPkg != nil {
 				// Check if this is a downgrade (fewer vCPUs or memory)
 				if (newPkg.CPUCores < currentVM.Package.CPUCores) ||
 					(newPkg.MemoryInGB < currentVM.Package.MemoryInGB) {
