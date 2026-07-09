@@ -954,7 +954,7 @@ func resourceVirtualMachineDelete(
 	}
 
 	if !stopped {
-		_, err = waitForVirtualMachineToStop(
+		err = waitForVirtualMachineToStop(
 			ctx, m, timeout, vm.Ref(),
 		)
 		if err != nil && !isErrNotFoundOrInTrash(err) {
@@ -1053,7 +1053,7 @@ func waitForVirtualMachineToStop(
 	m *Meta,
 	timeout time.Duration,
 	vmRef core.VirtualMachineRef,
-) (*core.VirtualMachine, error) {
+) error {
 	waiter := &retry.StateChangeConf{
 		Pending: []string{
 			string(core.VirtualMachineStarted),
@@ -1077,9 +1077,9 @@ func waitForVirtualMachineToStop(
 		ContinuousTargetOccurence: 1,
 	}
 
-	rawVM, err := waiter.WaitForStateContext(ctx)
+	_, err := waiter.WaitForStateContext(ctx)
 
-	return rawVM.(*core.VirtualMachine), err
+	return err
 }
 
 func normalizeVirtualMachinePackage(

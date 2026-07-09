@@ -1373,8 +1373,8 @@ func TestAccKatapultVirtualMachine_update_network_speed_profile(t *testing.T) {
 // extractResourceAttr captures the value of a resource attribute into target
 // so it can be compared against in a later test step.
 func extractResourceAttr(
-	res string,
-	attr string,
+	res string, //nolint:unparam
+	attr string, //nolint:unparam
 	target *string,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -1412,7 +1412,7 @@ func stopVirtualMachine(tt *testTools, id string) {
 		require.NoError(tt.T, err, "stop virtual machine task failed")
 	}
 
-	_, err = waitForVirtualMachineToStop(tt.Ctx, tt.Meta, 5*time.Minute, ref)
+	err = waitForVirtualMachineToStop(tt.Ctx, tt.Meta, 5*time.Minute, ref)
 	require.NoError(tt.T, err, "virtual machine did not reach stopped state")
 }
 
