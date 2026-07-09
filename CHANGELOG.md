@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.18](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.17...v0.0.18) (2026-07-09)
+
+
+### Features
+
+* **resource/katapult_virtual_machine:** support package changes ([#177](https://github.com/krystal/terraform-provider-katapult/issues/177)) ([7bc87de](https://github.com/krystal/terraform-provider-katapult/commit/7bc87ded4c5b8b22219887ee1e0b6b17bfb77a6a))
+
 ## [0.0.17](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.16...v0.0.17) (2026-02-10)
 
 
