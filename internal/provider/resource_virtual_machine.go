@@ -207,9 +207,9 @@ The Virtual Machine resource allows you to create and manage Virtual Machines in
 }
 
 func resourceVirtualMachineCustomizeDiff(
-	_ context.Context,
+	ctx context.Context,
 	d *schema.ResourceDiff,
-	_ interface{},
+	meta interface{},
 ) error {
 	if d.HasChange("ip_address_ids") {
 		err := d.SetNewComputed("ip_addresses")
@@ -225,7 +225,82 @@ func resourceVirtualMachineCustomizeDiff(
 		}
 	}
 
+	return validateVirtualMachinePackageChange(ctx, d, meta)
+}
+
+// validateVirtualMachinePackageChange fails the plan when a package change
+// would downgrade a running Virtual Machine, as Katapult requires the VM to
+// be stopped before its vCPU count or memory can be reduced.
+func validateVirtualMachinePackageChange(
+	ctx context.Context,
+	d *schema.ResourceDiff,
+	meta interface{},
+) error {
+	if d.Id() == "" ||
+		!d.HasChange("package") ||
+		!d.NewValueKnown("package") {
+		return nil
+	}
+
+	m := meta.(*Meta)
+	pkgRef := d.Get("package").(string)
+
+	vm, _, err := m.Core.VirtualMachines.GetByID(ctx, d.Id())
+	if err != nil {
+		// A missing VM is handled by the regular plan/apply flow, so only
+		// unexpected errors should fail the plan.
+		if errors.Is(err, katapult.ErrNotFound) ||
+			errors.Is(err, core.ErrObjectInTrash) {
+			return nil
+		}
+
+		return fmt.Errorf(
+			"failed to fetch virtual machine details: %w", err,
+		)
+	}
+
+	if vm.Package == nil || vm.State != core.VirtualMachineStarted {
+		return nil
+	}
+
+	// Referencing the current package by its other format (ID vs permalink)
+	// is not a real package change, so there is nothing to validate.
+	if vm.Package.ID == pkgRef || vm.Package.Permalink == pkgRef {
+		return nil
+	}
+
+	newPkg, _, err := m.Core.VirtualMachinePackages.Get(
+		ctx, virtualMachinePackageRef(pkgRef),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to fetch new package details: %w", err)
+	}
+
+	if newPkg != nil &&
+		(newPkg.CPUCores < vm.Package.CPUCores ||
+			newPkg.MemoryInGB < vm.Package.MemoryInGB) {
+		return fmt.Errorf(
+			"cannot downgrade package while Virtual Machine is running: "+
+				"current package has %d vCPU(s) and %dGB memory, new "+
+				"package has %d vCPU(s) and %dGB memory. Stop the "+
+				"Virtual Machine before downgrading.",
+			vm.Package.CPUCores, vm.Package.MemoryInGB,
+			newPkg.CPUCores, newPkg.MemoryInGB,
+		)
+	}
+
 	return nil
+}
+
+// virtualMachinePackageRef builds a package ref from a user-provided value,
+// treating values with a "vmpkg_" prefix as IDs, and anything else as a
+// permalink.
+func virtualMachinePackageRef(value string) core.VirtualMachinePackageRef {
+	if strings.HasPrefix(value, "vmpkg_") {
+		return core.VirtualMachinePackageRef{ID: value}
+	}
+
+	return core.VirtualMachinePackageRef{Permalink: value}
 }
 
 //nolint:funlen,gocyclo
@@ -768,59 +843,35 @@ func resourceVirtualMachineUpdate(
 
 	if d.HasChange("package") {
 		pkgRef := d.Get("package").(string)
-		pkg := core.VirtualMachinePackageRef{}
-		if strings.HasPrefix(pkgRef, "vmpkg_") {
-			pkg.ID = pkgRef
-		} else {
-			pkg.Permalink = pkgRef
-		}
 
-		// Fetch current VM to check if running and get current package
 		currentVM, _, err := m.Core.VirtualMachines.GetByID(ctx, vm.ID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		// Validate that downgrades aren't attempted while VM is running
-		if currentVM.State == "started" && currentVM.Package != nil {
-			newPkg, _, errVMPKG := m.Core.VirtualMachinePackages.Get(ctx, pkg)
-			if errVMPKG != nil {
-				return diag.FromErr(fmt.Errorf(
-					"failed to fetch new package details: %w", errVMPKG,
-				))
-			}
+		// The API rejects package changes to the VM's current package, so
+		// skip the call when the new value only references the current
+		// package by its other format (ID vs permalink). The read at the
+		// end of the update rewrites state in the configured format.
+		samePackage := currentVM.Package != nil &&
+			(currentVM.Package.ID == pkgRef ||
+				currentVM.Package.Permalink == pkgRef)
 
-			if newPkg != nil {
-				// Check if this is a downgrade (fewer vCPUs or memory)
-				if (newPkg.CPUCores < currentVM.Package.CPUCores) ||
-					(newPkg.MemoryInGB < currentVM.Package.MemoryInGB) {
-					return diag.Errorf(
-						"cannot downgrade package while Virtual Machine "+
-							"is running: current package has %d vCPU(s) "+
-							"and %dGB memory, new package has %d vCPU(s) "+
-							"and %dGB memory. Stop the Virtual Machine "+
-							"before downgrading.",
-						currentVM.Package.CPUCores,
-						currentVM.Package.MemoryInGB,
-						newPkg.CPUCores, newPkg.MemoryInGB,
-					)
-				}
-			}
-		}
-
-		task, _, err := m.Core.VirtualMachines.ChangePackage(
-			ctx, vm.Ref(), pkg,
-		)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		if task != nil {
-			err = waitForTaskCompletion(
-				ctx, m, d.Timeout(schema.TimeoutUpdate), task.ID,
+		if !samePackage {
+			task, _, err := m.Core.VirtualMachines.ChangePackage(
+				ctx, vm.Ref(), virtualMachinePackageRef(pkgRef),
 			)
 			if err != nil {
 				return diag.FromErr(err)
+			}
+
+			if task != nil {
+				err = waitForTaskCompletion(
+					ctx, m, d.Timeout(schema.TimeoutUpdate), task.ID,
+				)
+				if err != nil {
+					return diag.FromErr(err)
+				}
 			}
 		}
 	}

@@ -14,6 +14,7 @@ import (
 	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult"
 	"github.com/krystal/go-katapult/core"
+	"github.com/stretchr/testify/assert"
 )
 
 func init() { //nolint:gochecknoinits
@@ -1281,5 +1282,106 @@ func testAccCheckKatapultVirtualMachineDestroy(
 		}
 
 		return nil
+	}
+}
+
+func Test_normalizeVirtualMachinePackageForState(t *testing.T) {
+	pkg := &core.VirtualMachinePackage{
+		ID:        "vmpkg_YlqvfsKqZm6mpY4Y",
+		Permalink: "rock-3",
+	}
+
+	tests := []struct {
+		name       string
+		configured string
+		pkg        *core.VirtualMachinePackage
+		want       string
+	}{
+		{
+			name:       "nil package",
+			configured: "rock-3",
+			pkg:        nil,
+			want:       "",
+		},
+		{
+			name:       "configured with ID",
+			configured: "vmpkg_YlqvfsKqZm6mpY4Y",
+			pkg:        pkg,
+			want:       "vmpkg_YlqvfsKqZm6mpY4Y",
+		},
+		{
+			name:       "configured with permalink",
+			configured: "rock-3",
+			pkg:        pkg,
+			want:       "rock-3",
+		},
+		{
+			name:       "not configured (import)",
+			configured: "",
+			pkg:        pkg,
+			want:       "rock-3",
+		},
+		{
+			name:       "configured with ID, package has no ID",
+			configured: "vmpkg_YlqvfsKqZm6mpY4Y",
+			pkg:        &core.VirtualMachinePackage{Permalink: "rock-3"},
+			want:       "rock-3",
+		},
+		{
+			name:       "package has no permalink",
+			configured: "rock-3",
+			pkg: &core.VirtualMachinePackage{
+				ID: "vmpkg_YlqvfsKqZm6mpY4Y",
+			},
+			want: "vmpkg_YlqvfsKqZm6mpY4Y",
+		},
+		{
+			name:       "package has no ID or permalink",
+			configured: "rock-3",
+			pkg:        &core.VirtualMachinePackage{},
+			want:       "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := normalizeVirtualMachinePackageForState(
+				tt.configured, tt.pkg,
+			)
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_virtualMachinePackageRef(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+		want  core.VirtualMachinePackageRef
+	}{
+		{
+			name:  "ID",
+			value: "vmpkg_YlqvfsKqZm6mpY4Y",
+			want: core.VirtualMachinePackageRef{
+				ID: "vmpkg_YlqvfsKqZm6mpY4Y",
+			},
+		},
+		{
+			name:  "permalink",
+			value: "rock-3",
+			want:  core.VirtualMachinePackageRef{Permalink: "rock-3"},
+		},
+		{
+			name:  "empty",
+			value: "",
+			want:  core.VirtualMachinePackageRef{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := virtualMachinePackageRef(tt.value)
+
+			assert.Equal(t, tt.want, got)
+		})
 	}
 }
