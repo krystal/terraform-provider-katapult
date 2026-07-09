@@ -20,6 +20,9 @@ func dataSourceVirtualMachine() *schema.Resource {
 
 	ds["fqdn"].Optional = true
 
+	// Override package description for data source (read-only context)
+	ds["package"].Description = "Permalink or ID of a Virtual Machine Package."
+
 	// Remove creation-only fields which cannot be read back from the API.
 	delete(ds, "disk")
 

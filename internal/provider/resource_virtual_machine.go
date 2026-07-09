@@ -68,10 +68,13 @@ The Virtual Machine resource allows you to create and manage Virtual Machines in
 				Computed: true,
 			},
 			"package": {
-				Type:         schema.TypeString,
-				Description:  "Permalink or ID of a Virtual Machine Package.",
+				Type: schema.TypeString,
+				Description: "Permalink or ID of a Virtual Machine Package. " +
+					"Changing this will resize the Virtual Machine to the " +
+					"new package in place. Note: Downgrades (to packages " +
+					"with fewer vCPUs or memory) require the Virtual " +
+					"Machine to be stopped before the change can be applied.",
 				Required:     true,
-				ForceNew:     true, // TODO: Add support for changing package
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			"disk_template": {
@@ -204,9 +207,9 @@ The Virtual Machine resource allows you to create and manage Virtual Machines in
 }
 
 func resourceVirtualMachineCustomizeDiff(
-	_ context.Context,
+	ctx context.Context,
 	d *schema.ResourceDiff,
-	_ interface{},
+	meta interface{},
 ) error {
 	if d.HasChange("ip_address_ids") {
 		err := d.SetNewComputed("ip_addresses")
@@ -222,7 +225,82 @@ func resourceVirtualMachineCustomizeDiff(
 		}
 	}
 
+	return validateVirtualMachinePackageChange(ctx, d, meta)
+}
+
+// validateVirtualMachinePackageChange fails the plan when a package change
+// would downgrade a running Virtual Machine, as Katapult requires the VM to
+// be stopped before its vCPU count or memory can be reduced.
+func validateVirtualMachinePackageChange(
+	ctx context.Context,
+	d *schema.ResourceDiff,
+	meta interface{},
+) error {
+	if d.Id() == "" ||
+		!d.HasChange("package") ||
+		!d.NewValueKnown("package") {
+		return nil
+	}
+
+	m := meta.(*Meta)
+	pkgRef := d.Get("package").(string)
+
+	vm, _, err := m.Core.VirtualMachines.GetByID(ctx, d.Id())
+	if err != nil {
+		// A missing VM is handled by the regular plan/apply flow, so only
+		// unexpected errors should fail the plan.
+		if errors.Is(err, katapult.ErrNotFound) ||
+			errors.Is(err, core.ErrObjectInTrash) {
+			return nil
+		}
+
+		return fmt.Errorf(
+			"failed to fetch virtual machine details: %w", err,
+		)
+	}
+
+	if vm.Package == nil || vm.State != core.VirtualMachineStarted {
+		return nil
+	}
+
+	// Referencing the current package by its other format (ID vs permalink)
+	// is not a real package change, so there is nothing to validate.
+	if vm.Package.ID == pkgRef || vm.Package.Permalink == pkgRef {
+		return nil
+	}
+
+	newPkg, _, err := m.Core.VirtualMachinePackages.Get(
+		ctx, virtualMachinePackageRef(pkgRef),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to fetch new package details: %w", err)
+	}
+
+	if newPkg != nil &&
+		(newPkg.CPUCores < vm.Package.CPUCores ||
+			newPkg.MemoryInGB < vm.Package.MemoryInGB) {
+		return fmt.Errorf(
+			"cannot downgrade package while Virtual Machine is running: "+
+				"current package has %d vCPU(s) and %dGB memory, new "+
+				"package has %d vCPU(s) and %dGB memory. Stop the "+
+				"Virtual Machine before downgrading.",
+			vm.Package.CPUCores, vm.Package.MemoryInGB,
+			newPkg.CPUCores, newPkg.MemoryInGB,
+		)
+	}
+
 	return nil
+}
+
+// virtualMachinePackageRef builds a package ref from a user-provided value,
+// treating values with a "vmpkg_" prefix as IDs, and anything else as a
+// permalink.
+func virtualMachinePackageRef(value string) core.VirtualMachinePackageRef {
+	if strings.HasPrefix(value, "vmpkg_") {
+		return core.VirtualMachinePackageRef{ID: value}
+	}
+
+	return core.VirtualMachinePackageRef{Permalink: value}
 }
 
 //nolint:funlen,gocyclo
@@ -567,8 +645,12 @@ func resourceVirtualMachineRead(
 		_ = d.Set("group_id", vm.Group.ID)
 	}
 
-	if pkg := normalizeVirtualMachinePackage(vm.Package); pkg != "" {
-		_ = d.Set("package", pkg)
+	configuredPkg := d.Get("package").(string)
+	normalizedPkg := normalizeVirtualMachinePackageForState(
+		configuredPkg, vm.Package,
+	)
+	if normalizedPkg != "" {
+		_ = d.Set("package", normalizedPkg)
 	}
 
 	err = d.Set(
@@ -759,6 +841,41 @@ func resourceVirtualMachineUpdate(
 		}
 	}
 
+	if d.HasChange("package") {
+		pkgRef := d.Get("package").(string)
+
+		currentVM, _, err := m.Core.VirtualMachines.GetByID(ctx, vm.ID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		// The API rejects package changes to the VM's current package, so
+		// skip the call when the new value only references the current
+		// package by its other format (ID vs permalink). The read at the
+		// end of the update rewrites state in the configured format.
+		samePackage := currentVM.Package != nil &&
+			(currentVM.Package.ID == pkgRef ||
+				currentVM.Package.Permalink == pkgRef)
+
+		if !samePackage {
+			task, _, err := m.Core.VirtualMachines.ChangePackage(
+				ctx, vm.Ref(), virtualMachinePackageRef(pkgRef),
+			)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
+			if task != nil {
+				err = waitForTaskCompletion(
+					ctx, m, d.Timeout(schema.TimeoutUpdate), task.ID,
+				)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
+		}
+	}
+
 	_, _, err := m.Core.VirtualMachines.Update(ctx, vm.Ref(), args)
 	if err != nil {
 		return diag.FromErr(err)
@@ -837,7 +954,7 @@ func resourceVirtualMachineDelete(
 	}
 
 	if !stopped {
-		_, err = waitForVirtualMachineToStop(
+		err = waitForVirtualMachineToStop(
 			ctx, m, timeout, vm.Ref(),
 		)
 		if err != nil && !isErrNotFoundOrInTrash(err) {
@@ -936,7 +1053,7 @@ func waitForVirtualMachineToStop(
 	m *Meta,
 	timeout time.Duration,
 	vmRef core.VirtualMachineRef,
-) (*core.VirtualMachine, error) {
+) error {
 	waiter := &retry.StateChangeConf{
 		Pending: []string{
 			string(core.VirtualMachineStarted),
@@ -960,9 +1077,9 @@ func waitForVirtualMachineToStop(
 		ContinuousTargetOccurence: 1,
 	}
 
-	rawVM, err := waiter.WaitForStateContext(ctx)
+	_, err := waiter.WaitForStateContext(ctx)
 
-	return rawVM.(*core.VirtualMachine), err
+	return err
 }
 
 func normalizeVirtualMachinePackage(
@@ -972,6 +1089,31 @@ func normalizeVirtualMachinePackage(
 		return ""
 	}
 
+	if pkg.Permalink != "" {
+		return pkg.Permalink
+	}
+
+	return pkg.ID
+}
+
+// normalizeVirtualMachinePackageForState returns the package value to store in
+// state, preserving whichever format (ID or permalink) the user configured.
+// This prevents perpetual diffs when config uses IDs but the API returns
+// permalinks (or vice versa).
+func normalizeVirtualMachinePackageForState(
+	configured string,
+	pkg *core.VirtualMachinePackage,
+) string {
+	if pkg == nil {
+		return ""
+	}
+
+	// If the user configured an ID and the API knows the ID, return the ID.
+	if strings.HasPrefix(configured, "vmpkg_") && pkg.ID != "" {
+		return pkg.ID
+	}
+
+	// Otherwise prefer the permalink, falling back to ID.
 	if pkg.Permalink != "" {
 		return pkg.Permalink
 	}
