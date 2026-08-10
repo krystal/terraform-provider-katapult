@@ -7,15 +7,20 @@ the legacy Terraform Plugin SDK and the Terraform Plugin Framework.
 
 - `main.go` combines the two provider implementations into one protocol-v6
   server.
-- `internal/provider` contains legacy Plugin SDK resources and data sources.
-- `internal/v6provider` contains Plugin Framework resources and data sources.
+- `internal/provider` contains the remaining legacy Plugin SDK v2 resources and
+  data sources, exposed through an upgraded protocol-v5 server.
+- `internal/v6provider` contains native protocol-v6 Plugin Framework resources
+  and data sources.
 - `internal/*/testdata` contains VCR cassettes and their stable random IDs.
 - `docs` is generated provider documentation. Change provider schemas or
   templates, then run `make docs`; do not hand-edit generated output.
+- `CONTRIBUTING.md` documents the intentionally gradual v5-to-v6 migration and
+  the ownership rules between both implementations.
 
 Check the resource and data-source registration maps before deciding which
-provider package owns a change. Update both implementations only when behavior
-is intentionally shared.
+provider package owns a change. New types belong in `internal/v6provider`.
+When migrating an existing type, remove its legacy registration in the same
+change so the mux never sees duplicate type names.
 
 ## Setup
 
@@ -29,18 +34,18 @@ is intentionally shared.
 
 Use the narrowest relevant command while working, then broaden before handoff:
 
-- `make build` builds the provider.
-- `VCR=replay make test` runs the race-enabled unit-test path against recorded
+- `mise run build` builds the provider.
+- `mise run test` runs the race-enabled unit-test path against recorded
   cassettes.
-- `VCR=replay make testacc` runs acceptance tests against recorded cassettes.
+- `mise run test:acceptance` runs acceptance tests against recorded cassettes.
 - Run one acceptance test by narrowing both its package and exact test name:
-  `VCR=replay make testacc TEST=./internal/v6provider TESTARGS='-run ^TestAccKatapultIP_ipv4$'`.
+  `TEST=./internal/v6provider TESTARGS='-run ^TestAccKatapultIP_ipv4$' mise run test:acceptance`.
 - Run a related group with a Go test regular expression, for example:
-  `VCR=replay make testacc TEST=./internal/v6provider TESTARGS='-run ^TestAccKatapultIP_'`.
-- `make lint` and `make lint-provider` run Go and provider-specific linting.
-- `make check-tidy` verifies `go.mod` and `go.sum` are tidy.
-- `make check-docs` validates generated documentation; `make docs` regenerates
-  it.
+  `TEST=./internal/v6provider TESTARGS='-run ^TestAccKatapultIP_' mise run test:acceptance`.
+- `mise run check` runs the fast local suite, including format, lint, unit,
+  dependency, documentation, and offline workflow checks.
+- `mise run verify` adds replay acceptance tests, generated-doc freshness,
+  GoReleaser validation, and the online action maturity check.
 - `mise run workflows:check` validates workflow syntax, security, action pins,
   and the three-day action maturity policy.
 
@@ -56,8 +61,8 @@ unexpected `.cassette.rand_id` changes as generated drift.
 
 ## Repository Rules
 
-- Keep build, test, Go lint, and docs tasks in the `Makefile`; use mise for
-  cross-language tooling, setup, worktree bootstrap, and workflow checks.
+- Treat mise as the discoverable task interface. The Makefile remains the
+  lower-level implementation for commands that have not yet been migrated.
 - Keep GitHub Actions pinned to full commit SHAs with accurate version comments.
 - Preserve the three-day dependency maturity policy in mise, Pinact, and
   Dependabot.

@@ -1,4 +1,7 @@
-FROM alpine:latest
+FROM alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
+
+ARG TARGETARCH
+ARG MISE_VERSION=2026.8.2
 
 RUN apk add --no-cache \
     bash \
@@ -6,20 +9,41 @@ RUN apk add --no-cache \
     curl \
     git \
     make \
-    tree
+    tree \
+    zizmor
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN set -e \
     && mkdir -p /terraform-provider-katapult
 WORKDIR /terraform-provider-katapult
 
-COPY mise.toml mise.lock /terraform-provider-katapult/
 RUN set -e \
-    && curl https://mise.run | sh \
-    && "$HOME/.local/bin/mise" install --locked --yes \
+    && case "$TARGETARCH" in \
+        amd64) \
+            mise_arch="x64"; \
+            mise_checksum="811dd88d30f2eae804e4da393cb1bb5e7b023fa427669ac4fdeac58cbe0819bc" \
+            ;; \
+        arm64) \
+            mise_arch="arm64"; \
+            mise_checksum="a37534382769fc01d342ace9865f91e0786ccfb5497f7a515e8d9574262efaac" \
+            ;; \
+        *) echo "unsupported architecture: $TARGETARCH" >&2; exit 1 ;; \
+    esac \
+    && curl -fsSLo /usr/local/bin/mise \
+        "https://github.com/jdx/mise/releases/download/v${MISE_VERSION}/mise-v${MISE_VERSION}-linux-${mise_arch}-musl" \
+    && echo "${mise_checksum}  /usr/local/bin/mise" | sha256sum -c - \
+    && chmod 0755 /usr/local/bin/mise
+
+COPY mise.toml mise.lock /terraform-provider-katapult/
+# Treeboot only bootstraps host worktrees. Zizmor does not publish a musl
+# release asset, so Alpine's native package is installed above instead.
+RUN set -e \
+    && mise install --locked --yes \
+        actionlint go goreleaser lefthook pinact taplo terraform \
     && echo 'export PS1="\u@go-alpine:\w\$ "' > /root/.bashrc \
+    && echo 'export MISE_TASK_RUN_AUTO_INSTALL=false' >> /root/.bashrc \
     && echo 'alias ll="ls -lah"' >> /root/.bashrc \
     && echo 'alias ma="make"' >> /root/.bashrc \
     && echo 'alias mi="mise"' >> /root/.bashrc \
     && echo 'alias tf="terraform"' >> /root/.bashrc \
-    && echo 'eval "$(~/.local/bin/mise activate bash)"' >> ~/.bashrc
+    && echo 'eval "$(mise activate bash)"' >> ~/.bashrc

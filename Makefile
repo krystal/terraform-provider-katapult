@@ -135,7 +135,7 @@ test:
 
 .PHONY: testacc
 testacc:
-	TF_ACC=1 go test $(V) $(TESTARGS) $(TEST) -timeout=120m
+	TF_ACC=1 go test $(V) -count=1 $(TESTARGS) $(TEST) -timeout=120m
 
 .PHONY: test-deps
 test-deps:
@@ -195,6 +195,16 @@ docs: $(TOOLDIR)/tfplugindocs
 check-docs: $(TOOLDIR)/tfplugindocs
 		tfplugindocs validate --provider-name "terraform-provider-$(NAME)"
 
+.PHONY: check-docs-generated
+check-docs-generated: $(TOOLDIR)/tfplugindocs
+	@tmpdir="$$(mktemp -d "$(CURDIR)/../.tfplugindocs-check.XXXXXX")"; \
+	trap 'rm -rf "$$tmpdir"' EXIT; \
+	KATAPULT_API_KEY="" KATAPULT_ORGANIZATION="" KATAPULT_DATA_CENTER="" \
+		tfplugindocs generate \
+		--provider-name "terraform-provider-$(NAME)" \
+		--rendered-website-dir "../$$(basename "$$tmpdir")"; \
+	diff -rN docs "$$tmpdir"
+
 #
 # Coverage
 #
@@ -237,25 +247,16 @@ deps-analyze: $(TOOLDIR)/gomod
 tidy:
 	go mod tidy $(V)
 
-.PHONY: verify
-verify:
+.PHONY: verify-deps
+verify-deps:
 	go mod verify
 
-.SILENT: check-tidy
+# Deprecated compatibility alias. Use `mise run verify` for the broad
+# pre-handoff validation suite.
+.PHONY: verify
+verify: verify-deps
+	@echo "make verify only verifies downloaded Go modules; use mise run verify for the full suite"
+
 .PHONY: check-tidy
 check-tidy:
-	cp go.mod go.mod.tidy-check
-	cp go.sum go.sum.tidy-check
-	go mod tidy
-	( \
-		diff go.mod go.mod.tidy-check && \
-		diff go.sum go.sum.tidy-check && \
-		rm -f go.mod go.sum && \
-		mv go.mod.tidy-check go.mod && \
-		mv go.sum.tidy-check go.sum \
-	) || ( \
-		rm -f go.mod go.sum && \
-		mv go.mod.tidy-check go.mod && \
-		mv go.sum.tidy-check go.sum; \
-		exit 1 \
-	)
+	go mod tidy -diff

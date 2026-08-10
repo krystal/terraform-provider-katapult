@@ -28,6 +28,75 @@ run = ["mise install --locked", "lefthook install"]
 description = "Bootstrap the current worktree with Treeboot"
 run = "treeboot run"
 
+[tasks.build]
+description = "Build the provider"
+run = "make build"
+
+[tasks.format]
+description = "Format Go and TOML files"
+run = ["make format", "taplo fmt mise.toml mise.lock"]
+
+[tasks."format:check"]
+description = "Check Go and TOML formatting"
+run = '''
+unformatted="$(gofmt -l .)"
+if [ -n "$unformatted" ]; then
+  echo "Go files need formatting:" >&2
+  echo "$unformatted" >&2
+  exit 1
+fi
+taplo fmt --check mise.toml mise.lock
+git diff --check
+'''
+
+[tasks."lint:go"]
+description = "Lint Go code"
+run = "make lint"
+
+[tasks."lint:provider"]
+description = "Run Terraform provider-specific lint checks"
+run = "make lint-provider"
+
+[tasks.lint]
+description = "Run all lint checks"
+depends = ["lint:go", "lint:provider"]
+
+[tasks.test]
+description = "Run race-enabled unit tests with VCR replay"
+run = "VCR=replay make test"
+
+[tasks."test:acceptance"]
+description = "Run acceptance tests with VCR replay"
+run = "VCR=replay make testacc"
+
+[tasks."deps:verify"]
+description = "Verify downloaded Go module hashes"
+run = "make verify-deps"
+
+[tasks."deps:tidy"]
+description = "Check that Go module files are tidy"
+run = "make check-tidy"
+
+[tasks."docs:generate"]
+description = "Generate provider documentation"
+run = "make docs"
+
+[tasks."docs:check"]
+description = "Validate provider documentation"
+run = "make check-docs"
+
+[tasks."docs:generated"]
+description = "Check that generated provider documentation is current"
+run = "make check-docs-generated"
+
+[tasks."docs:verify"]
+description = "Validate provider documentation and generated output"
+depends = ["docs:check", "docs:generated"]
+
+[tasks."release:check"]
+description = "Validate the GoReleaser configuration"
+run = "goreleaser check"
+
 [tasks."workflows:actionlint"]
 description = "Lint GitHub Actions workflows"
 run = "actionlint"
@@ -36,6 +105,10 @@ run = "actionlint"
 description = "Verify GitHub Actions pins and release age"
 run = "pinact run --check --verify --verify-min-age"
 
+[tasks."workflows:pinact-offline"]
+description = "Check GitHub Actions pins without network access"
+run = "pinact run --fix=false --no-api"
+
 [tasks."workflows:zizmor"]
 description = "Audit GitHub Actions workflows"
 run = "zizmor --offline .github/workflows"
@@ -43,3 +116,33 @@ run = "zizmor --offline .github/workflows"
 [tasks."workflows:check"]
 description = "Validate GitHub Actions workflows"
 depends = ["workflows:actionlint", "workflows:pinact", "workflows:zizmor"]
+
+[tasks."workflows:quick"]
+description = "Validate GitHub Actions workflows without network access"
+depends = [
+  "workflows:actionlint",
+  "workflows:pinact-offline",
+  "workflows:zizmor",
+]
+
+[tasks.check]
+description = "Run fast local validation"
+depends = [
+  "deps:tidy",
+  "deps:verify",
+  "docs:check",
+  "format:check",
+  "lint",
+  "test",
+  "workflows:quick",
+]
+
+[tasks.verify]
+description = "Run broad pre-handoff validation"
+depends = [
+  "check",
+  "docs:generated",
+  "release:check",
+  "test:acceptance",
+  "workflows:pinact",
+]

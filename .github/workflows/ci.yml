@@ -1,6 +1,10 @@
 ---
 name: CI
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
 permissions:
   contents: read
@@ -17,9 +21,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
         with:
-          go-version-file: "go.mod"
+          install_args: go
       - name: golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
@@ -38,7 +42,7 @@ jobs:
         with:
           install_args: actionlint pinact zizmor
       - name: Validate workflows
-        run: mise run workflows:check
+        run: mise run --skip-tools workflows:check
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -49,11 +53,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
         with:
-          go-version-file: "go.mod"
+          install_args: go
       - name: Run tfproviderlint
-        run: make lint-provider
+        run: mise run --skip-tools lint:provider
 
   tidy:
     name: Tidy
@@ -62,11 +66,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
         with:
-          go-version-file: "go.mod"
+          install_args: go
       - name: Check if mods are tidy
-        run: make check-tidy
+        run: mise run --skip-tools deps:tidy
 
   test:
     name: Acceptance Test (VCR Replay)
@@ -87,18 +91,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
         with:
-          go-version-file: "go.mod"
+          install_args: go
       - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
           terraform_version: ${{ matrix.terraform_version }}
           terraform_wrapper: false
       - name: Run tests
-        run: make testacc
+        run: mise run --skip-tools test:acceptance
         env:
           VERBOSE: "true"
-          VCR: "replay"
           KATAPULT_API_KEY: ${{ secrets.KATAPULT_API_KEY }}
           KATAPULT_ORGANIZATION: ${{ secrets.KATAPULT_ORGANIZATION }}
           KATAPULT_DATA_CENTER: ${{ secrets.KATAPULT_DATA_CENTER }}
@@ -110,16 +113,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
         with:
-          go-version-file: "go.mod"
-      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
-        with:
-          terraform_wrapper: false
+          install_args: go terraform
       - name: Validate documentation
-        run: make check-docs
-      - name: Ensure generated documentation is up to date
-        run: mv docs docs-current && make docs && diff -rN docs-current docs
+        run: mise run --skip-tools docs:verify
 
   goreleaser-config:
     name: Goreleaser Config
@@ -131,15 +129,11 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
         with:
-          cache: false
-          go-version-file: "go.mod"
-      - name: goreleaser check
-        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
-        with:
-          version: "~> v2"
-          args: check
+          install_args: go goreleaser
+      - name: GoReleaser check
+        run: mise run --skip-tools release:check
 
   release-please:
     name: Release Please
