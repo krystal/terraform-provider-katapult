@@ -3,7 +3,7 @@ module github.com/krystal/terraform-provider-katapult
 go 1.26
 
 require (
-	github.com/dnaeon/go-vcr v1.1.0
+	github.com/dnaeon/go-vcr v1.2.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
 	github.com/hashicorp/go-hclog v1.6.2
 	github.com/hashicorp/go-retryablehttp v0.7.5
