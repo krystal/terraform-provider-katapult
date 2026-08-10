@@ -39,7 +39,7 @@ run = ["make format", "taplo fmt mise.toml mise.lock"]
 [tasks."format:check"]
 description = "Check Go and TOML formatting"
 run = '''
-unformatted="$(gofmt -l .)"
+unformatted="$(git ls-files -z -- '*.go' | xargs -0 gofmt -l)"
 if [ -n "$unformatted" ]; then
   echo "Go files need formatting:" >&2
   echo "$unformatted" >&2

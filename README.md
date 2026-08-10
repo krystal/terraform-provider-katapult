@@ -68,7 +68,7 @@ Enter the provider directory and build the provider:
 
 ```bash
 cd ~/Projects/terraform-provider-katapult
-make build
+mise run build
 ```
 
 ## Developing the Provider

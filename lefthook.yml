@@ -8,7 +8,18 @@ pre-commit:
       stage_fixed: true
     go-vet:
       glob: "*.go"
-      run: go vet ./...
+      run: |
+        packages="$({
+          for file in {staged_files}; do
+            directory="$(dirname "$file")"
+            if [ "$directory" = "." ]; then
+              printf '.\n'
+            else
+              printf './%s\n' "$directory"
+            fi
+          done
+        } | sort -u)"
+        go vet $packages
     taplo:
       glob: "*.toml"
       run: mise exec -- taplo fmt {staged_files}
