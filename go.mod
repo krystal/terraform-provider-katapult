@@ -14,10 +14,10 @@ require (
 	github.com/hashicorp/terraform-plugin-mux v0.13.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.31.0
 	github.com/hashicorp/terraform-plugin-testing v1.5.1
-	github.com/jimeh/rands v0.3.0
+	github.com/jimeh/rands v0.5.0
 	github.com/jimeh/undent v1.1.1
 	github.com/krystal/go-katapult v0.2.13
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/tidwall/gjson v1.18.0
 )
 
