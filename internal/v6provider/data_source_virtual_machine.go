@@ -66,6 +66,7 @@ func (d *VirtualMachineDataSource) Configure(
 	d.M = meta
 }
 
+//nolint:funlen
 func (d *VirtualMachineDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
@@ -152,20 +153,24 @@ func (d *VirtualMachineDataSource) Schema(
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
-							Computed:            true,
-							MarkdownDescription: "The ID of the network interface.",
+							Computed: true,
+							MarkdownDescription: "The ID of the network " +
+								"interface.",
 						},
 						"network_id": schema.StringAttribute{
-							Computed:            true,
-							MarkdownDescription: "The ID of the network the interface is on.",
+							Computed: true,
+							MarkdownDescription: "The ID of the network " +
+								"the interface is on.",
 						},
 						"virtual_network_id": schema.StringAttribute{
-							Computed:            true,
-							MarkdownDescription: "The ID of the virtual network the interface is on.",
+							Computed: true,
+							MarkdownDescription: "The ID of the virtual " +
+								"network the interface is on.",
 						},
 						"mac_address": schema.StringAttribute{
-							Computed:            true,
-							MarkdownDescription: "The MAC address of the interface.",
+							Computed: true,
+							MarkdownDescription: "The MAC address of the " +
+								"interface.",
 						},
 						"ip_addresses": schema.SetAttribute{
 							Computed:    true,
@@ -191,7 +196,7 @@ func (d *VirtualMachineDataSource) Schema(
 	}
 }
 
-//nolint:gocyclo
+//nolint:funlen,gocyclo
 func (d *VirtualMachineDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,
@@ -205,9 +210,11 @@ func (d *VirtualMachineDataSource) Read(
 
 	var params core.GetVirtualMachineParams
 	switch {
-	case !data.ID.IsNull() && !data.ID.IsUnknown() && data.ID.ValueString() != "":
+	case !data.ID.IsNull() && !data.ID.IsUnknown() &&
+		data.ID.ValueString() != "":
 		params.VirtualMachineId = data.ID.ValueStringPointer()
-	case !data.FQDN.IsNull() && !data.FQDN.IsUnknown() && data.FQDN.ValueString() != "":
+	case !data.FQDN.IsNull() && !data.FQDN.IsUnknown() &&
+		data.FQDN.ValueString() != "":
 		params.VirtualMachineFqdn = data.FQDN.ValueStringPointer()
 	default:
 		resp.Diagnostics.AddError(

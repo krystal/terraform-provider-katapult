@@ -136,6 +136,7 @@ func TestAccKatapultVMGroup_segregated(t *testing.T) {
 	})
 }
 
+//nolint:lll
 func TestAccKatapultVMGroup_not_segregated(t *testing.T) {
 	tt := newTestTools(t)
 

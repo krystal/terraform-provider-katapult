@@ -568,7 +568,7 @@ func resourceVirtualMachineCreate(
 	return resourceVirtualMachineRead(ctx, d, meta)
 }
 
-//nolint:gocyclo
+//nolint:funlen,gocyclo
 func resourceVirtualMachineRead(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -887,7 +887,7 @@ func resourceVirtualMachineUpdate(
 	return resourceVirtualMachineRead(ctx, d, meta)
 }
 
-//nolint:gocyclo
+//nolint:funlen,gocyclo
 func resourceVirtualMachineDelete(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -1276,6 +1276,7 @@ func fetchAllVMNetworkInterfaces(
 	return vmnets, nil
 }
 
+//nolint:lll
 func nextFetchAllVMNetworkInterfaces(
 	ctx context.Context,
 	m *Meta,
@@ -1358,6 +1359,7 @@ func addVirtualNetowrksToVirtualMachine(
 	return nil
 }
 
+//nolint:lll
 func addVirtualNetowrkToVirtualMachine(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -1415,6 +1417,7 @@ func removeNetworkInterfacesFromVirtualMachine(
 	return nil
 }
 
+//nolint:lll
 func removeNetworkInterfaceFromVirtualMachine(
 	ctx context.Context,
 	d *schema.ResourceData,
@@ -1512,6 +1515,7 @@ func attachVirtualMachineNetworkInterfaces(
 	return nil
 }
 
+//nolint:lll
 func attachVirtualMachineNetworkInterface(
 	ctx context.Context,
 	m *Meta,
@@ -1548,6 +1552,7 @@ func attachVirtualMachineNetworkInterface(
 	return nil
 }
 
+//nolint:lll
 func detatchVirtualMachineNetworkInterface(
 	ctx context.Context,
 	m *Meta,

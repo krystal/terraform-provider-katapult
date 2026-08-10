@@ -13,6 +13,7 @@ type FileStorageVolumesDataSource struct {
 	M *Meta
 }
 
+//nolint:lll
 type FileStorageVolumesDataSourceModel struct {
 	FileStorageVolumes []FileStorageVolumeDataSourceModel `tfsdk:"file_storage_volumes"`
 }

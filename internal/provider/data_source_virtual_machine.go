@@ -32,7 +32,7 @@ func dataSourceVirtualMachine() *schema.Resource {
 	}
 }
 
-//nolint:gocyclo
+//nolint:funlen,gocyclo
 func dataSourceVirtualMachineRead(
 	ctx context.Context,
 	d *schema.ResourceData,

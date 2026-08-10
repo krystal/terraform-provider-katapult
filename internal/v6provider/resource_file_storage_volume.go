@@ -338,6 +338,7 @@ func (r *FileStorageVolumeResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
+//nolint:funlen
 func (r *FileStorageVolumeResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -501,6 +502,7 @@ func (r *FileStorageVolumeResource) FileStorageVolumeRead(
 
 // Helper
 
+//nolint:lll
 func waitForFileStorageVolumeToBeReady(
 	ctx context.Context,
 	m *Meta,

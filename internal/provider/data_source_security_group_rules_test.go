@@ -51,6 +51,7 @@ func TestAccKatapultDataSourceSecurityGroupRules_no_rules(t *testing.T) {
 	})
 }
 
+//nolint:lll
 func TestAccKatapultDataSourceSecurityGroupRules_rules(t *testing.T) {
 	tt := newTestTools(t)
 

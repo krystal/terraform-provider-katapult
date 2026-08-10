@@ -198,7 +198,8 @@ func TestAccKatapultDataSourceVirtualMachine_blank(t *testing.T) {
 				Config: `data "katapult_virtual_machine" "src" {}`,
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
-						"At least one attribute out of [id,fqdn] must be specified",
+						"At least one attribute out of [id,fqdn] " +
+							"must be specified",
 					),
 				),
 			},

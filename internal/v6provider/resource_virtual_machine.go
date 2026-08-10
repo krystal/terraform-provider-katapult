@@ -445,7 +445,10 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 			return
 		}
 		if ipRes.JSON200 == nil {
-			resp.Diagnostics.AddError("Create Error", "unexpected empty response fetching IP")
+			resp.Diagnostics.AddError(
+				"Create Error",
+				"unexpected empty response fetching IP",
+			)
 			return
 		}
 		ip := ipRes.JSON200.IpAddress
@@ -543,7 +546,10 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 	}
 
 	if buildRes.JSON201 == nil {
-		resp.Diagnostics.AddError("Create Error", "unexpected empty response from build")
+		resp.Diagnostics.AddError(
+			"Create Error",
+			"unexpected empty response from build",
+		)
 		return
 	}
 	buildID := buildRes.JSON201.VirtualMachineBuild.Id
@@ -573,7 +579,9 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 			}
 
 			if res.JSON200 == nil {
-				return nil, "", fmt.Errorf("unexpected empty response polling build")
+				return nil, "", fmt.Errorf(
+					"unexpected empty response polling build",
+				)
 			}
 			b := res.JSON200.VirtualMachineBuild
 			if b.State == nil {
@@ -587,8 +595,9 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 			return b, string(*b.State), nil
 		},
 		Timeout:                   timeout,
-		Delay:                     2 * time.Second,
-		MinTimeout:                5 * time.Second,
+		Delay:                     r.M.stateChangeDelay(2 * time.Second),
+		MinTimeout:                r.M.stateChangeDelay(5 * time.Second),
+		PollInterval:              r.M.stateChangePollInterval(),
 		ContinuousTargetOccurence: 1,
 	}
 
@@ -603,6 +612,7 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 		return
 	}
 
+	//nolint:lll
 	build := rawBuild.(core.GetVirtualMachinesBuildsVirtualMachineBuild200ResponseVirtualMachineBuild)
 	vmPartial, err2 := build.VirtualMachine.Get()
 	if err2 != nil || vmPartial.Id == nil {
@@ -659,7 +669,9 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 				return nil, "", e
 			}
 			if res.JSON200 == nil {
-				return nil, "", fmt.Errorf("unexpected empty response polling VM state")
+				return nil, "", fmt.Errorf(
+					"unexpected empty response polling VM state",
+				)
 			}
 			v := res.JSON200.VirtualMachine
 			if v.State == nil {
@@ -668,8 +680,9 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 			return v, string(*v.State), nil
 		},
 		Timeout:                   timeout,
-		Delay:                     2 * time.Second,
-		MinTimeout:                5 * time.Second,
+		Delay:                     r.M.stateChangeDelay(2 * time.Second),
+		MinTimeout:                r.M.stateChangeDelay(5 * time.Second),
+		PollInterval:              r.M.stateChangePollInterval(),
 		ContinuousTargetOccurence: 1,
 	}
 
@@ -796,7 +809,9 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		props.Group = &nullGroup
 	case setGroup:
 		groupBytes, _ := json.Marshal(
-			core.VirtualMachineGroupLookup{Id: plan.GroupID.ValueStringPointer()},
+			core.VirtualMachineGroupLookup{
+				Id: plan.GroupID.ValueStringPointer(),
+			},
 		)
 		rg := json.RawMessage(groupBytes)
 		props.Group = &rg
@@ -901,11 +916,12 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 			if iface.State == nil {
 				continue
 			}
-			if *iface.State == "attached" {
+			switch *iface.State {
+			case "attached":
 				attachedVnetIDs = append(
 					attachedVnetIDs, *vnet.Id,
 				)
-			} else if *iface.State == "detached" {
+			case "detached":
 				detachedVnets[*vnet.Id] = *iface.Id
 			}
 		}
@@ -1019,7 +1035,10 @@ func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 		return
 	}
 	if vmRes.JSON200 == nil {
-		resp.Diagnostics.AddError("Delete Error", "unexpected empty response fetching VM")
+		resp.Diagnostics.AddError(
+			"Delete Error",
+			"unexpected empty response fetching VM",
+		)
 		return
 	}
 	vm := vmRes.JSON200.VirtualMachine
@@ -1174,7 +1193,7 @@ func (r *VirtualMachineResource) ImportState(
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-//nolint:gocyclo
+//nolint:funlen,gocyclo
 func (r *VirtualMachineResource) vmRead(
 	ctx context.Context,
 	model *VirtualMachineResourceModel,
@@ -1730,16 +1749,17 @@ func allocateIPsToVM(
 			)
 		}
 
+		//nolint:lll
+		requestBody := core.PostVirtualMachineNetworkInterfaceAllocateIpJSONRequestBody{
+			IpAddress: core.IPAddressLookup{Id: &id},
+			VirtualMachineNetworkInterface: core.
+				VirtualMachineNetworkInterfaceLookup{
+				Id: &vmnetID,
+			},
+		}
 		resp, err := m.Core.
 			PostVirtualMachineNetworkInterfaceAllocateIpWithResponse(
-				ctx,
-				core.PostVirtualMachineNetworkInterfaceAllocateIpJSONRequestBody{
-					IpAddress: core.IPAddressLookup{Id: &id},
-					VirtualMachineNetworkInterface: core.
-						VirtualMachineNetworkInterfaceLookup{
-						Id: &vmnetID,
-					},
-				},
+				ctx, requestBody,
 			)
 		if err != nil {
 			if resp != nil {
@@ -1773,18 +1793,19 @@ func updateVMNetworkSpeedProfile(
 		}
 		ifaceID := *iface.Id
 
+		//nolint:lll
+		requestBody := core.PatchVirtualMachineNetworkInterfaceUpdateSpeedProfileJSONRequestBody{
+			VirtualMachineNetworkInterface: core.
+				VirtualMachineNetworkInterfaceLookup{
+				Id: &ifaceID,
+			},
+			SpeedProfile: core.NetworkSpeedProfileLookup{
+				Permalink: &permalink,
+			},
+		}
 		res, err := m.Core.
 			PatchVirtualMachineNetworkInterfaceUpdateSpeedProfileWithResponse(
-				ctx,
-				core.PatchVirtualMachineNetworkInterfaceUpdateSpeedProfileJSONRequestBody{
-					VirtualMachineNetworkInterface: core.
-						VirtualMachineNetworkInterfaceLookup{
-						Id: &ifaceID,
-					},
-					SpeedProfile: core.NetworkSpeedProfileLookup{
-						Permalink: &permalink,
-					},
-				},
+				ctx, requestBody,
 			)
 		if err != nil {
 			if res != nil {
@@ -1839,7 +1860,9 @@ func waitForVMToStop(
 				return nil, "", e
 			}
 			if res.JSON200 == nil {
-				return nil, "", fmt.Errorf("unexpected empty response polling VM state")
+				return nil, "", fmt.Errorf(
+					"unexpected empty response polling VM state",
+				)
 			}
 			v := res.JSON200.VirtualMachine
 			if v.State == nil {
@@ -1848,8 +1871,9 @@ func waitForVMToStop(
 			return v, string(*v.State), nil
 		},
 		Timeout:                   timeout,
-		Delay:                     1 * time.Second,
-		MinTimeout:                5 * time.Second,
+		Delay:                     m.stateChangeDelay(1 * time.Second),
+		MinTimeout:                m.stateChangeDelay(5 * time.Second),
+		PollInterval:              m.stateChangePollInterval(),
 		ContinuousTargetOccurence: 1,
 	}
 

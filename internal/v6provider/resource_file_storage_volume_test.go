@@ -23,6 +23,7 @@ func init() { //nolint:gochecknoinits
 	})
 }
 
+//nolint:lll
 func testSweepFileStorageVolumes(_ string) error {
 	m := sweepMeta()
 	ctx := context.Background()
