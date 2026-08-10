@@ -57,13 +57,20 @@ func waitForTrashObjectNotFound(
 		Pending: []string{"exists"},
 		Target:  []string{"not_found"},
 		Refresh: func() (interface{}, string, error) {
-			_, e := m.Core.GetTrashObjectWithResponse(ctx,
+			res, err := m.Core.GetTrashObjectWithResponse(ctx,
 				&core.GetTrashObjectParams{
 					TrashObjectId:       trashObject.Id,
 					TrashObjectObjectId: trashObject.ObjectId,
 				})
-			if e != nil && errors.Is(e, core.ErrNotFound) {
-				return 1, "not_found", nil
+			if err != nil {
+				if errors.Is(err, core.ErrNotFound) {
+					return 1, "not_found", nil
+				}
+				if res != nil {
+					err = genericAPIError(err, res.Body)
+				}
+
+				return nil, "", err
 			}
 
 			return nil, "exists", nil
