@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/krystal/terraform-provider-katapult/internal/vcrtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -234,6 +235,7 @@ func newVCRRecorder(t *testing.T) *recorder.Recorder {
 
 		return nil
 	})
+	r.AddSaveFilter(vcrtest.RedactSensitiveResponseFields)
 
 	t.Cleanup(func() {
 		assert.NoError(t, r.Stop())
