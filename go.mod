@@ -18,7 +18,7 @@ require (
 	github.com/jimeh/undent v1.1.1
 	github.com/krystal/go-katapult v0.2.13
 	github.com/stretchr/testify v1.9.0
-	github.com/tidwall/gjson v1.18.0
+	github.com/tidwall/gjson v1.19.0
 )
 
 require (
