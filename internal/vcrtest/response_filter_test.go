@@ -79,6 +79,23 @@ func TestRedactSensitiveResponseFieldsLeavesOtherBodiesUnchanged(t *testing.T) {
 	}
 }
 
+func TestRedactSensitiveResponseFieldsPreservesNumberLiterals(t *testing.T) {
+	t.Parallel()
+
+	interaction := &cassette.Interaction{
+		Response: cassette.Response{
+			Body: `{"initial_root_password":"password","id":9007199254740993}`,
+		},
+	}
+
+	require.NoError(t, RedactSensitiveResponseFields(interaction))
+	assert.Equal(
+		t,
+		`{"id":9007199254740993,"initial_root_password":"[REDACTED]"}`,
+		interaction.Response.Body,
+	)
+}
+
 func TestCassettesDoNotContainSensitiveResponseValues(t *testing.T) {
 	t.Parallel()
 

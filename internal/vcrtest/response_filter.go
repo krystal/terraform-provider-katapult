@@ -1,6 +1,7 @@
 package vcrtest
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -23,8 +24,10 @@ func RedactSensitiveResponseFields(i *cassette.Interaction) error {
 	}
 
 	var body any
-	if err := json.Unmarshal(bodyBytes, &body); err != nil {
-		return fmt.Errorf("unmarshal VCR response: %w", err)
+	decoder := json.NewDecoder(bytes.NewReader(bodyBytes))
+	decoder.UseNumber()
+	if err := decoder.Decode(&body); err != nil {
+		return fmt.Errorf("decode VCR response: %w", err)
 	}
 
 	if !redactSensitiveFields(body) {
