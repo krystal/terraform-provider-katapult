@@ -3,9 +3,22 @@ package v6provider
 import (
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMeta_StateChangeTiming(t *testing.T) {
+	delay := 5 * time.Second
+
+	productionMeta := &Meta{}
+	assert.Equal(t, delay, productionMeta.stateChangeDelay(delay))
+	assert.Zero(t, productionMeta.stateChangePollInterval())
+
+	replayMeta := &Meta{testMode: true}
+	assert.Zero(t, replayMeta.stateChangeDelay(delay))
+	assert.Equal(t, time.Millisecond, replayMeta.stateChangePollInterval())
+}
 
 func TestMeta_UseOrGenerateName(t *testing.T) {
 	type fields struct {
