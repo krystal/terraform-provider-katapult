@@ -39,7 +39,9 @@ COPY mise.toml mise.lock /terraform-provider-katapult/
 # release asset, so Alpine's native package is installed above instead.
 RUN set -e \
     && mise install --locked --yes \
-        actionlint go goreleaser lefthook pinact taplo terraform \
+        actionlint go gofumpt goreleaser lefthook pinact taplo terraform \
+    && mise install --locked --yes \
+        "go:golang.org/x/tools/cmd/goimports" \
     && echo 'export PS1="\u@go-alpine:\w\$ "' > /root/.bashrc \
     && echo 'export MISE_TASK_RUN_AUTO_INSTALL=false' >> /root/.bashrc \
     && echo 'alias ll="ls -lah"' >> /root/.bashrc \

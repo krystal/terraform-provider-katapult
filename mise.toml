@@ -8,6 +8,7 @@ task.run_auto_install = true
 [tools]
 actionlint = "1"
 go = "1.26"
+gofumpt = "0"
 goreleaser = "2"
 lefthook = "2"
 pinact = "4"
@@ -15,6 +16,7 @@ taplo = "0"
 terraform = "1.10"
 zizmor = "1"
 "github:jimeh/treeboot" = "0"
+"go:golang.org/x/tools/cmd/goimports" = "0"
 
 [env]
 # DO NOT put local environment variables here. Use mise.local.toml instead.
@@ -34,12 +36,21 @@ run = "make build"
 
 [tasks.format]
 description = "Format Go and TOML files"
-run = ["make format", "taplo fmt mise.toml mise.lock"]
+run = '''
+git ls-files -z -- '*.go' | xargs -0 goimports -w
+git ls-files -z -- '*.go' | xargs -0 gofumpt -w
+taplo fmt mise.toml mise.lock
+'''
 
 [tasks."format:check"]
 description = "Check Go and TOML formatting"
 run = '''
-unformatted="$(git ls-files -z -- '*.go' | xargs -0 gofmt -l)"
+unformatted="$(
+  {
+    git ls-files -z -- '*.go' | xargs -0 goimports -l
+    git ls-files -z -- '*.go' | xargs -0 gofumpt -l
+  } | sort -u
+)"
 if [ -n "$unformatted" ]; then
   echo "Go files need formatting:" >&2
   echo "$unformatted" >&2

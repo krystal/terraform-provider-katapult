@@ -2,9 +2,11 @@ lefthook: mise exec -- lefthook
 
 pre-commit:
   commands:
-    gofmt:
+    go-format:
       glob: "*.go"
-      run: gofmt -w {staged_files}
+      run: |
+        goimports -w {staged_files}
+        gofumpt -w {staged_files}
       stage_fixed: true
     go-vet:
       glob: "*.go"
