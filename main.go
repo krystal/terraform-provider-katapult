@@ -20,7 +20,23 @@ var (
 
 func main() {
 	ctx := context.Background()
+	providerServer, err := newProviderServer(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	err = tf6server.Serve(
+		"registry.terraform.io/providers/krystal/katapult",
+		providerServer,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func newProviderServer(
+	ctx context.Context,
+) (func() tfprotov6.ProviderServer, error) {
 	upgradedSDKServer, err := tf5to6server.UpgradeServer(
 		ctx, provider.New(&provider.Config{
 			Version: version,
@@ -28,7 +44,7 @@ func main() {
 		})().GRPCProvider,
 	)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	providers := []func() tfprotov6.ProviderServer{
@@ -41,14 +57,8 @@ func main() {
 
 	muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	err = tf6server.Serve(
-		"registry.terraform.io/providers/krystal/katapult",
-		muxServer.ProviderServer,
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
+	return muxServer.ProviderServer, nil
 }

@@ -16,6 +16,8 @@ endif
 
 BINDIR := bin
 TOOLDIR := $(BINDIR)/tools
+GO_ROOT := $(shell go env GOROOT)
+GO_BINARY := $(GO_ROOT)/bin/go
 
 # Global environment variables for all targets
 SHELL ?= /bin/bash
@@ -42,13 +44,14 @@ define tool # 1: binary-name, 2: go-import-path
 TOOLS += $(TOOLDIR)/$(1)
 
 $(TOOLDIR)/$(1): Makefile
-	GOBIN="$(CURDIR)/$(TOOLDIR)" go install "$(2)"
+	GOROOT="$(GO_ROOT)" GOBIN="$(CURDIR)/$(TOOLDIR)" \
+		"$(GO_BINARY)" install "$(2)"
 endef
 
-$(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62))
-$(eval $(call tool,gomod,github.com/Helcaraxan/gomod@latest))
+$(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2))
+$(eval $(call tool,gomod,github.com/Helcaraxan/gomod@v0.7.1))
 $(eval $(call tool,tfplugindocs,github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.20.0))
-$(eval $(call tool,tfproviderlint,github.com/bflad/tfproviderlint/cmd/tfproviderlint@v0.30.0))
+$(eval $(call tool,tfproviderlint,github.com/bflad/tfproviderlint/cmd/tfproviderlint@v0.31.0))
 
 .PHONY: tools
 tools: $(TOOLS)
@@ -132,7 +135,7 @@ test:
 
 .PHONY: testacc
 testacc:
-	TF_ACC=1 go test $(V) $(TESTARGS) $(TEST) -timeout=120m
+	TF_ACC=1 go test $(V) -count=1 $(TESTARGS) $(TEST) -timeout=120m
 
 .PHONY: test-deps
 test-deps:
@@ -186,11 +189,21 @@ docker-dev-build:
 .PHONY: docs
 docs: $(TOOLDIR)/tfplugindocs
 	KATAPULT_API_KEY="" KATAPULT_ORGANIZATION="" KATAPULT_DATA_CENTER="" \
-		tfplugindocs generate
+		tfplugindocs generate --provider-name "terraform-provider-$(NAME)"
 
 .PHONY: check-docs
 check-docs: $(TOOLDIR)/tfplugindocs
-		tfplugindocs validate
+		tfplugindocs validate --provider-name "terraform-provider-$(NAME)"
+
+.PHONY: check-docs-generated
+check-docs-generated: $(TOOLDIR)/tfplugindocs
+	@tmpdir="$$(mktemp -d "$(CURDIR)/../.tfplugindocs-check.XXXXXX")"; \
+	trap 'rm -rf "$$tmpdir"' EXIT; \
+	KATAPULT_API_KEY="" KATAPULT_ORGANIZATION="" KATAPULT_DATA_CENTER="" \
+		tfplugindocs generate \
+		--provider-name "terraform-provider-$(NAME)" \
+		--rendered-website-dir "../$$(basename "$$tmpdir")"; \
+	diff -rN docs "$$tmpdir"
 
 #
 # Coverage
@@ -234,25 +247,16 @@ deps-analyze: $(TOOLDIR)/gomod
 tidy:
 	go mod tidy $(V)
 
-.PHONY: verify
-verify:
+.PHONY: verify-deps
+verify-deps:
 	go mod verify
 
-.SILENT: check-tidy
+# Deprecated compatibility alias. Use `mise run verify` for the broad
+# pre-handoff validation suite.
+.PHONY: verify
+verify: verify-deps
+	@echo "make verify only verifies downloaded Go modules; use mise run verify for the full suite"
+
 .PHONY: check-tidy
 check-tidy:
-	cp go.mod go.mod.tidy-check
-	cp go.sum go.sum.tidy-check
-	go mod tidy
-	( \
-		diff go.mod go.mod.tidy-check && \
-		diff go.sum go.sum.tidy-check && \
-		rm -f go.mod go.sum && \
-		mv go.mod.tidy-check go.mod && \
-		mv go.sum.tidy-check go.sum \
-	) || ( \
-		rm -f go.mod go.sum && \
-		mv go.mod.tidy-check go.mod && \
-		mv go.sum.tidy-check go.sum; \
-		exit 1 \
-	)
+	go mod tidy -diff

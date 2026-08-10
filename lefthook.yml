@@ -1,8 +1,34 @@
-pre-commit: 
-  commands: 
-    tidy:
-      run: make check-tidy
-    lint:
-      run: make lint
-    docs:
-      run: make check-docs
+lefthook: mise exec -- lefthook
+
+pre-commit:
+  commands:
+    go-format:
+      glob: "*.go"
+      run: |
+        goimports -w {staged_files}
+        gofumpt -w {staged_files}
+      stage_fixed: true
+    go-vet:
+      glob: "*.go"
+      run: |
+        packages="$({
+          for file in {staged_files}; do
+            directory="$(dirname "$file")"
+            if [ "$directory" = "." ]; then
+              printf '.\n'
+            else
+              printf './%s\n' "$directory"
+            fi
+          done
+        } | sort -u)"
+        go vet $packages
+    taplo:
+      glob: "*.toml"
+      run: mise exec -- taplo fmt {staged_files}
+      stage_fixed: true
+    actionlint:
+      glob: ".github/workflows/*.{yml,yaml}"
+      run: mise exec -- actionlint {staged_files}
+    pinact:
+      glob: ".github/workflows/*.{yml,yaml}"
+      run: mise exec -- pinact run --fix=false --no-api {staged_files}

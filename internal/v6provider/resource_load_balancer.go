@@ -405,9 +405,8 @@ func flattenLoadBalancerResourceIDs(ids []string) types.Set {
 func extractLoadBalancerResourceTypeAndIDs(
 	model *LoadBalancerResourceModel,
 ) (core.LoadBalancerResourceTypesEnum, []string) {
-	var t core.LoadBalancerResourceTypesEnum = core.VirtualMachines
+	t := core.VirtualMachines
 	var list []attr.Value
-	ids := []string{}
 
 	//nolint:lll
 	switch {
@@ -421,6 +420,8 @@ func extractLoadBalancerResourceTypeAndIDs(
 		t = core.Tags
 		list = model.TagIDs.Elements()
 	}
+
+	ids := make([]string, 0, len(list))
 
 	for _, item := range list {
 		i := item.(types.String)

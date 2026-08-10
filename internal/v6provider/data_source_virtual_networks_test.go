@@ -73,7 +73,7 @@ func testAccCheckKatapultVirtualNetworksAttrs(
 
 		networks := resp.JSON200.VirtualNetworks
 
-		checks := []resource.TestCheckFunc{}
+		checks := make([]resource.TestCheckFunc, 0, len(networks))
 
 		for _, network := range networks {
 			attrs := map[string]string{

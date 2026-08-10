@@ -1,23 +1,9 @@
-linters-settings:
-  funlen:
-    lines: 100
-    statements: 150
-  goconst:
-    min-occurrences: 5
-  gocyclo:
-    min-complexity: 20
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment
-  lll:
-    line-length: 80
-    tab-width: 4
-  misspell:
-    locale: US
-
+version: "2"
+run:
+  modules-download-mode: readonly
+  allow-parallel-runners: true
 linters:
-  disable-all: true
+  default: none
   enable:
     - asciicheck
     - bodyclose
@@ -33,11 +19,8 @@ linters:
     - gocritic
     - gocyclo
     - godot
-    - gofumpt
-    - goimports
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
     - importas
     - ineffassign
@@ -54,34 +37,69 @@ linters:
     - sqlclosecheck
     - staticcheck
     - tparallel
-    - typecheck
     - unconvert
     - unparam
     - unused
     - wastedassign
     - whitespace
-
-issues:
-  exclude:
-    - Using the variable on range scope `tt` in function literal
-    - Using the variable on range scope `tc` in function literal
-  exclude-rules:
-    - linters:
-        - staticcheck
-      text: "SA1019: resource.StateChangeConf is deprecated"
-    - path: "_test\\.go"
-      linters:
-        - funlen
-        - dupl
-        - goconst
-    - source: "^//go:generate "
-      linters:
-        - lll
-    - source: "`json:"
-      linters:
-        - lll
-
-run:
-  timeout: 2m
-  allow-parallel-runners: true
-  modules-download-mode: readonly
+  settings:
+    funlen:
+      lines: 100
+      statements: 150
+    goconst:
+      min-occurrences: 5
+      # Terraform schema keys and repeated schema descriptions are declarative
+      # vocabulary, not application values that benefit from Go constants.
+      ignore-string-values:
+        - '^(Always set to provider organization value\.|The ID of this resource\.|address|color|data_center_id|exists|katapult_virtual_machine|load_balancer_id|name|not_found|notes|permalink|ports|protocol|tag_ids|targets|virtual_machine_group_ids|virtual_machine_ids)$'
+    gocyclo:
+      min-complexity: 20
+    govet:
+      disable:
+        - fieldalignment
+      enable-all: true
+    lll:
+      line-length: 80
+      tab-width: 4
+    misspell:
+      locale: US
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - staticcheck
+        text: 'SA1019: resource.StateChangeConf is deprecated'
+      - linters:
+          - dupl
+          - funlen
+          - goconst
+        path: _test\.go
+      - linters:
+          - lll
+        source: '^//go:generate '
+      - linters:
+          - lll
+        source: '`json:'
+      - path: (.+)\.go$
+        text: Using the variable on range scope `tt` in function literal
+      - path: (.+)\.go$
+        text: Using the variable on range scope `tc` in function literal
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

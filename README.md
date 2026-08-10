@@ -68,14 +68,14 @@ Enter the provider directory and build the provider:
 
 ```bash
 cd ~/Projects/terraform-provider-katapult
-make build
+mise run build
 ```
 
 ## Developing the Provider
 
 ### Requirements
 
-- [Go](https://golang.org/dl/) 1.23 or later.
+- [Go](https://go.dev/dl/) 1.26 or later.
 - [Terraform](https://www.terraform.io/downloads.html) 1.4 or later.
 
 ### Rules
@@ -84,6 +84,28 @@ make build
   [Conventional Commit](https://www.conventionalcommits.org/en/v1.0.0/) standard
   when writing your commit messages. This will among other things, ensure
   relevant changes are automatically added to the Changelog.
+
+The provider is in a gradual migration from the Terraform Plugin SDK v2 and
+protocol v5 to the Plugin Framework and protocol v6. See
+[CONTRIBUTING.md](CONTRIBUTING.md#provider-v5-to-v6-migration) before adding or
+migrating a resource or data source.
+
+### Development Tasks
+
+Run `mise tasks` to discover the supported task surface. The most useful entry
+points are:
+
+- `mise run build` — build the provider binary.
+- `mise run test` — run race-enabled unit tests using VCR replay.
+- `mise run test:acceptance` — run acceptance tests using VCR replay.
+- `mise run check` — run the fast local formatting, linting, unit-test,
+  dependency, documentation, and workflow checks.
+- `mise run verify` — run the broad pre-handoff suite, including replay
+  acceptance tests and generated-output checks.
+
+The Makefile remains available as the lower-level implementation and for
+specialized targets such as installation, sweeping, coverage, and the
+development container.
 
 ### Make Targets
 

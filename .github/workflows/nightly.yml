@@ -6,6 +6,9 @@ on:
   schedule:
     - cron: "0 0 * * *" # Midnight every day
 
+permissions:
+  contents: read
+
 jobs:
   nightly:
     name: Acceptance Tests
@@ -13,11 +16,13 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: 'go.mod'
-      - uses: hashicorp/setup-terraform@v2
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
           terraform_wrapper: false
       - name: Run tests
@@ -34,7 +39,7 @@ jobs:
           KATAPULT_DATA_CENTER: ${{ secrets.KATAPULT_DATA_CENTER }}
       - name: save VCR cassettes as build artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: vcr-casettes
           path: internal/provider/testdata/
@@ -44,8 +49,10 @@ jobs:
     needs: nightly
     if: always()
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: 'go.mod'
       - name: Sweep
