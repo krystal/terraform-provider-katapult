@@ -96,8 +96,11 @@ func (ds *AddressListsDataSource) Read(
 				Page:                  &i,
 			})
 		if err != nil {
-			resp.Diagnostics.AddError("Address Lists get error", err.Error())
+			if res != nil {
+				err = genericAPIError(err, res.Body)
+			}
 
+			resp.Diagnostics.AddError("Address Lists Error", err.Error())
 			return
 		}
 

@@ -509,10 +509,24 @@ func waitForFileStorageVolumeToBeReady(
 					FileStorageVolumeId: fsvID,
 				})
 			if err != nil {
+				if res != nil {
+					err = genericAPIError(err, res.Body)
+				}
+
 				return nil, "", err
+			}
+			if res == nil || res.JSON200 == nil {
+				return nil, "", errors.New(
+					"unexpected empty file storage volume response",
+				)
 			}
 
 			f := &res.JSON200.FileStorageVolume
+			if f.State == nil {
+				return nil, "", errors.New(
+					"unexpected file storage volume response: missing state",
+				)
+			}
 
 			return f, string(*f.State), nil
 		},

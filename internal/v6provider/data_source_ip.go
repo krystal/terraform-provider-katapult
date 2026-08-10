@@ -145,10 +145,11 @@ func (r *IPDataSource) Read(
 	}
 
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"IP Error",
-			err.Error(),
-		)
+		if res != nil {
+			err = genericAPIError(err, res.Body)
+		}
+
+		resp.Diagnostics.AddError("IP Error", err.Error())
 		return
 	}
 
