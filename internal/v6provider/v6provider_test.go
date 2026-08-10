@@ -266,7 +266,7 @@ func newVCRRecorder(t *testing.T) *recorder.Recorder {
 		return nil
 	case recorder.ModeReplaying:
 		transport = &stopRequests{}
-	case recorder.ModeRecording:
+	case recorder.ModeRecording, recorder.ModeReplayingOrRecording:
 		// Use the default transport.
 	}
 
