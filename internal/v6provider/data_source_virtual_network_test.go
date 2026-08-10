@@ -65,7 +65,10 @@ func TestAccKatapultDataSourceVirtualNetwork_not_found(t *testing.T) {
 					}
 				`),
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta("resource not found"),
+					regexp.QuoteMeta(
+						"virtual_network_not_found: " +
+							"No virtual network",
+					),
 				),
 			},
 		},
