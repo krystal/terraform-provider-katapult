@@ -109,8 +109,13 @@ func TestCassettesDoNotContainSensitiveResponseValues(t *testing.T) {
 		filepath.Join(repositoryRoot, "internal", "provider", "testdata"),
 		filepath.Join(repositoryRoot, "internal", "v6provider", "testdata"),
 	} {
-		require.NoError(t, filepath.WalkDir(
-			directory,
+		root, err := os.OpenRoot(directory)
+		require.NoError(t, err)
+		defer root.Close()
+
+		require.NoError(t, fs.WalkDir(
+			root.FS(),
+			".",
 			func(path string, entry fs.DirEntry, err error) error {
 				if err != nil {
 					return err
@@ -120,10 +125,13 @@ func TestCassettesDoNotContainSensitiveResponseValues(t *testing.T) {
 					return nil
 				}
 
-				contents, err := os.ReadFile(path)
+				contents, err := root.ReadFile(path)
 				require.NoError(t, err)
 
-				relativePath, err := filepath.Rel(repositoryRoot, path)
+				relativePath, err := filepath.Rel(
+					repositoryRoot,
+					filepath.Join(directory, filepath.FromSlash(path)),
+				)
 				require.NoError(t, err)
 				assert.NotRegexp(
 					t,

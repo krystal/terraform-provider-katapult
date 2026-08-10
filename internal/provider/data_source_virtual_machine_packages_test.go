@@ -64,7 +64,7 @@ func testAccCheckKatapultVirtualMachinePackages(
 	res string,
 	pkgs []*core.VirtualMachinePackage,
 ) resource.TestCheckFunc {
-	tfs := []resource.TestCheckFunc{}
+	tfs := make([]resource.TestCheckFunc, 0, len(pkgs))
 
 	for i, pkg := range pkgs {
 		prefix := fmt.Sprintf("packages.%d.", i)

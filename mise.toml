@@ -1,8 +1,45 @@
+#:schema https://mise.jdx.dev/schema/mise.json
+
+[settings]
+lockfile = true
+minimum_release_age = "3d"
+task.run_auto_install = true
+
 [tools]
-go = "1.23"
+actionlint = "1"
+go = "1.26"
 goreleaser = "2"
+lefthook = "2"
+pinact = "4"
+taplo = "0"
 terraform = "1.10"
+zizmor = "1"
+"github:jimeh/treeboot" = "0"
 
 [env]
 # DO NOT put local environment variables here. Use mise.local.toml instead.
 # Refer to mise.local.toml.example for an example.
+
+[tasks.setup]
+description = "Install locked tools and local Git hooks"
+run = ["mise install --locked", "lefthook install"]
+
+[tasks.treeboot]
+description = "Bootstrap the current worktree with Treeboot"
+run = "treeboot run"
+
+[tasks."workflows:actionlint"]
+description = "Lint GitHub Actions workflows"
+run = "actionlint"
+
+[tasks."workflows:pinact"]
+description = "Verify GitHub Actions pins and release age"
+run = "pinact run --check --verify --verify-min-age"
+
+[tasks."workflows:zizmor"]
+description = "Audit GitHub Actions workflows"
+run = "zizmor --offline .github/workflows"
+
+[tasks."workflows:check"]
+description = "Validate GitHub Actions workflows"
+depends = ["workflows:actionlint", "workflows:pinact", "workflows:zizmor"]

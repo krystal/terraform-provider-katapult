@@ -128,7 +128,7 @@ func testAccCheckKatapultDiskTemplates(
 	res string,
 	tpls []*core.DiskTemplate,
 ) resource.TestCheckFunc {
-	tfs := []resource.TestCheckFunc{}
+	tfs := make([]resource.TestCheckFunc, 0, len(tpls))
 
 	for i, tpl := range tpls {
 		prefix := fmt.Sprintf("templates.%d.", i)

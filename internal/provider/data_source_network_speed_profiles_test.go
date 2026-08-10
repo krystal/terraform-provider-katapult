@@ -67,7 +67,7 @@ func testAccCheckKatapultNetworkSpeedProfiles(
 	res string,
 	profiles []*core.NetworkSpeedProfile,
 ) resource.TestCheckFunc {
-	tfs := []resource.TestCheckFunc{}
+	tfs := make([]resource.TestCheckFunc, 0, 5*len(profiles))
 
 	for i, profile := range profiles {
 		prefix := fmt.Sprintf("profiles.%d.", i)

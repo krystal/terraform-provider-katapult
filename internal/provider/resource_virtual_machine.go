@@ -283,7 +283,7 @@ func validateVirtualMachinePackageChange(
 			"cannot downgrade package while Virtual Machine is running: "+
 				"current package has %d vCPU(s) and %dGB memory, new "+
 				"package has %d vCPU(s) and %dGB memory. Stop the "+
-				"Virtual Machine before downgrading.",
+				"Virtual Machine before downgrading",
 			vm.Package.CPUCores, vm.Package.MemoryInGB,
 			newPkg.CPUCores, newPkg.MemoryInGB,
 		)
@@ -761,9 +761,10 @@ func resourceVirtualMachineUpdate(
 					continue
 				}
 
-				if *iface.State == "attached" {
+				switch *iface.State {
+				case "attached":
 					attachedVnetIDs = append(attachedVnetIDs, *vnet.Id)
-				} else if *iface.State == "detached" {
+				case "detached":
 					detachedVnets[*vnet.Id] = *iface.Id
 				}
 			}
