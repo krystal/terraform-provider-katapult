@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -190,7 +191,10 @@ func userAgent(name string, terraformVersion string, version string) string {
 		add = strings.TrimSpace(add)
 		if len(add) > 0 {
 			ua += " " + add
-			log.Print("[DEBUG] Using modified User-Agent")
+			log.Printf(
+				"[DEBUG] Using modified User-Agent: %s",
+				strconv.Quote(ua),
+			)
 		}
 	}
 
