@@ -5,12 +5,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/dnaeon/go-vcr/cassette"
@@ -108,24 +108,23 @@ func newTestTools(t *testing.T) *testTools {
 		testAccResourceNamePrefix, v6config.HTTPClient, "", "")
 	require.NoError(t, err)
 
+	if r != nil && r.Mode() == recorder.ModeReplaying {
+		meta.testMode = true
+		meta.retryClient.RetryMax = 0
+		meta.retryClient.RetryWaitMin = 0
+		meta.retryClient.RetryWaitMax = 0
+		v5Config.TestMode = true
+	}
+
 	v6config.m = meta
 
-	upgradedSDKServer, err := tf5to6server.UpgradeServer(
-		ctx, v5provider.New(v5Config)().GRPCProvider,
+	// UpgradeServer and NewMuxServer inspect each provider's schema. Defer that
+	// work until the factory runs so parallel tests do not serialize in setup.
+	var (
+		muxOnce     sync.Once
+		muxedServer tfprotov6.ProviderServer
+		muxErr      error
 	)
-	if err != nil {
-		require.NoError(t, err)
-	}
-
-	providers := []func() tfprotov6.ProviderServer{
-		func() tfprotov6.ProviderServer { return upgradedSDKServer },
-		providerserver.NewProtocol6(New(v6config)()),
-	}
-
-	muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	return &testTools{
 		T:        t,
@@ -133,9 +132,37 @@ func newTestTools(t *testing.T) *testTools {
 		Recorder: r,
 		Meta:     meta,
 		ProviderFactories: providerFactoryList{
-			//nolint:unparam // must return an error to match the map signature
 			"katapult": func() (tfprotov6.ProviderServer, error) {
-				return muxServer.ProviderServer(), nil
+				muxOnce.Do(func() {
+					upgradedSDKServer, upgradeErr := tf5to6server.UpgradeServer(
+						ctx, v5provider.New(v5Config)().GRPCProvider,
+					)
+					if upgradeErr != nil {
+						muxErr = upgradeErr
+
+						return
+					}
+
+					providers := []func() tfprotov6.ProviderServer{
+						func() tfprotov6.ProviderServer {
+							return upgradedSDKServer
+						},
+						providerserver.NewProtocol6(New(v6config)()),
+					}
+
+					muxServer, newMuxErr := tf6muxserver.NewMuxServer(
+						ctx, providers...,
+					)
+					if newMuxErr != nil {
+						muxErr = newMuxErr
+
+						return
+					}
+
+					muxedServer = muxServer.ProviderServer()
+				})
+
+				return muxedServer, muxErr
 			},
 		},
 	}

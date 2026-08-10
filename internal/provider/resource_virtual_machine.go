@@ -493,8 +493,9 @@ func resourceVirtualMachineCreate(
 			return b.VirtualMachine, string(b.State), nil
 		},
 		Timeout:                   d.Timeout(schema.TimeoutCreate),
-		Delay:                     2 * time.Second,
-		MinTimeout:                5 * time.Second,
+		Delay:                     m.stateChangeDelay(2 * time.Second),
+		MinTimeout:                m.stateChangeDelay(5 * time.Second),
+		PollInterval:              m.stateChangePollInterval(),
 		ContinuousTargetOccurence: 1,
 	}
 
@@ -546,8 +547,9 @@ func resourceVirtualMachineCreate(
 			return v, string(v.State), nil
 		},
 		Timeout:                   d.Timeout(schema.TimeoutCreate),
-		Delay:                     2 * time.Second,
-		MinTimeout:                5 * time.Second,
+		Delay:                     m.stateChangeDelay(2 * time.Second),
+		MinTimeout:                m.stateChangeDelay(5 * time.Second),
+		PollInterval:              m.stateChangePollInterval(),
 		ContinuousTargetOccurence: 1,
 	}
 
@@ -1072,8 +1074,9 @@ func waitForVirtualMachineToStop(
 			return vm, string(vm.State), nil
 		},
 		Timeout:                   timeout,
-		Delay:                     1 * time.Second,
-		MinTimeout:                5 * time.Second,
+		Delay:                     m.stateChangeDelay(1 * time.Second),
+		MinTimeout:                m.stateChangeDelay(5 * time.Second),
+		PollInterval:              m.stateChangePollInterval(),
 		ContinuousTargetOccurence: 1,
 	}
 
