@@ -204,7 +204,8 @@ func TestAccKatapultDataSourceFileStorageVolume_not_found(t *testing.T) {
 				),
 				ExpectError: regexp.MustCompile(
 					regexp.QuoteMeta(
-						"resource not found",
+						"file_storage_volume_not_found: " +
+							"No file storage volume",
 					),
 				),
 			},
