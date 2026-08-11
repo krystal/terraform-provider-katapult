@@ -32,14 +32,12 @@ func TestObjectStorageAccountAdoptExistingUpdatesStateOnly(t *testing.T) {
 	require.Empty(t, adoptAttribute.PlanModifiers)
 
 	stateModel := ObjectStorageAccountResourceModel{
-		ID:                types.StringValue(objectStorageAccountDefaultRegion),
-		Region:            types.StringValue(objectStorageAccountDefaultRegion),
+		Region:            types.StringValue(objectStorageAccTestRegion),
 		AdoptExisting:     types.BoolValue(true),
 		ProvisioningState: types.StringValue("provisioned"),
 	}
 	planModel := stateModel
 	planModel.AdoptExisting = types.BoolValue(false)
-	planModel.ID = types.StringUnknown()
 	planModel.ProvisioningState = types.StringUnknown()
 
 	state := tfsdk.State{Schema: schemaResp.Schema}
@@ -58,7 +56,6 @@ func TestObjectStorageAccountAdoptExistingUpdatesStateOnly(t *testing.T) {
 
 	var got ObjectStorageAccountResourceModel
 	require.False(t, resp.State.Get(ctx, &got).HasError())
-	planModel.ID = stateModel.ID
 	planModel.ProvisioningState = stateModel.ProvisioningState
 	require.Equal(t, planModel, got)
 }
@@ -111,10 +108,6 @@ func TestAccKatapultObjectStorageAccount_lifecycle(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"katapult_object_storage_account.main",
-						"id", objectStorageAccTestRegion,
-					),
-					resource.TestCheckResourceAttr(
-						"katapult_object_storage_account.main",
 						"region", objectStorageAccTestRegion,
 					),
 					resource.TestCheckResourceAttr(
@@ -136,10 +129,11 @@ func TestAccKatapultObjectStorageAccount_lifecycle(t *testing.T) {
 			},
 			// Import the same account and verify all attributes match.
 			{
-				ResourceName:      "katapult_object_storage_account.main",
-				ImportState:       true,
-				ImportStateId:     objectStorageAccTestRegion,
-				ImportStateVerify: true,
+				ResourceName:                         "katapult_object_storage_account.main",
+				ImportState:                          true,
+				ImportStateId:                        objectStorageAccTestRegion,
+				ImportStateVerify:                    true,
+				ImportStateVerifyIdentifierAttribute: "region",
 			},
 		},
 	})
@@ -173,7 +167,7 @@ func TestAccKatapultObjectStorageAccount_adopt_existing(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"katapult_object_storage_account.main",
-						"id", objectStorageAccTestRegion,
+						"region", objectStorageAccTestRegion,
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_object_storage_account.main",

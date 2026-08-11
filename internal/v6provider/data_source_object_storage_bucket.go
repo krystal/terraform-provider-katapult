@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/krystal/go-katapult/next/core"
 )
@@ -55,13 +56,13 @@ func (d *ObjectStorageBucketDataSource) Schema(
 				Required:            true,
 				MarkdownDescription: "Globally unique bucket name.",
 			},
-			"object_storage_account_id": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
-				MarkdownDescription: "ID of the " +
-					"`katapult_object_storage_account` resource the " +
-					"bucket lives in. The account ID is the region " +
-					"permalink, e.g. `uk-lon-1`. Defaults to `uk-lon-1`.",
+			objectStorageRegionAttributeName: schema.StringAttribute{
+				Required: true,
+				MarkdownDescription: "Object storage region containing the " +
+					"bucket. Currently the only available region is `uk-lon-1`.",
+				Validators: []validator.String{
+					stringValidatorNotEmpty(),
+				},
 			},
 			"label": schema.StringAttribute{
 				Computed:            true,
@@ -125,18 +126,11 @@ func (d *ObjectStorageBucketDataSource) Read(
 		return
 	}
 
-	if data.ObjectStorageAccountID.IsNull() ||
-		data.ObjectStorageAccountID.ValueString() == "" {
-		data.ObjectStorageAccountID = types.StringValue(
-			objectStorageAccountDefaultRegion,
-		)
-	}
-
 	r := &ObjectStorageBucketResource{M: d.M}
 	if err := r.ObjectStorageBucketRead(
 		ctx,
 		data.Name.ValueString(),
-		data.ObjectStorageAccountID.ValueString(),
+		data.Region.ValueString(),
 		&data,
 	); err != nil {
 		if errors.Is(err, core.ErrNotFound) {

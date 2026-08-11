@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/krystal/go-katapult/next/core"
 )
@@ -16,7 +17,6 @@ type ObjectStorageAccountDataSource struct {
 }
 
 type ObjectStorageAccountDataSourceModel struct {
-	ID                types.String `tfsdk:"id"`
 	Region            types.String `tfsdk:"region"`
 	ProvisioningState types.String `tfsdk:"provisioning_state"`
 }
@@ -25,9 +25,9 @@ var objectStorageAccountDataSourceMarkdownDesc = strings.TrimSpace(`
 Look up the object storage account for an organization in a given region.
 
 Useful when another Terraform configuration manages the
-` + "`katapult_object_storage_account`" + ` and you only need to reference
-its ` + "`id`" + ` to attach buckets or access keys without managing the
-account itself.
+` + "`katapult_object_storage_account`" + ` and you need to verify the account
+exists before attaching buckets or access keys without managing the account
+itself.
 
 If you also manage the account in the same configuration, reference the
 resource directly instead of going through this data source.
@@ -70,16 +70,13 @@ func (d *ObjectStorageAccountDataSource) Schema(
 	resp.Schema = schema.Schema{
 		MarkdownDescription: objectStorageAccountDataSourceMarkdownDesc,
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-				MarkdownDescription: "Account identifier — the region " +
-					"permalink.",
-			},
-			"region": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
-				MarkdownDescription: "Region permalink, e.g. `uk-lon-1`. " +
-					"Defaults to `uk-lon-1`.",
+			objectStorageRegionAttributeName: schema.StringAttribute{
+				Required: true,
+				MarkdownDescription: "Object storage region. Currently the " +
+					"only available region is `uk-lon-1`.",
+				Validators: []validator.String{
+					stringValidatorNotEmpty(),
+				},
 			},
 			"provisioning_state": schema.StringAttribute{
 				Computed: true,
@@ -103,9 +100,6 @@ func (d *ObjectStorageAccountDataSource) Read(
 	}
 
 	region := data.Region.ValueString()
-	if region == "" {
-		region = objectStorageAccountDefaultRegion
-	}
 
 	acct, err := getObjectStorageAccount(ctx, d.M, region)
 	if err != nil {
@@ -124,7 +118,6 @@ func (d *ObjectStorageAccountDataSource) Read(
 		return
 	}
 
-	data.ID = types.StringValue(region)
 	data.Region = types.StringValue(region)
 	data.ProvisioningState = types.StringValue(
 		string(deref(acct.ProvisioningState)),

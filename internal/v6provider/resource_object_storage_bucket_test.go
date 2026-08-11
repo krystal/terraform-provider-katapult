@@ -28,8 +28,8 @@ func accObjectStorageBucketMinimal(t *testing.T) {
 			{
 				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  name = "%s"
+					  region = data.katapult_object_storage_account.main.region
 					}`,
 					name,
 				),
@@ -43,7 +43,7 @@ func accObjectStorageBucketMinimal(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_object_storage_bucket.main",
-						"object_storage_account_id",
+						"region",
 						objectStorageAccTestRegion,
 					),
 					resource.TestCheckResourceAttr(
@@ -88,7 +88,7 @@ func accObjectStorageBucketMinimal(t *testing.T) {
 						return "", fmt.Errorf("resource not found")
 					}
 					return rs.Primary.Attributes["name"] + "/" +
-						rs.Primary.Attributes["object_storage_account_id"], nil
+						rs.Primary.Attributes["region"], nil
 				},
 				ImportState:                          true,
 				ImportStateVerify:                    true,
@@ -105,8 +105,8 @@ func accObjectStorageBucketUpdateName(t *testing.T) {
 	cfg := func(n string) string {
 		return objectStorageAccountDataBlock + undent.Stringf(`
 			resource "katapult_object_storage_bucket" "main" {
-			  name                      = "%s"
-			  object_storage_account_id = data.katapult_object_storage_account.main.id
+			  name = "%s"
+			  region = data.katapult_object_storage_account.main.region
 			}`,
 			n,
 		)
@@ -154,8 +154,8 @@ func accObjectStorageBucketUpdateLabel(t *testing.T) {
 	withLabel := func(label string) string {
 		return objectStorageAccountDataBlock + undent.Stringf(`
 			resource "katapult_object_storage_bucket" "main" {
-			  name                      = "%s"
-			  object_storage_account_id = data.katapult_object_storage_account.main.id
+			  name = "%s"
+			  region = data.katapult_object_storage_account.main.region
 			  label                     = "%s"
 			}`,
 			name, label,
@@ -164,8 +164,8 @@ func accObjectStorageBucketUpdateLabel(t *testing.T) {
 
 	noLabel := objectStorageAccountDataBlock + undent.Stringf(`
 		resource "katapult_object_storage_bucket" "main" {
-		  name                      = "%s"
-		  object_storage_account_id = data.katapult_object_storage_account.main.id
+		  name = "%s"
+		  region = data.katapult_object_storage_account.main.region
 		}`,
 		name,
 	)
@@ -231,8 +231,8 @@ func accObjectStorageBucketACL(t *testing.T) {
 			{
 				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  name = "%s"
+					  region = data.katapult_object_storage_account.main.region
 					  all_keys_read             = true
 					  all_keys_write            = true
 					}`,
@@ -263,8 +263,8 @@ func accObjectStorageBucketACL(t *testing.T) {
 			{
 				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  name = "%s"
+					  region = data.katapult_object_storage_account.main.region
 					  public_list               = true
 					  public_read               = true
 					}`,
@@ -310,8 +310,8 @@ func accObjectStorageBucketStaticSite(t *testing.T) {
 			{
 				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  name = "%s"
+					  region = data.katapult_object_storage_account.main.region
 					  serve_static_site         = true
 					  static_site_index         = "index.html"
 					  static_site_error         = "error.html"
@@ -350,8 +350,8 @@ func accObjectStorageBucketStaticSite(t *testing.T) {
 			{
 				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  name = "%s"
+					  region = data.katapult_object_storage_account.main.region
 					  serve_static_site         = true
 					  static_site_index         = "home.html"
 					  static_site_error         = "404.html"
@@ -382,8 +382,8 @@ func accObjectStorageBucketStaticSite(t *testing.T) {
 			{
 				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  name = "%s"
+					  region = data.katapult_object_storage_account.main.region
 					  serve_static_site         = false
 					}`,
 					name,
@@ -417,8 +417,8 @@ func accObjectStorageBucketValidateStaticSiteRequiresIndex(t *testing.T) {
 			{
 				Config: undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = "%s"
+					  name = "%s"
+					  region = "%s"
 					  serve_static_site         = true
 					  public_list               = true
 					  public_read               = true
@@ -447,8 +447,8 @@ func accObjectStorageBucketValidateStaticSiteRequiresPublicList(t *testing.T) {
 			{
 				Config: undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = "%s"
+					  name = "%s"
+					  region = "%s"
 					  serve_static_site         = true
 					  static_site_index         = "index.html"
 					  public_read               = true
@@ -477,8 +477,8 @@ func accObjectStorageBucketValidateStaticSiteRequiresPublicRead(t *testing.T) {
 			{
 				Config: undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = "%s"
+					  name = "%s"
+					  region = "%s"
 					  serve_static_site         = true
 					  static_site_index         = "index.html"
 					  public_list               = true
@@ -507,8 +507,8 @@ func accObjectStorageBucketValidateStaticSiteIndexForbidden(t *testing.T) {
 			{
 				Config: undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = "%s"
+					  name = "%s"
+					  region = "%s"
 					  static_site_index         = "index.html"
 					}`,
 					name, objectStorageAccTestRegion,
@@ -535,8 +535,8 @@ func accObjectStorageBucketValidateStaticSiteErrorForbidden(t *testing.T) {
 			{
 				Config: undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = "%s"
+					  name = "%s"
+					  region = "%s"
 					  static_site_error         = "error.html"
 					}`,
 					name, objectStorageAccTestRegion,
@@ -561,11 +561,13 @@ func TestObjectStorageBucketValidateConfig_unknownServeStaticSite(t *testing.T) 
 			PlanOnly:           true,
 			ExpectNonEmptyPlan: true,
 			Config: `
-				resource "katapult_object_storage_account" "source" {}
+				resource "katapult_object_storage_account" "source" {
+				  region = "uk-lon-1"
+				}
 
 				resource "katapult_object_storage_bucket" "main" {
-				  name                      = "unknown-serve-static-site"
-				  object_storage_account_id = "uk-lon-1"
+				  name = "unknown-serve-static-site"
+				  region = "uk-lon-1"
 				  serve_static_site         = katapult_object_storage_account.source.provisioning_state == "provisioned"
 				  static_site_index         = "index.html"
 				}
@@ -583,11 +585,13 @@ func TestObjectStorageBucketValidateConfig_unknownDependentValue(t *testing.T) {
 			PlanOnly:           true,
 			ExpectNonEmptyPlan: true,
 			Config: `
-				resource "katapult_object_storage_account" "source" {}
+				resource "katapult_object_storage_account" "source" {
+				  region = "uk-lon-1"
+				}
 
 				resource "katapult_object_storage_bucket" "main" {
-				  name                      = "unknown-public-list"
-				  object_storage_account_id = "uk-lon-1"
+				  name = "unknown-public-list"
+				  region = "uk-lon-1"
 				  serve_static_site         = true
 				  static_site_index         = "index.html"
 				  public_list               = katapult_object_storage_account.source.provisioning_state == "provisioned"
@@ -607,8 +611,8 @@ func TestObjectStorageBucketValidateConfig_emptyLabel(t *testing.T) {
 			PlanOnly: true,
 			Config: `
 				resource "katapult_object_storage_bucket" "main" {
-				  name                      = "empty-label"
-				  object_storage_account_id = "uk-lon-1"
+				  name = "empty-label"
+				  region = "uk-lon-1"
 				  label                     = ""
 				}
 			`,
@@ -632,7 +636,7 @@ func testAccCheckKatapultObjectStorageBucketAttrs(
 		}
 
 		name := rs.Primary.Attributes["name"]
-		region := rs.Primary.Attributes["object_storage_account_id"]
+		region := rs.Primary.Attributes["region"]
 
 		resp, err := tt.Meta.Core.
 			GetObjectStorageObjectStorageClusterBucketWithResponse(
@@ -651,7 +655,7 @@ func testAccCheckKatapultObjectStorageBucketAttrs(
 		checks := []resource.TestCheckFunc{
 			resource.TestCheckResourceAttr(res, "name", *b.Name),
 			resource.TestCheckResourceAttr(
-				res, "object_storage_account_id", region,
+				res, "region", region,
 			),
 		}
 
@@ -747,7 +751,7 @@ func testAccCheckKatapultObjectStorageBucketDestroy(
 			}
 
 			name := rs.Primary.Attributes["name"]
-			region := rs.Primary.Attributes["object_storage_account_id"]
+			region := rs.Primary.Attributes["region"]
 
 			resp, err := tt.Meta.Core.
 				GetObjectStorageObjectStorageClusterBucketWithResponse(

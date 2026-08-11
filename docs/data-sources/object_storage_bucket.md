@@ -15,9 +15,10 @@ example, to reference a bucket managed by another Terraform configuration,
 or to wire its `public_url` into application config without managing the
 bucket itself.
 
-A bucket is identified uniquely by `name`. `object_storage_account_id`
-defaults to `uk-lon-1` (the only region currently available) and can be
-omitted.
+A bucket has a globally unique `name`, but the Katapult API also requires its
+object storage `region` when looking it up. Object storage is currently
+available only in `uk-lon-1`; the provider accepts any non-empty region value
+and lets the Katapult API reject unavailable regions.
 
 If no matching bucket exists, reading the data source fails with a "not
 found" error rather than producing an empty result, so callers can rely on
@@ -39,9 +40,13 @@ attributes are always in sync with the plan.
 ## Example Usage
 
 ```terraform
+data "katapult_object_storage_account" "main" {
+  region = "uk-lon-1"
+}
+
 data "katapult_object_storage_bucket" "assets" {
-  name                      = "my-org-assets"
-  object_storage_account_id = "uk-lon-1"
+  name   = "my-org-assets"
+  region = data.katapult_object_storage_account.main.region
 }
 ```
 
@@ -51,10 +56,7 @@ data "katapult_object_storage_bucket" "assets" {
 ### Required
 
 - `name` (String) Globally unique bucket name.
-
-### Optional
-
-- `object_storage_account_id` (String) ID of the `katapult_object_storage_account` resource the bucket lives in. The account ID is the region permalink, e.g. `uk-lon-1`. Defaults to `uk-lon-1`.
+- `region` (String) Object storage region containing the bucket. Currently the only available region is `uk-lon-1`.
 
 ### Read-Only
 

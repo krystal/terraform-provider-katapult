@@ -35,19 +35,19 @@ type (
 	}
 
 	ObjectStorageBucketResourceModel struct {
-		Name                   types.String `tfsdk:"name"`
-		ObjectStorageAccountID types.String `tfsdk:"object_storage_account_id"`
-		Label                  types.String `tfsdk:"label"`
-		PublicURL              types.String `tfsdk:"public_url"`
-		ServeStaticSite        types.Bool   `tfsdk:"serve_static_site"`
-		StaticSiteError        types.String `tfsdk:"static_site_error"`
-		StaticSiteIndex        types.String `tfsdk:"static_site_index"`
-		AllKeysRead            types.Bool   `tfsdk:"all_keys_read"`
-		AllKeysWrite           types.Bool   `tfsdk:"all_keys_write"`
-		PublicList             types.Bool   `tfsdk:"public_list"`
-		PublicRead             types.Bool   `tfsdk:"public_read"`
-		ReadKeyIDs             types.Set    `tfsdk:"read_key_ids"`
-		WriteKeyIDs            types.Set    `tfsdk:"write_key_ids"`
+		Name            types.String `tfsdk:"name"`
+		Region          types.String `tfsdk:"region"`
+		Label           types.String `tfsdk:"label"`
+		PublicURL       types.String `tfsdk:"public_url"`
+		ServeStaticSite types.Bool   `tfsdk:"serve_static_site"`
+		StaticSiteError types.String `tfsdk:"static_site_error"`
+		StaticSiteIndex types.String `tfsdk:"static_site_index"`
+		AllKeysRead     types.Bool   `tfsdk:"all_keys_read"`
+		AllKeysWrite    types.Bool   `tfsdk:"all_keys_write"`
+		PublicList      types.Bool   `tfsdk:"public_list"`
+		PublicRead      types.Bool   `tfsdk:"public_read"`
+		ReadKeyIDs      types.Set    `tfsdk:"read_key_ids"`
+		WriteKeyIDs     types.Set    `tfsdk:"write_key_ids"`
 	}
 )
 
@@ -97,13 +97,14 @@ func (r *ObjectStorageBucketResource) Schema(
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"object_storage_account_id": schema.StringAttribute{
+			objectStorageRegionAttributeName: schema.StringAttribute{
 				Required: true,
-				MarkdownDescription: "ID of the " +
-					"`katapult_object_storage_account` resource the " +
-					"bucket lives in. The account ID is the region " +
-					"permalink, e.g. `uk-lon-1`. Cannot be changed " +
-					"after creation.",
+				MarkdownDescription: "Object storage region in which to create " +
+					"the bucket. Currently the only available region is `uk-lon-1`. " +
+					"Cannot be changed after creation.",
+				Validators: []validator.String{
+					stringValidatorNotEmpty(),
+				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -292,7 +293,7 @@ func (r *ObjectStorageBucketResource) Create(
 	args := core.
 		PostOrganizationObjectStorageObjectStorageClusterBucketsJSONRequestBody{
 		ObjectStorageCluster: core.ObjectStorageClusterLookup{
-			Region: plan.ObjectStorageAccountID.ValueStringPointer(),
+			Region: plan.Region.ValueStringPointer(),
 		},
 		Organization: core.OrganizationLookup{
 			SubDomain: &r.M.confOrganization,
@@ -343,8 +344,8 @@ func (r *ObjectStorageBucketResource) Create(
 	}
 
 	plan.Name = types.StringValue(name)
-	plan.ObjectStorageAccountID = types.StringValue(
-		plan.ObjectStorageAccountID.ValueString(),
+	plan.Region = types.StringValue(
+		plan.Region.ValueString(),
 	)
 	plan.PublicURL = types.StringNull()
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
@@ -355,7 +356,7 @@ func (r *ObjectStorageBucketResource) Create(
 	if err := r.ObjectStorageBucketRead(
 		ctx,
 		name,
-		plan.ObjectStorageAccountID.ValueString(),
+		plan.Region.ValueString(),
 		&plan,
 	); err != nil {
 		resp.Diagnostics.AddError(
@@ -383,7 +384,7 @@ func (r *ObjectStorageBucketResource) Read(
 	if err := r.ObjectStorageBucketRead(
 		ctx,
 		state.Name.ValueString(),
-		state.ObjectStorageAccountID.ValueString(),
+		state.Region.ValueString(),
 		&state,
 	); err != nil {
 		if errors.Is(err, core.ErrNotFound) {
@@ -424,7 +425,7 @@ func (r *ObjectStorageBucketResource) Update(
 			Name: state.Name.ValueStringPointer(),
 		},
 		ObjectStorageCluster: core.ObjectStorageClusterLookup{
-			Region: state.ObjectStorageAccountID.ValueStringPointer(),
+			Region: state.Region.ValueStringPointer(),
 		},
 		Properties: core.ObjectStorageBucketArguments{
 			AccessControlList: &core.ObjectStorageBucketACLArguments{},
@@ -506,7 +507,7 @@ func (r *ObjectStorageBucketResource) Update(
 		return
 	}
 
-	if err := r.ObjectStorageBucketRead(ctx, plan.Name.ValueString(), plan.ObjectStorageAccountID.ValueString(), &plan); err != nil {
+	if err := r.ObjectStorageBucketRead(ctx, plan.Name.ValueString(), plan.Region.ValueString(), &plan); err != nil {
 		resp.Diagnostics.AddError("Object Storage Bucket Read Error", err.Error())
 		return
 	}
@@ -532,7 +533,7 @@ func (r *ObjectStorageBucketResource) Delete(
 					Name: state.Name.ValueStringPointer(),
 				},
 				ObjectStorageCluster: core.ObjectStorageClusterLookup{
-					Region: state.ObjectStorageAccountID.ValueStringPointer(),
+					Region: state.Region.ValueStringPointer(),
 				},
 			})
 	if err != nil {
@@ -557,7 +558,7 @@ func (r *ObjectStorageBucketResource) ImportState(
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
 			"Expected import ID in the format: "+
-				"name/object_storage_account_id (e.g. my-bucket/uk-lon-1)",
+				"name/region (e.g. my-bucket/uk-lon-1)",
 		)
 		return
 	}
@@ -566,7 +567,7 @@ func (r *ObjectStorageBucketResource) ImportState(
 		ctx, path.Root("name"), parts[0],
 	)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(
-		ctx, path.Root("object_storage_account_id"), parts[1],
+		ctx, path.Root(objectStorageRegionAttributeName), parts[1],
 	)...)
 }
 
@@ -600,7 +601,7 @@ func (r *ObjectStorageBucketResource) ObjectStorageBucketRead(
 
 	b := res.JSON200.ObjectStorageBucket
 
-	model.ObjectStorageAccountID = types.StringValue(region)
+	model.Region = types.StringValue(region)
 	model.Name = types.StringPointerValue(b.Name)
 	model.Label = types.StringNull()
 

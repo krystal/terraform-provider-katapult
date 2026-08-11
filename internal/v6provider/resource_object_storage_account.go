@@ -14,18 +14,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/krystal/go-katapult/next/core"
 )
 
-const objectStorageAccountDefaultRegion = "uk-lon-1"
-
 const (
 	objectStorageAccountTrashIDPrivateKey = "object_storage_account_trash_id"
 	objectStorageNoResponseBody           = "<no response>"
+	objectStorageRegionAttributeName      = "region"
 )
 
 type (
@@ -34,7 +33,6 @@ type (
 	}
 
 	ObjectStorageAccountResourceModel struct {
-		ID                types.String `tfsdk:"id"`
 		Region            types.String `tfsdk:"region"`
 		AdoptExisting     types.Bool   `tfsdk:"adopt_existing"`
 		ProvisioningState types.String `tfsdk:"provisioning_state"`
@@ -45,7 +43,7 @@ type (
 var objectStorageAccountMarkdownDesc = strings.TrimSpace(`
 Manages the object storage account for an organization in a given region.
 
-A Katapult organization has at most one object storage account per region. This resource creates the account (if it does not already exist) and waits for it to reach the ` + "`provisioned`" + ` state. All ` + "`katapult_object_storage_bucket`" + ` and ` + "`katapult_object_storage_access_key`" + ` resources must reference this resource via ` + "`object_storage_account_id`" + `, which ties their lifecycle to the account and gives Terraform a way to clean the account up when no longer needed.
+A Katapult organization has at most one object storage account per region. This resource creates the account (if it does not already exist) and waits for it to reach the ` + "`provisioned`" + ` state. Reference its ` + "`region`" + ` attribute from ` + "`katapult_object_storage_bucket`" + ` and ` + "`katapult_object_storage_access_key`" + ` resources to preserve Terraform's lifecycle dependency on the account.
 
 ~> **Only declare one of these per (organization, region).** If your organization already has object storage enabled via the Katapult dashboard, declare this resource anyway and import the existing account — otherwise Terraform cannot clean it up on destroy, and your organization will continue to be billed.
 `)
@@ -87,26 +85,14 @@ func (r *ObjectStorageAccountResource) Schema(
 	resp.Schema = schema.Schema{
 		MarkdownDescription: objectStorageAccountMarkdownDesc,
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-				MarkdownDescription: "Account identifier — the region " +
-					"permalink. Reference this from " +
-					"`katapult_object_storage_bucket` and " +
-					"`katapult_object_storage_access_key` via " +
-					"`object_storage_account_id`.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+			objectStorageRegionAttributeName: schema.StringAttribute{
+				Required: true,
+				MarkdownDescription: "Object storage region. Currently the " +
+					"only available region is `uk-lon-1`. Changing this " +
+					"forces replacement.",
+				Validators: []validator.String{
+					stringValidatorNotEmpty(),
 				},
-			},
-			"region": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
-				MarkdownDescription: "Region permalink, e.g. `uk-lon-1`. " +
-					"Defaults to `uk-lon-1`. Changing this forces " +
-					"replacement.",
-				Default: stringdefault.StaticString(
-					objectStorageAccountDefaultRegion,
-				),
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -191,7 +177,6 @@ func (r *ObjectStorageAccountResource) Create(
 		return
 	}
 
-	plan.ID = types.StringValue(region)
 	plan.Region = types.StringValue(region)
 	plan.AdoptExisting = types.BoolValue(adopt)
 	plan.ProvisioningState = types.StringNull()
@@ -238,9 +223,6 @@ func (r *ObjectStorageAccountResource) Read(
 	}
 
 	region := state.Region.ValueString()
-	if region == "" {
-		region = state.ID.ValueString()
-	}
 
 	acct, err := getObjectStorageAccount(ctx, r.M, region)
 	if err != nil {
@@ -280,7 +262,6 @@ func (r *ObjectStorageAccountResource) Read(
 		return
 	}
 
-	state.ID = types.StringValue(region)
 	state.Region = types.StringValue(region)
 	state.ProvisioningState = types.StringValue(
 		string(deref(acct.ProvisioningState)),
@@ -307,7 +288,6 @@ func (r *ObjectStorageAccountResource) Update(
 	// adopt_existing has no server-side representation. Its only purpose is
 	// controlling Create behavior, so an update is deliberately state-only.
 	// Preserve computed values because they may be unknown in the update plan.
-	plan.ID = state.ID
 	plan.ProvisioningState = state.ProvisioningState
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -453,16 +433,15 @@ func (r *ObjectStorageAccountResource) ImportState(
 	if region == "" {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
-			"Expected import ID to be a region permalink, e.g. uk-lon-1.",
+			"Expected import ID to be an object storage region, e.g. uk-lon-1.",
 		)
 		return
 	}
 
 	resp.Diagnostics.Append(
-		resp.State.SetAttribute(ctx, path.Root("id"), region)...,
-	)
-	resp.Diagnostics.Append(
-		resp.State.SetAttribute(ctx, path.Root("region"), region)...,
+		resp.State.SetAttribute(
+			ctx, path.Root(objectStorageRegionAttributeName), region,
+		)...,
 	)
 	resp.Diagnostics.Append(
 		resp.State.SetAttribute(

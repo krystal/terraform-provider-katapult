@@ -18,24 +18,11 @@ ownership of the account itself.
 
 If you also manage the account in the same configuration, reference the
 resource directly via
-[`katapult_object_storage_account.<name>.id`](../resources/object_storage_account.md)
+[`katapult_object_storage_account.<name>.region`](../resources/object_storage_account.md)
 instead — the resource's attributes are always in sync with the plan.
 
 If no account exists for the given region, reading the data source fails
 with a "not found" error rather than producing an empty result.
-
-## Example Usage
-
-```terraform
-data "katapult_object_storage_account" "main" {
-  region = "uk-lon-1"
-}
-
-resource "katapult_object_storage_bucket" "assets" {
-  name                      = "my-org-assets"
-  object_storage_account_id = data.katapult_object_storage_account.main.id
-}
-```
 
 {{ if .HasExample -}}
 ## Example Usage

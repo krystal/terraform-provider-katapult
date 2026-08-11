@@ -36,8 +36,8 @@ func accObjectStorageAccessKeyMinimal(t *testing.T) {
 			{
 				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_access_key" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  name = "%s"
+					  region = data.katapult_object_storage_account.main.region
 					}`,
 					name,
 				),
@@ -52,7 +52,7 @@ func accObjectStorageAccessKeyMinimal(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_object_storage_access_key.main",
-						"object_storage_account_id",
+						"region",
 						objectStorageAccTestRegion,
 					),
 					resource.TestCheckResourceAttr(
@@ -100,8 +100,8 @@ func accObjectStorageAccessKeyUpdateName(t *testing.T) {
 	cfg := func(n string) string {
 		return objectStorageAccountDataBlock + undent.Stringf(`
 			resource "katapult_object_storage_access_key" "main" {
-			  name                      = "%s"
-			  object_storage_account_id = data.katapult_object_storage_account.main.id
+			  name = "%s"
+			  region = data.katapult_object_storage_account.main.region
 			}`,
 			n,
 		)
@@ -164,13 +164,13 @@ func accObjectStorageAccessKeyBuckets(t *testing.T) {
 
 	cfg := objectStorageAccountDataBlock + undent.Stringf(`
 		resource "katapult_object_storage_access_key" "main" {
-		  name                      = "%s"
-		  object_storage_account_id = data.katapult_object_storage_account.main.id
+		  name = "%s"
+		  region = data.katapult_object_storage_account.main.region
 		}
 
 		resource "katapult_object_storage_bucket" "main" {
-		  name                      = "%s"
-		  object_storage_account_id = data.katapult_object_storage_account.main.id
+		  name = "%s"
+		  region = data.katapult_object_storage_account.main.region
 		  read_key_ids              = [katapult_object_storage_access_key.main.id]
 		  write_key_ids             = [katapult_object_storage_access_key.main.id]
 		}`,
@@ -236,8 +236,8 @@ func accObjectStorageAccessKeyUpdatePermissions(t *testing.T) {
 			{
 				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_access_key" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  name = "%s"
+					  region = data.katapult_object_storage_account.main.region
 					  all_buckets_read          = true
 					  all_objects_read          = true
 					  all_objects_write         = true
@@ -267,8 +267,8 @@ func accObjectStorageAccessKeyUpdatePermissions(t *testing.T) {
 			{
 				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_access_key" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  name = "%s"
+					  region = data.katapult_object_storage_account.main.region
 					}`,
 					name,
 				),

@@ -21,13 +21,13 @@ func accDataSourceObjectStorageBucketMinimal(t *testing.T) {
 			{
 				Config: objectStorageAccountDataBlock + undent.Stringf(`
 					resource "katapult_object_storage_bucket" "main" {
-					  name                      = "%s"
-					  object_storage_account_id = data.katapult_object_storage_account.main.id
+					  name = "%s"
+					  region = data.katapult_object_storage_account.main.region
 					}
 
 					data "katapult_object_storage_bucket" "main" {
-					  name                      = katapult_object_storage_bucket.main.name
-					  object_storage_account_id = katapult_object_storage_bucket.main.object_storage_account_id
+					  name = katapult_object_storage_bucket.main.name
+					  region = katapult_object_storage_bucket.main.region
 					}`,
 					name,
 				),
@@ -41,9 +41,9 @@ func accDataSourceObjectStorageBucketMinimal(t *testing.T) {
 					),
 					resource.TestCheckResourceAttrPair(
 						"data.katapult_object_storage_bucket.main",
-						"object_storage_account_id",
+						"region",
 						"katapult_object_storage_bucket.main",
-						"object_storage_account_id",
+						"region",
 					),
 					resource.TestCheckResourceAttrPair(
 						"data.katapult_object_storage_bucket.main", "public_url",
@@ -85,8 +85,8 @@ func accDataSourceObjectStorageBucketNotFound(t *testing.T) {
 			{
 				Config: undent.Stringf(`
 					data "katapult_object_storage_bucket" "main" {
-					  name                      = "this-bucket-does-not-exist"
-					  object_storage_account_id = "%s"
+					  name = "this-bucket-does-not-exist"
+					  region = "%s"
 					}`,
 					objectStorageAccTestRegion,
 				),

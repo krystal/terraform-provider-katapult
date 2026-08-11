@@ -11,9 +11,8 @@ description: |-
 {{ .Description | trimspace }}
 
 Buckets are containers for objects in Katapult's object storage service.
-Each bucket lives inside an object storage account, referenced via
-`object_storage_account_id`, and is accessed via the credentials and
-endpoint exposed by a
+Each bucket lives in an object storage region and is accessed via the
+credentials and endpoint exposed by a
 [`katapult_object_storage_access_key`](./object_storage_access_key.md).
 
 You must declare a
@@ -25,9 +24,14 @@ any buckets.
 ## Regions
 
 Object storage is currently available in a single region, `uk-lon-1`
-(London, UK). The bucket's region is inherited through the account it
-references; the data source's region attribute defaults to `uk-lon-1` and
-can be omitted.
+(London, UK). `region` is required, but the provider deliberately accepts
+any non-empty value so newly introduced regions can be used without waiting
+for a provider release. The Katapult API rejects unavailable regions.
+
+When the account is managed in the same configuration, set `region` from
+`katapult_object_storage_account.<name>.region`. Besides avoiding duplicate
+configuration, the reference ensures Terraform provisions the account before
+creating its buckets.
 
 ## Bucket Naming
 
@@ -97,9 +101,8 @@ Setting `serve_static_site = true` turns the bucket into a static website:
 {{ if .HasImport -}}
 ## Import
 
-A bucket is imported using its `name` and the `object_storage_account_id` it
-belongs to (currently always the region permalink), separated by a `/`. The
-account ID is required so the importer knows which regional endpoint to read
+A bucket is imported using its `name` and object storage `region`, separated
+by a `/`. The region is required so the importer knows which endpoint to read
 from; bucket names themselves are globally unique.
 
 Import is supported using the following syntax:

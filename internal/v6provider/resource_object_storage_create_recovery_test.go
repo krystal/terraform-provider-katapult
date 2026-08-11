@@ -56,17 +56,17 @@ func TestObjectStorageAccessKeyCreateRetainsStateWhenCredentialsFail(
 
 	r := &ObjectStorageAccessKeyResource{M: meta}
 	plan := ObjectStorageAccessKeyResourceModel{
-		ID:                     types.StringUnknown(),
-		Name:                   types.StringValue("recoverable-key"),
-		ObjectStorageAccountID: types.StringValue("uk-lon-1"),
-		AllBucketsRead:         types.BoolValue(true),
-		AllObjectsRead:         types.BoolValue(false),
-		AllObjectsWrite:        types.BoolValue(true),
-		ReadBuckets:            types.SetUnknown(types.StringType),
-		WriteBuckets:           types.SetUnknown(types.StringType),
-		AccessKeyID:            types.StringUnknown(),
-		SecretAccessKey:        types.StringUnknown(),
-		ServerURL:              types.StringUnknown(),
+		ID:              types.StringUnknown(),
+		Name:            types.StringValue("recoverable-key"),
+		Region:          types.StringValue("uk-lon-1"),
+		AllBucketsRead:  types.BoolValue(true),
+		AllObjectsRead:  types.BoolValue(false),
+		AllObjectsWrite: types.BoolValue(true),
+		ReadBuckets:     types.SetUnknown(types.StringType),
+		WriteBuckets:    types.SetUnknown(types.StringType),
+		AccessKeyID:     types.StringUnknown(),
+		SecretAccessKey: types.StringUnknown(),
+		ServerURL:       types.StringUnknown(),
 	}
 	req, resp := objectStorageCreateOperation(t, r.Schema, plan)
 
@@ -81,7 +81,7 @@ func TestObjectStorageAccessKeyCreateRetainsStateWhenCredentialsFail(
 	require.False(t, resp.State.Get(context.Background(), &state).HasError())
 	require.Equal(t, "objkey_recoverable", state.ID.ValueString())
 	require.Equal(t, "recoverable-key", state.Name.ValueString())
-	require.Equal(t, "uk-lon-1", state.ObjectStorageAccountID.ValueString())
+	require.Equal(t, "uk-lon-1", state.Region.ValueString())
 	require.True(t, state.AllBucketsRead.ValueBool())
 	require.False(t, state.AllObjectsRead.ValueBool())
 	require.True(t, state.AllObjectsWrite.ValueBool())
@@ -125,19 +125,19 @@ func TestObjectStorageBucketCreateRetainsStateWhenReadBackFails(
 
 	r := &ObjectStorageBucketResource{M: meta}
 	plan := ObjectStorageBucketResourceModel{
-		Name:                   types.StringValue("recoverable-bucket"),
-		ObjectStorageAccountID: types.StringValue("uk-lon-1"),
-		Label:                  types.StringValue("Recoverable Bucket"),
-		PublicURL:              types.StringUnknown(),
-		ServeStaticSite:        types.BoolValue(false),
-		StaticSiteError:        types.StringValue(""),
-		StaticSiteIndex:        types.StringValue(""),
-		AllKeysRead:            types.BoolValue(true),
-		AllKeysWrite:           types.BoolValue(false),
-		PublicList:             types.BoolValue(false),
-		PublicRead:             types.BoolValue(true),
-		ReadKeyIDs:             buildStringSet([]string{"objkey_read"}),
-		WriteKeyIDs:            buildStringSet([]string{"objkey_write"}),
+		Name:            types.StringValue("recoverable-bucket"),
+		Region:          types.StringValue("uk-lon-1"),
+		Label:           types.StringValue("Recoverable Bucket"),
+		PublicURL:       types.StringUnknown(),
+		ServeStaticSite: types.BoolValue(false),
+		StaticSiteError: types.StringValue(""),
+		StaticSiteIndex: types.StringValue(""),
+		AllKeysRead:     types.BoolValue(true),
+		AllKeysWrite:    types.BoolValue(false),
+		PublicList:      types.BoolValue(false),
+		PublicRead:      types.BoolValue(true),
+		ReadKeyIDs:      buildStringSet([]string{"objkey_read"}),
+		WriteKeyIDs:     buildStringSet([]string{"objkey_write"}),
 	}
 	req, resp := objectStorageCreateOperation(t, r.Schema, plan)
 
@@ -151,7 +151,7 @@ func TestObjectStorageBucketCreateRetainsStateWhenReadBackFails(
 	var state ObjectStorageBucketResourceModel
 	require.False(t, resp.State.Get(context.Background(), &state).HasError())
 	require.Equal(t, "recoverable-bucket", state.Name.ValueString())
-	require.Equal(t, "uk-lon-1", state.ObjectStorageAccountID.ValueString())
+	require.Equal(t, "uk-lon-1", state.Region.ValueString())
 	require.Equal(t, "Recoverable Bucket", state.Label.ValueString())
 	require.True(t, state.AllKeysRead.ValueBool())
 	require.False(t, state.AllKeysWrite.ValueBool())
@@ -202,7 +202,6 @@ func TestObjectStorageAccountCreateRetainsStateWhenWaiterFails(
 
 	r := &ObjectStorageAccountResource{M: meta}
 	plan := ObjectStorageAccountResourceModel{
-		ID:                types.StringUnknown(),
 		Region:            types.StringValue("uk-lon-1"),
 		AdoptExisting:     types.BoolValue(false),
 		ProvisioningState: types.StringUnknown(),
@@ -220,7 +219,6 @@ func TestObjectStorageAccountCreateRetainsStateWhenWaiterFails(
 
 	var state ObjectStorageAccountResourceModel
 	require.False(t, resp.State.Get(context.Background(), &state).HasError())
-	require.Equal(t, "uk-lon-1", state.ID.ValueString())
 	require.Equal(t, "uk-lon-1", state.Region.ValueString())
 	require.False(t, state.AdoptExisting.ValueBool())
 	requireKnownNullString(t, state.ProvisioningState)
@@ -279,7 +277,6 @@ func TestObjectStorageAccountDeleteResumesTrashPurgeFromPrivateState(
 	var schemaResp resource.SchemaResponse
 	r.Schema(ctx, resource.SchemaRequest{}, &schemaResp)
 	stateModel := ObjectStorageAccountResourceModel{
-		ID:                types.StringValue("uk-lon-1"),
 		Region:            types.StringValue("uk-lon-1"),
 		AdoptExisting:     types.BoolValue(false),
 		ProvisioningState: types.StringValue("provisioned"),
@@ -366,7 +363,6 @@ func TestObjectStorageAccountReadRetainsStateForPendingTrashPurge(
 	require.Equal(t, int32(1), accountReadCalls.Load())
 	var retained ObjectStorageAccountResourceModel
 	require.False(t, resp.State.Get(ctx, &retained).HasError())
-	require.Equal(t, "uk-lon-1", retained.ID.ValueString())
 	require.Equal(t, "uk-lon-1", retained.Region.ValueString())
 	require.Equal(t, "provisioned", retained.ProvisioningState.ValueString())
 	privateTrashID, diags := resp.Private.GetKey(
@@ -493,7 +489,6 @@ func objectStorageAccountTestState(
 	r.Schema(ctx, resource.SchemaRequest{}, &schemaResp)
 	state := tfsdk.State{Schema: schemaResp.Schema}
 	require.False(t, state.Set(ctx, &ObjectStorageAccountResourceModel{
-		ID:                types.StringValue("uk-lon-1"),
 		Region:            types.StringValue("uk-lon-1"),
 		AdoptExisting:     types.BoolValue(false),
 		ProvisioningState: types.StringValue("provisioned"),

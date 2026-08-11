@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/krystal/go-katapult/next/core"
 
@@ -26,17 +27,17 @@ type (
 	}
 
 	ObjectStorageAccessKeyResourceModel struct {
-		ID                     types.String `tfsdk:"id"`
-		Name                   types.String `tfsdk:"name"`
-		ObjectStorageAccountID types.String `tfsdk:"object_storage_account_id"`
-		AllBucketsRead         types.Bool   `tfsdk:"all_buckets_read"`
-		AllObjectsRead         types.Bool   `tfsdk:"all_objects_read"`
-		AllObjectsWrite        types.Bool   `tfsdk:"all_objects_write"`
-		ReadBuckets            types.Set    `tfsdk:"read_buckets"`
-		WriteBuckets           types.Set    `tfsdk:"write_buckets"`
-		AccessKeyID            types.String `tfsdk:"access_key_id"`
-		SecretAccessKey        types.String `tfsdk:"secret_access_key"`
-		ServerURL              types.String `tfsdk:"server_url"`
+		ID              types.String `tfsdk:"id"`
+		Name            types.String `tfsdk:"name"`
+		Region          types.String `tfsdk:"region"`
+		AllBucketsRead  types.Bool   `tfsdk:"all_buckets_read"`
+		AllObjectsRead  types.Bool   `tfsdk:"all_objects_read"`
+		AllObjectsWrite types.Bool   `tfsdk:"all_objects_write"`
+		ReadBuckets     types.Set    `tfsdk:"read_buckets"`
+		WriteBuckets    types.Set    `tfsdk:"write_buckets"`
+		AccessKeyID     types.String `tfsdk:"access_key_id"`
+		SecretAccessKey types.String `tfsdk:"secret_access_key"`
+		ServerURL       types.String `tfsdk:"server_url"`
 	}
 )
 
@@ -82,9 +83,9 @@ Manages an access key for a Katapult object storage cluster.
 
 Use ` + "`access_key_id`" + `, ` + "`secret_access_key`" + `, and ` + "`server_url`" + ` to configure an object storage client or SDK. Bucket-level permissions are managed via ` + "`read_key_ids`" + ` / ` + "`write_key_ids`" + ` on ` + "`katapult_object_storage_bucket`" + ` resources; ` + "`read_buckets`" + ` and ` + "`write_buckets`" + ` here reflect those associations.
 
-The key is scoped to the region of the ` + "`katapult_object_storage_account`" + ` it references via ` + "`object_storage_account_id`" + `.
+The key is scoped to one object storage region. Reference the ` + "`region`" + ` attribute of a ` + "`katapult_object_storage_account`" + ` resource when the account is managed in the same configuration.
 
-~> **Note:** ` + "`secret_access_key`" + ` is only available at creation time and cannot be retrieved again — it will be empty after import. Changing ` + "`object_storage_account_id`" + ` forces a new resource.
+~> **Note:** ` + "`secret_access_key`" + ` is only available at creation time and cannot be retrieved again — it will be empty after import. Changing ` + "`region`" + ` forces a new resource.
 `),
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -98,12 +99,14 @@ The key is scoped to the region of the ` + "`katapult_object_storage_account`" +
 				Required:            true,
 				MarkdownDescription: "Human-readable name for the access key.",
 			},
-			"object_storage_account_id": schema.StringAttribute{
+			objectStorageRegionAttributeName: schema.StringAttribute{
 				Required: true,
-				MarkdownDescription: "ID of the " +
-					"`katapult_object_storage_account` resource this key " +
-					"is scoped to. The account ID is the region permalink, " +
-					"e.g. `uk-lon-1`. Changing this forces a new resource.",
+				MarkdownDescription: "Object storage region in which to create " +
+					"the access key. Currently the only available region is " +
+					"`uk-lon-1`. Changing this forces a new resource.",
+				Validators: []validator.String{
+					stringValidatorNotEmpty(),
+				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -187,7 +190,7 @@ func (r *ObjectStorageAccessKeyResource) Create(
 		ctx,
 		core.PostOrganizationObjectStorageObjectStorageClusterAccessKeysJSONRequestBody{
 			ObjectStorageCluster: core.ObjectStorageClusterLookup{
-				Region: plan.ObjectStorageAccountID.ValueStringPointer(),
+				Region: plan.Region.ValueStringPointer(),
 			},
 			Organization: core.OrganizationLookup{
 				SubDomain: &r.M.confOrganization,
@@ -474,7 +477,7 @@ func (r *ObjectStorageAccessKeyResource) populateModel(
 	model.Name = types.StringPointerValue(key.Name)
 
 	if key.Region != nil {
-		model.ObjectStorageAccountID = types.StringPointerValue(key.Region)
+		model.Region = types.StringPointerValue(key.Region)
 	}
 
 	model.AllBucketsRead = types.BoolPointerValue(key.AllBucketsRead)
