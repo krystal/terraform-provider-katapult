@@ -91,6 +91,7 @@ resource "katapult_virtual_machine" "base" {
 - `name` (String) The name of the Virtual Machine. If not provided, a name is generated automatically.
 - `network_speed_profile` (String) Permalink of the Network Speed Profile to apply to all network interfaces.
 - `tags` (Set of String) Set of tag names to assign to the Virtual Machine.
+- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 - `virtual_network_ids` (Set of String) Set of Virtual Network IDs to attach to the Virtual Machine.
 
 ### Read-Only
@@ -111,6 +112,16 @@ Required:
 Optional:
 
 - `name` (String) Name of the disk. Defaults to "System Disk" for the first disk.
+
+
+<a id="nestedatt--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+- `delete` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.
+- `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
 
 
 <a id="nestedatt--network_interfaces"></a>

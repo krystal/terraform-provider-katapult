@@ -94,15 +94,15 @@ func (d *VirtualMachineGroupDataSource) Read(
 			VirtualMachineGroupId: data.ID.ValueStringPointer(),
 		})
 	if err != nil {
-		if res != nil {
-			err = genericAPIError(err, res.Body)
-		}
 		if errors.Is(err, core.ErrNotFound) {
 			resp.Diagnostics.AddError(
 				"Virtual Machine Group Not Found",
 				err.Error(),
 			)
 			return
+		}
+		if res != nil {
+			err = genericAPIError(err, res.Body)
 		}
 		resp.Diagnostics.AddError("Read Error", err.Error())
 		return

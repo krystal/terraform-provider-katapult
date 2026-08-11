@@ -77,6 +77,11 @@ func waitForTaskCompletion(
 				}
 				return nil, "", e
 			}
+			if res == nil || res.JSON200 == nil {
+				return nil, "", fmt.Errorf(
+					"unexpected empty response fetching task",
+				)
+			}
 
 			task := res.JSON200.Task
 			if task.Status == nil {

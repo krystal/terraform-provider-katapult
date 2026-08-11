@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -36,23 +37,24 @@ type (
 	}
 
 	VirtualMachineResourceModel struct {
-		ID                  types.String `tfsdk:"id"`
-		Name                types.String `tfsdk:"name"`
-		Hostname            types.String `tfsdk:"hostname"`
-		Description         types.String `tfsdk:"description"`
-		FQDN                types.String `tfsdk:"fqdn"`
-		State               types.String `tfsdk:"state"`
-		Package             types.String `tfsdk:"package"`
-		DiskTemplate        types.String `tfsdk:"disk_template"`
-		DiskTemplateOptions types.Map    `tfsdk:"disk_template_options"`
-		Disk                types.List   `tfsdk:"disk"`
-		IPAddressIDs        types.Set    `tfsdk:"ip_address_ids"`
-		IPAddresses         types.Set    `tfsdk:"ip_addresses"`
-		VirtualNetworkIDs   types.Set    `tfsdk:"virtual_network_ids"`
-		NetworkSpeedProfile types.String `tfsdk:"network_speed_profile"`
-		NetworkInterfaces   types.List   `tfsdk:"network_interfaces"`
-		Tags                types.Set    `tfsdk:"tags"`
-		GroupID             types.String `tfsdk:"group_id"`
+		ID                  types.String   `tfsdk:"id"`
+		Name                types.String   `tfsdk:"name"`
+		Hostname            types.String   `tfsdk:"hostname"`
+		Description         types.String   `tfsdk:"description"`
+		FQDN                types.String   `tfsdk:"fqdn"`
+		State               types.String   `tfsdk:"state"`
+		Package             types.String   `tfsdk:"package"`
+		DiskTemplate        types.String   `tfsdk:"disk_template"`
+		DiskTemplateOptions types.Map      `tfsdk:"disk_template_options"`
+		Disk                types.List     `tfsdk:"disk"`
+		IPAddressIDs        types.Set      `tfsdk:"ip_address_ids"`
+		IPAddresses         types.Set      `tfsdk:"ip_addresses"`
+		VirtualNetworkIDs   types.Set      `tfsdk:"virtual_network_ids"`
+		NetworkSpeedProfile types.String   `tfsdk:"network_speed_profile"`
+		NetworkInterfaces   types.List     `tfsdk:"network_interfaces"`
+		Tags                types.Set      `tfsdk:"tags"`
+		GroupID             types.String   `tfsdk:"group_id"`
+		Timeouts            timeouts.Value `tfsdk:"timeouts"`
 	}
 
 	VirtualMachineDiskModel struct {
@@ -171,7 +173,7 @@ func (r *VirtualMachineResource) ModifyPlan(
 }
 
 func (r *VirtualMachineResource) Schema( //nolint:funlen
-	_ context.Context,
+	ctx context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
@@ -195,6 +197,9 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 				Computed: true,
 				MarkdownDescription: "The name of the Virtual Machine. " +
 					"If not provided, a name is generated automatically.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"hostname": schema.StringAttribute{
 				Optional: true,
@@ -207,8 +212,12 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 			},
 			"description": schema.StringAttribute{
 				Optional: true,
+				Computed: true,
 				MarkdownDescription: "A description for the " +
 					"Virtual Machine.",
+				PlanModifiers: []planmodifier.String{
+					PreserveEmptyStringStateForNullConfig(),
+				},
 			},
 			"fqdn": schema.StringAttribute{
 				Computed: true,
@@ -282,6 +291,9 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 				Computed: true,
 				MarkdownDescription: "Permalink of the Network Speed " +
 					"Profile to apply to all network interfaces.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"network_interfaces": schema.ListNestedAttribute{
 				Computed: true,
@@ -330,9 +342,18 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 			},
 			"group_id": schema.StringAttribute{
 				Optional: true,
+				Computed: true,
 				MarkdownDescription: "The ID of the Virtual Machine Group " +
 					"to assign this Virtual Machine to.",
+				PlanModifiers: []planmodifier.String{
+					PreserveEmptyStringStateForNullConfig(),
+				},
 			},
+			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
+				Create: true,
+				Update: true,
+				Delete: true,
+			}),
 		},
 		Blocks: map[string]schema.Block{
 			"disk": schema.ListNestedBlock{
@@ -376,7 +397,11 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 		return
 	}
 
-	timeout := 20 * time.Minute
+	timeout, diags := plan.Timeouts.Create(ctx, 20*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	spec := &buildspec.VirtualMachineSpec{
 		DataCenter: &buildspec.DataCenter{
@@ -402,7 +427,7 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 			req.Config.GetAttribute(ctx, path.Root("tags"), &targetTags)...,
 		)
 	}
-	planTags, diags := stringSetValueStrings(ctx, targetTags)
+	planTags, diags := stringSetValueStrings(ctx, "tags", targetTags)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -490,7 +515,7 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 			)...,
 		)
 	}
-	ipIDs, diags := stringSetValueStrings(ctx, targetIPIDs)
+	ipIDs, diags := stringSetValueStrings(ctx, "ip_address_ids", targetIPIDs)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -561,7 +586,9 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 			)...,
 		)
 	}
-	vnetIDs, diags := stringSetValueStrings(ctx, targetVnetIDs)
+	vnetIDs, diags := stringSetValueStrings(
+		ctx, "virtual_network_ids", targetVnetIDs,
+	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -810,7 +837,11 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		return
 	}
 
-	timeout := 10 * time.Minute
+	timeout, diags := plan.Timeouts.Update(ctx, 10*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	vmID := state.ID.ValueString()
 
 	if !plan.Package.Equal(state.Package) {
@@ -829,14 +860,20 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 
 	args := core.VirtualMachineArguments{}
 
-	if !plan.Name.Equal(state.Name) {
+	if !plan.Name.IsUnknown() && !plan.Name.Equal(state.Name) {
 		args.Name = plan.Name.ValueStringPointer()
 	}
-	if !plan.Hostname.Equal(state.Hostname) {
+	if !plan.Hostname.IsUnknown() && !plan.Hostname.Equal(state.Hostname) {
 		args.Hostname = plan.Hostname.ValueStringPointer()
 	}
-	if !plan.Description.Equal(state.Description) {
-		args.Description = plan.Description.ValueStringPointer()
+	if !plan.Description.IsUnknown() &&
+		!plan.Description.Equal(state.Description) {
+		if plan.Description.IsNull() {
+			emptyDescription := ""
+			args.Description = &emptyDescription
+		} else {
+			args.Description = plan.Description.ValueStringPointer()
+		}
 	}
 	targetTags := plan.Tags
 	if targetTags.IsUnknown() {
@@ -845,7 +882,7 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		)
 	}
 	if !targetTags.IsUnknown() && !targetTags.Equal(state.Tags) {
-		tags, diags := stringSetValueStrings(ctx, targetTags)
+		tags, diags := stringSetValueStrings(ctx, "tags", targetTags)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -895,24 +932,28 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		props.Group = &rg
 	}
 
-	patchBodyBytes, marshalErr := json.Marshal(vmGroupPatchBody{
-		VirtualMachine: core.VirtualMachineLookup{Id: &vmID},
-		Properties:     props,
-	})
-	if marshalErr != nil {
-		resp.Diagnostics.AddError("Update Error", marshalErr.Error())
-		return
-	}
-
-	patchRes, err := r.M.Core.PatchVirtualMachineWithBodyWithResponse(
-		ctx, "application/json", bytes.NewReader(patchBodyBytes),
-	)
-	if err != nil {
-		if patchRes != nil {
-			err = genericAPIError(err, patchRes.Body)
+	shouldPatch := args.Name != nil || args.Hostname != nil ||
+		args.Description != nil || args.TagNames != nil || props.Group != nil
+	if shouldPatch {
+		patchBodyBytes, marshalErr := json.Marshal(vmGroupPatchBody{
+			VirtualMachine: core.VirtualMachineLookup{Id: &vmID},
+			Properties:     props,
+		})
+		if marshalErr != nil {
+			resp.Diagnostics.AddError("Update Error", marshalErr.Error())
+			return
 		}
-		resp.Diagnostics.AddError("Update Error", err.Error())
-		return
+
+		patchRes, err := r.M.Core.PatchVirtualMachineWithBodyWithResponse(
+			ctx, "application/json", bytes.NewReader(patchBodyBytes),
+		)
+		if err != nil {
+			if patchRes != nil {
+				err = genericAPIError(err, patchRes.Body)
+			}
+			resp.Diagnostics.AddError("Update Error", err.Error())
+			return
+		}
 	}
 
 	if !plan.IPAddressIDs.Equal(state.IPAddressIDs) {
@@ -927,10 +968,14 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 			)
 		}
 
-		targetIDs, diags := stringSetValueStrings(ctx, targetIPIDs)
+		targetIDs, diags := stringSetValueStrings(
+			ctx, "ip_address_ids", targetIPIDs,
+		)
 		resp.Diagnostics.Append(diags...)
 
-		stateIDs, diags := stringSetValueStrings(ctx, state.IPAddressIDs)
+		stateIDs, diags := stringSetValueStrings(
+			ctx, "ip_address_ids", state.IPAddressIDs,
+		)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -969,7 +1014,9 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 	}
 	if !targetVnetIDs.IsUnknown() &&
 		!targetVnetIDs.Equal(state.VirtualNetworkIDs) {
-		targetIDs, diags := stringSetValueStrings(ctx, targetVnetIDs)
+		targetIDs, diags := stringSetValueStrings(
+			ctx, "virtual_network_ids", targetVnetIDs,
+		)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -1064,7 +1111,8 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		}
 	}
 
-	if !plan.NetworkSpeedProfile.Equal(state.NetworkSpeedProfile) {
+	if !plan.NetworkSpeedProfile.IsUnknown() &&
+		!plan.NetworkSpeedProfile.Equal(state.NetworkSpeedProfile) {
 		permalink := plan.NetworkSpeedProfile.ValueString()
 		if e := updateVMNetworkSpeedProfile(
 			ctx, r.M, vmID, permalink, timeout,
@@ -1097,7 +1145,11 @@ func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 		return
 	}
 
-	timeout := 10 * time.Minute
+	timeout, diags := state.Timeouts.Delete(ctx, 10*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	vmID := state.ID.ValueString()
 
 	vmRes, err := r.M.Core.GetVirtualMachineWithResponse(ctx,
@@ -1752,6 +1804,7 @@ func buildVMNetworkInterfaceList(
 
 func stringSetValueStrings(
 	ctx context.Context,
+	attributeName string,
 	set basetypes.SetValue,
 ) ([]string, diag.Diagnostics) {
 	var diags diag.Diagnostics
@@ -1773,7 +1826,10 @@ func stringSetValueStrings(
 		if value.IsUnknown() {
 			diags.AddError(
 				"Value Conversion Error",
-				"ip_address_ids contains unknown values during update",
+				fmt.Sprintf(
+					"%s contains unknown values during update",
+					attributeName,
+				),
 			)
 			return nil, diags
 		}

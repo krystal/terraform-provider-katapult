@@ -37,6 +37,13 @@ func (m nullToEmptySetPlanModifier) PlanModifySet(
 	req planmodifier.SetRequest,
 	resp *planmodifier.SetResponse,
 ) {
+	// Preserve a null value from existing state. SDKv2 resources can store an
+	// omitted optional+computed set as null, which is already equivalent to an
+	// empty remote collection and should not create a migration-only diff.
+	if req.ConfigValue.IsNull() && req.StateValue.IsNull() {
+		return
+	}
+
 	// Leave unknown plans untouched so other modifiers such as
 	// UseStateForUnknown() can preserve state.
 	if req.PlanValue.IsUnknown() {

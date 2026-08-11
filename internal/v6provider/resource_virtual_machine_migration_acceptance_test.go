@@ -1,6 +1,7 @@
 package v6provider
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -28,6 +29,7 @@ func TestAccKatapultVirtualMachine_migrate_v5_state(t *testing.T) {
 				Config: virtualMachineV5HandoverConfig(
 					name,
 					hostname,
+					"",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultVirtualMachineExists(
@@ -51,6 +53,7 @@ func TestAccKatapultVirtualMachine_migrate_v5_state(t *testing.T) {
 				Config: virtualMachineV5HandoverConfig(
 					name,
 					hostname,
+					"",
 				),
 				PlanOnly: true,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -64,6 +67,7 @@ func TestAccKatapultVirtualMachine_migrate_v5_state(t *testing.T) {
 				Config: virtualMachineV5HandoverConfig(
 					name+"-renamed",
 					hostname,
+					"",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultVirtualMachineExists(
@@ -82,28 +86,86 @@ func TestAccKatapultVirtualMachine_migrate_v5_state(t *testing.T) {
 					),
 				),
 			},
+			{
+				ProtoV6ProviderFactories: tt.ProviderFactories,
+				Config: virtualMachineV5HandoverConfig(
+					name+"-renamed",
+					hostname,
+					"Temporary description",
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base",
+						"description",
+						"Temporary description",
+					),
+					resource.TestCheckResourceAttrPtr(
+						"katapult_virtual_machine.base",
+						"id",
+						&vmID,
+					),
+				),
+			},
+			{
+				ProtoV6ProviderFactories: tt.ProviderFactories,
+				Config: virtualMachineV5HandoverConfig(
+					name+"-renamed",
+					hostname,
+					"",
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr(
+						"katapult_virtual_machine.base",
+						"description",
+					),
+					resource.TestCheckResourceAttrPtr(
+						"katapult_virtual_machine.base",
+						"id",
+						&vmID,
+					),
+				),
+			},
+			{
+				ProtoV6ProviderFactories: tt.ProviderFactories,
+				ResourceName:             "katapult_virtual_machine.base",
+				ImportState:              true,
+				ImportStateVerify:        true,
+				ImportStateVerifyIgnore: []string{
+					"disk_template",
+					"disk_template_options",
+					"timeouts",
+				},
+			},
 		},
 	})
 }
 
-func virtualMachineV5HandoverConfig(name, hostname string) string {
+func virtualMachineV5HandoverConfig(
+	name string,
+	hostname string,
+	description string,
+) string {
+	descriptionConfig := ""
+	if description != "" {
+		descriptionConfig = fmt.Sprintf("description = %q", description)
+	}
+
 	return undent.Stringf(`
 		resource "katapult_legacy_ip" "web" {}
 
 		resource "katapult_virtual_machine" "base" {
 			name          = "%s"
 			hostname      = "%s"
-			description   = "Created by the protocol-v5 provider."
+			%s
 			package       = "rock-3"
 			disk_template = "ubuntu-18-04"
 			disk_template_options = {
 				install_agent = true
 			}
-			ip_address_ids       = [katapult_legacy_ip.web.id]
-			network_speed_profile = "1gbps"
-			tags                  = ["migration-test"]
+			ip_address_ids = [katapult_legacy_ip.web.id]
 		}`,
 		name,
 		hostname,
+		descriptionConfig,
 	)
 }

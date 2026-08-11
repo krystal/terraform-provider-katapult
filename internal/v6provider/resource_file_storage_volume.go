@@ -159,7 +159,9 @@ func (r *FileStorageVolumeResource) Create(
 		)
 	}
 
-	associations, diags := stringSetValueStrings(ctx, targetAssociations)
+	associations, diags := stringSetValueStrings(
+		ctx, "associations", targetAssociations,
+	)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -284,7 +286,9 @@ func (r *FileStorageVolumeResource) Update(
 
 	if !targetAssociations.IsUnknown() &&
 		!targetAssociations.Equal(state.Associations) {
-		associations, diags := stringSetValueStrings(ctx, targetAssociations)
+		associations, diags := stringSetValueStrings(
+			ctx, "associations", targetAssociations,
+		)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
