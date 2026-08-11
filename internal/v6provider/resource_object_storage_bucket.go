@@ -344,9 +344,6 @@ func (r *ObjectStorageBucketResource) Create(
 	}
 
 	plan.Name = types.StringValue(name)
-	plan.Region = types.StringValue(
-		plan.Region.ValueString(),
-	)
 	plan.PublicURL = types.StringNull()
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 	if resp.Diagnostics.HasError() {

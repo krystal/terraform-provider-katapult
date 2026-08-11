@@ -82,12 +82,15 @@ func TestObjectStorageAccountTrashIDPrivateState(t *testing.T) {
 // TestAccKatapultObjectStorageAccount_lifecycle exercises the resource's
 // full Create → Read → Import → Delete cycle against a clean org.
 //
-// This is a top-level test, NOT a subtest of TestAccKatapultObjectStorage,
+// This is a top-level test, NOT a subtest of
+// TestAccKatapultObjectStorage_scenarios,
 // because it owns the account's full lifecycle (the umbrella test only
 // references the account via the data source). Go runs top-level tests
 // in the same package serially, so this won't race the umbrella test for
 // ownership of the singleton account.
 func TestAccKatapultObjectStorageAccount_lifecycle(t *testing.T) {
+	skipUnlessAcceptance(t)
+
 	tt := newTestTools(t)
 
 	cfg := undent.Stringf(`

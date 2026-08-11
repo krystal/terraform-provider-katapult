@@ -11,8 +11,8 @@ import (
 
 const objectStorageAccTestRegion = "uk-lon-1"
 
-// TestAccKatapultObjectStorage is the umbrella acceptance test for all
-// object storage scenarios. It provisions a single shared object storage
+// TestAccKatapultObjectStorage_scenarios is the umbrella acceptance test for
+// all object storage scenarios. It provisions a single shared object storage
 // account for the organization (via SDK calls, not the Terraform resource
 // itself), runs every scenario as a subtest against that shared account,
 // and tears the account down once all subtests complete.
@@ -126,7 +126,7 @@ func teardownSharedObjectStorageAccount(
 			tt.Ctx,
 			core.DeleteOrganizationObjectStorageObjectStorageClusterJSONRequestBody{
 				ObjectStorageCluster: core.ObjectStorageClusterLookup{
-					Region: stringPtr(objectStorageAccTestRegion),
+					Region: ptr(objectStorageAccTestRegion),
 				},
 				Organization: core.OrganizationLookup{
 					SubDomain: &tt.Meta.confOrganization,
@@ -186,5 +186,3 @@ func TestSharedObjectStorageAccountCleanupOwnership(t *testing.T) {
 		owned = true
 	})
 }
-
-func stringPtr(s string) *string { return &s }

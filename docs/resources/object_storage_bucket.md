@@ -86,10 +86,10 @@ Setting `serve_static_site = true` turns the bucket into a static website:
 * `static_site_error` is the suffix appended when an HTTP error occurs. For
   example, `static_site_error = ".html"` redirects a 404 to `/404.html` and a
   403 to `/403.html`.
-* `public_read = true` and `public_list = true` are both required. The
-  `public_list` permission is what allows the static site handler to resolve
-  a directory request to its index document. It also authorizes unauthenticated
-  object listing, so enable it only when public listings are acceptable.
+* `public_read = true` and `public_list = true` are both required. `public_list`
+  enables the static site handler's internal directory-to-index resolution. It
+  separately authorizes unauthenticated object-list operations, so enable it
+  only when that broader access is acceptable.
 * `public_url` is the URL clients should hit. Point a CNAME at it to serve
   the site from a custom domain.
 

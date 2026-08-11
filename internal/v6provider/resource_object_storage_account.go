@@ -544,10 +544,7 @@ func waitForObjectStorageAccountProvisioned(
 ) (*core.ObjectStorageAccount, error) {
 	const settleWindow = 15 * time.Second
 
-	var (
-		latest    *core.ObjectStorageAccount
-		firstSeen = time.Now()
-	)
+	firstSeen := time.Now()
 
 	waiter := &retry.StateChangeConf{
 		Pending: []string{
@@ -565,8 +562,6 @@ func waitForObjectStorageAccountProvisioned(
 			if err != nil {
 				return nil, "", err
 			}
-			latest = acct
-
 			state := deref(acct.ProvisioningState)
 
 			if state == core.ObjectStorageAccountProvisioningStateEnumFailed &&
@@ -586,11 +581,20 @@ func waitForObjectStorageAccountProvisioned(
 		ContinuousTargetOccurence: 1,
 	}
 
-	if _, err := waiter.WaitForStateContext(ctx); err != nil {
-		return latest, err
+	result, err := waiter.WaitForStateContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	return latest, nil
+	acct, ok := result.(*core.ObjectStorageAccount)
+	if !ok || acct == nil {
+		return nil, fmt.Errorf(
+			"unexpected object storage account waiter result: %T",
+			result,
+		)
+	}
+
+	return acct, nil
 }
 
 // preflightObjectStorageAccountDelete returns an error describing why the

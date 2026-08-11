@@ -75,6 +75,10 @@ Use the narrowest relevant command while working, then broaden before handoff:
 without explicit authorization for live acceptance testing. After tests, check
 `git status` for cassette or random-ID drift.
 
+`retry.StateChangeConf.Refresh` runs in a goroutine. Use the value returned by
+`WaitForStateContext`; do not capture refresh results for unsynchronized reads
+outside the callback because cancellation can return before a refresh finishes.
+
 VCR cassette YAML is massive and can exhaust agent context very quickly. Do not
 print whole cassette files or review complete cassette diffs by default. Start
 with `git diff --stat`, `git diff --numstat`, and `git diff --name-only`, then use

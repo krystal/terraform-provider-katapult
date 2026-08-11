@@ -1,13 +1,44 @@
 package v6provider
 
 import (
+	"context"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
 
+	frameworkdatasource "github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/jimeh/undent"
+	"github.com/stretchr/testify/require"
 )
+
+func TestObjectStorageBucketDataSourceSchemaMatchesSharedModel(t *testing.T) {
+	ctx := context.Background()
+	var resp frameworkdatasource.SchemaResponse
+	(&ObjectStorageBucketDataSource{}).Schema(
+		ctx, frameworkdatasource.SchemaRequest{}, &resp,
+	)
+	require.False(t, resp.Diagnostics.HasError())
+
+	modelAttributes := make(map[string]struct{})
+	modelType := reflect.TypeOf(ObjectStorageBucketResourceModel{})
+	for i := range modelType.NumField() {
+		field := modelType.Field(i)
+		tag, ok := field.Tag.Lookup("tfsdk")
+		require.Truef(t, ok, "model field %s has no tfsdk tag", field.Name)
+		name := strings.Split(tag, ",")[0]
+		require.NotEmptyf(t, name, "model field %s has an empty tfsdk tag", field.Name)
+		modelAttributes[name] = struct{}{}
+	}
+
+	schemaAttributes := make(map[string]struct{}, len(resp.Schema.Attributes))
+	for name := range resp.Schema.Attributes {
+		schemaAttributes[name] = struct{}{}
+	}
+
+	require.Equal(t, modelAttributes, schemaAttributes)
+}
 
 func accDataSourceObjectStorageBucketMinimal(t *testing.T) {
 	tt := newTestTools(t)

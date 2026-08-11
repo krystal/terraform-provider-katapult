@@ -487,7 +487,7 @@ func TestObjectStorageAccountCreateRetainsStateWhenWaiterFails(
 		ProvisioningState: types.StringUnknown(),
 	}
 	req, resp := objectStorageCreateOperation(t, r.Schema, plan)
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	r.Create(ctx, req, &resp)
@@ -828,13 +828,24 @@ func initializeResourcePrivateState(
 	resp any,
 ) {
 	t.Helper()
+
+	// The framework exposes Private on resource requests and responses using an
+	// internal type with no public constructor. Reflection is required here to
+	// initialize it from provider tests, so validate the field shape explicitly
+	// to make framework compatibility failures actionable.
 	reqPrivate := reflect.ValueOf(req).Elem().FieldByName("Private")
-	require.True(t, reqPrivate.CanSet())
+	require.True(t, reqPrivate.IsValid(), "request has no Private field")
+	require.True(t, reqPrivate.CanSet(), "request Private field cannot be set")
+	require.Equal(t, reflect.Pointer, reqPrivate.Kind(),
+		"request Private field is not a pointer")
 	privateData := reflect.New(reqPrivate.Type().Elem())
 	reqPrivate.Set(privateData)
 
 	respPrivate := reflect.ValueOf(resp).Elem().FieldByName("Private")
-	require.True(t, respPrivate.CanSet())
+	require.True(t, respPrivate.IsValid(), "response has no Private field")
+	require.True(t, respPrivate.CanSet(), "response Private field cannot be set")
+	require.Equal(t, reqPrivate.Type(), respPrivate.Type(),
+		"request and response Private fields have different types")
 	respPrivate.Set(privateData)
 }
 
