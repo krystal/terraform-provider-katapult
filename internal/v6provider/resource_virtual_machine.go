@@ -1112,7 +1112,7 @@ func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 			}
 
 			err = purgeTrashObjectByObjectID(ctx, r.M, timeout, vmID)
-			if err != nil {
+			if err != nil && !isErrNotFoundOrInTrash(err, nil) {
 				resp.Diagnostics.AddError(
 					"Delete Error",
 					fmt.Sprintf("failed to purge VM from trash: %s", err),

@@ -88,12 +88,18 @@ func TestVirtualMachineResourceDeleteAlreadyInTrash(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name      string
-		skipPurge bool
-		wantPurge int
+		name        string
+		skipPurge   bool
+		purgeStatus int
+		wantPurge   int
 	}{
 		{name: "skip purge", skipPurge: true},
-		{name: "purge", wantPurge: 1},
+		{name: "purge", purgeStatus: http.StatusOK, wantPurge: 1},
+		{
+			name:        "purge entry disappeared",
+			purgeStatus: http.StatusNotFound,
+			wantPurge:   1,
+		},
 	}
 
 	for _, tt := range tests {
@@ -112,7 +118,7 @@ func TestVirtualMachineResourceDeleteAlreadyInTrash(t *testing.T) {
 				case r.Method == http.MethodDelete &&
 					r.URL.Path == "/trash_objects/trash_object":
 					purgeCalls++
-					writeTestJSON(w, http.StatusOK, `{}`)
+					writeTestJSON(w, tt.purgeStatus, `{}`)
 				case r.Method == http.MethodGet &&
 					r.URL.Path == "/trash_objects/trash_object":
 					writeTestJSON(w, http.StatusNotFound, `{
