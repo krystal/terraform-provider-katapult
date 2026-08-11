@@ -13,7 +13,8 @@ import (
 
 func isErrNotFoundOrInTrash(err error, res *core.ObjectInTrashResponse) bool {
 	return errors.Is(err, core.ErrNotFound) ||
-		(res != nil && *res.Code == core.ObjectInTrashEnumObjectInTrash)
+		(res != nil && res.Code != nil &&
+			*res.Code == core.ObjectInTrashEnumObjectInTrash)
 }
 
 func purgeTrashObjectByObjectID(
@@ -89,8 +90,9 @@ func waitForTaskCompletion(
 			return task, string(*task.Status), nil
 		},
 		Timeout:                   timeout,
-		Delay:                     1 * time.Second,
-		MinTimeout:                5 * time.Second,
+		Delay:                     m.stateChangeDelay(1 * time.Second),
+		MinTimeout:                m.stateChangeDelay(5 * time.Second),
+		PollInterval:              m.stateChangePollInterval(),
 		ContinuousTargetOccurence: 1,
 	}
 

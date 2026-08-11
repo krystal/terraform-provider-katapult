@@ -61,6 +61,19 @@ type (
 	}
 )
 
+type virtualMachinePackageReader interface {
+	GetVirtualMachineWithResponse(
+		context.Context,
+		*core.GetVirtualMachineParams,
+		...core.RequestEditorFn,
+	) (*core.GetVirtualMachineResponse, error)
+	GetVirtualMachinePackageWithResponse(
+		context.Context,
+		*core.GetVirtualMachinePackageParams,
+		...core.RequestEditorFn,
+	) (*core.GetVirtualMachinePackageResponse, error)
+}
+
 var vmNetworkInterfaceAttrTypes = map[string]attr.Type{
 	"id":                 types.StringType,
 	"network_id":         types.StringType,
@@ -68,6 +81,8 @@ var vmNetworkInterfaceAttrTypes = map[string]attr.Type{
 	"mac_address":        types.StringType,
 	"ip_addresses":       types.SetType{ElemType: types.StringType},
 }
+
+var _ resource.ResourceWithModifyPlan = (*VirtualMachineResource)(nil)
 
 // vmGroupPatchBody is a custom PATCH body that allows explicitly sending
 // "group": null to clear the VM group, which the SDK struct cannot express
@@ -111,6 +126,48 @@ func (r *VirtualMachineResource) Configure(
 	}
 
 	r.M = meta
+}
+
+func (r *VirtualMachineResource) ModifyPlan(
+	ctx context.Context,
+	req resource.ModifyPlanRequest,
+	resp *resource.ModifyPlanResponse,
+) {
+	if r.M == nil || req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+
+	var plan VirtualMachineResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var state VirtualMachineResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if state.ID.IsNull() || state.ID.IsUnknown() ||
+		plan.Package.IsNull() || plan.Package.IsUnknown() ||
+		plan.Package.Equal(state.Package) {
+		return
+	}
+
+	err := validateVirtualMachinePackageChange(
+		ctx,
+		r.M.Core,
+		state.ID.ValueString(),
+		plan.Package.ValueString(),
+	)
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("package"),
+			"Invalid Virtual Machine Package Change",
+			err.Error(),
+		)
+	}
 }
 
 func (r *VirtualMachineResource) Schema( //nolint:funlen
@@ -165,10 +222,14 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 			},
 			"package": schema.StringAttribute{
 				Required: true,
-				MarkdownDescription: "Permalink or ID of the Virtual " +
-					"Machine Package to use.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+				MarkdownDescription: "Permalink or ID of a Virtual Machine " +
+					"Package. Changing this will resize the Virtual Machine " +
+					"to the new package in place. Note: Downgrades (to " +
+					"packages with fewer vCPUs or memory) require the " +
+					"Virtual Machine to be stopped before the change can be " +
+					"applied.",
+				Validators: []validator.String{
+					stringValidatorNotEmpty(),
 				},
 			},
 			"disk_template": schema.StringAttribute{
@@ -749,6 +810,20 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 	timeout := 10 * time.Minute
 	vmID := state.ID.ValueString()
 
+	if !plan.Package.Equal(state.Package) {
+		err := changeVirtualMachinePackage(
+			ctx,
+			r.M,
+			vmID,
+			plan.Package.ValueString(),
+			timeout,
+		)
+		if err != nil {
+			resp.Diagnostics.AddError("Update Error", err.Error())
+			return
+		}
+	}
+
 	args := core.VirtualMachineArguments{}
 
 	if !plan.Name.Equal(state.Name) {
@@ -1265,10 +1340,16 @@ func (r *VirtualMachineResource) vmRead(
 
 	if vm.Package.IsSpecified() {
 		if pkg, err2 := vm.Package.Get(); err2 == nil {
-			if pkg.Permalink != nil && *pkg.Permalink != "" {
-				model.Package = types.StringPointerValue(pkg.Permalink)
-			} else if pkg.Id != nil {
-				model.Package = types.StringPointerValue(pkg.Id)
+			configuredPkg := ""
+			if !model.Package.IsNull() && !model.Package.IsUnknown() {
+				configuredPkg = model.Package.ValueString()
+			}
+			normalizedPkg := normalizeVirtualMachinePackageForState(
+				configuredPkg,
+				pkg,
+			)
+			if normalizedPkg != "" {
+				model.Package = types.StringValue(normalizedPkg)
 			}
 		}
 	}
@@ -1336,6 +1417,226 @@ func (r *VirtualMachineResource) vmRead(
 	model.NetworkInterfaces = niList
 
 	return nil
+}
+
+// validateVirtualMachinePackageChange fails when a package change would
+// downgrade a running Virtual Machine. Katapult requires the VM to be stopped
+// before its vCPU count or memory can be reduced.
+func validateVirtualMachinePackageChange(
+	ctx context.Context,
+	client virtualMachinePackageReader,
+	vmID string,
+	pkgRef string,
+) error {
+	vm, err := virtualMachineForPackageValidation(ctx, client, vmID)
+	if err != nil {
+		return err
+	}
+	if vm == nil || vm.State == nil || *vm.State != core.Started ||
+		!vm.Package.IsSpecified() || vm.Package.IsNull() {
+		return nil
+	}
+
+	currentPkg, _ := vm.Package.Get()
+	if virtualMachinePackageMatches(currentPkg, pkgRef) {
+		return nil
+	}
+
+	newPkg, err := virtualMachinePackageForValidation(ctx, client, pkgRef)
+	if err != nil {
+		return err
+	}
+
+	if currentPkg.CpuCores == nil || currentPkg.MemoryInGb == nil ||
+		newPkg.CpuCores == nil || newPkg.MemoryInGb == nil {
+		return fmt.Errorf("package response is missing vCPU or memory details")
+	}
+
+	if *newPkg.CpuCores < *currentPkg.CpuCores ||
+		*newPkg.MemoryInGb < *currentPkg.MemoryInGb {
+		return fmt.Errorf(
+			"cannot downgrade package while Virtual Machine is running: "+
+				"current package has %d vCPU(s) and %dGB memory, new "+
+				"package has %d vCPU(s) and %dGB memory. Stop the "+
+				"Virtual Machine before downgrading",
+			*currentPkg.CpuCores,
+			*currentPkg.MemoryInGb,
+			*newPkg.CpuCores,
+			*newPkg.MemoryInGb,
+		)
+	}
+
+	return nil
+}
+
+func virtualMachineForPackageValidation(
+	ctx context.Context,
+	client virtualMachinePackageReader,
+	vmID string,
+) (*core.GetVirtualMachine200ResponseVirtualMachine, error) {
+	vmRes, err := client.GetVirtualMachineWithResponse(
+		ctx,
+		&core.GetVirtualMachineParams{VirtualMachineId: &vmID},
+	)
+	if err != nil {
+		if errors.Is(err, core.ErrNotFound) ||
+			(vmRes != nil && isErrNotFoundOrInTrash(err, vmRes.JSON406)) {
+			return nil, nil
+		}
+		if vmRes != nil {
+			err = genericAPIError(err, vmRes.Body)
+		}
+
+		return nil, fmt.Errorf(
+			"failed to fetch virtual machine details: %w",
+			err,
+		)
+	}
+	if vmRes == nil || vmRes.JSON200 == nil {
+		return nil, fmt.Errorf(
+			"unexpected empty response fetching virtual machine",
+		)
+	}
+
+	return &vmRes.JSON200.VirtualMachine, nil
+}
+
+func virtualMachinePackageForValidation(
+	ctx context.Context,
+	client virtualMachinePackageReader,
+	pkgRef string,
+) (*core.VirtualMachinePackage, error) {
+	pkgRes, err := client.GetVirtualMachinePackageWithResponse(
+		ctx,
+		virtualMachinePackageParams(pkgRef),
+	)
+	if err != nil {
+		if pkgRes != nil {
+			err = genericAPIError(err, pkgRes.Body)
+		}
+
+		return nil, fmt.Errorf("failed to fetch new package details: %w", err)
+	}
+	if pkgRes == nil || pkgRes.JSON200 == nil {
+		return nil, fmt.Errorf("unexpected empty response fetching new package")
+	}
+
+	return &pkgRes.JSON200.VirtualMachinePackage, nil
+}
+
+func changeVirtualMachinePackage(
+	ctx context.Context,
+	m *Meta,
+	vmID string,
+	pkgRef string,
+	timeout time.Duration,
+) error {
+	vmRes, err := m.Core.GetVirtualMachineWithResponse(
+		ctx,
+		&core.GetVirtualMachineParams{VirtualMachineId: &vmID},
+	)
+	if err != nil {
+		if vmRes != nil {
+			err = genericAPIError(err, vmRes.Body)
+		}
+
+		return fmt.Errorf("failed to fetch virtual machine details: %w", err)
+	}
+	if vmRes == nil || vmRes.JSON200 == nil {
+		return fmt.Errorf("unexpected empty response fetching virtual machine")
+	}
+
+	vm := vmRes.JSON200.VirtualMachine
+	if vm.Package.IsSpecified() {
+		currentPkg, getErr := vm.Package.Get()
+		if getErr == nil && virtualMachinePackageMatches(currentPkg, pkgRef) {
+			return nil
+		}
+	}
+
+	changeRes, err := m.Core.PutVirtualMachinePackageWithResponse(
+		ctx,
+		core.PutVirtualMachinePackageJSONRequestBody{
+			VirtualMachine:        core.VirtualMachineLookup{Id: &vmID},
+			VirtualMachinePackage: virtualMachinePackageLookup(pkgRef),
+		},
+	)
+	if err != nil {
+		if changeRes != nil {
+			err = genericAPIError(err, changeRes.Body)
+		}
+
+		return fmt.Errorf("failed to change virtual machine package: %w", err)
+	}
+	if changeRes == nil || changeRes.JSON200 == nil ||
+		changeRes.JSON200.Task.Id == nil {
+		return fmt.Errorf(
+			"unexpected empty task response changing virtual machine package",
+		)
+	}
+
+	return waitForTaskCompletion(
+		ctx,
+		m,
+		timeout,
+		*changeRes.JSON200.Task.Id,
+	)
+}
+
+func virtualMachinePackageLookup(
+	value string,
+) core.VirtualMachinePackageLookup {
+	if strings.HasPrefix(value, "vmpkg_") {
+		return core.VirtualMachinePackageLookup{Id: &value}
+	}
+
+	return core.VirtualMachinePackageLookup{Permalink: &value}
+}
+
+func virtualMachinePackageParams(
+	value string,
+) *core.GetVirtualMachinePackageParams {
+	if strings.HasPrefix(value, "vmpkg_") {
+		return &core.GetVirtualMachinePackageParams{
+			VirtualMachinePackageId: &value,
+		}
+	}
+
+	return &core.GetVirtualMachinePackageParams{
+		VirtualMachinePackagePermalink: &value,
+	}
+}
+
+func virtualMachinePackageMatches(
+	pkg core.VirtualMachinePackage,
+	value string,
+) bool {
+	return (pkg.Id != nil && *pkg.Id == value) ||
+		(pkg.Permalink != nil && *pkg.Permalink == value)
+}
+
+// normalizeVirtualMachinePackageForState returns the package value to store in
+// state, preserving whichever format (ID or permalink) the user configured.
+// This prevents perpetual diffs when config uses IDs but the API returns
+// permalinks (or vice versa).
+func normalizeVirtualMachinePackageForState(
+	configured string,
+	pkg core.VirtualMachinePackage,
+) string {
+	if strings.HasPrefix(configured, "vmpkg_") && pkg.Id != nil &&
+		*pkg.Id != "" {
+		return *pkg.Id
+	}
+
+	if pkg.Permalink != nil && *pkg.Permalink != "" {
+		return *pkg.Permalink
+	}
+
+	if pkg.Id != nil {
+		return *pkg.Id
+	}
+
+	return ""
 }
 
 func buildVMNetworkInterfaceList(
