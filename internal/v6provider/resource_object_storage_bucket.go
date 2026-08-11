@@ -600,6 +600,12 @@ func (r *ObjectStorageBucketResource) ObjectStorageBucketRead(
 	}
 
 	b := res.JSON200.ObjectStorageBucket
+	if b.AccessControlList == nil {
+		return errors.New(
+			"unexpected object storage bucket response: " +
+				"missing access_control_list",
+		)
+	}
 
 	model.Region = types.StringValue(region)
 	model.Name = types.StringPointerValue(b.Name)

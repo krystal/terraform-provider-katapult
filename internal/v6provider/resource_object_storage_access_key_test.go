@@ -85,6 +85,10 @@ func accObjectStorageAccessKeyMinimal(t *testing.T) {
 				ResourceName:      "katapult_object_storage_access_key.main",
 				ImportState:       true,
 				ImportStateVerify: true,
+				Check: resource.TestCheckNoResourceAttr(
+					"katapult_object_storage_access_key.main",
+					"secret_access_key",
+				),
 				// secret_access_key is only returned by the API at
 				// creation time and cannot be retrieved again after import.
 				ImportStateVerifyIgnore: []string{"secret_access_key"},

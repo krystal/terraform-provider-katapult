@@ -15,11 +15,12 @@ object storage API. It pairs with one or more
 [`katapult_object_storage_bucket`](./object_storage_bucket.md) resources to
 control what the workload can read or write.
 
-The key is scoped to a single object storage region. You must declare a
-[`katapult_object_storage_account`](./object_storage_account.md) resource (or
-look one up via the
-[data source](../data-sources/object_storage_account.md)) before declaring
-any access keys.
+The key is scoped to a single object storage region. An object storage account
+must already exist there. Terraform can manage it with
+[`katapult_object_storage_account`](./object_storage_account.md), optionally
+verify an externally managed account with the
+[data source](../data-sources/object_storage_account.md), or use the known
+region directly without declaring either.
 
 ## Regions
 
@@ -31,7 +32,10 @@ for a provider release. The Katapult API rejects unavailable regions.
 When the account is managed in the same configuration, set `region` from
 `katapult_object_storage_account.<name>.region`. The reference ensures
 Terraform provisions the account before creating its access keys. An access
-key can only authenticate against buckets in the same region.
+key can only authenticate against buckets in the same region. When the account
+is managed outside this configuration, setting `region = "uk-lon-1"` directly
+is valid; using the account data source is optional verification that the
+account exists.
 
 ## Credential Lifecycle
 
@@ -41,7 +45,7 @@ key can only authenticate against buckets in the same region.
 * The secret is stored in Terraform state. Treat the state file as
   sensitive: encrypt remote state at rest, restrict access, and avoid
   printing the value to logs or unredacted outputs.
-* Imported keys will have `secret_access_key` set to an empty string. If
+* Imported keys will have `secret_access_key` set to null/unavailable. If
   you need the secret for an imported key, delete and recreate the key (or
   retrieve it from your secrets store, if you stashed it elsewhere).
 * Rotating a key requires creating a new access key, updating the consumer to
@@ -105,7 +109,7 @@ not for recovering credentials. After import you can:
 
 ### What import does **not** give you
 
-* `secret_access_key` will be empty and cannot be retrieved — the secret is
+* `secret_access_key` will be null/unavailable and cannot be retrieved — the secret is
   only returned by the Katapult API at creation. If you need the secret for
   an existing key, either look it up in your secrets store (if you stashed
   it elsewhere) or replace the key with a freshly-created one.

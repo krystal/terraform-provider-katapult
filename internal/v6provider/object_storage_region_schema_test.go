@@ -8,8 +8,11 @@ import (
 	datasourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	frameworkresource "github.com/hashicorp/terraform-plugin-framework/resource"
 	resourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	frameworkvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/stretchr/testify/require"
 )
 
@@ -80,7 +83,34 @@ func requireRequiredResourceRegion(
 	require.False(t, attribute.Optional)
 	require.False(t, attribute.Computed)
 	require.NotEmpty(t, attribute.PlanModifiers)
+	requireRegionChangeRequiresReplacement(ctx, t, attribute.PlanModifiers)
 	requireRegionValidatorsAcceptArbitraryValue(ctx, t, attribute.Validators)
+}
+
+func requireRegionChangeRequiresReplacement(
+	ctx context.Context,
+	t *testing.T,
+	modifiers []planmodifier.String,
+) {
+	t.Helper()
+
+	nonNullRaw := tftypes.NewValue(tftypes.String, "resource-present")
+	requiresReplace := false
+	for _, modifier := range modifiers {
+		request := planmodifier.StringRequest{
+			Plan:       tfsdk.Plan{Raw: nonNullRaw},
+			State:      tfsdk.State{Raw: nonNullRaw},
+			PlanValue:  types.StringValue("future-region"),
+			StateValue: types.StringValue("uk-lon-1"),
+		}
+		response := &planmodifier.StringResponse{}
+		modifier.PlanModifyString(ctx, request, response)
+		require.False(t, response.Diagnostics.HasError())
+		requiresReplace = requiresReplace || response.RequiresReplace
+	}
+
+	require.True(t, requiresReplace,
+		"changing a configured region must request resource replacement")
 }
 
 func requireRequiredDataSourceRegion(

@@ -17,11 +17,12 @@ Each bucket lives in an object storage region and is accessed via the
 credentials and endpoint exposed by a
 [`katapult_object_storage_access_key`](./object_storage_access_key.md).
 
-You must declare a
-[`katapult_object_storage_account`](./object_storage_account.md) resource
-(or look one up via the
-[data source](../data-sources/object_storage_account.md)) before declaring
-any buckets.
+An object storage account must already exist in the bucket's region. Terraform
+can manage it with
+[`katapult_object_storage_account`](./object_storage_account.md), optionally
+verify an externally managed account with the
+[data source](../data-sources/object_storage_account.md), or use the known
+region directly without declaring either.
 
 ## Regions
 
@@ -33,7 +34,9 @@ for a provider release. The Katapult API rejects unavailable regions.
 When the account is managed in the same configuration, set `region` from
 `katapult_object_storage_account.<name>.region`. Besides avoiding duplicate
 configuration, the reference ensures Terraform provisions the account before
-creating its buckets.
+creating its buckets. When the account is managed outside this configuration,
+setting `region = "uk-lon-1"` directly is valid; using the account data source
+is optional verification that the account exists.
 
 ## Bucket Naming
 
@@ -85,17 +88,17 @@ Setting `serve_static_site = true` turns the bucket into a static website:
   403 to `/403.html`.
 * `public_read = true` and `public_list = true` are both required. The
   `public_list` permission is what allows the static site handler to resolve
-  a directory request to its index document — it does **not** expose the raw
-  object listing to clients, because any request that resolves to a directory
-  is internally rewritten to the configured `static_site_index` before the
-  response is served.
+  a directory request to its index document. It also authorizes unauthenticated
+  object listing, so enable it only when public listings are acceptable.
 * `public_url` is the URL clients should hit. Point a CNAME at it to serve
   the site from a custom domain.
 
 ## Example Usage
 
 ```terraform
-# Required entrypoint: one account per (organization, region).
+# When Terraform manages the account, referencing its region establishes the
+# required creation ordering. For an externally managed account, use the known
+# region directly instead, for example: region = "uk-lon-1".
 resource "katapult_object_storage_account" "main" {
   region = "uk-lon-1"
 }

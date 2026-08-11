@@ -1,4 +1,6 @@
-# Required entrypoint: one account per (organization, region).
+# When Terraform manages the account, referencing its region establishes the
+# required creation ordering. For an externally managed account, use the known
+# region directly instead, for example: region = "uk-lon-1".
 resource "katapult_object_storage_account" "main" {
   region = "uk-lon-1"
 }

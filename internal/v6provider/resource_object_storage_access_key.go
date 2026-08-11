@@ -85,7 +85,7 @@ Use ` + "`access_key_id`" + `, ` + "`secret_access_key`" + `, and ` + "`server_u
 
 The key is scoped to one object storage region. Reference the ` + "`region`" + ` attribute of a ` + "`katapult_object_storage_account`" + ` resource when the account is managed in the same configuration.
 
-~> **Note:** ` + "`secret_access_key`" + ` is only available at creation time and cannot be retrieved again — it will be empty after import. Changing ` + "`region`" + ` forces a new resource.
+~> **Note:** ` + "`secret_access_key`" + ` is only available at creation time and cannot be retrieved again — it will be null after import. Changing ` + "`region`" + ` forces a new resource.
 `),
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -157,7 +157,7 @@ The key is scoped to one object storage region. Reference the ` + "`region`" + `
 				Sensitive: true,
 				MarkdownDescription: "Secret access key. Available " +
 					"only at creation; not retrievable " +
-					"via the API. Empty after import.",
+					"via the API. Null after import.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -268,6 +268,11 @@ func (r *ObjectStorageAccessKeyResource) Create(
 			}
 
 			if credsRes.JSON200 != nil {
+				if validationErr := validateObjectStorageAccessKeyCredentials(
+					&credsRes.JSON200.ObjectStorageAccessKey,
+				); validationErr != nil {
+					return retry.NonRetryableError(validationErr)
+				}
 				return nil
 			}
 
@@ -305,6 +310,32 @@ func (r *ObjectStorageAccessKeyResource) Create(
 	)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+}
+
+func validateObjectStorageAccessKeyCredentials(
+	key *core.ObjectStorageAccessKey,
+) error {
+	missing := make([]string, 0, 3)
+	if !key.S3AccessKeyId.IsSpecified() || key.S3AccessKeyId.IsNull() ||
+		strings.TrimSpace(key.S3AccessKeyId.MustGet()) == "" {
+		missing = append(missing, "s3_access_key_id")
+	}
+	if !key.S3SecretAccessKey.IsSpecified() || key.S3SecretAccessKey.IsNull() ||
+		strings.TrimSpace(key.S3SecretAccessKey.MustGet()) == "" {
+		missing = append(missing, "s3_secret_access_key")
+	}
+	if !key.ServerUrl.IsSpecified() || key.ServerUrl.IsNull() ||
+		strings.TrimSpace(key.ServerUrl.MustGet()) == "" {
+		missing = append(missing, "server_url")
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf(
+			"unexpected credentials response: missing non-empty field(s): %s",
+			strings.Join(missing, ", "),
+		)
+	}
+
+	return nil
 }
 
 func (r *ObjectStorageAccessKeyResource) Read(

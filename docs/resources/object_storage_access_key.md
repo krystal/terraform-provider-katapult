@@ -14,18 +14,19 @@ Use `access_key_id`, `secret_access_key`, and `server_url` to configure an objec
 
 The key is scoped to one object storage region. Reference the `region` attribute of a `katapult_object_storage_account` resource when the account is managed in the same configuration.
 
-~> **Note:** `secret_access_key` is only available at creation time and cannot be retrieved again — it will be empty after import. Changing `region` forces a new resource.
+~> **Note:** `secret_access_key` is only available at creation time and cannot be retrieved again — it will be null after import. Changing `region` forces a new resource.
 
 An access key is the credential a workload uses to talk to Katapult's
 object storage API. It pairs with one or more
 [`katapult_object_storage_bucket`](./object_storage_bucket.md) resources to
 control what the workload can read or write.
 
-The key is scoped to a single object storage region. You must declare a
-[`katapult_object_storage_account`](./object_storage_account.md) resource (or
-look one up via the
-[data source](../data-sources/object_storage_account.md)) before declaring
-any access keys.
+The key is scoped to a single object storage region. An object storage account
+must already exist there. Terraform can manage it with
+[`katapult_object_storage_account`](./object_storage_account.md), optionally
+verify an externally managed account with the
+[data source](../data-sources/object_storage_account.md), or use the known
+region directly without declaring either.
 
 ## Regions
 
@@ -37,7 +38,10 @@ for a provider release. The Katapult API rejects unavailable regions.
 When the account is managed in the same configuration, set `region` from
 `katapult_object_storage_account.<name>.region`. The reference ensures
 Terraform provisions the account before creating its access keys. An access
-key can only authenticate against buckets in the same region.
+key can only authenticate against buckets in the same region. When the account
+is managed outside this configuration, setting `region = "uk-lon-1"` directly
+is valid; using the account data source is optional verification that the
+account exists.
 
 ## Credential Lifecycle
 
@@ -47,7 +51,7 @@ key can only authenticate against buckets in the same region.
 * The secret is stored in Terraform state. Treat the state file as
   sensitive: encrypt remote state at rest, restrict access, and avoid
   printing the value to logs or unredacted outputs.
-* Imported keys will have `secret_access_key` set to an empty string. If
+* Imported keys will have `secret_access_key` set to null/unavailable. If
   you need the secret for an imported key, delete and recreate the key (or
   retrieve it from your secrets store, if you stashed it elsewhere).
 * Rotating a key requires creating a new access key, updating the consumer to
@@ -83,7 +87,9 @@ The three attributes you typically pass to an object storage client are:
 ## Example Usage
 
 ```terraform
-# Required entrypoint: one account per (organization, region).
+# When Terraform manages the account, referencing its region establishes the
+# required creation ordering. For an externally managed account, use the known
+# region directly instead, for example: region = "uk-lon-1".
 resource "katapult_object_storage_account" "main" {
   region = "uk-lon-1"
 }
@@ -150,7 +156,7 @@ output "backup_server_url" {
 - `access_key_id` (String) Access key ID for authenticating object storage clients.
 - `id` (String) Internal Katapult ID of the access key.
 - `read_buckets` (Set of String) Bucket names this key can read from. Populated via a bucket's `read_key_ids`.
-- `secret_access_key` (String, Sensitive) Secret access key. Available only at creation; not retrievable via the API. Empty after import.
+- `secret_access_key` (String, Sensitive) Secret access key. Available only at creation; not retrievable via the API. Null after import.
 - `server_url` (String) Endpoint URL for configuring object storage clients.
 - `write_buckets` (Set of String) Bucket names this key can write to. Populated via a bucket's `write_key_ids`.
 
@@ -178,7 +184,7 @@ not for recovering credentials. After import you can:
 
 ### What import does **not** give you
 
-* `secret_access_key` will be empty and cannot be retrieved — the secret is
+* `secret_access_key` will be null/unavailable and cannot be retrieved — the secret is
   only returned by the Katapult API at creation. If you need the secret for
   an existing key, either look it up in your secrets store (if you stashed
   it elsewhere) or replace the key with a freshly-created one.

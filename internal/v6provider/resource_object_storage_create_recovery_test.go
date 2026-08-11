@@ -96,6 +96,152 @@ func TestObjectStorageAccessKeyCreateRetainsStateWhenCredentialsFail(
 	require.Empty(t, state.WriteBuckets.Elements())
 }
 
+func TestObjectStorageAccessKeyCreateRejectsIncompleteCredentials(
+	t *testing.T,
+) {
+	testCases := map[string]struct {
+		response string
+		missing  string
+	}{
+		"missing access key ID": {
+			response: `{
+				"s3_secret_access_key": "secret",
+				"server_url": "https://objects.example.test"
+			}`,
+			missing: "s3_access_key_id",
+		},
+		"null access key ID": {
+			response: `{
+				"s3_access_key_id": null,
+				"s3_secret_access_key": "secret",
+				"server_url": "https://objects.example.test"
+			}`,
+			missing: "s3_access_key_id",
+		},
+		"empty access key ID": {
+			response: `{
+				"s3_access_key_id": "",
+				"s3_secret_access_key": "secret",
+				"server_url": "https://objects.example.test"
+			}`,
+			missing: "s3_access_key_id",
+		},
+		"missing secret access key": {
+			response: `{
+				"s3_access_key_id": "access-key",
+				"server_url": "https://objects.example.test"
+			}`,
+			missing: "s3_secret_access_key",
+		},
+		"null secret access key": {
+			response: `{
+				"s3_access_key_id": "access-key",
+				"s3_secret_access_key": null,
+				"server_url": "https://objects.example.test"
+			}`,
+			missing: "s3_secret_access_key",
+		},
+		"empty secret access key": {
+			response: `{
+				"s3_access_key_id": "access-key",
+				"s3_secret_access_key": "",
+				"server_url": "https://objects.example.test"
+			}`,
+			missing: "s3_secret_access_key",
+		},
+		"missing server URL": {
+			response: `{
+				"s3_access_key_id": "access-key",
+				"s3_secret_access_key": "secret"
+			}`,
+			missing: "server_url",
+		},
+		"null server URL": {
+			response: `{
+				"s3_access_key_id": "access-key",
+				"s3_secret_access_key": "secret",
+				"server_url": null
+			}`,
+			missing: "server_url",
+		},
+		"empty server URL": {
+			response: `{
+				"s3_access_key_id": "access-key",
+				"s3_secret_access_key": "secret",
+				"server_url": ""
+			}`,
+			missing: "server_url",
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			var credentialCalls atomic.Int32
+			meta := newObjectStorageFailureTestMeta(t, http.HandlerFunc(
+				func(w http.ResponseWriter, req *http.Request) {
+					w.Header().Set("Content-Type", "application/json")
+					switch req.URL.Path {
+					case "/core/v1/organizations/organization/object_storage/" +
+						"object_storage_cluster/access_keys":
+						w.WriteHeader(http.StatusCreated)
+						_, _ = w.Write([]byte(`{
+							"object_storage_access_key": {
+								"id": "objkey_incomplete",
+								"name": "incomplete-key",
+								"region": "future-region"
+							}
+						}`))
+					case "/core/v1/object_storage/access_keys/access_key/" +
+						"generate_credentials":
+						credentialCalls.Add(1)
+						w.WriteHeader(http.StatusOK)
+						_, _ = w.Write([]byte(
+							`{"object_storage_access_key":` +
+								testCase.response + `}`,
+						))
+					default:
+						http.Error(w, "unexpected request: "+req.URL.Path,
+							http.StatusInternalServerError)
+					}
+				},
+			))
+
+			r := &ObjectStorageAccessKeyResource{M: meta}
+			plan := ObjectStorageAccessKeyResourceModel{
+				ID:              types.StringUnknown(),
+				Name:            types.StringValue("incomplete-key"),
+				Region:          types.StringValue("future-region"),
+				AllBucketsRead:  types.BoolValue(false),
+				AllObjectsRead:  types.BoolValue(false),
+				AllObjectsWrite: types.BoolValue(false),
+				ReadBuckets:     types.SetUnknown(types.StringType),
+				WriteBuckets:    types.SetUnknown(types.StringType),
+				AccessKeyID:     types.StringUnknown(),
+				SecretAccessKey: types.StringUnknown(),
+				ServerURL:       types.StringUnknown(),
+			}
+			req, resp := objectStorageCreateOperation(t, r.Schema, plan)
+
+			r.Create(context.Background(), req, &resp)
+
+			require.Equal(t, int32(1), credentialCalls.Load())
+			requireDiagnosticContains(t, resp.Diagnostics,
+				"Object Storage Access Key Credentials Error")
+			requireDiagnosticContains(t, resp.Diagnostics, testCase.missing)
+
+			var state ObjectStorageAccessKeyResourceModel
+			require.False(t,
+				resp.State.Get(context.Background(), &state).HasError())
+			require.Equal(t, "objkey_incomplete", state.ID.ValueString())
+			require.Equal(t, "incomplete-key", state.Name.ValueString())
+			require.Equal(t, "future-region", state.Region.ValueString())
+			requireKnownNullString(t, state.AccessKeyID)
+			requireKnownNullString(t, state.SecretAccessKey)
+			requireKnownNullString(t, state.ServerURL)
+		})
+	}
+}
+
 func TestObjectStorageBucketCreateRetainsStateWhenReadBackFails(
 	t *testing.T,
 ) {
@@ -160,6 +306,64 @@ func TestObjectStorageBucketCreateRetainsStateWhenReadBackFails(
 	requireKnownNullString(t, state.PublicURL)
 	require.False(t, state.ReadKeyIDs.IsUnknown())
 	require.False(t, state.WriteKeyIDs.IsUnknown())
+}
+
+func TestObjectStorageBucketCreateRetainsStateWhenReadOmitsACL(
+	t *testing.T,
+) {
+	meta := newObjectStorageFailureTestMeta(t, http.HandlerFunc(
+		func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			switch req.Method {
+			case http.MethodPost:
+				w.WriteHeader(http.StatusCreated)
+				_, _ = w.Write([]byte(`{
+					"object_storage_bucket": {"name": "missing-acl"}
+				}`))
+			case http.MethodGet:
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(`{
+					"object_storage_bucket": {
+						"name": "missing-acl",
+						"public_url": "https://objects.example.test/missing-acl",
+						"serve_static_site": false
+					}
+				}`))
+			default:
+				http.Error(w, "unexpected request", http.StatusInternalServerError)
+			}
+		},
+	))
+
+	r := &ObjectStorageBucketResource{M: meta}
+	plan := ObjectStorageBucketResourceModel{
+		Name:            types.StringValue("missing-acl"),
+		Region:          types.StringValue("future-region"),
+		Label:           types.StringNull(),
+		PublicURL:       types.StringUnknown(),
+		ServeStaticSite: types.BoolValue(false),
+		StaticSiteError: types.StringValue(""),
+		StaticSiteIndex: types.StringValue(""),
+		AllKeysRead:     types.BoolValue(false),
+		AllKeysWrite:    types.BoolValue(false),
+		PublicList:      types.BoolValue(false),
+		PublicRead:      types.BoolValue(false),
+		ReadKeyIDs:      buildStringSet(nil),
+		WriteKeyIDs:     buildStringSet(nil),
+	}
+	req, resp := objectStorageCreateOperation(t, r.Schema, plan)
+
+	r.Create(context.Background(), req, &resp)
+
+	requireDiagnosticContains(t, resp.Diagnostics,
+		"Object Storage Bucket Read Error")
+	requireDiagnosticContains(t, resp.Diagnostics, "access_control_list")
+
+	var state ObjectStorageBucketResourceModel
+	require.False(t, resp.State.Get(context.Background(), &state).HasError())
+	require.Equal(t, "missing-acl", state.Name.ValueString())
+	require.Equal(t, "future-region", state.Region.ValueString())
+	requireKnownNullString(t, state.PublicURL)
 }
 
 func TestObjectStorageAccountCreateRetainsStateWhenWaiterFails(
