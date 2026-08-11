@@ -50,8 +50,6 @@ endef
 
 $(eval $(call tool,golangci-lint,github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2))
 $(eval $(call tool,gomod,github.com/Helcaraxan/gomod@v0.7.1))
-$(eval $(call tool,tfplugindocs,github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.20.0))
-$(eval $(call tool,tfproviderlint,github.com/bflad/tfproviderlint/cmd/tfproviderlint@v0.31.0))
 
 .PHONY: tools
 tools: $(TOOLS)
@@ -145,14 +143,9 @@ test-deps:
 lint: $(TOOLDIR)/golangci-lint
 	golangci-lint $(V) run
 
-.PHONY: lint-provider
-lint-provider: $(TOOLDIR)/tfproviderlint
-	tfproviderlint ./...
-
 .PHONY: format
 format: $(TOOLDIR)/golangci-lint
 	golangci-lint $(V) run --fix
-
 
 sweep:
 	$(info WARNING: This will destroy infrastructure. Use only on \
@@ -179,31 +172,6 @@ DOCKER_DEV_BUILD_CMD = docker build -f Dockerfile.dev .
 .PHONY: docker-dev-build
 docker-dev-build:
 	$(DOCKER_DEV_BUILD_CMD)
-
-#
-# Documentation
-#
-
-# Force set provider configuration environment variables, as required vars get
-# listed as "Optional" if the corresponding var is not empty.
-.PHONY: docs
-docs: $(TOOLDIR)/tfplugindocs
-	KATAPULT_API_KEY="" KATAPULT_ORGANIZATION="" KATAPULT_DATA_CENTER="" \
-		tfplugindocs generate --provider-name "terraform-provider-$(NAME)"
-
-.PHONY: check-docs
-check-docs: $(TOOLDIR)/tfplugindocs
-		tfplugindocs validate --provider-name "terraform-provider-$(NAME)"
-
-.PHONY: check-docs-generated
-check-docs-generated: $(TOOLDIR)/tfplugindocs
-	@tmpdir="$$(mktemp -d "$(CURDIR)/../.tfplugindocs-check.XXXXXX")"; \
-	trap 'rm -rf "$$tmpdir"' EXIT; \
-	KATAPULT_API_KEY="" KATAPULT_ORGANIZATION="" KATAPULT_DATA_CENTER="" \
-		tfplugindocs generate \
-		--provider-name "terraform-provider-$(NAME)" \
-		--rendered-website-dir "../$$(basename "$$tmpdir")"; \
-	diff -rN docs "$$tmpdir"
 
 #
 # Coverage

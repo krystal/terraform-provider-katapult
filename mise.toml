@@ -1,9 +1,16 @@
 #:schema https://mise.jdx.dev/schema/mise.json
+#
+# Settings
+#
 
 [settings]
 lockfile = true
 minimum_release_age = "3d"
 task.run_auto_install = true
+
+#
+# Tools
+#
 
 [tools]
 actionlint = "1"
@@ -15,24 +22,55 @@ pinact = "4"
 taplo = "0"
 terraform = "1.10"
 zizmor = "1"
+"github:colbymchenry/codegraph" = "1"
 "github:jimeh/treeboot" = "0"
+"go:github.com/bflad/tfproviderlint/cmd/tfproviderlint" = "0.31.0"
+"go:github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs" = "0.20.0"
 "go:golang.org/x/tools/cmd/goimports" = "0"
+
+#
+# Environment
+#
 
 [env]
 # DO NOT put local environment variables here. Use mise.local.toml instead.
 # Refer to mise.local.toml.example for an example.
 
+#
+# Tasks
+#
+
+# Setup and bootstrap
+
 [tasks.setup]
-description = "Install locked tools and local Git hooks"
-run = ["mise install --locked", "lefthook install"]
+description = "Set up project dependencies and development tooling"
+depends = ["codegraph:init", "deps:download", "hooks:install"]
 
 [tasks.treeboot]
 description = "Bootstrap the current worktree with Treeboot"
 run = "treeboot run"
 
+[tasks."codegraph:init"]
+description = "Initialize or sync the CodeGraph index"
+run = '''
+if [ -d .codegraph ]; then
+  codegraph sync
+else
+  codegraph init
+fi
+'''
+
+[tasks."hooks:install"]
+description = "Install local Git hooks"
+run = "lefthook install"
+
+# Build
+
 [tasks.build]
 description = "Build the provider"
 run = "make build"
+
+# Formatting
 
 [tasks.format]
 description = "Format Go and TOML files"
@@ -60,17 +98,35 @@ taplo fmt --check mise.toml mise.lock
 git diff --check
 '''
 
+# Dependencies
+
+[tasks."deps:download"]
+description = "Download Go module dependencies"
+run = "go mod download"
+
+[tasks."deps:tidy"]
+description = "Check that Go module files are tidy"
+run = "make check-tidy"
+
+[tasks."deps:verify"]
+description = "Verify downloaded Go module hashes"
+run = "make verify-deps"
+
+# Linting
+
 [tasks."lint:go"]
 description = "Lint Go code"
 run = "make lint"
 
 [tasks."lint:provider"]
 description = "Run Terraform provider-specific lint checks"
-run = "make lint-provider"
+run = "tfproviderlint ./..."
 
 [tasks.lint]
 description = "Run all lint checks"
 depends = ["lint:go", "lint:provider"]
+
+# Testing
 
 [tasks.test]
 description = "Run race-enabled unit tests with VCR replay"
@@ -80,33 +136,46 @@ run = "VCR=replay make test"
 description = "Run acceptance tests with VCR replay"
 run = "VCR=replay make testacc"
 
-[tasks."deps:verify"]
-description = "Verify downloaded Go module hashes"
-run = "make verify-deps"
-
-[tasks."deps:tidy"]
-description = "Check that Go module files are tidy"
-run = "make check-tidy"
+# Documentation
 
 [tasks."docs:generate"]
 description = "Generate provider documentation"
-run = "make docs"
+run = '''
+KATAPULT_API_KEY="" \
+KATAPULT_ORGANIZATION="" \
+KATAPULT_DATA_CENTER="" \
+tfplugindocs generate --provider-name terraform-provider-katapult
+'''
 
 [tasks."docs:check"]
 description = "Validate provider documentation"
-run = "make check-docs"
+run = "tfplugindocs validate --provider-name terraform-provider-katapult"
 
 [tasks."docs:generated"]
 description = "Check that generated provider documentation is current"
-run = "make check-docs-generated"
+run = '''
+docs_check_dir="$(mktemp -d "$PWD/../.tfplugindocs-check.XXXXXX")"
+trap 'rm -rf "$docs_check_dir"' EXIT
+KATAPULT_API_KEY="" \
+KATAPULT_ORGANIZATION="" \
+KATAPULT_DATA_CENTER="" \
+tfplugindocs generate \
+  --provider-name terraform-provider-katapult \
+  --rendered-website-dir "../$(basename "$docs_check_dir")"
+diff -rN docs "$docs_check_dir"
+'''
 
 [tasks."docs:verify"]
 description = "Validate provider documentation and generated output"
 depends = ["docs:check", "docs:generated"]
 
+# Release
+
 [tasks."release:check"]
 description = "Validate the GoReleaser configuration"
 run = "goreleaser check"
+
+# Workflows
 
 [tasks."workflows:actionlint"]
 description = "Lint GitHub Actions workflows"
@@ -135,6 +204,8 @@ depends = [
   "workflows:pinact-offline",
   "workflows:zizmor",
 ]
+
+# Validation
 
 [tasks.check]
 description = "Run fast local validation"

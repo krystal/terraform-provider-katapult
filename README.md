@@ -75,6 +75,8 @@ mise run build
 
 ### Requirements
 
+- [mise](https://mise.jdx.dev/) for development tool management and task
+  execution.
 - [Go](https://go.dev/dl/) 1.26 or later.
 - [Terraform](https://www.terraform.io/downloads.html) 1.9 or later.
 
@@ -96,6 +98,8 @@ Run `mise tasks` to discover the supported task surface. The most useful entry
 points are:
 
 - `mise run build` — build the provider binary.
+- `mise run lint:provider` — run Terraform provider-specific lint checks.
+- `mise run docs:generate` — regenerate documentation in `docs`.
 - `mise run test` — run race-enabled unit tests using VCR replay.
 - `mise run test:acceptance` — run acceptance tests using VCR replay.
 - `mise run check` — run the fast local formatting, linting, unit-test,
@@ -120,7 +124,6 @@ development container.
   environment variable to `rec` to record requests, or `off` to disable the VCR
   request recording/playback all together.
 - `make lint` — Run golangci-lint to lint all Go code.
-- `make docs` — Re-generate docs into `./docs` folder.
 
 ## Releasing the Provider
 

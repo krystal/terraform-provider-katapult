@@ -13,7 +13,8 @@ the legacy Terraform Plugin SDK and the Terraform Plugin Framework.
   and data sources.
 - `internal/*/testdata` contains VCR cassettes and their stable random IDs.
 - `docs` is generated provider documentation. Change provider schemas or
-  templates, then run `make docs`; do not hand-edit generated output.
+  templates, then run `mise run docs:generate`; do not hand-edit generated
+  output.
 - `CONTRIBUTING.md` documents the intentionally gradual v5-to-v6 migration and
   the ownership rules between both implementations.
 
@@ -22,11 +23,29 @@ provider package owns a change. New types belong in `internal/v6provider`.
 When migrating an existing type, remove its legacy registration in the same
 change so the mux never sees duplicate type names.
 
+## Code Exploration
+
+Use CodeGraph for structural exploration before reading broad areas of the
+codebase manually. When the CodeGraph MCP server is available, prefer its tools
+over invoking the CLI directly; use the CLI forms below as fallbacks:
+
+- Use the `codegraph_explore` MCP tool, or `codegraph explore <topic>`, to find
+  the relevant symbols, source, and call paths for a feature or behavior.
+- Use the `codegraph_node` MCP tool, or `codegraph node <symbol-or-path>`, to
+  inspect a symbol or file with its callers, callees, and dependents. Use the
+  related MCP tools, or `codegraph callers`, `codegraph callees`, and
+  `codegraph impact`, for narrower relationship queries.
+- Run `mise run codegraph:init` to initialize a missing index or sync an
+  existing one. Continue to use `rg` for exact text, filenames, and config
+  searches.
+
 ## Setup
 
 - Run `mise run treeboot` in a new worktree to copy supported local config from
-  the root checkout.
-- Run `mise run setup` to install locked tools and the Lefthook Git hooks.
+  the root checkout, then run the full project setup.
+- Run `mise run setup` to download Go dependencies, install the Lefthook Git
+  hooks, and initialize or sync CodeGraph. Mise installs missing task tools
+  automatically.
 - Keep credentials and developer overrides in ignored `.envrc`,
   `mise.local.toml`, or `.mise.local.toml` files. Never print or commit them.
 
