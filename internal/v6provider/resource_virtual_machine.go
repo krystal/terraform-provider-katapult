@@ -236,6 +236,9 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 				Required: true,
 				MarkdownDescription: "Permalink or ID of the Disk " +
 					"Template to use.",
+				Validators: []validator.String{
+					stringValidatorNotEmpty(),
+				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -1103,6 +1106,20 @@ func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 		if errors.Is(err, core.ErrNotFound) {
 			return
 		}
+		if vmRes != nil && isErrNotFoundOrInTrash(err, vmRes.JSON406) {
+			if r.M.SkipTrashObjectPurge {
+				return
+			}
+
+			err = purgeTrashObjectByObjectID(ctx, r.M, timeout, vmID)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Delete Error",
+					fmt.Sprintf("failed to purge VM from trash: %s", err),
+				)
+			}
+			return
+		}
 		if vmRes != nil {
 			err = genericAPIError(err, vmRes.Body)
 		}
@@ -1201,6 +1218,7 @@ func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 		core.DeleteVirtualMachineJSONRequestBody{
 			VirtualMachine: &core.VirtualMachineLookup{Id: &vmID},
 		})
+	deleteReturnedInTrash := false
 	if err != nil {
 		if delRes == nil {
 			resp.Diagnostics.AddError(
@@ -1210,8 +1228,13 @@ func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 			return
 		}
 
-		err = genericAPIError(err, delRes.Body)
-		if !isErrNotFoundOrInTrash(err, delRes.JSON406) {
+		if errors.Is(err, core.ErrNotFound) {
+			return
+		}
+		if isErrNotFoundOrInTrash(err, delRes.JSON406) {
+			deleteReturnedInTrash = true
+		} else {
+			err = genericAPIError(err, delRes.Body)
 			resp.Diagnostics.AddError(
 				"Delete Error",
 				fmt.Sprintf("failed to delete VM: %s", err),
@@ -1245,12 +1268,15 @@ func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 		}
 	}
 
-	if !r.M.SkipTrashObjectPurge &&
-		delRes != nil && delRes.JSON200 != nil {
-		trashObj := delRes.JSON200.TrashObject
-		if e := purgeTrashObject(
-			ctx, r.M, timeout, trashObj,
-		); e != nil && !isErrNotFoundOrInTrash(e, nil) {
+	if !r.M.SkipTrashObjectPurge {
+		var e error
+		switch {
+		case deleteReturnedInTrash:
+			e = purgeTrashObjectByObjectID(ctx, r.M, timeout, vmID)
+		case delRes != nil && delRes.JSON200 != nil:
+			e = purgeTrashObject(ctx, r.M, timeout, delRes.JSON200.TrashObject)
+		}
+		if e != nil && !isErrNotFoundOrInTrash(e, nil) {
 			resp.Diagnostics.AddError(
 				"Delete Error",
 				fmt.Sprintf("failed to purge VM from trash: %s", e),
@@ -1278,6 +1304,9 @@ func (r *VirtualMachineResource) vmRead(
 	vmRes, err := r.M.Core.GetVirtualMachineWithResponse(ctx,
 		&core.GetVirtualMachineParams{VirtualMachineId: &vmID})
 	if err != nil {
+		if errors.Is(err, core.ErrNotFound) {
+			return err
+		}
 		if vmRes != nil {
 			err = genericAPIError(err, vmRes.Body)
 		}
@@ -1335,7 +1364,7 @@ func (r *VirtualMachineResource) vmRead(
 	if desc, err2 := vm.Description.Get(); err2 == nil && desc != "" {
 		model.Description = types.StringValue(desc)
 	} else {
-		model.Description = types.StringNull()
+		model.Description = optionalOnlyStringAbsentValue(model.Description)
 	}
 
 	if vm.Package.IsSpecified() {
@@ -1358,10 +1387,10 @@ func (r *VirtualMachineResource) vmRead(
 		if grp, err2 := vm.Group.Get(); err2 == nil && grp.Id != nil {
 			model.GroupID = types.StringPointerValue(grp.Id)
 		} else {
-			model.GroupID = types.StringNull()
+			model.GroupID = optionalOnlyStringAbsentValue(model.GroupID)
 		}
 	} else {
-		model.GroupID = types.StringNull()
+		model.GroupID = optionalOnlyStringAbsentValue(model.GroupID)
 	}
 
 	if nsp != "" {
@@ -1417,6 +1446,15 @@ func (r *VirtualMachineResource) vmRead(
 	model.NetworkInterfaces = niList
 
 	return nil
+}
+
+func optionalOnlyStringAbsentValue(current types.String) types.String {
+	if !current.IsNull() && !current.IsUnknown() &&
+		current.ValueString() == "" {
+		return types.StringValue("")
+	}
+
+	return types.StringNull()
 }
 
 // validateVirtualMachinePackageChange fails when a package change would

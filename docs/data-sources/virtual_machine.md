@@ -35,6 +35,8 @@ data "katapult_virtual_machine" "web-1" {
 ### Read-Only
 
 - `description` (String) A description for the Virtual Machine.
+- `disk_template` (String) Permalink or ID of the Disk Template used to create the Virtual Machine. The API does not expose this value, so it is always null.
+- `disk_template_options` (Map of String) Options passed to the Disk Template during creation. The API does not expose these values, so this attribute is always null.
 - `group_id` (String) The ID of the Virtual Machine Group this Virtual Machine belongs to.
 - `hostname` (String) The hostname of the Virtual Machine.
 - `ip_address_ids` (Set of String) Set of IP address IDs allocated to the Virtual Machine.

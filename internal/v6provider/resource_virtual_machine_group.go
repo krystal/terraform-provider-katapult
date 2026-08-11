@@ -251,6 +251,9 @@ func (r *VirtualMachineGroupResource) vmgRead(
 			VirtualMachineGroupId: id,
 		})
 	if err != nil {
+		if errors.Is(err, core.ErrNotFound) {
+			return err
+		}
 		if res != nil {
 			err = genericAPIError(err, res.Body)
 		}

@@ -27,6 +27,8 @@ type (
 		FQDN                types.String `tfsdk:"fqdn"`
 		State               types.String `tfsdk:"state"`
 		Package             types.String `tfsdk:"package"`
+		DiskTemplate        types.String `tfsdk:"disk_template"`
+		DiskTemplateOptions types.Map    `tfsdk:"disk_template_options"`
 		IPAddressIDs        types.Set    `tfsdk:"ip_address_ids"`
 		IPAddresses         types.Set    `tfsdk:"ip_addresses"`
 		VirtualNetworkIDs   types.Set    `tfsdk:"virtual_network_ids"`
@@ -122,6 +124,19 @@ func (d *VirtualMachineDataSource) Schema(
 				Computed: true,
 				MarkdownDescription: "Permalink or ID of the Virtual " +
 					"Machine Package.",
+			},
+			"disk_template": schema.StringAttribute{
+				Computed: true,
+				MarkdownDescription: "Permalink or ID of the Disk " +
+					"Template used to create the Virtual Machine. The API " +
+					"does not expose this value, so it is always null.",
+			},
+			"disk_template_options": schema.MapAttribute{
+				Computed:    true,
+				ElementType: types.StringType,
+				MarkdownDescription: "Options passed to the Disk Template " +
+					"during creation. The API does not expose these values, " +
+					"so this attribute is always null.",
 			},
 			"ip_address_ids": schema.SetAttribute{
 				Computed:    true,
@@ -243,6 +258,8 @@ func (d *VirtualMachineDataSource) Read(
 	data.Name = types.StringPointerValue(vm.Name)
 	data.Hostname = types.StringPointerValue(vm.Hostname)
 	data.FQDN = types.StringPointerValue(vm.Fqdn)
+	data.DiskTemplate = types.StringNull()
+	data.DiskTemplateOptions = types.MapNull(types.StringType)
 
 	if vm.State != nil {
 		data.State = types.StringValue(string(*vm.State))
