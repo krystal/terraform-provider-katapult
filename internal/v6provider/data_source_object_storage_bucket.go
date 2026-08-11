@@ -127,7 +127,9 @@ func (d *ObjectStorageBucketDataSource) Read(
 
 	if data.ObjectStorageAccountID.IsNull() ||
 		data.ObjectStorageAccountID.ValueString() == "" {
-		data.ObjectStorageAccountID = types.StringValue("uk-lon-1")
+		data.ObjectStorageAccountID = types.StringValue(
+			objectStorageAccountDefaultRegion,
+		)
 	}
 
 	r := &ObjectStorageBucketResource{M: d.M}

@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -12,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -22,6 +22,11 @@ import (
 )
 
 const objectStorageAccountDefaultRegion = "uk-lon-1"
+
+const (
+	objectStorageAccountTrashIDPrivateKey = "object_storage_account_trash_id"
+	objectStorageNoResponseBody           = "<no response>"
+)
 
 type (
 	ObjectStorageAccountResource struct {
@@ -112,12 +117,10 @@ func (r *ObjectStorageAccountResource) Schema(
 				MarkdownDescription: "Adopt an existing object storage " +
 					"account for this region if one already exists, " +
 					"instead of erroring with import instructions. " +
-					"Defaults to `false`. " +
-					"Changing this forces replacement.",
+					"Defaults to `false`. This is only used during create; " +
+					"changing it later updates Terraform state without " +
+					"changing the remote account.",
 				Default: booldefault.StaticBool(false),
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.RequiresReplace(),
-				},
 			},
 			"provisioning_state": schema.StringAttribute{
 				Computed: true,
@@ -188,6 +191,24 @@ func (r *ObjectStorageAccountResource) Create(
 		return
 	}
 
+	plan.ID = types.StringValue(region)
+	plan.Region = types.StringValue(region)
+	plan.AdoptExisting = types.BoolValue(adopt)
+	plan.ProvisioningState = types.StringNull()
+	if existing != nil && existing.ProvisioningState != nil {
+		plan.ProvisioningState = types.StringValue(
+			string(*existing.ProvisioningState),
+		)
+	}
+
+	// Persist recoverable identity and configuration immediately after the
+	// account exists remotely. Terraform retains this state when a later
+	// provisioning diagnostic fails, allowing refresh or destroy to recover.
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	acct, err := waitForObjectStorageAccountProvisioned(ctx, r.M, region)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -197,9 +218,6 @@ func (r *ObjectStorageAccountResource) Create(
 		return
 	}
 
-	plan.ID = types.StringValue(region)
-	plan.Region = types.StringValue(region)
-	plan.AdoptExisting = types.BoolValue(adopt)
 	plan.ProvisioningState = types.StringValue(
 		string(deref(acct.ProvisioningState)),
 	)
@@ -249,18 +267,24 @@ func (r *ObjectStorageAccountResource) Read(
 }
 
 func (r *ObjectStorageAccountResource) Update(
-	_ context.Context,
-	_ resource.UpdateRequest,
+	ctx context.Context,
+	req resource.UpdateRequest,
 	resp *resource.UpdateResponse,
 ) {
-	// All user-configurable attributes (region) force replacement, so Update
-	// is never called with a real diff. This is here only to satisfy the
-	// resource.Resource interface.
-	resp.Diagnostics.AddError(
-		"Object Storage Account Update Not Supported",
-		"All configurable attributes on katapult_object_storage_account "+
-			"force replacement; Update should never be called.",
-	)
+	var plan, state ObjectStorageAccountResourceModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// adopt_existing has no server-side representation. Its only purpose is
+	// controlling Create behavior, so an update is deliberately state-only.
+	// Preserve computed values because they may be unknown in the update plan.
+	plan.ID = state.ID
+	plan.ProvisioningState = state.ProvisioningState
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
 func (r *ObjectStorageAccountResource) Delete(
@@ -275,16 +299,51 @@ func (r *ObjectStorageAccountResource) Delete(
 		return
 	}
 
+	privateTrashID, privateDiags := req.Private.GetKey(
+		ctx, objectStorageAccountTrashIDPrivateKey,
+	)
+	resp.Diagnostics.Append(privateDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	trashID, decodeErr := decodeObjectStorageAccountTrashID(privateTrashID)
+	if decodeErr != nil {
+		resp.Diagnostics.AddError(
+			"Invalid Object Storage Account Private State",
+			decodeErr.Error(),
+		)
+		return
+	}
+	if trashID != "" {
+		if r.M.SkipTrashObjectPurge {
+			return
+		}
+		if purgeErr := purgeTrashObject(
+			ctx, r.M, 5*time.Minute, core.TrashObject{Id: &trashID},
+		); purgeErr != nil {
+			resp.Diagnostics.AddError(
+				"Failed to purge object storage account from trash.",
+				purgeErr.Error(),
+			)
+			return
+		}
+		resp.Diagnostics.Append(resp.Private.SetKey(
+			ctx, objectStorageAccountTrashIDPrivateKey, nil,
+		)...)
+		return
+	}
+
 	region := state.Region.ValueString()
 
 	// Preflight: refuse to delete the account if any buckets or access keys
 	// still exist in this region — managed by Terraform or not.
-	if err := preflightObjectStorageAccountDelete(
+	if preflightErr := preflightObjectStorageAccountDelete(
 		ctx, r.M, region,
-	); err != nil {
+	); preflightErr != nil {
 		resp.Diagnostics.AddError(
 			"Object Storage Account Delete Blocked",
-			err.Error(),
+			preflightErr.Error(),
 		)
 		return
 	}
@@ -321,14 +380,30 @@ func (r *ObjectStorageAccountResource) Delete(
 		return
 	}
 
-	if delRes.JSON200 == nil || delRes.JSON200.TrashObject.Id == nil {
+	if delRes == nil || delRes.JSON200 == nil ||
+		delRes.JSON200.TrashObject.Id == nil {
 		// Nothing to purge — either the API didn't move the account to
 		// trash, or the response shape is unexpected. Don't fail the
 		// destroy on this.
 		return
 	}
 
-	trashID := *delRes.JSON200.TrashObject.Id
+	trashID = *delRes.JSON200.TrashObject.Id
+	encodedTrashID, err := encodeObjectStorageAccountTrashID(trashID)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Failed to encode object storage account trash ID.",
+			err.Error(),
+		)
+		return
+	}
+	resp.Diagnostics.Append(resp.Private.SetKey(
+		ctx, objectStorageAccountTrashIDPrivateKey, encodedTrashID,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	if err := purgeTrashObject(
 		ctx, r.M, 5*time.Minute, core.TrashObject{Id: &trashID},
 	); err != nil {
@@ -336,7 +411,12 @@ func (r *ObjectStorageAccountResource) Delete(
 			"Failed to purge object storage account from trash.",
 			err.Error(),
 		)
+		return
 	}
+
+	resp.Diagnostics.Append(resp.Private.SetKey(
+		ctx, objectStorageAccountTrashIDPrivateKey, nil,
+	)...)
 }
 
 func (r *ObjectStorageAccountResource) ImportState(
@@ -395,12 +475,16 @@ func getObjectStorageAccount(
 		}
 		return nil, fmt.Errorf("%w: %s", err, body)
 	}
-	if res.JSON404 != nil {
+	if res != nil && res.JSON404 != nil {
 		return nil, fmt.Errorf("%w: %s", core.ErrNotFound, body)
 	}
-	if res.JSON200 == nil {
+	if res == nil || res.JSON200 == nil {
+		status := 0
+		if res != nil {
+			status = res.StatusCode()
+		}
 		return nil, fmt.Errorf("unexpected response (%d): %s",
-			res.StatusCode(), body)
+			status, body)
 	}
 	return &res.JSON200.ObjectStorageAccount, nil
 }
@@ -431,9 +515,15 @@ func createObjectStorageAccount(
 		}
 		return fmt.Errorf("%w: %s", err, body)
 	}
-	if res.JSON201 == nil {
+	if res == nil || res.JSON201 == nil {
+		status := 0
+		body := ""
+		if res != nil {
+			status = res.StatusCode()
+			body = string(res.Body)
+		}
 		return fmt.Errorf("unexpected create response (%d): %s",
-			res.StatusCode(), string(res.Body))
+			status, body)
 	}
 	return nil
 }
@@ -582,9 +672,15 @@ func listObjectStorageAccessKeyNamesInRegion(
 		if err != nil {
 			return nil, err
 		}
-		if res.JSON200 == nil {
+		if res == nil || res.JSON200 == nil {
+			status := 0
+			body := ""
+			if res != nil {
+				status = res.StatusCode()
+				body = string(res.Body)
+			}
 			return nil, fmt.Errorf("unexpected list-keys response (%d): %s",
-				res.StatusCode(), string(res.Body))
+				status, body)
 		}
 
 		for i := range res.JSON200.ObjectStorageAccessKeys {
@@ -614,4 +710,24 @@ func deref[T any](p *T) T {
 		return zero
 	}
 	return *p
+}
+
+func encodeObjectStorageAccountTrashID(trashID string) ([]byte, error) {
+	return json.Marshal(trashID)
+}
+
+func decodeObjectStorageAccountTrashID(data []byte) (string, error) {
+	if len(data) == 0 {
+		return "", nil
+	}
+
+	var trashID string
+	if err := json.Unmarshal(data, &trashID); err != nil {
+		return "", fmt.Errorf("decode trash ID: %w", err)
+	}
+	if trashID == "" {
+		return "", errors.New("decoded trash ID is empty")
+	}
+
+	return trashID, nil
 }

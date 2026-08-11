@@ -109,7 +109,7 @@ output "account_provisioning_state" {
 
 ### Optional
 
-- `adopt_existing` (Boolean) Adopt an existing object storage account for this region if one already exists, instead of erroring with import instructions. Defaults to `false`. Changing this forces replacement.
+- `adopt_existing` (Boolean) Adopt an existing object storage account for this region if one already exists, instead of erroring with import instructions. Defaults to `false`. This is only used during create; changing it later updates Terraform state without changing the remote account.
 - `region` (String) Region permalink, e.g. `uk-lon-1`. Defaults to `uk-lon-1`. Changing this forces replacement.
 
 ### Read-Only

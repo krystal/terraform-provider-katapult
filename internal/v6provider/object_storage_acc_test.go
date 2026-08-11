@@ -34,8 +34,11 @@ const objectStorageAccTestRegion = "uk-lon-1"
 // `testdata/ObjectStorage_scenarios.cassette.yaml`.
 func TestAccKatapultObjectStorage_scenarios(t *testing.T) {
 	parentTT := newTestTools(t)
-	setupSharedObjectStorageAccount(t, parentTT)
-	t.Cleanup(func() { teardownSharedObjectStorageAccount(t, parentTT) })
+	accountCreated := false
+	registerOwnershipAwareCleanup(t, &accountCreated, func() {
+		teardownSharedObjectStorageAccount(t, parentTT)
+	})
+	setupSharedObjectStorageAccount(t, parentTT, &accountCreated)
 
 	t.Run("AccessKey_minimal", accObjectStorageAccessKeyMinimal)
 	t.Run("AccessKey_buckets", accObjectStorageAccessKeyBuckets)
@@ -69,7 +72,11 @@ func TestAccKatapultObjectStorage_scenarios(t *testing.T) {
 // shared test region if it does not already exist, then waits for it to
 // reach `provisioned`. This uses the same SDK helpers the
 // katapult_object_storage_account resource uses internally.
-func setupSharedObjectStorageAccount(t *testing.T, tt *testTools) {
+func setupSharedObjectStorageAccount(
+	t *testing.T,
+	tt *testTools,
+	accountCreated *bool,
+) {
 	t.Helper()
 
 	_, err := getObjectStorageAccount(
@@ -77,11 +84,14 @@ func setupSharedObjectStorageAccount(t *testing.T, tt *testTools) {
 	)
 	switch {
 	case err == nil:
-		// Account already exists — leave it in place; teardown will deal.
+		// Account already exists — leave it in place after the test run.
 	case errors.Is(err, core.ErrNotFound):
 		require.NoError(t, createObjectStorageAccount(
 			tt.Ctx, tt.Meta, objectStorageAccTestRegion,
 		))
+		// Mark ownership before the waiter. Cleanup is already registered, so
+		// even a fatal waiter failure removes the account this run created.
+		*accountCreated = true
 	default:
 		require.NoError(t, err, "fetching object storage account")
 	}
@@ -96,7 +106,10 @@ func setupSharedObjectStorageAccount(t *testing.T, tt *testTools) {
 // all subtests have completed. Calls the preflight helper first so the
 // failure mode (leftover buckets/keys from a broken subtest) is loud and
 // actionable rather than a silent partial-cleanup.
-func teardownSharedObjectStorageAccount(t *testing.T, tt *testTools) {
+func teardownSharedObjectStorageAccount(
+	t *testing.T,
+	tt *testTools,
+) {
 	t.Helper()
 
 	if err := preflightObjectStorageAccountDelete(
@@ -140,6 +153,36 @@ func teardownSharedObjectStorageAccount(t *testing.T, tt *testTools) {
 	); err != nil {
 		t.Errorf("object storage account trash purge failed: %s", err)
 	}
+}
+
+func registerOwnershipAwareCleanup(
+	t *testing.T,
+	owned *bool,
+	cleanup func(),
+) {
+	t.Helper()
+	t.Cleanup(func() {
+		if *owned {
+			cleanup()
+		}
+	})
+}
+
+func TestSharedObjectStorageAccountCleanupOwnership(t *testing.T) {
+	t.Run("preexisting account is not deleted", func(t *testing.T) {
+		owned := false
+		called := false
+		t.Cleanup(func() { require.False(t, called) })
+		registerOwnershipAwareCleanup(t, &owned, func() { called = true })
+	})
+
+	t.Run("ownership is recorded before waiter", func(t *testing.T) {
+		owned := false
+		called := false
+		t.Cleanup(func() { require.True(t, called) })
+		registerOwnershipAwareCleanup(t, &owned, func() { called = true })
+		owned = true
+	})
 }
 
 func stringPtr(s string) *string { return &s }

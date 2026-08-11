@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/krystal/go-katapult/next/core"
 
@@ -110,6 +111,9 @@ func (r *ObjectStorageBucketResource) Schema(
 			"label": schema.StringAttribute{
 				Optional:            true,
 				MarkdownDescription: "Optional bucket label in Katapult.",
+				Validators: []validator.String{
+					stringValidatorNotEmpty(),
+				},
 			},
 			"public_url": schema.StringAttribute{
 				Computed:            true,
@@ -198,10 +202,14 @@ func (r *ObjectStorageBucketResource) ValidateConfig(
 		return
 	}
 
+	if data.ServeStaticSite.IsUnknown() {
+		return
+	}
+
 	if data.ServeStaticSite.ValueBool() {
-		if data.StaticSiteIndex.IsNull() ||
-			data.StaticSiteIndex.IsUnknown() ||
-			data.StaticSiteIndex.ValueString() == "" {
+		if !data.StaticSiteIndex.IsUnknown() &&
+			(data.StaticSiteIndex.IsNull() ||
+				data.StaticSiteIndex.ValueString() == "") {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("static_site_index"),
 				"Missing Attribute Configuration",
@@ -210,9 +218,8 @@ func (r *ObjectStorageBucketResource) ValidateConfig(
 			)
 		}
 
-		if data.PublicList.IsNull() ||
-			data.PublicList.IsUnknown() ||
-			!data.PublicList.ValueBool() {
+		if !data.PublicList.IsUnknown() &&
+			(data.PublicList.IsNull() || !data.PublicList.ValueBool()) {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("public_list"),
 				"Missing Attribute Configuration",
@@ -221,9 +228,8 @@ func (r *ObjectStorageBucketResource) ValidateConfig(
 			)
 		}
 
-		if data.PublicRead.IsNull() ||
-			data.PublicRead.IsUnknown() ||
-			!data.PublicRead.ValueBool() {
+		if !data.PublicRead.IsUnknown() &&
+			(data.PublicRead.IsNull() || !data.PublicRead.ValueBool()) {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("public_read"),
 				"Missing Attribute Configuration",
@@ -264,7 +270,7 @@ func (r *ObjectStorageBucketResource) Create(
 		return
 	}
 
-	name := r.M.UseOrGenerateName(plan.Name.ValueString())
+	name := plan.Name.ValueString()
 
 	readKeyIDs := []string{}
 	writeKeyIDs := []string{}
@@ -320,6 +326,29 @@ func (r *ObjectStorageBucketResource) Create(
 			"error creating object storage bucket",
 			errMsg,
 		)
+		return
+	}
+	if res == nil || res.JSON201 == nil {
+		body := objectStorageNoResponseBody
+		status := 0
+		if res != nil {
+			body = string(res.Body)
+			status = res.StatusCode()
+		}
+		resp.Diagnostics.AddError(
+			"Object Storage Bucket Create Error",
+			fmt.Sprintf("unexpected response (%d): %s", status, body),
+		)
+		return
+	}
+
+	plan.Name = types.StringValue(name)
+	plan.ObjectStorageAccountID = types.StringValue(
+		plan.ObjectStorageAccountID.ValueString(),
+	)
+	plan.PublicURL = types.StringNull()
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -469,6 +498,13 @@ func (r *ObjectStorageBucketResource) Update(
 		resp.Diagnostics.AddError("Object Storage Bucket Update Error", errMsg)
 		return
 	}
+	if responseErr := validateObjectStorageBucketUpdateResponse(res); responseErr != nil {
+		resp.Diagnostics.AddError(
+			"Object Storage Bucket Update Error",
+			responseErr.Error(),
+		)
+		return
+	}
 
 	if err := r.ObjectStorageBucketRead(ctx, plan.Name.ValueString(), plan.ObjectStorageAccountID.ValueString(), &plan); err != nil {
 		resp.Diagnostics.AddError("Object Storage Bucket Read Error", err.Error())
@@ -550,6 +586,17 @@ func (r *ObjectStorageBucketResource) ObjectStorageBucketRead(
 	if err != nil {
 		return err
 	}
+	if res == nil {
+		return errors.New("unexpected empty response reading object storage bucket")
+	}
+	if res.JSON404 != nil {
+		return fmt.Errorf("%w: %s", core.ErrNotFound, string(res.Body))
+	}
+	if res.JSON200 == nil {
+		return fmt.Errorf(
+			"unexpected response (%d): %s", res.StatusCode(), string(res.Body),
+		)
+	}
 
 	b := res.JSON200.ObjectStorageBucket
 
@@ -617,4 +664,19 @@ func buildStringSet(in []string) basetypes.SetValue {
 	}
 
 	return types.SetValueMust(types.StringType, values)
+}
+
+func validateObjectStorageBucketUpdateResponse(
+	res *core.PatchObjectStorageObjectStorageClusterBucketResponse,
+) error {
+	if res == nil {
+		return fmt.Errorf("unexpected response (0): %s", objectStorageNoResponseBody)
+	}
+	if res.JSON200 == nil {
+		return fmt.Errorf(
+			"unexpected response (%d): %s", res.StatusCode(), string(res.Body),
+		)
+	}
+
+	return nil
 }

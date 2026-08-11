@@ -201,7 +201,7 @@ func (r *ObjectStorageAccessKeyResource) Create(
 		},
 	)
 	if err != nil {
-		body := "<no response>"
+		body := objectStorageNoResponseBody
 		if res != nil {
 			body = string(res.Body)
 		}
@@ -213,8 +213,33 @@ func (r *ObjectStorageAccessKeyResource) Create(
 
 		return
 	}
+	if res == nil || res.JSON201 == nil ||
+		res.JSON201.ObjectStorageAccessKey.Id == nil ||
+		*res.JSON201.ObjectStorageAccessKey.Id == "" {
+		body := objectStorageNoResponseBody
+		status := 0
+		if res != nil {
+			body = string(res.Body)
+			status = res.StatusCode()
+		}
+		resp.Diagnostics.AddError(
+			"Object Storage Access Key Create Error",
+			fmt.Sprintf("unexpected response (%d): %s", status, body),
+		)
+		return
+	}
 
 	keyID := res.JSON201.ObjectStorageAccessKey.Id
+	plan.ID = types.StringValue(*keyID)
+	plan.ReadBuckets = buildStringSet(nil)
+	plan.WriteBuckets = buildStringSet(nil)
+	plan.AccessKeyID = types.StringNull()
+	plan.SecretAccessKey = types.StringNull()
+	plan.ServerURL = types.StringNull()
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	type credsResponse = core.PostObjectStorageAccessKeyGenerateCredentialsResponse
 	var credsRes *credsResponse
@@ -231,6 +256,11 @@ func (r *ObjectStorageAccessKeyResource) Create(
 					},
 				)
 			if credsRes == nil {
+				if callErr == nil {
+					callErr = errors.New(
+						"unexpected empty response generating credentials",
+					)
+				}
 				return retry.NonRetryableError(callErr)
 			}
 
@@ -307,9 +337,25 @@ func (r *ObjectStorageAccessKeyResource) Read(
 		return
 	}
 
-	if res.JSON404 != nil {
+	if res != nil && res.JSON404 != nil {
 		resp.State.RemoveResource(ctx)
 
+		return
+	}
+	if res == nil || res.JSON200 == nil {
+		status := 0
+		body := objectStorageNoResponseBody
+		if res != nil {
+			status = res.StatusCode()
+			body = string(res.Body)
+		}
+		resp.Diagnostics.AddError(
+			"Object Storage Access Key Read Error",
+			fmt.Sprintf(
+				"unexpected response (%d): %s",
+				status, body,
+			),
+		)
 		return
 	}
 
@@ -359,6 +405,19 @@ func (r *ObjectStorageAccessKeyResource) Update(
 			errorMessage,
 		)
 
+		return
+	}
+	if res == nil || res.JSON200 == nil {
+		body := objectStorageNoResponseBody
+		status := 0
+		if res != nil {
+			body = string(res.Body)
+			status = res.StatusCode()
+		}
+		resp.Diagnostics.AddError(
+			"Object Storage Access Key Update Error",
+			fmt.Sprintf("unexpected response (%d): %s", status, body),
+		)
 		return
 	}
 

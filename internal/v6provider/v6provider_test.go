@@ -203,7 +203,7 @@ func redactObjectStorageSecret(tt *testTools) func(*cassette.Interaction) error 
 			return nil
 		}
 
-		key["s3_secret_access_key"] = "redacted-" + tt.randID
+		key["s3_secret_access_key"] = "redacted-" + tt.RandID()
 
 		b, err := json.Marshal(body)
 		if err != nil {
@@ -273,6 +273,7 @@ func (tt *testTools) RandID() string {
 	}
 
 	if tt.Recorder == nil {
+		tt.randID = rand
 		return rand
 	}
 
@@ -289,7 +290,18 @@ func (tt *testTools) RandID() string {
 		require.NoError(tt.T, err, "failed to write rand VCR resource ID")
 	}
 
+	tt.randID = rand
 	return rand
+}
+
+func TestTestToolsRandIDCachesFirstResolution(t *testing.T) {
+	tt := &testTools{}
+
+	first := tt.RandID()
+	second := tt.RandID()
+
+	require.NotEmpty(t, first)
+	require.Equal(t, first, second)
 }
 
 func testDataFilePath(t *testing.T, suffix string) string {

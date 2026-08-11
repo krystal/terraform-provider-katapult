@@ -1,18 +1,87 @@
 package v6provider
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"regexp"
 	"testing"
 	"time"
 
+	frameworkresource "github.com/hashicorp/terraform-plugin-framework/resource"
+	resourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/next/core"
 	"github.com/stretchr/testify/require"
 )
+
+func TestObjectStorageAccountAdoptExistingUpdatesStateOnly(t *testing.T) {
+	ctx := context.Background()
+	r := &ObjectStorageAccountResource{}
+	var schemaResp frameworkresource.SchemaResponse
+	r.Schema(ctx, frameworkresource.SchemaRequest{}, &schemaResp)
+
+	attribute := schemaResp.Schema.Attributes["adopt_existing"]
+	adoptAttribute, ok := attribute.(resourceschema.BoolAttribute)
+	require.True(t, ok)
+	require.Empty(t, adoptAttribute.PlanModifiers)
+
+	stateModel := ObjectStorageAccountResourceModel{
+		ID:                types.StringValue(objectStorageAccountDefaultRegion),
+		Region:            types.StringValue(objectStorageAccountDefaultRegion),
+		AdoptExisting:     types.BoolValue(true),
+		ProvisioningState: types.StringValue("provisioned"),
+	}
+	planModel := stateModel
+	planModel.AdoptExisting = types.BoolValue(false)
+	planModel.ID = types.StringUnknown()
+	planModel.ProvisioningState = types.StringUnknown()
+
+	state := tfsdk.State{Schema: schemaResp.Schema}
+	require.False(t, state.Set(ctx, &stateModel).HasError())
+	plan := tfsdk.Plan{Schema: schemaResp.Schema}
+	require.False(t, plan.Set(ctx, &planModel).HasError())
+
+	resp := frameworkresource.UpdateResponse{
+		State: tfsdk.State{Schema: schemaResp.Schema, Raw: plan.Raw},
+	}
+	r.Update(ctx, frameworkresource.UpdateRequest{
+		Plan:  plan,
+		State: state,
+	}, &resp)
+	require.False(t, resp.Diagnostics.HasError())
+
+	var got ObjectStorageAccountResourceModel
+	require.False(t, resp.State.Get(ctx, &got).HasError())
+	planModel.ID = stateModel.ID
+	planModel.ProvisioningState = stateModel.ProvisioningState
+	require.Equal(t, planModel, got)
+}
+
+func TestObjectStorageAccountTrashIDPrivateState(t *testing.T) {
+	const trashID = "trash-object-123"
+
+	encoded, err := encodeObjectStorageAccountTrashID(trashID)
+	require.NoError(t, err)
+	require.True(t, json.Valid(encoded))
+	require.JSONEq(t, `"trash-object-123"`, string(encoded))
+
+	decoded, err := decodeObjectStorageAccountTrashID(encoded)
+	require.NoError(t, err)
+	require.Equal(t, trashID, decoded)
+
+	decoded, err = decodeObjectStorageAccountTrashID(nil)
+	require.NoError(t, err)
+	require.Empty(t, decoded)
+
+	_, err = decodeObjectStorageAccountTrashID([]byte("not-json"))
+	require.Error(t, err)
+}
 
 // TestAccKatapultObjectStorageAccount_lifecycle exercises the resource's
 // full Create → Read → Import → Delete cycle against a clean org.

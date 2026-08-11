@@ -552,6 +552,71 @@ func accObjectStorageBucketValidateStaticSiteErrorForbidden(t *testing.T) {
 	})
 }
 
+func TestObjectStorageBucketValidateConfig_unknownServeStaticSite(t *testing.T) {
+	tt := newTestTools(t).NoHTTP()
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		Steps: []resource.TestStep{{
+			PlanOnly:           true,
+			ExpectNonEmptyPlan: true,
+			Config: `
+				resource "katapult_object_storage_account" "source" {}
+
+				resource "katapult_object_storage_bucket" "main" {
+				  name                      = "unknown-serve-static-site"
+				  object_storage_account_id = "uk-lon-1"
+				  serve_static_site         = katapult_object_storage_account.source.provisioning_state == "provisioned"
+				  static_site_index         = "index.html"
+				}
+			`,
+		}},
+	})
+}
+
+func TestObjectStorageBucketValidateConfig_unknownDependentValue(t *testing.T) {
+	tt := newTestTools(t).NoHTTP()
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		Steps: []resource.TestStep{{
+			PlanOnly:           true,
+			ExpectNonEmptyPlan: true,
+			Config: `
+				resource "katapult_object_storage_account" "source" {}
+
+				resource "katapult_object_storage_bucket" "main" {
+				  name                      = "unknown-public-list"
+				  object_storage_account_id = "uk-lon-1"
+				  serve_static_site         = true
+				  static_site_index         = "index.html"
+				  public_list               = katapult_object_storage_account.source.provisioning_state == "provisioned"
+				  public_read               = true
+				}
+			`,
+		}},
+	})
+}
+
+func TestObjectStorageBucketValidateConfig_emptyLabel(t *testing.T) {
+	tt := newTestTools(t).NoHTTP()
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		Steps: []resource.TestStep{{
+			PlanOnly: true,
+			Config: `
+				resource "katapult_object_storage_bucket" "main" {
+				  name                      = "empty-label"
+				  object_storage_account_id = "uk-lon-1"
+				  label                     = ""
+				}
+			`,
+			ExpectError: regexp.MustCompile("string cannot be empty"),
+		}},
+	})
+}
+
 //
 // Shared helpers
 //
