@@ -795,7 +795,7 @@ func TestAccKatapultVirtualMachine_update_package_by_id(t *testing.T) {
 	})
 }
 
-func TestAccKatapultVirtualMachine_update_package_downgrade_error(t *testing.T) { //nolint:lll
+func TestAccKatapultVirtualMachine_update_package_downgrade_error(t *testing.T) {
 	tt := newTestTools(t)
 
 	name := tt.ResourceName()
@@ -858,7 +858,7 @@ func TestAccKatapultVirtualMachine_update_package_downgrade_error(t *testing.T) 
 	})
 }
 
-func TestAccKatapultVirtualMachine_update_package_downgrade_stopped(t *testing.T) { //nolint:lll
+func TestAccKatapultVirtualMachine_update_package_downgrade_stopped(t *testing.T) {
 	tt := newTestTools(t)
 
 	name := tt.ResourceName()
@@ -945,7 +945,7 @@ func TestAccKatapultVirtualMachine_update_package_downgrade_stopped(t *testing.T
 	})
 }
 
-func TestAccKatapultVirtualMachine_update_package_upgrade_stopped(t *testing.T) { //nolint:lll
+func TestAccKatapultVirtualMachine_update_package_upgrade_stopped(t *testing.T) {
 	tt := newTestTools(t)
 
 	name := tt.ResourceName()

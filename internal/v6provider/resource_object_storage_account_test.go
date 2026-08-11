@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"errors"
+	"os"
 	"regexp"
 	"testing"
 	"time"
@@ -129,6 +130,10 @@ func TestAccKatapultObjectStorageAccount_adopt_existing(t *testing.T) {
 // fails with a diagnostic that points the user at `terraform import` and
 // the `adopt_existing` flag.
 func TestAccKatapultObjectStorageAccount_refuse_without_adopt(t *testing.T) {
+	if os.Getenv(resource.EnvTfAcc) == "" {
+		t.Skipf("acceptance tests skipped unless env %q set", resource.EnvTfAcc)
+	}
+
 	tt := newTestTools(t)
 
 	preCreateObjectStorageAccountForTest(t, tt)
