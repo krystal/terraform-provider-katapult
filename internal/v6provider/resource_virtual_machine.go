@@ -76,6 +76,8 @@ type virtualMachinePackageReader interface {
 	) (*core.GetVirtualMachinePackageResponse, error)
 }
 
+const virtualMachineDiskSizeAttribute = "size"
+
 var vmNetworkInterfaceAttrTypes = map[string]attr.Type{
 	"id":                 types.StringType,
 	"network_id":         types.StringType,
@@ -375,7 +377,7 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 								stringplanmodifier.RequiresReplace(),
 							},
 						},
-						"size": schema.Int64Attribute{
+						virtualMachineDiskSizeAttribute: schema.Int64Attribute{
 							Required:            true,
 							MarkdownDescription: "Size of the disk in GB.",
 						},
@@ -1126,10 +1128,6 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		resp.Diagnostics.AddError("Read Error", err.Error())
 		return
 	}
-	if !plan.NetworkSpeedProfile.Equal(state.NetworkSpeedProfile) &&
-		plan.NetworkSpeedProfile.ValueString() == "" {
-		plan.NetworkSpeedProfile = types.StringNull()
-	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -1358,6 +1356,9 @@ func (r *VirtualMachineResource) vmRead(
 	if err != nil {
 		if errors.Is(err, core.ErrNotFound) {
 			return err
+		}
+		if vmRes != nil && isErrNotFoundOrInTrash(err, vmRes.JSON406) {
+			return core.ErrNotFound
 		}
 		if vmRes != nil {
 			err = genericAPIError(err, vmRes.Body)

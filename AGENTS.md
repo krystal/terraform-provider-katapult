@@ -69,6 +69,9 @@ Use the narrowest relevant command while working, then broaden before handoff:
   `TEST=./internal/v6provider TESTARGS='-run ^TestAccKatapultObjectStorage_scenarios$$/^Bucket_minimal$$' mise run test:acceptance`.
 - Run a related group with a Go test regular expression, for example:
   `TEST=./internal/v6provider TESTARGS='-run ^TestAccKatapultIP_' mise run test:acceptance`.
+- Keep `TESTARGS` regexes free of unescaped shell metacharacters such as
+  parentheses; the Makefile expands the value unquoted. Prefer exact names or
+  simple prefixes, or run grouped cases as separate commands.
 - `mise run check` runs the fast local suite, including format, lint, unit,
   dependency, documentation, and offline workflow checks.
 - `mise run verify` adds replay acceptance tests, generated-doc freshness,

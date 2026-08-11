@@ -24,6 +24,7 @@ func TestValidateVirtualMachinePackageChange(t *testing.T) {
 		targetMemoryInGB  int
 		wantErr           string
 		wantPackageLookup bool
+		wantPackageID     bool
 	}{
 		{
 			name:             "running downgrade",
@@ -53,6 +54,15 @@ func TestValidateVirtualMachinePackageChange(t *testing.T) {
 			state:      "started",
 			packageRef: "vmpkg_current",
 		},
+		{
+			name:              "running upgrade by id",
+			state:             "started",
+			packageRef:        "vmpkg_target",
+			targetCPUCores:    4,
+			targetMemoryInGB:  8,
+			wantPackageLookup: true,
+			wantPackageID:     true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -81,11 +91,14 @@ func TestValidateVirtualMachinePackageChange(t *testing.T) {
 						}`))
 					case "/virtual_machine_packages/virtual_machine_package":
 						packageLookups++
-						if got := r.URL.Query().Get(
-							"virtual_machine_package[permalink]",
-						); got != tt.packageRef {
+						lookupKey := "virtual_machine_package[permalink]"
+						if tt.wantPackageID {
+							lookupKey = "virtual_machine_package[id]"
+						}
+						if got := r.URL.Query().Get(lookupKey); got !=
+							tt.packageRef {
 							t.Errorf(
-								"package permalink = %q, want %q",
+								"package lookup = %q, want %q",
 								got,
 								tt.packageRef,
 							)

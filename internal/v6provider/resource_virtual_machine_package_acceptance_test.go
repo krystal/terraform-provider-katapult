@@ -182,6 +182,10 @@ func virtualMachinePackageTestConfig(name string, pkg string) string {
 				install_agent = true
 			}
 			ip_address_ids = [katapult_ip.web.id]
+
+			timeouts {
+				update = "10m"
+			}
 		}`,
 		name,
 		name+"-host",
@@ -253,16 +257,16 @@ func stopVirtualMachineForPackageTest(tt *testTools, vmID string) {
 		},
 	)
 	require.NoError(tt.T, err, "failed to stop virtual machine")
-	if stopRes != nil && stopRes.JSON200 != nil &&
-		stopRes.JSON200.Task.Id != nil {
-		err = waitForTaskCompletion(
-			tt.Ctx,
-			tt.Meta,
-			5*time.Minute,
-			*stopRes.JSON200.Task.Id,
-		)
-		require.NoError(tt.T, err, "stop virtual machine task failed")
-	}
+	require.NotNil(tt.T, stopRes, "stop response is missing")
+	require.NotNil(tt.T, stopRes.JSON200, "stop response body is missing")
+	require.NotNil(tt.T, stopRes.JSON200.Task.Id, "stop task ID is missing")
+	err = waitForTaskCompletion(
+		tt.Ctx,
+		tt.Meta,
+		5*time.Minute,
+		*stopRes.JSON200.Task.Id,
+	)
+	require.NoError(tt.T, err, "stop virtual machine task failed")
 
 	err = waitForVMToStop(tt.Ctx, tt.Meta, vmID, 5*time.Minute)
 	require.NoError(tt.T, err, "virtual machine did not reach stopped state")

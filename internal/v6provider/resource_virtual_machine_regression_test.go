@@ -11,8 +11,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	frameworkdatasource "github.com/hashicorp/terraform-plugin-framework/datasource"
 	datasourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	frameworkresource "github.com/hashicorp/terraform-plugin-framework/resource"
 	resourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	frameworkvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -46,6 +48,30 @@ func TestVirtualMachineResourceReadRemovesMissingResource(t *testing.T) {
 	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
 	require.True(
 		t, resp.State.Raw.IsNull(), "missing VM should be removed from state",
+	)
+}
+
+func TestVirtualMachineResourceReadRemovesTrashedResource(t *testing.T) {
+	t.Parallel()
+
+	client := newVirtualMachineTestClient(t, func(
+		w http.ResponseWriter,
+		_ *http.Request,
+	) {
+		writeObjectInTrashResponse(w)
+	})
+	resource := &VirtualMachineResource{M: &Meta{Core: client, testMode: true}}
+	state := virtualMachineTestState(t, resource, VirtualMachineResourceModel{
+		ID: types.StringValue("vm_trashed"),
+	})
+
+	req := frameworkresource.ReadRequest{State: state}
+	resp := frameworkresource.ReadResponse{State: state}
+	resource.Read(context.Background(), req, &resp)
+
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+	require.True(
+		t, resp.State.Raw.IsNull(), "trashed VM should be removed from state",
 	)
 }
 
@@ -427,11 +453,60 @@ func TestVirtualMachineDataSourceSDKv2CompatibilityAttributes(t *testing.T) {
 	idAttrValue := schemaResp.Schema.Attributes["id"]
 	idAttr, ok := idAttrValue.(datasourceschema.StringAttribute)
 	require.True(t, ok)
-	require.Len(t, idAttr.Validators, 1)
-	fqdnAttrValue := schemaResp.Schema.Attributes["fqdn"]
-	fqdnAttr, ok := fqdnAttrValue.(datasourceschema.StringAttribute)
-	require.True(t, ok)
-	require.Empty(t, fqdnAttr.Validators)
+
+	selectorsHaveError := func(id, fqdn types.String) bool {
+		t.Helper()
+
+		configState := tfsdk.State{Schema: schemaResp.Schema}
+		diags := configState.Set(
+			context.Background(),
+			VirtualMachineDataSourceModel{
+				ID:                  id,
+				FQDN:                fqdn,
+				DiskTemplateOptions: types.MapNull(types.StringType),
+				IPAddressIDs:        types.SetNull(types.StringType),
+				IPAddresses:         types.SetNull(types.StringType),
+				VirtualNetworkIDs:   types.SetNull(types.StringType),
+				NetworkInterfaces: types.ListNull(types.ObjectType{
+					AttrTypes: vmNetworkInterfaceAttrTypes,
+				}),
+				Tags: types.SetNull(types.StringType),
+			},
+		)
+		require.False(t, diags.HasError(), diags.Errors())
+
+		validationResp := &frameworkvalidator.StringResponse{}
+		validationReq := frameworkvalidator.StringRequest{
+			Config:         tfsdk.Config(configState),
+			ConfigValue:    id,
+			Path:           path.Root("id"),
+			PathExpression: path.MatchRoot("id"),
+		}
+		for _, validator := range idAttr.Validators {
+			validator.ValidateString(
+				context.Background(), validationReq, validationResp,
+			)
+		}
+
+		return validationResp.Diagnostics.HasError()
+	}
+	require.True(
+		t,
+		selectorsHaveError(types.StringNull(), types.StringNull()),
+		"id and fqdn cannot both be omitted",
+	)
+	require.False(
+		t,
+		selectorsHaveError(
+			types.StringNull(), types.StringValue("vm.example.test"),
+		),
+		"fqdn should satisfy selector validation",
+	)
+	require.False(
+		t,
+		selectorsHaveError(types.StringValue("vm_test"), types.StringNull()),
+		"id should satisfy selector validation",
+	)
 
 	optionsAttr := schemaResp.Schema.Attributes["disk_template_options"]
 	options, ok := optionsAttr.(datasourceschema.MapAttribute)
@@ -504,6 +579,18 @@ func TestVirtualMachineResourceDiskTemplateRejectsEmpty(t *testing.T) {
 		)
 	}
 	require.True(t, validationResp.Diagnostics.HasError())
+}
+
+func TestVirtualMachineResourceTimeoutsUseBlockSyntax(t *testing.T) {
+	t.Parallel()
+
+	resource := &VirtualMachineResource{}
+	schemaResp := &frameworkresource.SchemaResponse{}
+	resource.Schema(
+		context.Background(),
+		frameworkresource.SchemaRequest{},
+		schemaResp,
+	)
 
 	timeoutsBlockValue := schemaResp.Schema.Blocks["timeouts"]
 	timeoutsBlock, ok := timeoutsBlockValue.(resourceschema.SingleNestedBlock)
@@ -512,6 +599,71 @@ func TestVirtualMachineResourceDiskTemplateRejectsEmpty(t *testing.T) {
 	require.Contains(t, timeoutsBlock.Attributes, "create")
 	require.Contains(t, timeoutsBlock.Attributes, "update")
 	require.Contains(t, timeoutsBlock.Attributes, "delete")
+}
+
+func TestVirtualMachineResourceDiskSizeChangeRequiresReplace(t *testing.T) {
+	t.Parallel()
+
+	resource := &VirtualMachineResource{}
+	schemaResp := &frameworkresource.SchemaResponse{}
+	resource.Schema(
+		context.Background(),
+		frameworkresource.SchemaRequest{},
+		schemaResp,
+	)
+	diskBlockValue := schemaResp.Schema.Blocks["disk"]
+	diskBlock, ok := diskBlockValue.(resourceschema.ListNestedBlock)
+	require.True(t, ok)
+	require.NotEmpty(t, diskBlock.PlanModifiers)
+
+	diskAttrTypes := map[string]attr.Type{
+		"name":                          types.StringType,
+		virtualMachineDiskSizeAttribute: types.Int64Type,
+	}
+	diskValue := func(size int64) types.List {
+		name := types.StringValue("System")
+		return types.ListValueMust(
+			types.ObjectType{AttrTypes: diskAttrTypes},
+			[]attr.Value{types.ObjectValueMust(
+				diskAttrTypes,
+				map[string]attr.Value{
+					"name":                          name,
+					virtualMachineDiskSizeAttribute: types.Int64Value(size),
+				},
+			)},
+		)
+	}
+
+	stateDisk := diskValue(20)
+	planDisk := diskValue(40)
+	state := virtualMachineTestState(t, resource, VirtualMachineResourceModel{
+		ID:   types.StringValue("vm_test"),
+		Disk: stateDisk,
+	})
+	planState := virtualMachineTestState(
+		t,
+		resource,
+		VirtualMachineResourceModel{
+			ID:   types.StringValue("vm_test"),
+			Disk: planDisk,
+		},
+	)
+	resp := &planmodifier.ListResponse{PlanValue: planDisk}
+	for _, modifier := range diskBlock.PlanModifiers {
+		modifier.PlanModifyList(
+			context.Background(),
+			planmodifier.ListRequest{
+				Plan:       tfsdk.Plan(planState),
+				PlanValue:  planDisk,
+				State:      state,
+				StateValue: stateDisk,
+			},
+			resp,
+		)
+	}
+
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+	require.True(t, resp.RequiresReplace)
 }
 
 func virtualMachineTestState(

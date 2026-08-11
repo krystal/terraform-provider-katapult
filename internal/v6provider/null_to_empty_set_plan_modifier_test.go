@@ -33,6 +33,13 @@ func TestNullToEmptySetPlanModifier(t *testing.T) {
 			wantResult: types.SetNull(types.StringType),
 		},
 		{
+			name:       "unknown plan",
+			config:     types.SetNull(types.StringType),
+			plan:       types.SetUnknown(types.StringType),
+			state:      populated,
+			wantResult: types.SetUnknown(types.StringType),
+		},
+		{
 			name:       "removed populated state",
 			config:     types.SetNull(types.StringType),
 			plan:       populated,
