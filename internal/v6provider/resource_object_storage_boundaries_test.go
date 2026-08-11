@@ -15,6 +15,188 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestObjectStorageAccessKeyReadPreservesOmittedFieldsAndClearsEmptySet(
+	t *testing.T,
+) {
+	meta := newObjectStorageFailureTestMeta(t, http.HandlerFunc(
+		func(w http.ResponseWriter, req *http.Request) {
+			require.Equal(t, http.MethodGet, req.Method)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{
+				"object_storage_access_key": {
+					"read_buckets": []
+				}
+			}`))
+		},
+	))
+	r := &ObjectStorageAccessKeyResource{M: meta}
+	ctx := context.Background()
+	stateModel := objectStorageAccessKeyBoundaryModel()
+	req, resp := objectStorageReadOperation(t, r.Schema, stateModel)
+
+	r.Read(ctx, req, &resp)
+
+	require.False(t, resp.Diagnostics.HasError())
+	var result ObjectStorageAccessKeyResourceModel
+	require.False(t, resp.State.Get(ctx, &result).HasError())
+	require.Equal(t, stateModel.ID, result.ID)
+	require.Equal(t, stateModel.Name, result.Name)
+	require.Equal(t, stateModel.Region, result.Region)
+	require.Equal(t, stateModel.AllBucketsRead, result.AllBucketsRead)
+	require.Equal(t, stateModel.AllObjectsRead, result.AllObjectsRead)
+	require.Equal(t, stateModel.AllObjectsWrite, result.AllObjectsWrite)
+	require.Empty(t, result.ReadBuckets.Elements())
+	require.True(t, result.WriteBuckets.Equal(stateModel.WriteBuckets))
+	require.Equal(t, stateModel.AccessKeyID, result.AccessKeyID)
+	require.Equal(t, stateModel.SecretAccessKey, result.SecretAccessKey)
+	require.Equal(t, stateModel.ServerURL, result.ServerURL)
+}
+
+func TestObjectStorageAccessKeyUpdatePreservesOmittedFieldsAndClearsEmptySet(
+	t *testing.T,
+) {
+	meta := newObjectStorageFailureTestMeta(t, http.HandlerFunc(
+		func(w http.ResponseWriter, req *http.Request) {
+			require.Equal(t, http.MethodPatch, req.Method)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{
+				"object_storage_access_key": {
+					"write_buckets": []
+				}
+			}`))
+		},
+	))
+	r := &ObjectStorageAccessKeyResource{M: meta}
+	ctx := context.Background()
+	stateModel := objectStorageAccessKeyBoundaryModel()
+	planModel := stateModel
+	planModel.ID = types.StringUnknown()
+	planModel.Name = types.StringValue("updated-key")
+	planModel.AllObjectsRead = types.BoolValue(true)
+	planModel.ReadBuckets = types.SetUnknown(types.StringType)
+	planModel.WriteBuckets = types.SetUnknown(types.StringType)
+	planModel.AccessKeyID = types.StringUnknown()
+	planModel.SecretAccessKey = types.StringUnknown()
+	planModel.ServerURL = types.StringUnknown()
+	req, resp := objectStorageUpdateOperation(
+		t, r.Schema, stateModel, planModel,
+	)
+
+	r.Update(ctx, req, &resp)
+
+	require.False(t, resp.Diagnostics.HasError())
+	var result ObjectStorageAccessKeyResourceModel
+	require.False(t, resp.State.Get(ctx, &result).HasError())
+	require.Equal(t, stateModel.ID, result.ID)
+	require.Equal(t, planModel.Name, result.Name)
+	require.Equal(t, stateModel.Region, result.Region)
+	require.Equal(t, stateModel.AllBucketsRead, result.AllBucketsRead)
+	require.Equal(t, planModel.AllObjectsRead, result.AllObjectsRead)
+	require.Equal(t, stateModel.AllObjectsWrite, result.AllObjectsWrite)
+	require.True(t, result.ReadBuckets.Equal(stateModel.ReadBuckets))
+	require.Empty(t, result.WriteBuckets.Elements())
+	require.Equal(t, stateModel.AccessKeyID, result.AccessKeyID)
+	require.Equal(t, stateModel.SecretAccessKey, result.SecretAccessKey)
+	require.Equal(t, stateModel.ServerURL, result.ServerURL)
+}
+
+func TestObjectStorageBucketReadPreservesOmittedFieldsAndClearsEmptySet(
+	t *testing.T,
+) {
+	meta := newObjectStorageFailureTestMeta(t, http.HandlerFunc(
+		func(w http.ResponseWriter, req *http.Request) {
+			require.Equal(t, http.MethodGet, req.Method)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{
+				"object_storage_bucket": {
+					"access_control_list": {
+						"read_key_ids": []
+					}
+				}
+			}`))
+		},
+	))
+	r := &ObjectStorageBucketResource{M: meta}
+	ctx := context.Background()
+	stateModel := objectStorageBucketPartialPayloadModel()
+	req, resp := objectStorageReadOperation(t, r.Schema, stateModel)
+
+	r.Read(ctx, req, &resp)
+
+	require.False(t, resp.Diagnostics.HasError())
+	var result ObjectStorageBucketResourceModel
+	require.False(t, resp.State.Get(ctx, &result).HasError())
+	require.Equal(t, stateModel.Name, result.Name)
+	require.Equal(t, stateModel.Region, result.Region)
+	require.Equal(t, stateModel.Label, result.Label)
+	require.Equal(t, stateModel.PublicURL, result.PublicURL)
+	require.Equal(t, stateModel.ServeStaticSite, result.ServeStaticSite)
+	require.Equal(t, stateModel.StaticSiteError, result.StaticSiteError)
+	require.Equal(t, stateModel.StaticSiteIndex, result.StaticSiteIndex)
+	require.Equal(t, stateModel.AllKeysRead, result.AllKeysRead)
+	require.Equal(t, stateModel.AllKeysWrite, result.AllKeysWrite)
+	require.Equal(t, stateModel.PublicList, result.PublicList)
+	require.Equal(t, stateModel.PublicRead, result.PublicRead)
+	require.Empty(t, result.ReadKeyIDs.Elements())
+	require.True(t, result.WriteKeyIDs.Equal(stateModel.WriteKeyIDs))
+}
+
+func TestObjectStorageBucketUpdatePreservesOmittedFieldsAndClearsEmptySet(
+	t *testing.T,
+) {
+	requestCount := 0
+	meta := newObjectStorageFailureTestMeta(t, http.HandlerFunc(
+		func(w http.ResponseWriter, req *http.Request) {
+			requestCount++
+			w.Header().Set("Content-Type", "application/json")
+			switch req.Method {
+			case http.MethodPatch:
+				_, _ = w.Write([]byte(`{"object_storage_bucket": {}}`))
+			case http.MethodGet:
+				_, _ = w.Write([]byte(`{
+					"object_storage_bucket": {
+						"access_control_list": {
+							"write_key_ids": []
+						}
+					}
+				}`))
+			default:
+				http.Error(w, "unexpected request", http.StatusInternalServerError)
+			}
+		},
+	))
+	r := &ObjectStorageBucketResource{M: meta}
+	ctx := context.Background()
+	stateModel := objectStorageBucketPartialPayloadModel()
+	planModel := stateModel
+	planModel.Label = types.StringValue("updated label")
+	planModel.PublicURL = types.StringUnknown()
+	planModel.PublicRead = types.BoolValue(false)
+	req, resp := objectStorageUpdateOperation(
+		t, r.Schema, stateModel, planModel,
+	)
+
+	r.Update(ctx, req, &resp)
+
+	require.False(t, resp.Diagnostics.HasError())
+	require.Equal(t, 2, requestCount)
+	var result ObjectStorageBucketResourceModel
+	require.False(t, resp.State.Get(ctx, &result).HasError())
+	require.Equal(t, stateModel.Name, result.Name)
+	require.Equal(t, stateModel.Region, result.Region)
+	require.Equal(t, planModel.Label, result.Label)
+	require.Equal(t, stateModel.PublicURL, result.PublicURL)
+	require.Equal(t, stateModel.ServeStaticSite, result.ServeStaticSite)
+	require.Equal(t, stateModel.StaticSiteError, result.StaticSiteError)
+	require.Equal(t, stateModel.StaticSiteIndex, result.StaticSiteIndex)
+	require.Equal(t, stateModel.AllKeysRead, result.AllKeysRead)
+	require.Equal(t, stateModel.AllKeysWrite, result.AllKeysWrite)
+	require.Equal(t, stateModel.PublicList, result.PublicList)
+	require.Equal(t, planModel.PublicRead, result.PublicRead)
+	require.True(t, result.ReadKeyIDs.Equal(stateModel.ReadKeyIDs))
+	require.Empty(t, result.WriteKeyIDs.Elements())
+}
+
 func TestObjectStorageBucketUpdateSendsEmptyKeySets(t *testing.T) {
 	var (
 		serverMu       sync.Mutex
@@ -225,6 +407,56 @@ func objectStorageBucketBoundaryModel(
 		ReadKeyIDs:      readKeyIDs,
 		WriteKeyIDs:     writeKeyIDs,
 	}
+}
+
+func objectStorageBucketPartialPayloadModel() ObjectStorageBucketResourceModel {
+	return ObjectStorageBucketResourceModel{
+		Name:            types.StringValue("partial-bucket"),
+		Region:          types.StringValue("uk-lon-1"),
+		Label:           types.StringValue("existing label"),
+		PublicURL:       types.StringValue("https://objects.example.test/partial-bucket"),
+		ServeStaticSite: types.BoolValue(true),
+		StaticSiteError: types.StringValue("error.html"),
+		StaticSiteIndex: types.StringValue("index.html"),
+		AllKeysRead:     types.BoolValue(true),
+		AllKeysWrite:    types.BoolValue(true),
+		PublicList:      types.BoolValue(true),
+		PublicRead:      types.BoolValue(true),
+		ReadKeyIDs:      buildStringSet([]string{"objkey_read"}),
+		WriteKeyIDs:     buildStringSet([]string{"objkey_write"}),
+	}
+}
+
+func objectStorageAccessKeyBoundaryModel() ObjectStorageAccessKeyResourceModel {
+	return ObjectStorageAccessKeyResourceModel{
+		ID:              types.StringValue("objkey_partial"),
+		Name:            types.StringValue("partial-key"),
+		Region:          types.StringValue("uk-lon-1"),
+		AllBucketsRead:  types.BoolValue(true),
+		AllObjectsRead:  types.BoolValue(false),
+		AllObjectsWrite: types.BoolValue(true),
+		ReadBuckets:     buildStringSet([]string{"read-bucket"}),
+		WriteBuckets:    buildStringSet([]string{"write-bucket"}),
+		AccessKeyID:     types.StringValue("s3-access-key"),
+		SecretAccessKey: types.StringValue("s3-secret-key"),
+		ServerURL:       types.StringValue("https://objects.example.test"),
+	}
+}
+
+func objectStorageReadOperation(
+	t *testing.T,
+	schemaFunc objectStorageSchemaFunc,
+	stateModel any,
+) (resource.ReadRequest, resource.ReadResponse) {
+	t.Helper()
+	ctx := context.Background()
+	var schemaResp resource.SchemaResponse
+	schemaFunc(ctx, resource.SchemaRequest{}, &schemaResp)
+
+	state := tfsdk.State{Schema: schemaResp.Schema}
+	require.False(t, state.Set(ctx, stateModel).HasError())
+
+	return resource.ReadRequest{State: state}, resource.ReadResponse{State: state}
 }
 
 func objectStorageUpdateOperation(

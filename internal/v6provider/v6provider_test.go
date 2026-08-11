@@ -67,6 +67,13 @@ func testAccPreCheck(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func skipUnlessAcceptance(t *testing.T) {
+	t.Helper()
+	if os.Getenv(resource.EnvTfAcc) == "" {
+		t.Skipf("acceptance tests skipped unless env %q set", resource.EnvTfAcc)
+	}
+}
+
 type providerFactoryList map[string]func() (tfprotov6.ProviderServer, error)
 
 type stopRequests struct{}

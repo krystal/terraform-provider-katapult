@@ -10,12 +10,6 @@ description: |-
 
 Manages an access key for a Katapult object storage cluster.
 
-Use `access_key_id`, `secret_access_key`, and `server_url` to configure an object storage client or SDK. Bucket-level permissions are managed via `read_key_ids` / `write_key_ids` on `katapult_object_storage_bucket` resources; `read_buckets` and `write_buckets` here reflect those associations.
-
-The key is scoped to one object storage region. Reference the `region` attribute of a `katapult_object_storage_account` resource when the account is managed in the same configuration.
-
-~> **Note:** `secret_access_key` is only available at creation time and cannot be retrieved again — it will be null after import. Changing `region` forces a new resource.
-
 An access key is the credential a workload uses to talk to Katapult's
 object storage API. It pairs with one or more
 [`katapult_object_storage_bucket`](./object_storage_bucket.md) resources to

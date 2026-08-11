@@ -33,6 +33,8 @@ const objectStorageAccTestRegion = "uk-lon-1"
 // setup/teardown HTTP traffic is recorded to
 // `testdata/ObjectStorage_scenarios.cassette.yaml`.
 func TestAccKatapultObjectStorage_scenarios(t *testing.T) {
+	skipUnlessAcceptance(t)
+
 	parentTT := newTestTools(t)
 	accountCreated := false
 	registerOwnershipAwareCleanup(t, &accountCreated, func() {

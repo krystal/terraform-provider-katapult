@@ -23,14 +23,6 @@ type ObjectStorageAccountDataSourceModel struct {
 
 var objectStorageAccountDataSourceMarkdownDesc = strings.TrimSpace(`
 Look up the object storage account for an organization in a given region.
-
-Useful when another Terraform configuration manages the
-` + "`katapult_object_storage_account`" + ` and you need to verify the account
-exists before attaching buckets or access keys without managing the account
-itself.
-
-If you also manage the account in the same configuration, reference the
-resource directly instead of going through this data source.
 `)
 
 func (d *ObjectStorageAccountDataSource) Metadata(

@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -77,15 +76,8 @@ func (r *ObjectStorageAccessKeyResource) Schema(
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		//nolint:lll
 		MarkdownDescription: strings.TrimSpace(`
 Manages an access key for a Katapult object storage cluster.
-
-Use ` + "`access_key_id`" + `, ` + "`secret_access_key`" + `, and ` + "`server_url`" + ` to configure an object storage client or SDK. Bucket-level permissions are managed via ` + "`read_key_ids`" + ` / ` + "`write_key_ids`" + ` on ` + "`katapult_object_storage_bucket`" + ` resources; ` + "`read_buckets`" + ` and ` + "`write_buckets`" + ` here reflect those associations.
-
-The key is scoped to one object storage region. Reference the ` + "`region`" + ` attribute of a ` + "`katapult_object_storage_account`" + ` resource when the account is managed in the same configuration.
-
-~> **Note:** ` + "`secret_access_key`" + ` is only available at creation time and cannot be retrieved again — it will be null after import. Changing ` + "`region`" + ` forces a new resource.
 `),
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -456,6 +448,22 @@ func (r *ObjectStorageAccessKeyResource) Update(
 		return
 	}
 
+	if plan.ID.IsUnknown() {
+		plan.ID = state.ID
+	}
+	if plan.ReadBuckets.IsUnknown() {
+		plan.ReadBuckets = state.ReadBuckets
+	}
+	if plan.WriteBuckets.IsUnknown() {
+		plan.WriteBuckets = state.WriteBuckets
+	}
+	if plan.AccessKeyID.IsUnknown() {
+		plan.AccessKeyID = state.AccessKeyID
+	}
+	if plan.ServerURL.IsUnknown() {
+		plan.ServerURL = state.ServerURL
+	}
+
 	r.populateModel(&plan, &res.JSON200.ObjectStorageAccessKey)
 	plan.SecretAccessKey = state.SecretAccessKey
 
@@ -502,31 +510,33 @@ func (r *ObjectStorageAccessKeyResource) populateModel(
 	model *ObjectStorageAccessKeyResourceModel,
 	key *core.ObjectStorageAccessKey,
 ) {
-	model.ID = types.StringPointerValue(key.Id)
-	model.Name = types.StringPointerValue(key.Name)
+	if key.Id != nil {
+		model.ID = types.StringPointerValue(key.Id)
+	}
+	if key.Name != nil {
+		model.Name = types.StringPointerValue(key.Name)
+	}
 
 	if key.Region != nil {
 		model.Region = types.StringPointerValue(key.Region)
 	}
 
-	model.AllBucketsRead = types.BoolPointerValue(key.AllBucketsRead)
-	model.AllObjectsRead = types.BoolPointerValue(key.AllObjectsRead)
-	model.AllObjectsWrite = types.BoolPointerValue(key.AllObjectsWrite)
+	if key.AllBucketsRead != nil {
+		model.AllBucketsRead = types.BoolPointerValue(key.AllBucketsRead)
+	}
+	if key.AllObjectsRead != nil {
+		model.AllObjectsRead = types.BoolPointerValue(key.AllObjectsRead)
+	}
+	if key.AllObjectsWrite != nil {
+		model.AllObjectsWrite = types.BoolPointerValue(key.AllObjectsWrite)
+	}
 
 	if key.ReadBuckets != nil {
 		model.ReadBuckets = buildStringSet(*key.ReadBuckets)
-	} else {
-		model.ReadBuckets = types.SetValueMust(
-			types.StringType, []attr.Value{},
-		)
 	}
 
 	if key.WriteBuckets != nil {
 		model.WriteBuckets = buildStringSet(*key.WriteBuckets)
-	} else {
-		model.WriteBuckets = types.SetValueMust(
-			types.StringType, []attr.Value{},
-		)
 	}
 
 	if key.S3AccessKeyId.IsSpecified() && !key.S3AccessKeyId.IsNull() {

@@ -506,6 +506,7 @@ func (r *ObjectStorageBucketResource) Update(
 		)
 		return
 	}
+	plan.PublicURL = objectStorageStringOrState(plan.PublicURL, state.PublicURL)
 
 	if err := r.ObjectStorageBucketRead(ctx, plan.Name.ValueString(), plan.Region.ValueString(), &plan); err != nil {
 		resp.Diagnostics.AddError("Object Storage Bucket Read Error", err.Error())
@@ -606,10 +607,20 @@ func (r *ObjectStorageBucketResource) ObjectStorageBucketRead(
 				"missing access_control_list",
 		)
 	}
+	populateObjectStorageBucketModel(model, &b, region)
 
+	return nil
+}
+
+func populateObjectStorageBucketModel(
+	model *ObjectStorageBucketResourceModel,
+	b *core.ObjectStorageBucket,
+	region string,
+) {
 	model.Region = types.StringValue(region)
-	model.Name = types.StringPointerValue(b.Name)
-	model.Label = types.StringNull()
+	if b.Name != nil {
+		model.Name = types.StringPointerValue(b.Name)
+	}
 
 	if b.Label.IsSpecified() {
 		if b.Label.IsNull() || b.Label.MustGet() == "" {
@@ -619,10 +630,12 @@ func (r *ObjectStorageBucketResource) ObjectStorageBucketRead(
 		}
 	}
 
-	model.PublicURL = types.StringPointerValue(b.PublicUrl)
-	model.ServeStaticSite = types.BoolPointerValue(b.ServeStaticSite)
-	model.StaticSiteError = types.StringNull()
-	model.StaticSiteIndex = types.StringNull()
+	if b.PublicUrl != nil {
+		model.PublicURL = types.StringPointerValue(b.PublicUrl)
+	}
+	if b.ServeStaticSite != nil {
+		model.ServeStaticSite = types.BoolPointerValue(b.ServeStaticSite)
+	}
 
 	if b.StaticSiteError.IsSpecified() {
 		v := ""
@@ -642,24 +655,26 @@ func (r *ObjectStorageBucketResource) ObjectStorageBucketRead(
 
 	acl := b.AccessControlList
 
-	model.AllKeysRead = types.BoolPointerValue(acl.AllKeysRead)
-	model.AllKeysWrite = types.BoolPointerValue(acl.AllKeysWrite)
-	model.PublicList = types.BoolPointerValue(acl.PublicList)
-	model.PublicRead = types.BoolPointerValue(acl.PublicRead)
+	if acl.AllKeysRead != nil {
+		model.AllKeysRead = types.BoolPointerValue(acl.AllKeysRead)
+	}
+	if acl.AllKeysWrite != nil {
+		model.AllKeysWrite = types.BoolPointerValue(acl.AllKeysWrite)
+	}
+	if acl.PublicList != nil {
+		model.PublicList = types.BoolPointerValue(acl.PublicList)
+	}
+	if acl.PublicRead != nil {
+		model.PublicRead = types.BoolPointerValue(acl.PublicRead)
+	}
 
 	if acl.ReadKeyIds != nil {
 		model.ReadKeyIDs = buildStringSet(*acl.ReadKeyIds)
-	} else {
-		model.ReadKeyIDs = buildStringSet(nil)
 	}
 
 	if acl.WriteKeyIds != nil {
 		model.WriteKeyIDs = buildStringSet(*acl.WriteKeyIds)
-	} else {
-		model.WriteKeyIDs = buildStringSet(nil)
 	}
-
-	return nil
 }
 
 /// HELPERS
@@ -671,6 +686,17 @@ func buildStringSet(in []string) basetypes.SetValue {
 	}
 
 	return types.SetValueMust(types.StringType, values)
+}
+
+func objectStorageStringOrState(
+	planned types.String,
+	state types.String,
+) types.String {
+	if planned.IsUnknown() {
+		return state
+	}
+
+	return planned
 }
 
 func validateObjectStorageBucketUpdateResponse(

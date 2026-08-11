@@ -10,12 +10,6 @@ description: |-
 
 Manages the lifecycle of an object storage account for an organization in a given region.
 
-A Katapult organization has at most one object storage account per region. Use this resource when Terraform should create or own that account lifecycle; it creates the account (if it does not already exist) and waits for it to reach the `provisioned` state. Reference its `region` attribute from `katapult_object_storage_bucket` and `katapult_object_storage_access_key` resources to preserve Terraform's lifecycle dependency on the account.
-
-If the account is managed outside this configuration, buckets and access keys can use a known region directly. Neither this resource nor the account data source is mandatory; the data source is optional verification that an external account exists. Import a dashboard-enabled account only when Terraform should take over its lifecycle, including destroying and purging it when this resource is removed.
-
-~> **Only declare one of these per (organization, region).** The Katapult API enforces this limit. Destroying this resource destroys the account and can affect billing, so do not import an externally managed account unless Terraform should own that lifecycle.
-
 ~> **Only one of these resources may exist per (organization, region).**
 The Katapult API enforces this — a second `katapult_object_storage_account`
 block for the same region will fail to create. If your organization already

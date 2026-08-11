@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"os"
 	"regexp"
 	"testing"
 	"time"
@@ -143,6 +142,8 @@ func TestAccKatapultObjectStorageAccount_lifecycle(t *testing.T) {
 // `adopt_existing = true` silently takes ownership of an account created
 // out-of-band rather than erroring on Create.
 func TestAccKatapultObjectStorageAccount_adopt_existing(t *testing.T) {
+	skipUnlessAcceptance(t)
+
 	tt := newTestTools(t)
 
 	// Pre-create the account directly via the SDK so the resource's Create
@@ -193,9 +194,7 @@ func TestAccKatapultObjectStorageAccount_adopt_existing(t *testing.T) {
 // fails with a diagnostic that points the user at `terraform import` and
 // the `adopt_existing` flag.
 func TestAccKatapultObjectStorageAccount_refuse_without_adopt(t *testing.T) {
-	if os.Getenv(resource.EnvTfAcc) == "" {
-		t.Skipf("acceptance tests skipped unless env %q set", resource.EnvTfAcc)
-	}
+	skipUnlessAcceptance(t)
 
 	tt := newTestTools(t)
 

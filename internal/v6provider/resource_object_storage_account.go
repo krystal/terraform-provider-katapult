@@ -39,15 +39,8 @@ type (
 	}
 )
 
-//nolint:lll
 var objectStorageAccountMarkdownDesc = strings.TrimSpace(`
 Manages the lifecycle of an object storage account for an organization in a given region.
-
-A Katapult organization has at most one object storage account per region. Use this resource when Terraform should create or own that account lifecycle; it creates the account (if it does not already exist) and waits for it to reach the ` + "`provisioned`" + ` state. Reference its ` + "`region`" + ` attribute from ` + "`katapult_object_storage_bucket`" + ` and ` + "`katapult_object_storage_access_key`" + ` resources to preserve Terraform's lifecycle dependency on the account.
-
-If the account is managed outside this configuration, buckets and access keys can use a known region directly. Neither this resource nor the account data source is mandatory; the data source is optional verification that an external account exists. Import a dashboard-enabled account only when Terraform should take over its lifecycle, including destroying and purging it when this resource is removed.
-
-~> **Only declare one of these per (organization, region).** The Katapult API enforces this limit. Destroying this resource destroys the account and can affect billing, so do not import an externally managed account unless Terraform should own that lifecycle.
 `)
 
 func (r *ObjectStorageAccountResource) Metadata(
@@ -270,6 +263,12 @@ func (r *ObjectStorageAccountResource) Read(
 	)
 	// adopt_existing is a Create-time-only knob; it doesn't reflect any
 	// server-side property and is left untouched by Read.
+	resp.Diagnostics.Append(resp.Private.SetKey(
+		ctx, objectStorageAccountTrashIDPrivateKey, nil,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -611,10 +610,13 @@ func preflightObjectStorageAccountDelete(
 		return err
 	}
 
-	bucketCount := 0
-	if acct.BucketCount != nil {
-		bucketCount = *acct.BucketCount
+	if acct.BucketCount == nil {
+		return errors.New(
+			"cannot determine whether object storage account deletion is safe: " +
+				"account response is missing bucket_count",
+		)
 	}
+	bucketCount := *acct.BucketCount
 
 	keyNames, err := listObjectStorageAccessKeyNamesInRegion(ctx, m, region)
 	if err != nil {
@@ -691,7 +693,14 @@ func listObjectStorageAccessKeyNamesInRegion(
 
 		for i := range res.JSON200.ObjectStorageAccessKeys {
 			k := res.JSON200.ObjectStorageAccessKeys[i]
-			if k.Region == nil || *k.Region != region {
+			if k.Region == nil {
+				return nil, fmt.Errorf(
+					"cannot determine access key region during delete preflight: "+
+						"access key %s is missing region",
+					deref(k.Id),
+				)
+			}
+			if *k.Region != region {
 				continue
 			}
 			name := deref(k.Name)
@@ -699,8 +708,15 @@ func listObjectStorageAccessKeyNamesInRegion(
 			names = append(names, fmt.Sprintf("%s (%s)", name, id))
 		}
 
-		totalPages, _ := res.JSON200.Pagination.TotalPages.Get()
-		if totalPages == 0 || page >= totalPages {
+		morePages, paginationErr := objectStorageAccessKeysHaveMorePages(
+			res.JSON200.Pagination,
+			page,
+			len(res.JSON200.ObjectStorageAccessKeys),
+		)
+		if paginationErr != nil {
+			return nil, paginationErr
+		}
+		if !morePages {
 			break
 		}
 		page++
@@ -708,6 +724,58 @@ func listObjectStorageAccessKeyNamesInRegion(
 
 	sort.Strings(names)
 	return names, nil
+}
+
+func objectStorageAccessKeysHaveMorePages(
+	pagination core.PaginationObject,
+	requestedPage int,
+	itemCount int,
+) (bool, error) {
+	if pagination.CurrentPage == nil {
+		return false, fmt.Errorf(
+			"invalid access-key pagination on requested page %d: "+
+				"missing current_page", requestedPage,
+		)
+	}
+	if *pagination.CurrentPage != requestedPage {
+		return false, fmt.Errorf(
+			"invalid access-key pagination on requested page %d: "+
+				"response current_page is %d",
+			requestedPage, *pagination.CurrentPage,
+		)
+	}
+
+	if pagination.TotalPages.IsSpecified() &&
+		!pagination.TotalPages.IsNull() {
+		totalPages := pagination.TotalPages.MustGet()
+		if totalPages == 0 && requestedPage == 1 && itemCount == 0 {
+			return false, nil
+		}
+		if totalPages < 1 || totalPages < requestedPage {
+			return false, fmt.Errorf(
+				"invalid access-key pagination on page %d: total_pages is %d",
+				requestedPage, totalPages,
+			)
+		}
+
+		return requestedPage < totalPages, nil
+	}
+
+	if pagination.LargeSet == nil || !*pagination.LargeSet {
+		return false, fmt.Errorf(
+			"indeterminate access-key pagination on page %d: "+
+				"total_pages is missing or null and large_set is not true",
+			requestedPage,
+		)
+	}
+	if pagination.PerPage == nil || *pagination.PerPage < 1 {
+		return false, fmt.Errorf(
+			"invalid access-key pagination on large-set page %d: "+
+				"missing or invalid per_page", requestedPage,
+		)
+	}
+
+	return itemCount >= *pagination.PerPage, nil
 }
 
 func deref[T any](p *T) T {

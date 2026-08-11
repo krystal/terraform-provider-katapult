@@ -652,6 +652,85 @@ func TestObjectStorageAccountReadRetainsStateForPendingTrashPurge(
 	require.Equal(t, encodedTrashID, privateTrashID)
 }
 
+func TestObjectStorageAccountReadClearsStaleTrashBeforeDelete(
+	t *testing.T,
+) {
+	var accountReadCalls, keyListCalls, accountDeleteCalls atomic.Int32
+	meta := newObjectStorageFailureTestMeta(t, http.HandlerFunc(
+		func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			switch req.Method + " " + req.URL.Path {
+			case http.MethodGet + " /core/v1/organizations/organization/" +
+				"object_storage/object_storage_cluster":
+				accountReadCalls.Add(1)
+				_, _ = w.Write([]byte(`{
+					"object_storage_account": {
+						"region": "uk-lon-1",
+						"bucket_count": 0,
+						"provisioning_state": "provisioned"
+					}
+				}`))
+			case http.MethodGet + " /core/v1/organizations/organization/" +
+				"object_storage/access_keys":
+				keyListCalls.Add(1)
+				_, _ = w.Write([]byte(`{
+					"pagination": {
+						"current_page": 1,
+						"total_pages": 1,
+						"per_page": 100,
+						"large_set": false
+					},
+					"object_storage_access_keys": []
+				}`))
+			case http.MethodDelete + " /core/v1/organizations/organization/" +
+				"object_storage/object_storage_cluster":
+				accountDeleteCalls.Add(1)
+				_, _ = w.Write([]byte(`{
+					"object_storage_account": {"region": "uk-lon-1"},
+					"trash_object": {"id": "trsh_live_account"}
+				}`))
+			default:
+				http.Error(w, "unexpected request: "+req.URL.Path,
+					http.StatusInternalServerError)
+			}
+		},
+	))
+	meta.SkipTrashObjectPurge = true
+	r := &ObjectStorageAccountResource{M: meta}
+	ctx := context.Background()
+	state := objectStorageAccountTestState(t, r)
+	readReq := resource.ReadRequest{State: state}
+	readResp := resource.ReadResponse{State: state}
+	initializeResourcePrivateState(t, &readReq, &readResp)
+	encodedTrashID, err := encodeObjectStorageAccountTrashID("trsh_stale")
+	require.NoError(t, err)
+	require.False(t, readReq.Private.SetKey(
+		ctx, objectStorageAccountTrashIDPrivateKey, encodedTrashID,
+	).HasError())
+
+	r.Read(ctx, readReq, &readResp)
+
+	require.False(t, readResp.Diagnostics.HasError())
+	cleared, diags := readResp.Private.GetKey(
+		ctx, objectStorageAccountTrashIDPrivateKey,
+	)
+	require.False(t, diags.HasError())
+	require.Nil(t, cleared)
+
+	deleteReq := resource.DeleteRequest{
+		State: readResp.State, Private: readResp.Private,
+	}
+	deleteResp := resource.DeleteResponse{
+		State: readResp.State, Private: readResp.Private,
+	}
+	r.Delete(ctx, deleteReq, &deleteResp)
+
+	require.False(t, deleteResp.Diagnostics.HasError())
+	require.Equal(t, int32(2), accountReadCalls.Load())
+	require.Equal(t, int32(1), keyListCalls.Load())
+	require.Equal(t, int32(1), accountDeleteCalls.Load())
+}
+
 func TestObjectStorageAccountDeleteClearsPrivateStateWhenTrashAlreadyGone(
 	t *testing.T,
 ) {
