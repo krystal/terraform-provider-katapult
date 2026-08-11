@@ -245,6 +245,31 @@ func (r *ObjectStorageAccountResource) Read(
 	acct, err := getObjectStorageAccount(ctx, r.M, region)
 	if err != nil {
 		if errors.Is(err, core.ErrNotFound) {
+			privateTrashID, privateDiags := req.Private.GetKey(
+				ctx, objectStorageAccountTrashIDPrivateKey,
+			)
+			resp.Diagnostics.Append(privateDiags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+
+			trashID, decodeErr := decodeObjectStorageAccountTrashID(
+				privateTrashID,
+			)
+			if decodeErr != nil {
+				resp.Diagnostics.AddError(
+					"Invalid Object Storage Account Private State",
+					decodeErr.Error(),
+				)
+				return
+			}
+			if trashID != "" {
+				// The remote account is already deleted, but Terraform must
+				// retain state until Delete can resume the pending trash purge.
+				resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+				return
+			}
+
 			resp.State.RemoveResource(ctx)
 			return
 		}
@@ -321,7 +346,7 @@ func (r *ObjectStorageAccountResource) Delete(
 		}
 		if purgeErr := purgeTrashObject(
 			ctx, r.M, 5*time.Minute, core.TrashObject{Id: &trashID},
-		); purgeErr != nil {
+		); purgeErr != nil && !errors.Is(purgeErr, core.ErrNotFound) {
 			resp.Diagnostics.AddError(
 				"Failed to purge object storage account from trash.",
 				purgeErr.Error(),

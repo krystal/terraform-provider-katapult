@@ -289,7 +289,7 @@ func TestObjectStorageAccountDeleteResumesTrashPurgeFromPrivateState(
 
 	req := resource.DeleteRequest{State: state}
 	resp := resource.DeleteResponse{State: state}
-	initializeDeletePrivateState(t, &req, &resp)
+	initializeResourcePrivateState(t, &req, &resp)
 	encodedTrashID, err := encodeObjectStorageAccountTrashID("trsh_resume")
 	require.NoError(t, err)
 	require.False(t, req.Private.SetKey(
@@ -321,6 +321,107 @@ func TestObjectStorageAccountDeleteResumesTrashPurgeFromPrivateState(
 	require.Equal(t, int32(2), trashDeleteCalls.Load())
 	require.Equal(t, int32(1), trashReadCalls.Load())
 	require.Equal(t, int32(0), accountDeleteCalls.Load())
+}
+
+func TestObjectStorageAccountReadRetainsStateForPendingTrashPurge(
+	t *testing.T,
+) {
+	var accountReadCalls atomic.Int32
+	meta := newObjectStorageFailureTestMeta(t, http.HandlerFunc(
+		func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			if req.Method != http.MethodGet || req.URL.Path !=
+				"/core/v1/organizations/organization/object_storage/"+
+					"object_storage_cluster" {
+				http.Error(w, "unexpected request", http.StatusInternalServerError)
+				return
+			}
+			accountReadCalls.Add(1)
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{
+				"error": {
+					"code": "object_storage_account_not_found",
+					"description": "not found",
+					"detail": {}
+				}
+			}`))
+		},
+	))
+	r := &ObjectStorageAccountResource{M: meta}
+	ctx := context.Background()
+
+	state := objectStorageAccountTestState(t, r)
+	req := resource.ReadRequest{State: state}
+	resp := resource.ReadResponse{State: state}
+	initializeResourcePrivateState(t, &req, &resp)
+	encodedTrashID, err := encodeObjectStorageAccountTrashID("trsh_pending")
+	require.NoError(t, err)
+	require.False(t, req.Private.SetKey(
+		ctx, objectStorageAccountTrashIDPrivateKey, encodedTrashID,
+	).HasError())
+
+	r.Read(ctx, req, &resp)
+
+	require.False(t, resp.Diagnostics.HasError())
+	require.Equal(t, int32(1), accountReadCalls.Load())
+	var retained ObjectStorageAccountResourceModel
+	require.False(t, resp.State.Get(ctx, &retained).HasError())
+	require.Equal(t, "uk-lon-1", retained.ID.ValueString())
+	require.Equal(t, "uk-lon-1", retained.Region.ValueString())
+	require.Equal(t, "provisioned", retained.ProvisioningState.ValueString())
+	privateTrashID, diags := resp.Private.GetKey(
+		ctx, objectStorageAccountTrashIDPrivateKey,
+	)
+	require.False(t, diags.HasError())
+	require.Equal(t, encodedTrashID, privateTrashID)
+}
+
+func TestObjectStorageAccountDeleteClearsPrivateStateWhenTrashAlreadyGone(
+	t *testing.T,
+) {
+	var trashDeleteCalls, unexpectedCalls atomic.Int32
+	meta := newObjectStorageFailureTestMeta(t, http.HandlerFunc(
+		func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			if req.Method == http.MethodDelete && req.URL.Path ==
+				"/core/v1/trash_objects/trash_object" {
+				trashDeleteCalls.Add(1)
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write([]byte(`{
+					"error": {
+						"code": "trash_object_not_found",
+						"description": "already gone",
+						"detail": {}
+					}
+				}`))
+				return
+			}
+			unexpectedCalls.Add(1)
+			http.Error(w, "unexpected request", http.StatusInternalServerError)
+		},
+	))
+	r := &ObjectStorageAccountResource{M: meta}
+	ctx := context.Background()
+	state := objectStorageAccountTestState(t, r)
+	req := resource.DeleteRequest{State: state}
+	resp := resource.DeleteResponse{State: state}
+	initializeResourcePrivateState(t, &req, &resp)
+	encodedTrashID, err := encodeObjectStorageAccountTrashID("trsh_gone")
+	require.NoError(t, err)
+	require.False(t, req.Private.SetKey(
+		ctx, objectStorageAccountTrashIDPrivateKey, encodedTrashID,
+	).HasError())
+
+	r.Delete(ctx, req, &resp)
+
+	require.False(t, resp.Diagnostics.HasError())
+	require.Equal(t, int32(1), trashDeleteCalls.Load())
+	require.Equal(t, int32(0), unexpectedCalls.Load())
+	cleared, diags := resp.Private.GetKey(
+		ctx, objectStorageAccountTrashIDPrivateKey,
+	)
+	require.False(t, diags.HasError())
+	require.Nil(t, cleared)
 }
 
 type objectStorageSchemaFunc func(
@@ -366,10 +467,10 @@ func newObjectStorageFailureTestMeta(
 	return meta
 }
 
-func initializeDeletePrivateState(
+func initializeResourcePrivateState(
 	t *testing.T,
-	req *resource.DeleteRequest,
-	resp *resource.DeleteResponse,
+	req any,
+	resp any,
 ) {
 	t.Helper()
 	reqPrivate := reflect.ValueOf(req).Elem().FieldByName("Private")
@@ -380,6 +481,25 @@ func initializeDeletePrivateState(
 	respPrivate := reflect.ValueOf(resp).Elem().FieldByName("Private")
 	require.True(t, respPrivate.CanSet())
 	respPrivate.Set(privateData)
+}
+
+func objectStorageAccountTestState(
+	t *testing.T,
+	r *ObjectStorageAccountResource,
+) tfsdk.State {
+	t.Helper()
+	ctx := context.Background()
+	var schemaResp resource.SchemaResponse
+	r.Schema(ctx, resource.SchemaRequest{}, &schemaResp)
+	state := tfsdk.State{Schema: schemaResp.Schema}
+	require.False(t, state.Set(ctx, &ObjectStorageAccountResourceModel{
+		ID:                types.StringValue("uk-lon-1"),
+		Region:            types.StringValue("uk-lon-1"),
+		AdoptExisting:     types.BoolValue(false),
+		ProvisioningState: types.StringValue("provisioned"),
+	}).HasError())
+
+	return state
 }
 
 func requireDiagnosticContains(
