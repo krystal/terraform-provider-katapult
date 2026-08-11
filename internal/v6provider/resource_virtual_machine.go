@@ -349,13 +349,13 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 					PreserveEmptyStringStateForNullConfig(),
 				},
 			},
-			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
+		},
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{
 				Create: true,
 				Update: true,
 				Delete: true,
 			}),
-		},
-		Blocks: map[string]schema.Block{
 			"disk": schema.ListNestedBlock{
 				MarkdownDescription: "One or more disks with custom sizes " +
 					"to create and attach during creation. The first " +

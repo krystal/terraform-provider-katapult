@@ -163,6 +163,12 @@ func virtualMachineV5HandoverConfig(
 				install_agent = true
 			}
 			ip_address_ids = [katapult_legacy_ip.web.id]
+
+			timeouts {
+				create = "20m"
+				update = "10m"
+				delete = "10m"
+			}
 		}`,
 		name,
 		hostname,

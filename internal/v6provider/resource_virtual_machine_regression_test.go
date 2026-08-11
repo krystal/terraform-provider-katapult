@@ -505,14 +505,13 @@ func TestVirtualMachineResourceDiskTemplateRejectsEmpty(t *testing.T) {
 	}
 	require.True(t, validationResp.Diagnostics.HasError())
 
-	timeoutsAttrValue := schemaResp.Schema.Attributes["timeouts"]
-	timeoutsAttr, ok := timeoutsAttrValue.(resourceschema.SingleNestedAttribute)
+	timeoutsBlockValue := schemaResp.Schema.Blocks["timeouts"]
+	timeoutsBlock, ok := timeoutsBlockValue.(resourceschema.SingleNestedBlock)
 	require.True(t, ok)
-	require.True(t, timeoutsAttr.Optional)
-	require.Len(t, timeoutsAttr.Attributes, 3)
-	require.Contains(t, timeoutsAttr.Attributes, "create")
-	require.Contains(t, timeoutsAttr.Attributes, "update")
-	require.Contains(t, timeoutsAttr.Attributes, "delete")
+	require.Len(t, timeoutsBlock.Attributes, 3)
+	require.Contains(t, timeoutsBlock.Attributes, "create")
+	require.Contains(t, timeoutsBlock.Attributes, "update")
+	require.Contains(t, timeoutsBlock.Attributes, "delete")
 }
 
 func virtualMachineTestState(

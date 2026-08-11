@@ -91,7 +91,7 @@ resource "katapult_virtual_machine" "base" {
 - `name` (String) The name of the Virtual Machine. If not provided, a name is generated automatically.
 - `network_speed_profile` (String) Permalink of the Network Speed Profile to apply to all network interfaces.
 - `tags` (Set of String) Set of tag names to assign to the Virtual Machine.
-- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `virtual_network_ids` (Set of String) Set of Virtual Network IDs to attach to the Virtual Machine.
 
 ### Read-Only
@@ -114,7 +114,7 @@ Optional:
 - `name` (String) Name of the disk. Defaults to "System Disk" for the first disk.
 
 
-<a id="nestedatt--timeouts"></a>
+<a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:

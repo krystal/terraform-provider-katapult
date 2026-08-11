@@ -94,6 +94,9 @@ unexpected `.cassette.rand_id` changes as generated drift.
 
 - Treat mise as the discoverable task interface. The Makefile remains the
   lower-level implementation for commands that have not yet been migrated.
+- When migrating SDKv2 resources with `timeouts {}` configuration, use the
+  Framework timeouts package's `Block` API to preserve the existing HCL syntax;
+  its `Attributes` API requires `timeouts = {}` instead.
 - Keep GitHub Actions pinned to full commit SHAs with accurate version comments.
 - Preserve the three-day dependency maturity policy in mise, Pinact, and
   Dependabot.
