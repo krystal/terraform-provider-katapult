@@ -41,11 +41,13 @@ type (
 
 //nolint:lll
 var objectStorageAccountMarkdownDesc = strings.TrimSpace(`
-Manages the object storage account for an organization in a given region.
+Manages the lifecycle of an object storage account for an organization in a given region.
 
-A Katapult organization has at most one object storage account per region. This resource creates the account (if it does not already exist) and waits for it to reach the ` + "`provisioned`" + ` state. Reference its ` + "`region`" + ` attribute from ` + "`katapult_object_storage_bucket`" + ` and ` + "`katapult_object_storage_access_key`" + ` resources to preserve Terraform's lifecycle dependency on the account.
+A Katapult organization has at most one object storage account per region. Use this resource when Terraform should create or own that account lifecycle; it creates the account (if it does not already exist) and waits for it to reach the ` + "`provisioned`" + ` state. Reference its ` + "`region`" + ` attribute from ` + "`katapult_object_storage_bucket`" + ` and ` + "`katapult_object_storage_access_key`" + ` resources to preserve Terraform's lifecycle dependency on the account.
 
-~> **Only declare one of these per (organization, region).** If your organization already has object storage enabled via the Katapult dashboard, declare this resource anyway and import the existing account — otherwise Terraform cannot clean it up on destroy, and your organization will continue to be billed.
+If the account is managed outside this configuration, buckets and access keys can use a known region directly. Neither this resource nor the account data source is mandatory; the data source is optional verification that an external account exists. Import a dashboard-enabled account only when Terraform should take over its lifecycle, including destroying and purging it when this resource is removed.
+
+~> **Only declare one of these per (organization, region).** The Katapult API enforces this limit. Destroying this resource destroys the account and can affect billing, so do not import an externally managed account unless Terraform should own that lifecycle.
 `)
 
 func (r *ObjectStorageAccountResource) Metadata(

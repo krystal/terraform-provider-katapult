@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"sync"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -15,32 +16,56 @@ import (
 )
 
 func TestObjectStorageBucketUpdateSendsEmptyKeySets(t *testing.T) {
-	var patchBody []byte
+	var (
+		serverMu       sync.Mutex
+		patchArgs      core.PatchObjectStorageObjectStorageClusterBucketJSONRequestBody
+		serverReadIDs  = []string{"objkey_read"}
+		serverWriteIDs = []string{"objkey_write"}
+	)
 	meta := newObjectStorageFailureTestMeta(t, http.HandlerFunc(
 		func(w http.ResponseWriter, req *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			switch req.Method {
 			case http.MethodPatch:
-				patchBody, _ = io.ReadAll(req.Body)
+				var received core.
+					PatchObjectStorageObjectStorageClusterBucketJSONRequestBody
+				if err := json.NewDecoder(req.Body).Decode(&received); err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+				serverMu.Lock()
+				patchArgs = received
+				acl := received.Properties.AccessControlList
+				if acl != nil && acl.ReadKeyIds != nil {
+					serverReadIDs = append([]string(nil), (*acl.ReadKeyIds)...)
+				}
+				if acl != nil && acl.WriteKeyIds != nil {
+					serverWriteIDs = append([]string(nil), (*acl.WriteKeyIds)...)
+				}
+				serverMu.Unlock()
 				_, _ = w.Write([]byte(`{
 					"object_storage_bucket": {"name": "key-removal"}
 				}`))
 			case http.MethodGet:
-				_, _ = w.Write([]byte(`{
-					"object_storage_bucket": {
-						"name": "key-removal",
-						"public_url": "https://objects.example.test/key-removal",
+				serverMu.Lock()
+				readIDs := append([]string(nil), serverReadIDs...)
+				writeIDs := append([]string(nil), serverWriteIDs...)
+				serverMu.Unlock()
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"object_storage_bucket": map[string]any{
+						"name":              "key-removal",
+						"public_url":        "https://objects.example.test/key-removal",
 						"serve_static_site": false,
-						"access_control_list": {
-							"all_keys_read": false,
+						"access_control_list": map[string]any{
+							"all_keys_read":  false,
 							"all_keys_write": false,
-							"public_list": false,
-							"public_read": false,
-							"read_key_ids": [],
-							"write_key_ids": []
-						}
-					}
-				}`))
+							"public_list":    false,
+							"public_read":    false,
+							"read_key_ids":   readIDs,
+							"write_key_ids":  writeIDs,
+						},
+					},
+				})
 			default:
 				http.Error(w, "unexpected request", http.StatusInternalServerError)
 			}
@@ -62,13 +87,19 @@ func TestObjectStorageBucketUpdateSendsEmptyKeySets(t *testing.T) {
 	r.Update(context.Background(), req, &resp)
 
 	require.False(t, resp.Diagnostics.HasError())
-	var args core.PatchObjectStorageObjectStorageClusterBucketJSONRequestBody
-	require.NoError(t, json.Unmarshal(patchBody, &args))
-	require.NotNil(t, args.Properties.AccessControlList)
-	require.NotNil(t, args.Properties.AccessControlList.ReadKeyIds)
-	require.Empty(t, *args.Properties.AccessControlList.ReadKeyIds)
-	require.NotNil(t, args.Properties.AccessControlList.WriteKeyIds)
-	require.Empty(t, *args.Properties.AccessControlList.WriteKeyIds)
+	serverMu.Lock()
+	receivedACL := patchArgs.Properties.AccessControlList
+	serverMu.Unlock()
+	require.NotNil(t, receivedACL)
+	require.NotNil(t, receivedACL.ReadKeyIds)
+	require.Empty(t, *receivedACL.ReadKeyIds)
+	require.NotNil(t, receivedACL.WriteKeyIds)
+	require.Empty(t, *receivedACL.WriteKeyIds)
+
+	var result ObjectStorageBucketResourceModel
+	require.False(t, resp.State.Get(context.Background(), &result).HasError())
+	require.Empty(t, result.ReadKeyIDs.Elements())
+	require.Empty(t, result.WriteKeyIDs.Elements())
 }
 
 func TestObjectStorageBucketCreatePropagatesInvalidRegionError(
@@ -134,6 +165,40 @@ func TestObjectStorageBucketReadRemovesMissingRemoteResource(t *testing.T) {
 	)).HasError())
 	req := resource.ReadRequest{State: state}
 	resp := resource.ReadResponse{State: state}
+
+	r.Read(ctx, req, &resp)
+
+	require.False(t, resp.Diagnostics.HasError())
+	require.True(t, resp.State.Raw.IsNull())
+}
+
+func TestObjectStorageAccountReadRemovesMissingResourceWithoutPendingTrash(
+	t *testing.T,
+) {
+	meta := newObjectStorageFailureTestMeta(t, http.HandlerFunc(
+		func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			if req.URL.Path != "/core/v1/organizations/organization/"+
+				"object_storage/object_storage_cluster" {
+				http.Error(w, "unexpected request", http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{
+				"error": {
+					"code": "object_storage_account_not_found",
+					"description": "not found",
+					"detail": {}
+				}
+			}`))
+		},
+	))
+	r := &ObjectStorageAccountResource{M: meta}
+	ctx := context.Background()
+	state := objectStorageAccountTestState(t, r)
+	req := resource.ReadRequest{State: state}
+	resp := resource.ReadResponse{State: state}
+	initializeResourcePrivateState(t, &req, &resp)
 
 	r.Read(ctx, req, &resp)
 

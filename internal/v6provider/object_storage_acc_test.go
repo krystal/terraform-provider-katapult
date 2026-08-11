@@ -26,7 +26,7 @@ const objectStorageAccTestRegion = "uk-lon-1"
 //
 // Run a single scenario via, e.g.:
 //
-//	go test -run TestAccKatapultObjectStorage_scenarios/AccessKey_minimal
+//	go test -run '^TestAccKatapultObjectStorage_scenarios$/^AccessKey_minimal$'
 //
 // Each scenario records its own VCR cassette under
 // `testdata/ObjectStorage_scenarios/<name>.cassette.yaml`. The parent's

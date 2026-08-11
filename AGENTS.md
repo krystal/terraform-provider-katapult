@@ -59,6 +59,9 @@ Use the narrowest relevant command while working, then broaden before handoff:
 - `mise run test:acceptance` runs acceptance tests against recorded cassettes.
 - Run one acceptance test by narrowing both its package and exact test name:
   `TEST=./internal/v6provider TESTARGS='-run ^TestAccKatapultIP_ipv4$' mise run test:acceptance`.
+- For slash-separated subtests, anchor every path component. Because the mise
+  task delegates to Make, escape end anchors as `$$`, for example:
+  `TEST=./internal/v6provider TESTARGS='-run ^TestAccKatapultObjectStorage_scenarios$$/^Bucket_minimal$$' mise run test:acceptance`.
 - Run a related group with a Go test regular expression, for example:
   `TEST=./internal/v6provider TESTARGS='-run ^TestAccKatapultIP_' mise run test:acceptance`.
 - `mise run check` runs the fast local suite, including format, lint, unit,

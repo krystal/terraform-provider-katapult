@@ -242,6 +242,82 @@ func TestObjectStorageAccessKeyCreateRejectsIncompleteCredentials(
 	}
 }
 
+func TestObjectStorageAccessKeyCreateAppliesOnlyCredentialFields(
+	t *testing.T,
+) {
+	meta := newObjectStorageFailureTestMeta(t, http.HandlerFunc(
+		func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			switch req.URL.Path {
+			case "/core/v1/organizations/organization/object_storage/" +
+				"object_storage_cluster/access_keys":
+				w.WriteHeader(http.StatusCreated)
+				_, _ = w.Write([]byte(`{
+					"object_storage_access_key": {
+						"id": "objkey_complete",
+						"name": "complete-key",
+						"region": "future-region"
+					}
+				}`))
+			case "/core/v1/object_storage/access_keys/access_key/" +
+				"generate_credentials":
+				_, _ = w.Write([]byte(`{
+					"object_storage_access_key": {
+						"s3_access_key_id": "generated-access-key",
+						"s3_secret_access_key": "generated-secret",
+						"server_url": "https://objects.example.test"
+					}
+				}`))
+			default:
+				http.Error(w, "unexpected request", http.StatusInternalServerError)
+			}
+		},
+	))
+
+	r := &ObjectStorageAccessKeyResource{M: meta}
+	plan := ObjectStorageAccessKeyResourceModel{
+		ID:              types.StringUnknown(),
+		Name:            types.StringValue("complete-key"),
+		Region:          types.StringValue("future-region"),
+		AllBucketsRead:  types.BoolValue(true),
+		AllObjectsRead:  types.BoolValue(false),
+		AllObjectsWrite: types.BoolValue(true),
+		ReadBuckets:     types.SetUnknown(types.StringType),
+		WriteBuckets:    types.SetUnknown(types.StringType),
+		AccessKeyID:     types.StringUnknown(),
+		SecretAccessKey: types.StringUnknown(),
+		ServerURL:       types.StringUnknown(),
+	}
+	req, resp := objectStorageCreateOperation(t, r.Schema, plan)
+
+	r.Create(context.Background(), req, &resp)
+
+	require.False(t, resp.Diagnostics.HasError())
+	var state ObjectStorageAccessKeyResourceModel
+	require.False(t, resp.State.Get(context.Background(), &state).HasError())
+	require.Equal(t, "objkey_complete", state.ID.ValueString())
+	require.Equal(t, "complete-key", state.Name.ValueString())
+	require.Equal(t, "future-region", state.Region.ValueString())
+	require.False(t, state.AllBucketsRead.IsNull())
+	require.False(t, state.AllBucketsRead.IsUnknown())
+	require.True(t, state.AllBucketsRead.ValueBool())
+	require.False(t, state.AllObjectsRead.IsNull())
+	require.False(t, state.AllObjectsRead.IsUnknown())
+	require.False(t, state.AllObjectsRead.ValueBool())
+	require.False(t, state.AllObjectsWrite.IsNull())
+	require.False(t, state.AllObjectsWrite.IsUnknown())
+	require.True(t, state.AllObjectsWrite.ValueBool())
+	require.False(t, state.ReadBuckets.IsNull())
+	require.False(t, state.ReadBuckets.IsUnknown())
+	require.Empty(t, state.ReadBuckets.Elements())
+	require.False(t, state.WriteBuckets.IsNull())
+	require.False(t, state.WriteBuckets.IsUnknown())
+	require.Empty(t, state.WriteBuckets.Elements())
+	require.Equal(t, "generated-access-key", state.AccessKeyID.ValueString())
+	require.Equal(t, "generated-secret", state.SecretAccessKey.ValueString())
+	require.Equal(t, "https://objects.example.test", state.ServerURL.ValueString())
+}
+
 func TestObjectStorageBucketCreateRetainsStateWhenReadBackFails(
 	t *testing.T,
 ) {

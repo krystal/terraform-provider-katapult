@@ -305,9 +305,12 @@ func (r *ObjectStorageAccessKeyResource) Create(
 		return
 	}
 
-	r.populateModel(
-		&plan, &credsRes.JSON200.ObjectStorageAccessKey, true,
+	credentials := credsRes.JSON200.ObjectStorageAccessKey
+	plan.AccessKeyID = types.StringValue(credentials.S3AccessKeyId.MustGet())
+	plan.SecretAccessKey = types.StringValue(
+		credentials.S3SecretAccessKey.MustGet(),
 	)
+	plan.ServerURL = types.StringValue(credentials.ServerUrl.MustGet())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -393,9 +396,7 @@ func (r *ObjectStorageAccessKeyResource) Read(
 		return
 	}
 
-	r.populateModel(
-		&state, &res.JSON200.ObjectStorageAccessKey, false,
-	)
+	r.populateModel(&state, &res.JSON200.ObjectStorageAccessKey)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -455,9 +456,7 @@ func (r *ObjectStorageAccessKeyResource) Update(
 		return
 	}
 
-	r.populateModel(
-		&plan, &res.JSON200.ObjectStorageAccessKey, false,
-	)
+	r.populateModel(&plan, &res.JSON200.ObjectStorageAccessKey)
 	plan.SecretAccessKey = state.SecretAccessKey
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
@@ -502,7 +501,6 @@ func (r *ObjectStorageAccessKeyResource) ImportState(
 func (r *ObjectStorageAccessKeyResource) populateModel(
 	model *ObjectStorageAccessKeyResourceModel,
 	key *core.ObjectStorageAccessKey,
-	includeSecret bool,
 ) {
 	model.ID = types.StringPointerValue(key.Id)
 	model.Name = types.StringPointerValue(key.Name)
@@ -539,13 +537,5 @@ func (r *ObjectStorageAccessKeyResource) populateModel(
 
 	if key.ServerUrl.IsSpecified() && !key.ServerUrl.IsNull() {
 		model.ServerURL = types.StringValue(key.ServerUrl.MustGet())
-	}
-
-	if includeSecret &&
-		key.S3SecretAccessKey.IsSpecified() &&
-		!key.S3SecretAccessKey.IsNull() {
-		model.SecretAccessKey = types.StringValue(
-			key.S3SecretAccessKey.MustGet(),
-		)
 	}
 }

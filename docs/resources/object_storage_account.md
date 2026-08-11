@@ -8,22 +8,23 @@ description: |-
 
 # katapult_object_storage_account (Resource)
 
-Manages the object storage account for an organization in a given region.
+Manages the lifecycle of an object storage account for an organization in a given region.
 
-A Katapult organization has at most one object storage account per region. This resource creates the account (if it does not already exist) and waits for it to reach the `provisioned` state. Reference its `region` attribute from `katapult_object_storage_bucket` and `katapult_object_storage_access_key` resources to preserve Terraform's lifecycle dependency on the account.
+A Katapult organization has at most one object storage account per region. Use this resource when Terraform should create or own that account lifecycle; it creates the account (if it does not already exist) and waits for it to reach the `provisioned` state. Reference its `region` attribute from `katapult_object_storage_bucket` and `katapult_object_storage_access_key` resources to preserve Terraform's lifecycle dependency on the account.
 
-~> **Only declare one of these per (organization, region).** If your organization already has object storage enabled via the Katapult dashboard, declare this resource anyway and import the existing account — otherwise Terraform cannot clean it up on destroy, and your organization will continue to be billed.
+If the account is managed outside this configuration, buckets and access keys can use a known region directly. Neither this resource nor the account data source is mandatory; the data source is optional verification that an external account exists. Import a dashboard-enabled account only when Terraform should take over its lifecycle, including destroying and purging it when this resource is removed.
+
+~> **Only declare one of these per (organization, region).** The Katapult API enforces this limit. Destroying this resource destroys the account and can affect billing, so do not import an externally managed account unless Terraform should own that lifecycle.
 
 ~> **Only one of these resources may exist per (organization, region).**
 The Katapult API enforces this — a second `katapult_object_storage_account`
 block for the same region will fail to create. If your organization already
-has object storage enabled via the Katapult dashboard, declare this resource
-anyway and **import the existing account** rather than skipping it.
-Otherwise Terraform cannot clean the account up on destroy, and your
-organization will continue to be billed.
+has object storage enabled via the Katapult dashboard, import it only when
+Terraform should take over the account lifecycle, including destroy and trash
+purge. Otherwise leave the account externally managed.
 
-The account is the entrypoint for everything else in this provider's object
-storage surface:
+When Terraform manages the account, this resource is a useful dependency
+entrypoint for the rest of the provider's object storage surface:
 
 * [`katapult_object_storage_bucket`](./object_storage_bucket.md) resources
   use the account's `region`.
@@ -37,6 +38,14 @@ storage surface:
   up to 48 hours). Set the provider's `skip_trash_object_purge` option to
   `true` if you want to keep the account in the trash for manual recovery.
 
+Buckets and access keys for an externally managed account may set a known
+region directly, for example `region = "uk-lon-1"`. Neither this resource nor
+the account data source is mandatory in that case. The
+[`katapult_object_storage_account` data source](../data-sources/object_storage_account.md)
+is optional verification that the external account exists; it does not make
+Terraform own the account lifecycle. An external account is not destroyed when
+buckets or access keys are removed and may continue to incur charges.
+
 ## Regions
 
 Object storage is currently available in a single region, `uk-lon-1` (London,
@@ -44,12 +53,14 @@ UK). `region` is required, but the provider deliberately accepts any non-empty
 value so newly introduced regions can be used without waiting for a provider
 release. The Katapult API rejects unavailable regions. As additional regions
 become available, declare a separate `katapult_object_storage_account` per
-region and reference its `region` from the corresponding buckets and keys.
+region that Terraform should manage, and reference its `region` from the
+corresponding buckets and keys. Use a region literal for accounts managed
+outside the configuration.
 
 ## Minimal Usage
 
-Copy this block verbatim if you don't already have object storage enabled —
-it is the only sensible shape for a single-region setup.
+Use this block when Terraform should enable and manage object storage for the
+region:
 
 ```terraform
 resource "katapult_object_storage_account" "main" {

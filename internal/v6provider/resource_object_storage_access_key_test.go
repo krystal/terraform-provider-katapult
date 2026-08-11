@@ -166,7 +166,7 @@ func accObjectStorageAccessKeyBuckets(t *testing.T) {
 	keyName := baseName
 	bucketName := baseName + "-bkt"
 
-	cfg := objectStorageAccountDataBlock + undent.Stringf(`
+	associatedConfig := objectStorageAccountDataBlock + undent.Stringf(`
 		resource "katapult_object_storage_access_key" "main" {
 		  name = "%s"
 		  region = data.katapult_object_storage_account.main.region
@@ -181,6 +181,21 @@ func accObjectStorageAccessKeyBuckets(t *testing.T) {
 		keyName,
 		bucketName,
 	)
+	revokedConfig := objectStorageAccountDataBlock + undent.Stringf(`
+		resource "katapult_object_storage_access_key" "main" {
+		  name = "%s"
+		  region = data.katapult_object_storage_account.main.region
+		}
+
+		resource "katapult_object_storage_bucket" "main" {
+		  name = "%s"
+		  region = data.katapult_object_storage_account.main.region
+		  read_key_ids  = []
+		  write_key_ids = []
+		}`,
+		keyName,
+		bucketName,
+	)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -191,7 +206,7 @@ func accObjectStorageAccessKeyBuckets(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: cfg,
+				Config: associatedConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultObjectStorageAccessKeyAttrs(
 						tt,
@@ -201,12 +216,20 @@ func accObjectStorageAccessKeyBuckets(t *testing.T) {
 						tt,
 						"katapult_object_storage_bucket.main",
 					),
+					resource.TestCheckResourceAttr(
+						"katapult_object_storage_bucket.main",
+						"read_key_ids.#", "1",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_object_storage_bucket.main",
+						"write_key_ids.#", "1",
+					),
 				),
 			},
-			// Re-apply same config to trigger a Read refresh and verify
-			// read_buckets/write_buckets are populated on the key.
+			// Refresh after the bucket update to verify read_buckets and
+			// write_buckets from the access key's remote state.
 			{
-				Config: cfg,
+				RefreshState: true,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckTypeSetElemAttrPair(
 						"katapult_object_storage_access_key.main",
@@ -219,6 +242,43 @@ func accObjectStorageAccessKeyBuckets(t *testing.T) {
 						"write_buckets.*",
 						"katapult_object_storage_bucket.main",
 						"name",
+					),
+				),
+			},
+			{
+				Config: revokedConfig,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"katapult_object_storage_bucket.main",
+						"read_key_ids.#", "0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_object_storage_bucket.main",
+						"write_key_ids.#", "0",
+					),
+				),
+			},
+			// Refresh only after the revocation has completed. This proves
+			// the inverse access-key associations come from the remote API,
+			// rather than stale state captured before the bucket PATCH.
+			{
+				RefreshState: true,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"katapult_object_storage_bucket.main",
+						"read_key_ids.#", "0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_object_storage_bucket.main",
+						"write_key_ids.#", "0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_object_storage_access_key.main",
+						"read_buckets.#", "0",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_object_storage_access_key.main",
+						"write_buckets.#", "0",
 					),
 				),
 			},
