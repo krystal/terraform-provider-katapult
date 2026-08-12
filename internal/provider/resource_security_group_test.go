@@ -368,7 +368,6 @@ func TestAccKatapultSecurityGroup_allow_all_outbound(t *testing.T) {
 	})
 }
 
-//nolint:lll
 func TestAccKatapultSecurityGroup_associations(t *testing.T) {
 	tt := newTestTools(t)
 
@@ -493,7 +492,6 @@ func TestAccKatapultSecurityGroup_associations(t *testing.T) {
 	})
 }
 
-//nolint:lll
 func TestAccKatapultSecurityGroup_rules(t *testing.T) {
 	tt := newTestTools(t)
 
@@ -851,7 +849,6 @@ func TestAccKatapultSecurityGroup_rules(t *testing.T) {
 	})
 }
 
-//nolint:lll
 func TestAccKatapultSecurityGroup_dynamic_rules(t *testing.T) {
 	tt := newTestTools(t)
 

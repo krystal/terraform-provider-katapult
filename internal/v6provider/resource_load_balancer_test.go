@@ -21,7 +21,6 @@ func init() { //nolint:gochecknoinits
 	})
 }
 
-//nolint:lll
 func testSweepLoadBalancers(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()

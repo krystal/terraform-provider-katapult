@@ -71,7 +71,6 @@ func TestAccKatapultDataSourceSecurityGroup_minimal(t *testing.T) {
 	})
 }
 
-//nolint:lll
 func TestAccKatapultDataSourceSecurityGroup_include_rules(t *testing.T) {
 	tt := newTestTools(t)
 

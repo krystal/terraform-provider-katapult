@@ -68,7 +68,6 @@ func (d *VirtualMachineDataSource) Configure(
 	d.M = meta
 }
 
-//nolint:funlen
 func (d *VirtualMachineDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,

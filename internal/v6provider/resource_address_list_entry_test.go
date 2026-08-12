@@ -10,7 +10,6 @@ import (
 	core "github.com/krystal/go-katapult/next/core"
 )
 
-//nolint:lll
 func TestAccKatapultAddressListEntry_minimal(t *testing.T) {
 	tt := newTestTools(t)
 	name := tt.ResourceName()
@@ -57,7 +56,6 @@ func TestAccKatapultAddressListEntry_minimal(t *testing.T) {
 	})
 }
 
-//nolint:lll
 func TestAccKatapultAddressListEntry_update(t *testing.T) {
 	tt := newTestTools(t)
 

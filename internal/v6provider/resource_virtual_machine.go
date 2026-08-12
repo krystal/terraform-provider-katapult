@@ -705,7 +705,6 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 		return
 	}
 
-	//nolint:lll
 	build := rawBuild.(core.GetVirtualMachinesBuildsVirtualMachineBuild200ResponseVirtualMachineBuild)
 	vmPartial, err2 := build.VirtualMachine.Get()
 	if err2 != nil || vmPartial.Id == nil {
@@ -1344,7 +1343,7 @@ func (r *VirtualMachineResource) ImportState(
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-//nolint:funlen,gocyclo
+//nolint:gocyclo
 func (r *VirtualMachineResource) vmRead(
 	ctx context.Context,
 	model *VirtualMachineResourceModel,
@@ -2145,7 +2144,6 @@ func allocateIPsToVM(
 			)
 		}
 
-		//nolint:lll
 		requestBody := core.PostVirtualMachineNetworkInterfaceAllocateIpJSONRequestBody{
 			IpAddress: core.IPAddressLookup{Id: &id},
 			VirtualMachineNetworkInterface: core.
@@ -2189,7 +2187,6 @@ func updateVMNetworkSpeedProfile(
 		}
 		ifaceID := *iface.Id
 
-		//nolint:lll
 		requestBody := core.PatchVirtualMachineNetworkInterfaceUpdateSpeedProfileJSONRequestBody{
 			VirtualMachineNetworkInterface: core.
 				VirtualMachineNetworkInterfaceLookup{

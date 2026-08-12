@@ -153,7 +153,6 @@ func getLBRules(
 	return rules, nil
 }
 
-//nolint:lll
 func convertCoreLBRulesToAttrValue(
 	rules []core.GetLoadBalancersRulesLoadBalancerRule200ResponseLoadBalancerRule,
 ) []attr.Value {
