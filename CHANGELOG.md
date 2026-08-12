@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.19](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.18...v0.0.19) (2026-08-12)
+
+
+### Features
+
+* Add Object Storage Resources ([#146](https://github.com/krystal/terraform-provider-katapult/issues/146)) ([fd6fd86](https://github.com/krystal/terraform-provider-katapult/commit/fd6fd861ba58bd11f0053dd1a863d94e5776200c))
+
+
+### Bug Fixes
+
+* **deps:** resolve dependency security vulnerabilities ([#190](https://github.com/krystal/terraform-provider-katapult/issues/190)) ([b3425ec](https://github.com/krystal/terraform-provider-katapult/commit/b3425ecd5fb8d351d512ce401cc837e36e670e58))
+* improve API error handling and prevent nil dereferences ([#167](https://github.com/krystal/terraform-provider-katapult/issues/167)) ([f520218](https://github.com/krystal/terraform-provider-katapult/commit/f520218483e913645832b78f7f509181e855397d))
+
 ## [0.0.18](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.17...v0.0.18) (2026-07-09)
 
 
