@@ -67,6 +67,11 @@ Permissions can be granted at two levels:
    resource after the next refresh — these attributes are read-only and
    reflect the bucket side of the relationship.
 
+Because per-bucket permissions are managed by bucket resources, `read_buckets`
+and `write_buckets` may retain their previous values immediately after an apply
+that changes a bucket ACL. Run a subsequent plan or
+`terraform apply -refresh-only` to refresh these derived values.
+
 ## Using the Credentials
 
 The three attributes you typically pass to an object storage client are:

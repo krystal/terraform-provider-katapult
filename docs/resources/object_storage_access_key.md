@@ -67,6 +67,11 @@ Permissions can be granted at two levels:
    resource after the next refresh — these attributes are read-only and
    reflect the bucket side of the relationship.
 
+Because per-bucket permissions are managed by bucket resources, `read_buckets`
+and `write_buckets` may retain their previous values immediately after an apply
+that changes a bucket ACL. Run a subsequent plan or
+`terraform apply -refresh-only` to refresh these derived values.
+
 ## Using the Credentials
 
 The three attributes you typically pass to an object storage client are:
@@ -149,10 +154,10 @@ output "backup_server_url" {
 
 - `access_key_id` (String) Access key ID for authenticating object storage clients.
 - `id` (String) Internal Katapult ID of the access key.
-- `read_buckets` (Set of String) Bucket names this key can read from. Populated via a bucket's `read_key_ids`.
+- `read_buckets` (Set of String) Bucket names this key can read from, derived from bucket `read_key_ids`. Bucket ACL changes made during the same apply are reflected after the access key is next refreshed.
 - `secret_access_key` (String, Sensitive) Secret access key. Available only at creation; not retrievable via the API. Null after import.
 - `server_url` (String) Endpoint URL for configuring object storage clients.
-- `write_buckets` (Set of String) Bucket names this key can write to. Populated via a bucket's `write_key_ids`.
+- `write_buckets` (Set of String) Bucket names this key can write to, derived from bucket `write_key_ids`. Bucket ACL changes made during the same apply are reflected after the access key is next refreshed.
 
 ## Import
 

@@ -126,14 +126,18 @@ Manages an access key for a Katapult object storage cluster.
 			},
 			"read_buckets": schema.SetAttribute{
 				Computed: true,
-				MarkdownDescription: "Bucket names this key can read from. " +
-					"Populated via a bucket's `read_key_ids`.",
+				MarkdownDescription: "Bucket names this key can read from, " +
+					"derived from bucket `read_key_ids`. Bucket ACL changes made " +
+					"during the same apply are reflected after the access key is " +
+					"next refreshed.",
 				ElementType: types.StringType,
 			},
 			"write_buckets": schema.SetAttribute{
 				Computed: true,
-				MarkdownDescription: "Bucket names this key can write to. " +
-					"Populated via a bucket's `write_key_ids`.",
+				MarkdownDescription: "Bucket names this key can write to, " +
+					"derived from bucket `write_key_ids`. Bucket ACL changes made " +
+					"during the same apply are reflected after the access key is " +
+					"next refreshed.",
 				ElementType: types.StringType,
 			},
 			"access_key_id": schema.StringAttribute{
