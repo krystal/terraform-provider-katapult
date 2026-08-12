@@ -1,0 +1,917 @@
+---
+version: 1
+interactions:
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/organizations/organization/object_storage/object_storage_cluster?object_storage_cluster%5Bregion%5D=uk-lon-1&organization%5Bsub_domain%5D=terraform-acc-test
+    method: GET
+  response:
+    body: '{"object_storage_account":{"region":"uk-lon-1","created_at":1786439966,"provisioning_state":"provisioned","size":0,"bucket_count":0,"data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "356"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:19:34 GMT
+      Etag:
+      - W/"691a853ec1f15e6d7a1c5e50a306811a"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "992"
+      X-Request-Id:
+      - 223fbcaa-6165-4e88-962d-526f741a4795
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"object_storage_cluster":{"region":"uk-lon-1"},"organization":{"sub_domain":"terraform-acc-test"},"properties":{"all_buckets_read":true,"all_objects_read":true,"all_objects_write":true,"name":"tf-acc-test-update-permissions-lsehxhhub4ng"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/organizations/organization/object_storage/object_storage_cluster/access_keys
+    method: POST
+  response:
+    body: '{"object_storage_access_key":{"id":"objkey_WTI41KbUBGJh467n","name":"tf-acc-test-update-permissions-lsehxhhub4ng","created_at":1786439974,"region":"uk-lon-1","state":"pending","all_buckets_read":true,"all_objects_read":true,"all_objects_write":true,"read_buckets":[],"write_buckets":[],"server_url":null,"s3_access_key_id":null,"s3_secret_access_key":null}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "357"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:19:34 GMT
+      Etag:
+      - W/"ee2b66a6839018cd695d36f6327a3220"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "991"
+      X-Request-Id:
+      - 5e1bf632-1393-4807-a655-0d7d154cd10b
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"access_key":{"id":"objkey_WTI41KbUBGJh467n"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key/generate_credentials
+    method: POST
+  response:
+    body: '{"error":{"code":"object_storage_provisioning_error","description":"Provisioning
+      is in progress. Please try again later.","detail":{}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache
+      Content-Length:
+      - "135"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:19:34 GMT
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Api-Schema:
+      - json-error
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "990"
+      X-Request-Id:
+      - d5be8680-f889-4776-9a45-ca8ac6b5c0db
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{"access_key":{"id":"objkey_WTI41KbUBGJh467n"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key/generate_credentials
+    method: POST
+  response:
+    body: '{"error":{"code":"object_storage_provisioning_error","description":"Provisioning
+      is in progress. Please try again later.","detail":{}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache
+      Content-Length:
+      - "135"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:19:34 GMT
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Api-Schema:
+      - json-error
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "989"
+      X-Request-Id:
+      - a34bec95-d864-4c9f-b97d-c6176f956f5a
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{"access_key":{"id":"objkey_WTI41KbUBGJh467n"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key/generate_credentials
+    method: POST
+  response:
+    body: '{"error":{"code":"object_storage_provisioning_error","description":"Provisioning
+      is in progress. Please try again later.","detail":{}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache
+      Content-Length:
+      - "135"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:19:35 GMT
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Api-Schema:
+      - json-error
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "988"
+      X-Request-Id:
+      - a10b3287-0422-4c51-9b13-4b4c3036e2fa
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{"access_key":{"id":"objkey_WTI41KbUBGJh467n"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key/generate_credentials
+    method: POST
+  response:
+    body: '{"error":{"code":"object_storage_provisioning_error","description":"Provisioning
+      is in progress. Please try again later.","detail":{}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache
+      Content-Length:
+      - "135"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:19:37 GMT
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Api-Schema:
+      - json-error
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "987"
+      X-Request-Id:
+      - e797faf0-1849-41b4-8067-99da834e3c1d
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{"access_key":{"id":"objkey_WTI41KbUBGJh467n"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key/generate_credentials
+    method: POST
+  response:
+    body: '{"error":{"code":"object_storage_provisioning_error","description":"Provisioning
+      is in progress. Please try again later.","detail":{}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache
+      Content-Length:
+      - "135"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:19:42 GMT
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Api-Schema:
+      - json-error
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "986"
+      X-Request-Id:
+      - dbee6e60-0d61-42c7-beec-5ff988fb1e56
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{"access_key":{"id":"objkey_WTI41KbUBGJh467n"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key/generate_credentials
+    method: POST
+  response:
+    body: '{"error":{"code":"object_storage_provisioning_error","description":"Provisioning
+      is in progress. Please try again later.","detail":{}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache
+      Content-Length:
+      - "135"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:19:50 GMT
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Api-Schema:
+      - json-error
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "985"
+      X-Request-Id:
+      - ff3ea7fe-767f-42f8-9f3b-b4f381736cef
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{"access_key":{"id":"objkey_WTI41KbUBGJh467n"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key/generate_credentials
+    method: POST
+  response:
+    body: '{"object_storage_access_key":{"all_buckets_read":true,"all_objects_read":true,"all_objects_write":true,"created_at":1786439974,"id":"objkey_WTI41KbUBGJh467n","name":"tf-acc-test-update-permissions-lsehxhhub4ng","read_buckets":[],"region":"uk-lon-1","s3_access_key_id":"a5b2eac9fb6c438bb92ab1f4eb9a9848","s3_secret_access_key":"redacted-","server_url":"uk-lon-1.katapultobjects.com:443","state":"pending","write_buckets":[]}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "447"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:20:07 GMT
+      Etag:
+      - W/"29fa824c86f9a522e3bd111a50d5b462"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "999"
+      X-Request-Id:
+      - 87a99ba0-cef1-45ae-8646-04588333f0d3
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key?access_key%5Bid%5D=objkey_WTI41KbUBGJh467n
+    method: GET
+  response:
+    body: '{"object_storage_access_key":{"id":"objkey_WTI41KbUBGJh467n","name":"tf-acc-test-update-permissions-lsehxhhub4ng","created_at":1786439974,"region":"uk-lon-1","state":"pending","all_buckets_read":true,"all_objects_read":true,"all_objects_write":true,"read_buckets":[],"write_buckets":[],"server_url":"uk-lon-1.katapultobjects.com:443","s3_access_key_id":"a5b2eac9fb6c438bb92ab1f4eb9a9848","s3_secret_access_key":null}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "417"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:20:07 GMT
+      Etag:
+      - W/"546ede6310b396afc8764dba3a98e693"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "998"
+      X-Request-Id:
+      - 7133982b-808e-4b83-8b1d-bb02251cb03c
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/organizations/organization/object_storage/object_storage_cluster?object_storage_cluster%5Bregion%5D=uk-lon-1&organization%5Bsub_domain%5D=terraform-acc-test
+    method: GET
+  response:
+    body: '{"object_storage_account":{"region":"uk-lon-1","created_at":1786439966,"provisioning_state":"provisioned","size":0,"bucket_count":0,"data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "356"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:20:08 GMT
+      Etag:
+      - W/"691a853ec1f15e6d7a1c5e50a306811a"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "997"
+      X-Request-Id:
+      - 61d4bb92-63ad-4dfd-82ab-6b4b826bee74
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/organizations/organization/object_storage/object_storage_cluster?object_storage_cluster%5Bregion%5D=uk-lon-1&organization%5Bsub_domain%5D=terraform-acc-test
+    method: GET
+  response:
+    body: '{"object_storage_account":{"region":"uk-lon-1","created_at":1786439966,"provisioning_state":"provisioned","size":0,"bucket_count":0,"data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "356"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:20:08 GMT
+      Etag:
+      - W/"691a853ec1f15e6d7a1c5e50a306811a"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "996"
+      X-Request-Id:
+      - b2a8d21d-594d-4479-b075-1953d7cbb0e3
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key?access_key%5Bid%5D=objkey_WTI41KbUBGJh467n
+    method: GET
+  response:
+    body: '{"object_storage_access_key":{"id":"objkey_WTI41KbUBGJh467n","name":"tf-acc-test-update-permissions-lsehxhhub4ng","created_at":1786439974,"region":"uk-lon-1","state":"configured","all_buckets_read":true,"all_objects_read":true,"all_objects_write":true,"read_buckets":[],"write_buckets":[],"server_url":"uk-lon-1.katapultobjects.com:443","s3_access_key_id":"a5b2eac9fb6c438bb92ab1f4eb9a9848","s3_secret_access_key":null}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "420"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:20:08 GMT
+      Etag:
+      - W/"187104dd871f3fd8c3abdcb97fe2198b"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "995"
+      X-Request-Id:
+      - 438a4c42-aaa3-45a4-88e0-4496f3f567f1
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/organizations/organization/object_storage/object_storage_cluster?object_storage_cluster%5Bregion%5D=uk-lon-1&organization%5Bsub_domain%5D=terraform-acc-test
+    method: GET
+  response:
+    body: '{"object_storage_account":{"region":"uk-lon-1","created_at":1786439966,"provisioning_state":"provisioned","size":0,"bucket_count":0,"data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "356"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:20:08 GMT
+      Etag:
+      - W/"691a853ec1f15e6d7a1c5e50a306811a"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "994"
+      X-Request-Id:
+      - c670a9a5-6bd3-49ef-8a03-f84cf85605cc
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key?access_key%5Bid%5D=objkey_WTI41KbUBGJh467n
+    method: GET
+  response:
+    body: '{"object_storage_access_key":{"id":"objkey_WTI41KbUBGJh467n","name":"tf-acc-test-update-permissions-lsehxhhub4ng","created_at":1786439974,"region":"uk-lon-1","state":"configured","all_buckets_read":true,"all_objects_read":true,"all_objects_write":true,"read_buckets":[],"write_buckets":[],"server_url":"uk-lon-1.katapultobjects.com:443","s3_access_key_id":"a5b2eac9fb6c438bb92ab1f4eb9a9848","s3_secret_access_key":null}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "420"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:20:08 GMT
+      Etag:
+      - W/"187104dd871f3fd8c3abdcb97fe2198b"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "993"
+      X-Request-Id:
+      - 324b5016-a8a7-43b7-a4a2-05ef3d4ab2a6
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"access_key":{"id":"objkey_WTI41KbUBGJh467n"},"properties":{"all_buckets_read":false,"all_objects_read":false,"all_objects_write":false,"name":"tf-acc-test-update-permissions-lsehxhhub4ng"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key
+    method: PATCH
+  response:
+    body: '{"object_storage_access_key":{"id":"objkey_WTI41KbUBGJh467n","name":"tf-acc-test-update-permissions-lsehxhhub4ng","created_at":1786439974,"region":"uk-lon-1","state":"pending","all_buckets_read":false,"all_objects_read":false,"all_objects_write":false,"read_buckets":[],"write_buckets":[],"server_url":"uk-lon-1.katapultobjects.com:443","s3_access_key_id":"a5b2eac9fb6c438bb92ab1f4eb9a9848","s3_secret_access_key":null}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "420"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:20:09 GMT
+      Etag:
+      - W/"2675f5a57916672c9d4425662c963be4"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "992"
+      X-Request-Id:
+      - 624192bc-0aa2-4fb6-ad30-51c066ee41e5
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key?access_key%5Bid%5D=objkey_WTI41KbUBGJh467n
+    method: GET
+  response:
+    body: '{"object_storage_access_key":{"id":"objkey_WTI41KbUBGJh467n","name":"tf-acc-test-update-permissions-lsehxhhub4ng","created_at":1786439974,"region":"uk-lon-1","state":"configured","all_buckets_read":false,"all_objects_read":false,"all_objects_write":false,"read_buckets":[],"write_buckets":[],"server_url":"uk-lon-1.katapultobjects.com:443","s3_access_key_id":"a5b2eac9fb6c438bb92ab1f4eb9a9848","s3_secret_access_key":null}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "423"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:20:09 GMT
+      Etag:
+      - W/"177682e2d43a49e9542ad86f10a5398a"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "991"
+      X-Request-Id:
+      - bdc32781-8612-478c-be48-61e96900f0cc
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/organizations/organization/object_storage/object_storage_cluster?object_storage_cluster%5Bregion%5D=uk-lon-1&organization%5Bsub_domain%5D=terraform-acc-test
+    method: GET
+  response:
+    body: '{"object_storage_account":{"region":"uk-lon-1","created_at":1786439966,"provisioning_state":"provisioned","size":0,"bucket_count":0,"data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "356"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:20:09 GMT
+      Etag:
+      - W/"691a853ec1f15e6d7a1c5e50a306811a"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "990"
+      X-Request-Id:
+      - 0146dd72-31e9-466e-97a6-eb27b84e0bc5
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/organizations/organization/object_storage/object_storage_cluster?object_storage_cluster%5Bregion%5D=uk-lon-1&organization%5Bsub_domain%5D=terraform-acc-test
+    method: GET
+  response:
+    body: '{"object_storage_account":{"region":"uk-lon-1","created_at":1786439966,"provisioning_state":"provisioned","size":0,"bucket_count":0,"data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01","country":{"id":"ctry_6AO9tYYugvTGnd5b","name":"United
+      Kingdom","iso_code2":"GB","iso_code3":"GBR","time_zone":"Europe/London","eu":false}}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "356"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:20:09 GMT
+      Etag:
+      - W/"691a853ec1f15e6d7a1c5e50a306811a"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "989"
+      X-Request-Id:
+      - 1611ad6c-e895-4bc1-8b10-1e0810f12cac
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key?access_key%5Bid%5D=objkey_WTI41KbUBGJh467n
+    method: GET
+  response:
+    body: '{"object_storage_access_key":{"id":"objkey_WTI41KbUBGJh467n","name":"tf-acc-test-update-permissions-lsehxhhub4ng","created_at":1786439974,"region":"uk-lon-1","state":"configured","all_buckets_read":false,"all_objects_read":false,"all_objects_write":false,"read_buckets":[],"write_buckets":[],"server_url":"uk-lon-1.katapultobjects.com:443","s3_access_key_id":"a5b2eac9fb6c438bb92ab1f4eb9a9848","s3_secret_access_key":null}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "423"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:20:09 GMT
+      Etag:
+      - W/"177682e2d43a49e9542ad86f10a5398a"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "988"
+      X-Request-Id:
+      - 43fafbdb-773d-4517-ab4f-1ca7d5237023
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"access_key":{"id":"objkey_WTI41KbUBGJh467n"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key
+    method: DELETE
+  response:
+    body: '{"success":true}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "16"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:20:17 GMT
+      Etag:
+      - W/"c955e57777ec0d73639dca6748560d00"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "987"
+      X-Request-Id:
+      - 50ec1a9c-1823-40b7-ac89-afd269134bb9
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/object_storage/access_keys/access_key?access_key%5Bid%5D=objkey_WTI41KbUBGJh467n
+    method: GET
+  response:
+    body: '{"error":{"code":"object_storage_access_key_not_found","description":"No
+      object storage access key was found matching any of the criteria provided in
+      the arguments.","detail":{}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache
+      Content-Length:
+      - "179"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 11 Aug 2026 09:20:17 GMT
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Api-Schema:
+      - json-error
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "986"
+      X-Request-Id:
+      - 4be64c85-d504-4d6c-b92a-ded1d7729f32
+    status: 404 Not Found
+    code: 404
+    duration: ""

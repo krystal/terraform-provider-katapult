@@ -154,7 +154,6 @@ func getLBRules(
 }
 
 func convertCoreLBRulesToAttrValue(
-	//nolint:lll // generated type name
 	rules []core.GetLoadBalancersRulesLoadBalancerRule200ResponseLoadBalancerRule,
 ) []attr.Value {
 	attrs := make([]attr.Value, len(rules))

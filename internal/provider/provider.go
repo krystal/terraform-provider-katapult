@@ -35,7 +35,7 @@ type Config struct {
 	TestMode            bool
 }
 
-func New(c *Config) func() *schema.Provider { //nolint:funlen
+func New(c *Config) func() *schema.Provider {
 	once.Do(func() {
 		// Set descriptions to support markdown syntax, this will be used in
 		// document generation and the language server.
@@ -134,7 +134,7 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 				"katapult_virtual_machine":       resourceVirtualMachine(),
 				"katapult_virtual_machine_group": resourceVirtualMachineGroup(),
 			},
-			//nolint:lll
+
 			DataSourcesMap: map[string]*schema.Resource{
 				"katapult_data_center":              dataSourceDataCenter(),
 				"katapult_disk_template":            dataSourceDiskTemplate(),
@@ -157,15 +157,12 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 			// TEST RESOURCES
 			p.ResourcesMap["katapult_legacy_ip"] = resourceIP()
 
-			//nolint:lll // This is a test resource.
 			p.ResourcesMap["katapult_legacy_file_storage_volume"] = resourceFileStorageVolume()
 
 			// TEST DATA SOURCES
 
-			//nolint:lll // This is a test resource.
 			p.DataSourcesMap["katapult_legacy_file_storage_volume"] = dataSourceFileStorageVolume()
 
-			//nolint:lll // This is a test resource.
 			p.DataSourcesMap["katapult_legacy_file_storage_volumes"] = dataSourceFileStorageVolumes()
 		}
 
@@ -196,7 +193,6 @@ func boolOrEnv(in bool, env string) bool {
 	return false
 }
 
-//nolint:funlen
 func configure(
 	conf *Config,
 	p *schema.Provider,

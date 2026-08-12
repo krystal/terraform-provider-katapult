@@ -59,6 +59,9 @@ Use the narrowest relevant command while working, then broaden before handoff:
 - `mise run test:acceptance` runs acceptance tests against recorded cassettes.
 - Run one acceptance test by narrowing both its package and exact test name:
   `TEST=./internal/v6provider TESTARGS='-run ^TestAccKatapultIP_ipv4$' mise run test:acceptance`.
+- For slash-separated subtests, anchor every path component. Because the mise
+  task delegates to Make, escape end anchors as `$$`, for example:
+  `TEST=./internal/v6provider TESTARGS='-run ^TestAccKatapultObjectStorage_scenarios$$/^Bucket_minimal$$' mise run test:acceptance`.
 - Run a related group with a Go test regular expression, for example:
   `TEST=./internal/v6provider TESTARGS='-run ^TestAccKatapultIP_' mise run test:acceptance`.
 - `mise run check` runs the fast local suite, including format, lint, unit,
@@ -71,6 +74,10 @@ Use the narrowest relevant command while working, then broaden before handoff:
 `VCR=rec` and `VCR=off` can make live Katapult API requests. Do not use either
 without explicit authorization for live acceptance testing. After tests, check
 `git status` for cassette or random-ID drift.
+
+`retry.StateChangeConf.Refresh` runs in a goroutine. Use the value returned by
+`WaitForStateContext`; do not capture refresh results for unsynchronized reads
+outside the callback because cancellation can return before a refresh finishes.
 
 VCR cassette YAML is massive and can exhaust agent context very quickly. Do not
 print whole cassette files or review complete cassette diffs by default. Start
