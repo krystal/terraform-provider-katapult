@@ -149,7 +149,19 @@ tfplugindocs generate --provider-name terraform-provider-katapult
 
 [tasks."docs:check"]
 description = "Validate provider documentation"
-run = "tfplugindocs validate --provider-name terraform-provider-katapult"
+run = '''
+tfplugindocs validate --provider-name terraform-provider-katapult
+
+uncategorized_docs="$(
+  rg --files-without-match '^subcategory: "[^"]+"$' \
+    docs/resources docs/data-sources || true
+)"
+if [ -n "$uncategorized_docs" ]; then
+  echo "Provider documents must have a non-empty subcategory:" >&2
+  echo "$uncategorized_docs" >&2
+  exit 1
+fi
+'''
 
 [tasks."docs:generated"]
 description = "Check that generated provider documentation is current"
