@@ -15,6 +15,11 @@ the legacy Terraform Plugin SDK and the Terraform Plugin Framework.
 - `docs` is generated provider documentation. Change provider schemas or
   templates, then run `mise run docs:generate`; do not hand-edit generated
   output.
+- Every resource and data source belongs to a documentation subcategory:
+  `Compute`, `Infrastructure`, `Storage`, `Networking`, or `Organization`.
+  Maintain the mappings in `templates/resources.md.tmpl` and
+  `templates/data-sources.md.tmpl`; bespoke templates must use the matching
+  category. `mise run docs:check` rejects uncategorized pages.
 - `CONTRIBUTING.md` documents the intentionally gradual v5-to-v6 migration and
   the ownership rules between both implementations.
 
