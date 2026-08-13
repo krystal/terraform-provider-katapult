@@ -534,17 +534,22 @@ func createObjectStorageAccount(
 }
 
 // waitForObjectStorageAccountProvisioned polls the account until it reaches
-// the `provisioned` state. A transient `failed` state during the first
-// settling window is tolerated; a sustained `failed` state results in an
-// error that includes the API response body for diagnostics.
+// the `provisioned` state. A transient `failed` state is tolerated for a
+// settling window; a sustained `failed` state results in an error that includes
+// the API response body for diagnostics.
 func waitForObjectStorageAccountProvisioned(
 	ctx context.Context,
 	m *Meta,
 	region string,
 ) (*core.ObjectStorageAccount, error) {
-	const settleWindow = 15 * time.Second
+	settleWindow := 15 * time.Second
+	if replayPollInterval := m.stateChangePollInterval(); replayPollInterval > 0 {
+		// Replay advances recorded states per poll rather than over wall-clock
+		// seconds. Preserve a bounded settling window without waiting 15 seconds.
+		settleWindow = 15 * replayPollInterval
+	}
 
-	firstSeen := time.Now()
+	var failedSince time.Time
 
 	waiter := &retry.StateChangeConf{
 		Pending: []string{
@@ -564,20 +569,27 @@ func waitForObjectStorageAccountProvisioned(
 			}
 			state := deref(acct.ProvisioningState)
 
-			if state == core.ObjectStorageAccountProvisioningStateEnumFailed &&
-				time.Since(firstSeen) > settleWindow {
-				return acct, string(state), fmt.Errorf(
-					"object storage account provisioning failed "+
-						"for region %q after %s — contact Katapult support",
-					region, settleWindow,
-				)
+			if state == core.ObjectStorageAccountProvisioningStateEnumFailed {
+				if failedSince.IsZero() {
+					failedSince = time.Now()
+				}
+				if time.Since(failedSince) > settleWindow {
+					return acct, string(state), fmt.Errorf(
+						"object storage account provisioning failed "+
+							"for region %q after %s — contact Katapult support",
+						region, settleWindow,
+					)
+				}
+			} else {
+				failedSince = time.Time{}
 			}
 
 			return acct, string(state), nil
 		},
 		Timeout:                   5 * time.Minute,
-		Delay:                     2 * time.Second,
-		MinTimeout:                5 * time.Second,
+		Delay:                     m.stateChangeDelay(2 * time.Second),
+		MinTimeout:                m.stateChangeDelay(5 * time.Second),
+		PollInterval:              m.stateChangePollInterval(),
 		ContinuousTargetOccurence: 1,
 	}
 
