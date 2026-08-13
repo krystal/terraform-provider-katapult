@@ -504,6 +504,66 @@ func TestObjectStorageAccountCreateRetainsStateWhenWaiterFails(
 	requireKnownNullString(t, state.ProvisioningState)
 }
 
+func TestObjectStorageAccountProvisioningWaiterReplayTiming(t *testing.T) {
+	tests := []struct {
+		name       string
+		states     []string
+		wantState  string
+		wantErr    string
+		wantMinGet int32
+	}{
+		{
+			name:      "transient failure recovers",
+			states:    []string{"failed", "provisioned"},
+			wantState: "provisioned",
+		},
+		{
+			name:       "sustained failure terminates",
+			states:     []string{"failed"},
+			wantErr:    "object storage account provisioning failed",
+			wantMinGet: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var getCalls atomic.Int32
+			meta := newObjectStorageFailureTestMeta(t, http.HandlerFunc(
+				func(w http.ResponseWriter, _ *http.Request) {
+					call := getCalls.Add(1)
+					stateIndex := min(int(call)-1, len(tt.states)-1)
+					w.Header().Set("Content-Type", "application/json")
+					_, _ = w.Write([]byte(`{
+						"object_storage_account": {
+							"region": "uk-lon-1",
+							"provisioning_state": "` + tt.states[stateIndex] + `"
+						}
+					}`))
+				},
+			))
+			meta.testMode = true
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+
+			account, err := waitForObjectStorageAccountProvisioned(
+				ctx, meta, "uk-lon-1",
+			)
+
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				require.GreaterOrEqual(t, getCalls.Load(), tt.wantMinGet)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, account)
+			require.Equal(t, tt.wantState, string(*account.ProvisioningState))
+			require.Equal(t, len(tt.states), int(getCalls.Load()))
+		})
+	}
+}
+
 func TestObjectStorageAccountDeleteResumesTrashPurgeFromPrivateState(
 	t *testing.T,
 ) {

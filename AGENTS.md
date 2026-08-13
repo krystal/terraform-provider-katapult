@@ -87,6 +87,11 @@ without explicit authorization for live acceptance testing. After tests, check
 `WaitForStateContext`; do not capture refresh results for unsynchronized reads
 outside the callback because cancellation can return before a refresh finishes.
 
+Route every `StateChangeConf` delay, minimum timeout, and poll interval through
+the provider `Meta` timing helpers, including test sweepers. Compress any
+additional wall-clock settling window in replay mode so recorded state
+transitions remain fast without changing production timing.
+
 VCR cassette YAML is massive and can exhaust agent context very quickly. Do not
 print whole cassette files or review complete cassette diffs by default. Start
 with `git diff --stat`, `git diff --numstat`, and `git diff --name-only`, then use
