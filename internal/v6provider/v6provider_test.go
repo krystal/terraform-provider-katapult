@@ -18,6 +18,7 @@ import (
 	"github.com/dnaeon/go-vcr/recorder"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
 	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
@@ -76,6 +77,8 @@ func skipUnlessAcceptance(t *testing.T) {
 
 type providerFactoryList map[string]func() (tfprotov6.ProviderServer, error)
 
+type v5ProviderFactoryList map[string]func() (tfprotov5.ProviderServer, error)
+
 type stopRequests struct{}
 
 func (s *stopRequests) RoundTrip(_ *http.Request) (*http.Response, error) {
@@ -91,6 +94,7 @@ type testTools struct {
 	HTTPClient        *http.Client
 	Meta              *Meta
 	ProviderFactories providerFactoryList
+	LegacyVMFactories v5ProviderFactoryList
 	noHTTP            bool
 	randID            string
 }
@@ -147,6 +151,19 @@ func newTestTools(t *testing.T) *testTools {
 	)
 
 	tt.Meta = meta
+	tt.LegacyVMFactories = v5ProviderFactoryList{
+		//nolint:unparam
+		"katapult": func() (tfprotov5.ProviderServer, error) {
+			p := v5provider.New(v5Config)()
+			// Re-register the retained legacy implementation under its
+			// historical production type name so Terraform writes genuine
+			// protocol-v5 state for migration testing.
+			legacyVM := p.ResourcesMap["katapult_legacy_virtual_machine"]
+			p.ResourcesMap["katapult_virtual_machine"] = legacyVM
+
+			return p.GRPCProvider(), nil
+		},
+	}
 	tt.ProviderFactories = providerFactoryList{
 		"katapult": func() (tfprotov6.ProviderServer, error) {
 			muxOnce.Do(func() {
@@ -405,9 +422,7 @@ func getKatapultDataCenter(tt *testTools, permalink string) *core.DataCenter {
 	}
 }
 
-// Terraform TestCheckFunc helpers
-//
-//nolint:unused // will be used eventually
+// Terraform TestCheckFunc helpers.
 func testCheckGeneratedResourceName(
 	name string,
 	key string,
@@ -423,7 +438,6 @@ func testCheckGeneratedResourceName(
 	)
 }
 
-//nolint:unused // will be used eventually
 func testCheckGeneratedHostnameName(
 	name string,
 	key string,

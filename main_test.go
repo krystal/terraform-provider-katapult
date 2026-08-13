@@ -28,8 +28,6 @@ func TestLegacyProviderRegistrations(t *testing.T) {
 	assert.Equal(t, []string{
 		"katapult_security_group",
 		"katapult_security_group_rule",
-		"katapult_virtual_machine",
-		"katapult_virtual_machine_group",
 	}, sortedKeys(legacyProvider.ResourcesMap),
 		"new resources belong in internal/v6provider; "+
 			"only remove entries during migration")
@@ -44,9 +42,6 @@ func TestLegacyProviderRegistrations(t *testing.T) {
 		"katapult_security_group_rule",
 		"katapult_security_group_rules",
 		"katapult_security_groups",
-		"katapult_virtual_machine",
-		"katapult_virtual_machine_group",
-		"katapult_virtual_machine_groups",
 		"katapult_virtual_machine_package",
 		"katapult_virtual_machine_packages",
 	}, sortedKeys(legacyProvider.DataSourcesMap),

@@ -1,9 +1,12 @@
-package provider
+package v6provider
 
 import (
+	"fmt"
+	"strconv"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
 )
 
@@ -13,8 +16,9 @@ func TestAccKatapultDataSourceVMGroups_default(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultVMGroupDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -64,24 +68,54 @@ func TestAccKatapultDataSourceVMGroups_default(t *testing.T) {
 						"data.katapult_virtual_machine_groups.src",
 						"id", tt.Meta.confOrganization,
 					),
-					resource.TestCheckResourceAttr(
+					testCheckVMGroupsListContains(
 						"data.katapult_virtual_machine_groups.src",
-						"groups.0.name", name+"-1",
+						name+"-1", true,
 					),
-					resource.TestCheckResourceAttr(
+					testCheckVMGroupsListContains(
 						"data.katapult_virtual_machine_groups.src",
-						"groups.0.segregate", "true",
-					),
-					resource.TestCheckResourceAttr(
-						"data.katapult_virtual_machine_groups.src",
-						"groups.1.name", name+"-2",
-					),
-					resource.TestCheckResourceAttr(
-						"data.katapult_virtual_machine_groups.src",
-						"groups.1.segregate", "false",
+						name+"-2", false,
 					),
 				),
 			},
 		},
 	})
+}
+
+// testCheckVMGroupsListContains searches the groups list for an entry with the
+// given name and segregate value, without assuming a specific list position.
+func testCheckVMGroupsListContains(
+	res, name string,
+	segregate bool,
+) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[res]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", res)
+		}
+
+		countStr := rs.Primary.Attributes["groups.#"]
+		count, _ := strconv.Atoi(countStr)
+
+		wantSegregate := "true"
+		if !segregate {
+			wantSegregate = "false"
+		}
+
+		for i := range count {
+			if rs.Primary.Attributes[fmt.Sprintf("groups.%d.name", i)] == name {
+				segregateKey := fmt.Sprintf("groups.%d.segregate", i)
+				got := rs.Primary.Attributes[segregateKey]
+				if got != wantSegregate {
+					return fmt.Errorf(
+						"group %q: segregate = %s, want %s",
+						name, got, wantSegregate,
+					)
+				}
+				return nil
+			}
+		}
+
+		return fmt.Errorf("no group with name %q found in %s", name, res)
+	}
 }

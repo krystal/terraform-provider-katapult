@@ -10,14 +10,12 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-retryablehttp"
 
-	"github.com/krystal/go-katapult"
 	core "github.com/krystal/go-katapult/next/core"
 
 	"github.com/krystal/go-katapult/namegenerator"
 )
 
 type Meta struct {
-	Client      *katapult.Client
 	Core        core.ClientWithResponsesInterface
 	Logger      hclog.Logger
 	retryClient *retryablehttp.Client

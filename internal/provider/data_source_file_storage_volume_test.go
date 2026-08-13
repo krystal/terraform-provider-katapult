@@ -73,7 +73,7 @@ func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
 			{
 				Config: undent.Stringf(`
 					resource "katapult_legacy_ip" "web" {}
-					resource "katapult_virtual_machine" "web" {
+					resource "katapult_legacy_virtual_machine" "web" {
 						hostname = "%s-web"
 						package       = "rock-3"
 						disk_template = "ubuntu-18-04"
@@ -86,7 +86,7 @@ func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
 					resource "katapult_legacy_file_storage_volume" "my_vol" {
 						name = "%s"
 						associations = [
-							katapult_virtual_machine.web.id,
+							katapult_legacy_virtual_machine.web.id,
 						]
 					}
 
@@ -122,7 +122,7 @@ func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
 			{
 				Config: undent.Stringf(`
 					resource "katapult_legacy_ip" "web" {}
-					resource "katapult_virtual_machine" "web" {
+					resource "katapult_legacy_virtual_machine" "web" {
 						hostname = "%s-web"
 						package       = "rock-3"
 						disk_template = "ubuntu-18-04"
@@ -133,7 +133,7 @@ func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
 					}
 
 					resource "katapult_legacy_ip" "db" {}
-					resource "katapult_virtual_machine" "db" {
+					resource "katapult_legacy_virtual_machine" "db" {
 						hostname = "%s-db"
 						package       = "rock-3"
 						disk_template = "ubuntu-18-04"
@@ -146,8 +146,8 @@ func TestAccKatapultDataSourceFileStorageVolume_associations(t *testing.T) {
 					resource "katapult_legacy_file_storage_volume" "my_vol" {
 						name = "%s"
 						associations = [
-							katapult_virtual_machine.web.id,
-							katapult_virtual_machine.db.id,
+							katapult_legacy_virtual_machine.web.id,
+							katapult_legacy_virtual_machine.db.id,
 						]
 					}
 

@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -592,7 +593,8 @@ func testAccCheckKatapultIPDestroy(
 
 	return func(s *terraform.State) error {
 		for _, rs := range s.RootModule().Resources {
-			if rs.Type != "katapult_ip" {
+			if rs.Type != "katapult_ip" &&
+				rs.Type != "katapult_legacy_ip" {
 				continue
 			}
 
@@ -600,11 +602,26 @@ func testAccCheckKatapultIPDestroy(
 				&core.GetIpAddressParams{
 					IpAddressId: &rs.Primary.ID,
 				})
-			if err == nil && response.JSON200 != nil {
-				return fmt.Errorf(
-					"katapult_ip %s (%s) was not destroyed",
-					rs.Primary.ID, *response.JSON200.IpAddress.Address)
+			if errors.Is(err, core.ErrNotFound) {
+				continue
 			}
+			if err != nil {
+				return fmt.Errorf(
+					"error checking whether %s %s was destroyed: %w",
+					rs.Type, rs.Primary.ID, err,
+				)
+			}
+			if response == nil || response.JSON200 == nil {
+				return fmt.Errorf(
+					"unexpected response checking whether %s %s was destroyed",
+					rs.Type, rs.Primary.ID,
+				)
+			}
+
+			return fmt.Errorf(
+				"%s %s was not destroyed",
+				rs.Type, rs.Primary.ID,
+			)
 		}
 
 		return nil

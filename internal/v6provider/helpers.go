@@ -3,6 +3,8 @@ package v6provider
 import (
 	"context"
 	"errors"
+	"fmt"
+	"slices"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
@@ -11,7 +13,8 @@ import (
 
 func isErrNotFoundOrInTrash(err error, res *core.ObjectInTrashResponse) bool {
 	return errors.Is(err, core.ErrNotFound) ||
-		(res != nil && *res.Code == core.ObjectInTrashEnumObjectInTrash)
+		(res != nil && res.Code != nil &&
+			*res.Code == core.ObjectInTrashEnumObjectInTrash)
 }
 
 func purgeTrashObjectByObjectID(
@@ -31,12 +34,16 @@ func purgeTrashObject(
 	timeout time.Duration,
 	trashObject core.TrashObject,
 ) error {
+	lookup := core.TrashObjectLookup{}
+	if trashObject.Id != nil {
+		lookup.Id = trashObject.Id
+	} else {
+		lookup.ObjectId = trashObject.ObjectId
+	}
+
 	_, err := m.Core.DeleteTrashObjectWithResponse(ctx,
 		core.DeleteTrashObjectJSONRequestBody{
-			TrashObject: core.TrashObjectLookup{
-				Id:       trashObject.Id,
-				ObjectId: trashObject.ObjectId,
-			},
+			TrashObject: lookup,
 		})
 	if err != nil {
 		return err
@@ -45,6 +52,70 @@ func purgeTrashObject(
 	err = waitForTrashObjectNotFound(ctx, m, timeout, trashObject)
 
 	return err
+}
+
+func waitForTaskCompletion(
+	ctx context.Context,
+	m *Meta,
+	timeout time.Duration,
+	taskID string,
+) error {
+	waiter := &retry.StateChangeConf{
+		Pending: []string{
+			string(core.TaskStatusEnumPending),
+			string(core.TaskStatusEnumRunning),
+		},
+		Target: []string{
+			string(core.TaskStatusEnumCompleted),
+		},
+		Refresh: func() (interface{}, string, error) {
+			res, e := m.Core.GetTaskWithResponse(ctx,
+				&core.GetTaskParams{TaskId: &taskID})
+			if e != nil {
+				if res != nil {
+					e = genericAPIError(e, res.Body)
+				}
+				return nil, "", e
+			}
+			if res == nil || res.JSON200 == nil {
+				return nil, "", fmt.Errorf(
+					"unexpected empty response fetching task",
+				)
+			}
+
+			task := res.JSON200.Task
+			if task.Status == nil {
+				return task, "", fmt.Errorf("task status is nil")
+			}
+			if *task.Status == core.TaskStatusEnumFailed {
+				return task, string(*task.Status),
+					fmt.Errorf("task failed")
+			}
+
+			return task, string(*task.Status), nil
+		},
+		Timeout:                   timeout,
+		Delay:                     m.stateChangeDelay(1 * time.Second),
+		MinTimeout:                m.stateChangeDelay(5 * time.Second),
+		PollInterval:              m.stateChangePollInterval(),
+		ContinuousTargetOccurence: 1,
+	}
+
+	_, err := waiter.WaitForStateContext(ctx)
+
+	return err
+}
+
+func stringsDiff(a, b []string) []string {
+	r := []string{}
+
+	for _, v := range a {
+		if !slices.Contains(b, v) {
+			r = append(r, v)
+		}
+	}
+
+	return r
 }
 
 func waitForTrashObjectNotFound(
@@ -57,11 +128,13 @@ func waitForTrashObjectNotFound(
 		Pending: []string{"exists"},
 		Target:  []string{"not_found"},
 		Refresh: func() (interface{}, string, error) {
-			res, err := m.Core.GetTrashObjectWithResponse(ctx,
-				&core.GetTrashObjectParams{
-					TrashObjectId:       trashObject.Id,
-					TrashObjectObjectId: trashObject.ObjectId,
-				})
+			params := &core.GetTrashObjectParams{}
+			if trashObject.Id != nil {
+				params.TrashObjectId = trashObject.Id
+			} else {
+				params.TrashObjectObjectId = trashObject.ObjectId
+			}
+			res, err := m.Core.GetTrashObjectWithResponse(ctx, params)
 			if err != nil {
 				if errors.Is(err, core.ErrNotFound) {
 					return 1, "not_found", nil
