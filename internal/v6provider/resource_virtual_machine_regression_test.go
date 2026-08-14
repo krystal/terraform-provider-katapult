@@ -334,8 +334,9 @@ func TestVirtualMachineResourceUpdateShutsDownBeforePackageDowngrade(
 ) {
 	t.Parallel()
 
-	vmGetCalls := 0
 	var operations []string
+	shutdownRequested := false
+	packageChanged := false
 	client := newVirtualMachineTestClient(t, func(
 		w http.ResponseWriter,
 		r *http.Request,
@@ -343,15 +344,14 @@ func TestVirtualMachineResourceUpdateShutsDownBeforePackageDowngrade(
 		switch {
 		case r.Method == http.MethodGet &&
 			r.URL.Path == "/virtual_machines/virtual_machine":
-			state := "stopped"
+			state := "started"
 			pkg := "rock-3"
-			if vmGetCalls == 0 {
-				state = "started"
+			if shutdownRequested {
+				state = "stopped"
 			}
-			if vmGetCalls >= 3 {
+			if packageChanged {
 				pkg = "rock-1"
 			}
-			vmGetCalls++
 			writeTestJSON(w, http.StatusOK, `{
 				"annotations": [],
 				"virtual_machine": {
@@ -371,12 +371,14 @@ func TestVirtualMachineResourceUpdateShutsDownBeforePackageDowngrade(
 		case r.Method == http.MethodPost &&
 			r.URL.Path == "/virtual_machines/virtual_machine/shutdown":
 			operations = append(operations, "shutdown")
+			shutdownRequested = true
 			writeTestJSON(w, http.StatusOK, `{
 				"task": {"id": "task_shutdown", "status": "pending"}
 			}`)
 		case r.Method == http.MethodPut &&
 			r.URL.Path == "/virtual_machines/virtual_machine/package":
 			operations = append(operations, "package")
+			packageChanged = true
 			writeTestJSON(w, http.StatusOK, `{
 				"task": {"id": "task_package", "status": "pending"}
 			}`)
@@ -580,7 +582,7 @@ func TestVirtualMachineResourceCreateShutdownFailureKeepsCheckpointedID(
 			}`)
 		case r.Method == http.MethodGet &&
 			r.URL.Path == "/virtual_machines/virtual_machine":
-			writeVirtualMachinePowerState(w, core.Started)
+			writeVirtualMachinePowerState(w, "vm_checkpoint", core.Started)
 		case r.Method == http.MethodPost &&
 			r.URL.Path == "/virtual_machines/virtual_machine/shutdown":
 			writeTestJSON(w, http.StatusForbidden, `{

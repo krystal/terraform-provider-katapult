@@ -167,7 +167,7 @@ func TestVirtualMachinePowerReconciliation(t *testing.T) {
 						index = len(tt.states) - 1
 					}
 					stateCall++
-					writeVirtualMachinePowerState(w, tt.states[index])
+					writeVirtualMachinePowerState(w, "vm_power", tt.states[index])
 				case r.Method == http.MethodPost &&
 					strings.HasPrefix(
 						r.URL.Path, "/virtual_machines/virtual_machine/",
@@ -220,7 +220,7 @@ func TestVirtualMachinePowerReconciliationRejectsUnsafeStates(t *testing.T) {
 				r *http.Request,
 			) {
 				if r.Method == http.MethodGet {
-					writeVirtualMachinePowerState(w, state)
+					writeVirtualMachinePowerState(w, "vm_power", state)
 					return
 				}
 				actionCalls++
@@ -285,7 +285,7 @@ func TestVirtualMachinePowerReconciliationActionFailures(t *testing.T) {
 			) {
 				switch r.URL.Path {
 				case "/virtual_machines/virtual_machine":
-					writeVirtualMachinePowerState(w, core.Started)
+					writeVirtualMachinePowerState(w, "vm_power", core.Started)
 				case "/virtual_machines/virtual_machine/shutdown":
 					writeTestJSON(w, tt.actionCode, tt.actionBody)
 				case "/tasks/task":
@@ -311,10 +311,11 @@ func TestVirtualMachinePowerReconciliationActionFailures(t *testing.T) {
 
 func writeVirtualMachinePowerState(
 	w http.ResponseWriter,
+	id string,
 	state core.VirtualMachineStateEnum,
 ) {
 	writeTestJSON(w, http.StatusOK, fmt.Sprintf(`{
 		"annotations": [],
-		"virtual_machine": {"id": "vm_power", "state": %q}
-	}`, state))
+		"virtual_machine": {"id": %q, "state": %q}
+	}`, id, state))
 }
