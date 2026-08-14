@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	resourcetimeouts "github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
@@ -328,6 +329,304 @@ func TestVirtualMachineResourceUpdateClearsDescriptionWithoutUnknownName(
 	require.Equal(t, "", *patchBody.Properties.Description)
 }
 
+func TestVirtualMachineResourceUpdateShutsDownBeforePackageDowngrade(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	vmGetCalls := 0
+	var operations []string
+	client := newVirtualMachineTestClient(t, func(
+		w http.ResponseWriter,
+		r *http.Request,
+	) {
+		switch {
+		case r.Method == http.MethodGet &&
+			r.URL.Path == "/virtual_machines/virtual_machine":
+			state := "stopped"
+			pkg := "rock-3"
+			if vmGetCalls == 0 {
+				state = "started"
+			}
+			if vmGetCalls >= 3 {
+				pkg = "rock-1"
+			}
+			vmGetCalls++
+			writeTestJSON(w, http.StatusOK, `{
+				"annotations": [],
+				"virtual_machine": {
+					"id": "vm_downgrade",
+					"name": "Downgrade VM",
+					"hostname": "downgrade-vm",
+					"fqdn": "downgrade-vm.example.test",
+					"state": "`+state+`",
+					"package": {
+						"id": "vmpkg_test",
+						"permalink": "`+pkg+`"
+					},
+					"ip_addresses": [],
+					"tag_names": []
+				}
+			}`)
+		case r.Method == http.MethodPost &&
+			r.URL.Path == "/virtual_machines/virtual_machine/shutdown":
+			operations = append(operations, "shutdown")
+			writeTestJSON(w, http.StatusOK, `{
+				"task": {"id": "task_shutdown", "status": "pending"}
+			}`)
+		case r.Method == http.MethodPut &&
+			r.URL.Path == "/virtual_machines/virtual_machine/package":
+			operations = append(operations, "package")
+			writeTestJSON(w, http.StatusOK, `{
+				"task": {"id": "task_package", "status": "pending"}
+			}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/tasks/task":
+			writeTestJSON(w, http.StatusOK, `{
+				"task": {"id": "task", "status": "completed"}
+			}`)
+		case r.Method == http.MethodGet &&
+			r.URL.Path ==
+				"/virtual_machines/virtual_machine/network_interfaces":
+			writeTestJSON(w, http.StatusOK, `{
+				"pagination": {"total_pages": 1},
+				"virtual_machine_network_interfaces": []
+			}`)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+	resource := &VirtualMachineResource{M: &Meta{Core: client, testMode: true}}
+	emptyStrings := types.SetValueMust(types.StringType, nil)
+	stateModel := VirtualMachineResourceModel{
+		ID:                types.StringValue("vm_downgrade"),
+		Name:              types.StringValue("Downgrade VM"),
+		Hostname:          types.StringValue("downgrade-vm"),
+		FQDN:              types.StringValue("downgrade-vm.example.test"),
+		State:             types.StringValue("started"),
+		PoweredOn:         types.BoolValue(true),
+		Package:           types.StringValue("rock-3"),
+		DiskTemplate:      types.StringValue("ubuntu-18-04"),
+		IPAddressIDs:      emptyStrings,
+		IPAddresses:       emptyStrings,
+		VirtualNetworkIDs: emptyStrings,
+		Tags:              emptyStrings,
+	}
+	planModel := stateModel
+	planModel.State = types.StringUnknown()
+	planModel.PoweredOn = types.BoolValue(false)
+	planModel.Package = types.StringValue("rock-1")
+
+	state := virtualMachineTestState(t, resource, stateModel)
+	planState := virtualMachineTestState(t, resource, planModel)
+	req := frameworkresource.UpdateRequest{
+		Config: tfsdk.Config(planState),
+		Plan:   tfsdk.Plan(planState),
+		State:  state,
+	}
+	resp := frameworkresource.UpdateResponse{State: tfsdk.State{
+		Schema: state.Schema,
+	}}
+
+	resource.Update(context.Background(), req, &resp)
+
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+	require.Equal(t, []string{"shutdown", "package"}, operations)
+	var got VirtualMachineResourceModel
+	diags := resp.State.Get(context.Background(), &got)
+	require.False(t, diags.HasError(), diags.Errors())
+	require.Equal(t, "rock-1", got.Package.ValueString())
+	require.Equal(t, "stopped", got.State.ValueString())
+	require.False(t, got.PoweredOn.ValueBool())
+}
+
+func TestVirtualMachineResourceUpdatePoweredOnNoDriftQueuesNoPowerAction(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	patchCalls := 0
+	powerCalls := 0
+	client := newVirtualMachineTestClient(t, func(
+		w http.ResponseWriter,
+		r *http.Request,
+	) {
+		switch {
+		case r.Method == http.MethodPatch &&
+			r.URL.Path == "/virtual_machines/virtual_machine":
+			patchCalls++
+			writeTestJSON(w, http.StatusOK, `{
+				"virtual_machine": {"id": "vm_started"}
+			}`)
+		case r.Method == http.MethodPost &&
+			strings.HasPrefix(
+				r.URL.Path, "/virtual_machines/virtual_machine/",
+			):
+			powerCalls++
+			http.Error(w, "unexpected power action", http.StatusInternalServerError)
+		case r.Method == http.MethodGet &&
+			r.URL.Path == "/virtual_machines/virtual_machine":
+			writeTestJSON(w, http.StatusOK, `{
+				"annotations": [],
+				"virtual_machine": {
+					"id": "vm_started",
+					"name": "Started VM",
+					"hostname": "started-vm",
+					"description": "New description",
+					"fqdn": "started-vm.example.test",
+					"state": "started",
+					"package": {
+						"id": "vmpkg_test",
+						"permalink": "rock-3"
+					},
+					"ip_addresses": [],
+					"tag_names": []
+				}
+			}`)
+		case r.Method == http.MethodGet &&
+			r.URL.Path ==
+				"/virtual_machines/virtual_machine/network_interfaces":
+			writeTestJSON(w, http.StatusOK, `{
+				"pagination": {"total_pages": 1},
+				"virtual_machine_network_interfaces": []
+			}`)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+	resource := &VirtualMachineResource{M: &Meta{Core: client, testMode: true}}
+	emptyStrings := types.SetValueMust(types.StringType, nil)
+	stateModel := VirtualMachineResourceModel{
+		ID:                types.StringValue("vm_started"),
+		Name:              types.StringValue("Started VM"),
+		Hostname:          types.StringValue("started-vm"),
+		Description:       types.StringValue("Old description"),
+		FQDN:              types.StringValue("started-vm.example.test"),
+		State:             types.StringValue("started"),
+		PoweredOn:         types.BoolValue(true),
+		Package:           types.StringValue("rock-3"),
+		DiskTemplate:      types.StringValue("ubuntu-18-04"),
+		IPAddressIDs:      emptyStrings,
+		IPAddresses:       emptyStrings,
+		VirtualNetworkIDs: emptyStrings,
+		Tags:              emptyStrings,
+	}
+	planModel := stateModel
+	planModel.Description = types.StringValue("New description")
+	planModel.State = types.StringUnknown()
+
+	state := virtualMachineTestState(t, resource, stateModel)
+	planState := virtualMachineTestState(t, resource, planModel)
+	resp := frameworkresource.UpdateResponse{State: tfsdk.State{
+		Schema: state.Schema,
+	}}
+
+	resource.Update(context.Background(), frameworkresource.UpdateRequest{
+		Config: tfsdk.Config(planState),
+		Plan:   tfsdk.Plan(planState),
+		State:  state,
+	}, &resp)
+
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+	require.Equal(t, 1, patchCalls)
+	require.Zero(t, powerCalls)
+	var got VirtualMachineResourceModel
+	diags := resp.State.Get(context.Background(), &got)
+	require.False(t, diags.HasError(), diags.Errors())
+	require.True(t, got.PoweredOn.ValueBool())
+}
+
+func TestVirtualMachineResourceCreateShutdownFailureKeepsCheckpointedID(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	client := newVirtualMachineTestClient(t, func(
+		w http.ResponseWriter,
+		r *http.Request,
+	) {
+		switch {
+		case r.Method == http.MethodGet &&
+			r.URL.Path == "/ip_addresses/ip_address":
+			writeTestJSON(w, http.StatusOK, `{
+				"ip_address": {
+					"id": "ip_test",
+					"network": {"id": "net_test"}
+				}
+			}`)
+		case r.Method == http.MethodPost &&
+			r.URL.Path ==
+				"/organizations/organization/virtual_machines/build_from_spec":
+			writeTestJSON(w, http.StatusCreated, `{
+				"annotations": [],
+				"build": {"id": "vmbuild_test", "state": "pending"},
+				"virtual_machine_build": {
+					"id": "vmbuild_test",
+					"state": "pending"
+				},
+				"task": {"id": "task_build", "status": "pending"},
+				"hostname": "checkpoint-vm"
+			}`)
+		case r.Method == http.MethodGet &&
+			r.URL.Path == "/virtual_machines/builds/virtual_machine_build":
+			writeTestJSON(w, http.StatusOK, `{
+				"virtual_machine_build": {
+					"id": "vmbuild_test",
+					"state": "complete",
+					"virtual_machine": {
+						"id": "vm_checkpoint",
+						"state": "started"
+					}
+				}
+			}`)
+		case r.Method == http.MethodGet &&
+			r.URL.Path == "/virtual_machines/virtual_machine":
+			writeVirtualMachinePowerState(w, core.Started)
+		case r.Method == http.MethodPost &&
+			r.URL.Path == "/virtual_machines/virtual_machine/shutdown":
+			writeTestJSON(w, http.StatusForbidden, `{
+				"error": {
+					"code": "permission_denied",
+					"description": "Cannot shut down"
+				}
+			}`)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+	resource := &VirtualMachineResource{M: &Meta{
+		Core:             client,
+		confDataCenter:   "test-dc",
+		confOrganization: "test-org",
+		testMode:         true,
+	}}
+	model := VirtualMachineResourceModel{
+		Name:              types.StringValue("Checkpoint VM"),
+		Hostname:          types.StringValue("checkpoint-vm"),
+		PoweredOn:         types.BoolValue(false),
+		Package:           types.StringValue("rock-3"),
+		DiskTemplate:      types.StringValue("ubuntu-18-04"),
+		IPAddressIDs:      types.SetValueMust(types.StringType, []attr.Value{types.StringValue("ip_test")}),
+		VirtualNetworkIDs: types.SetValueMust(types.StringType, nil),
+		Tags:              types.SetValueMust(types.StringType, nil),
+	}
+	plan := virtualMachineTestState(t, resource, model)
+	resp := frameworkresource.CreateResponse{State: tfsdk.State{
+		Schema: plan.Schema,
+	}}
+
+	resource.Create(context.Background(), frameworkresource.CreateRequest{
+		Config: tfsdk.Config(plan),
+		Plan:   tfsdk.Plan(plan),
+	}, &resp)
+
+	require.True(t, resp.Diagnostics.HasError())
+	require.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "permission_denied")
+	var got VirtualMachineResourceModel
+	diags := resp.State.Get(context.Background(), &got)
+	require.False(t, diags.HasError(), diags.Errors())
+	require.Equal(t, "vm_checkpoint", got.ID.ValueString())
+}
+
 func TestVirtualMachineGroupDataSourceNotFoundDiagnostic(t *testing.T) {
 	t.Parallel()
 
@@ -599,6 +898,24 @@ func TestVirtualMachineResourceTimeoutsUseBlockSyntax(t *testing.T) {
 	require.Contains(t, timeoutsBlock.Attributes, "create")
 	require.Contains(t, timeoutsBlock.Attributes, "update")
 	require.Contains(t, timeoutsBlock.Attributes, "delete")
+}
+
+func TestVirtualMachineResourcePoweredOnSchemaIsNullableObservation(t *testing.T) {
+	t.Parallel()
+
+	resource := &VirtualMachineResource{}
+	schemaResp := &frameworkresource.SchemaResponse{}
+	resource.Schema(
+		context.Background(),
+		frameworkresource.SchemaRequest{},
+		schemaResp,
+	)
+
+	attribute, ok := schemaResp.Schema.Attributes["powered_on"].(resourceschema.BoolAttribute)
+	require.True(t, ok)
+	require.True(t, attribute.Optional)
+	require.True(t, attribute.Computed)
+	require.Empty(t, attribute.PlanModifiers)
 }
 
 func TestVirtualMachineResourceDiskSizeChangeRequiresReplace(t *testing.T) {

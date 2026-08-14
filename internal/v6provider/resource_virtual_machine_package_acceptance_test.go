@@ -102,7 +102,7 @@ func TestAccKatapultVirtualMachine_update_package_downgrade_error(
 			{
 				Config: virtualMachinePackageTestConfig(name, "rock-1"),
 				ExpectError: regexp.MustCompile(
-					"cannot downgrade package while Virtual Machine is running",
+					"cannot downgrade package unless the Virtual Machine is already",
 				),
 			},
 		},

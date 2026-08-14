@@ -5,6 +5,7 @@ subcategory: "Compute"
 description: |-
   Manages a Virtual Machine in Katapult.
   ~> Warning: Deleting a virtual machine resource will by default purge the VM from Katapult's trash, permanently deleting it. Set skip_trash_object_purge on the provider to keep it in the trash instead.
+  Set powered_on explicitly to opt into ongoing power-state management. Omitting it leaves power state unmanaged after creation. A VM created with powered_on = false is initially started by Katapult's build process and then gracefully shut down before creation completes, so connection-based provisioners cannot run against the stopped result.
 ---
 
 # katapult_virtual_machine (Resource)
@@ -12,6 +13,8 @@ description: |-
 Manages a Virtual Machine in Katapult.
 
 ~> **Warning:** Deleting a virtual machine resource will by default purge the VM from Katapult's trash, permanently deleting it. Set `skip_trash_object_purge` on the provider to keep it in the trash instead.
+
+Set `powered_on` explicitly to opt into ongoing power-state management. Omitting it leaves power state unmanaged after creation. A VM created with `powered_on = false` is initially started by Katapult's build process and then gracefully shut down before creation completes, so connection-based provisioners cannot run against the stopped result.
 
 ## Example Usage
 
@@ -40,6 +43,10 @@ resource "katapult_virtual_machine" "base" {
   name        = "Web 2"
   hostname    = "web-2"
   description = "A web server."
+
+  # Explicitly opt into ongoing power-state management. Set this to false to
+  # gracefully shut down the VM and keep it stopped.
+  powered_on = true
 
   group_id = katapult_virtual_machine_group.web.id
   tags     = ["web", "public"]
@@ -79,7 +86,7 @@ resource "katapult_virtual_machine" "base" {
 
 - `disk_template` (String) Permalink or ID of the Disk Template to use.
 - `ip_address_ids` (Set of String) Set of IP address IDs to allocate to the Virtual Machine.
-- `package` (String) Permalink or ID of a Virtual Machine Package. Changing this will resize the Virtual Machine to the new package in place. Note: Downgrades (to packages with fewer vCPUs or memory) require the Virtual Machine to be stopped before the change can be applied.
+- `package` (String) Permalink or ID of a Virtual Machine Package. Changing this will resize the Virtual Machine to the new package in place. Note: Downgrades (to packages with fewer vCPUs or memory) require the Virtual Machine to be stopped. To stop and downgrade in one apply, explicitly set `powered_on = false`; set it to true in a later apply to start the VM again.
 
 ### Optional
 
@@ -90,6 +97,7 @@ resource "katapult_virtual_machine" "base" {
 - `hostname` (String) The hostname of the Virtual Machine. If not provided, a hostname is generated.
 - `name` (String) The name of the Virtual Machine. If not provided, a name is generated automatically.
 - `network_speed_profile` (String) Permalink of the Network Speed Profile to apply to all network interfaces.
+- `powered_on` (Boolean) Whether the Virtual Machine should be powered on. Set this explicitly to opt into ongoing power state management; omit it to observe power state without managing it. Powering off uses a graceful shutdown.
 - `tags` (Set of String) Set of tag names to assign to the Virtual Machine.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `virtual_network_ids` (Set of String) Set of Virtual Network IDs to attach to the Virtual Machine.

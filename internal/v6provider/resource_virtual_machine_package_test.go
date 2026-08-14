@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/krystal/go-katapult/next/core"
 )
 
@@ -22,18 +23,77 @@ func TestValidateVirtualMachinePackageChange(t *testing.T) {
 		packageRef        string
 		targetCPUCores    int
 		targetMemoryInGB  int
+		poweredOn         types.Bool
 		wantErr           string
 		wantPackageLookup bool
 		wantPackageID     bool
 	}{
 		{
-			name:             "running downgrade",
-			state:            "started",
-			packageRef:       "rock-1",
-			targetCPUCores:   1,
-			targetMemoryInGB: 2,
-			wantErr: "cannot downgrade package while Virtual Machine " +
-				"is running",
+			name:              "running downgrade unmanaged",
+			state:             "started",
+			packageRef:        "rock-1",
+			targetCPUCores:    1,
+			targetMemoryInGB:  2,
+			poweredOn:         types.BoolNull(),
+			wantErr:           "powered_on = false",
+			wantPackageLookup: true,
+		},
+		{
+			name:              "running downgrade explicitly off",
+			state:             "started",
+			packageRef:        "rock-1",
+			targetCPUCores:    1,
+			targetMemoryInGB:  2,
+			poweredOn:         types.BoolValue(false),
+			wantPackageLookup: true,
+		},
+		{
+			name:              "running downgrade explicitly on",
+			state:             "started",
+			packageRef:        "rock-1",
+			targetCPUCores:    1,
+			targetMemoryInGB:  2,
+			poweredOn:         types.BoolValue(true),
+			wantErr:           "powered_on = false",
+			wantPackageLookup: true,
+		},
+		{
+			name:              "running downgrade unknown power config",
+			state:             "started",
+			packageRef:        "rock-1",
+			targetCPUCores:    1,
+			targetMemoryInGB:  2,
+			poweredOn:         types.BoolUnknown(),
+			wantErr:           "powered_on = false",
+			wantPackageLookup: true,
+		},
+		{
+			name:              "starting downgrade explicitly off",
+			state:             "starting",
+			packageRef:        "rock-1",
+			targetCPUCores:    1,
+			targetMemoryInGB:  2,
+			poweredOn:         types.BoolValue(false),
+			wantPackageLookup: true,
+		},
+		{
+			name:              "failed downgrade explicitly off",
+			state:             "failed",
+			packageRef:        "rock-1",
+			targetCPUCores:    1,
+			targetMemoryInGB:  2,
+			poweredOn:         types.BoolValue(false),
+			wantErr:           "failed state",
+			wantPackageLookup: true,
+		},
+		{
+			name:              "future state downgrade explicitly off",
+			state:             "future",
+			packageRef:        "rock-1",
+			targetCPUCores:    1,
+			targetMemoryInGB:  2,
+			poweredOn:         types.BoolValue(false),
+			wantErr:           "unsupported state",
 			wantPackageLookup: true,
 		},
 		{
@@ -45,9 +105,18 @@ func TestValidateVirtualMachinePackageChange(t *testing.T) {
 			wantPackageLookup: true,
 		},
 		{
-			name:       "stopped downgrade",
+			name:              "failed upgrade",
+			state:             "failed",
+			packageRef:        "rock-5",
+			targetCPUCores:    4,
+			targetMemoryInGB:  8,
+			wantPackageLookup: true,
+		},
+		{
+			name:       "stopped downgrade unmanaged",
 			state:      "stopped",
 			packageRef: "rock-1",
+			poweredOn:  types.BoolNull(),
 		},
 		{
 			name:       "same package by id",
@@ -127,6 +196,7 @@ func TestValidateVirtualMachinePackageChange(t *testing.T) {
 
 			err = validateVirtualMachinePackageChange(
 				context.Background(), client, "vm_test", tt.packageRef,
+				tt.poweredOn,
 			)
 			switch {
 			case tt.wantErr == "" && err != nil:

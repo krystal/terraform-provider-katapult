@@ -11,7 +11,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/next/core"
 )
@@ -537,6 +539,18 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 					}`,
 					name+"-diff", name+"-host-diff",
 				),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue(
+							"katapult_virtual_machine.base",
+							tfjsonpath.New("state"),
+						),
+						plancheck.ExpectUnknownValue(
+							"katapult_virtual_machine.base",
+							tfjsonpath.New("powered_on"),
+						),
+					},
+				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultVirtualMachineExists(
 						tt, "katapult_virtual_machine.base",
@@ -577,6 +591,9 @@ func TestAccKatapultVirtualMachine_update(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"katapult_virtual_machine.base",
 						"network_speed_profile", "10gbps",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "powered_on", "true",
 					),
 				),
 			},
