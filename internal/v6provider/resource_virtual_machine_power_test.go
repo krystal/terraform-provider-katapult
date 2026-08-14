@@ -94,8 +94,25 @@ func TestVirtualMachinePowerReconciliation(t *testing.T) {
 			states:    []core.VirtualMachineStateEnum{core.Starting, core.Started},
 		},
 		{
+			name:      "starting target on reverts then starts once",
+			poweredOn: true,
+			states: []core.VirtualMachineStateEnum{
+				core.Starting, core.Stopped, core.Stopped, core.Started,
+			},
+			wantAction:   "start",
+			wantEndpoint: "/virtual_machines/virtual_machine/start",
+		},
+		{
 			name:   "shutting down target off waits without duplicate action",
 			states: []core.VirtualMachineStateEnum{core.ShuttingDown, core.Stopped},
+		},
+		{
+			name: "shutting down target off reverts then shuts down once",
+			states: []core.VirtualMachineStateEnum{
+				core.ShuttingDown, core.Started, core.Started, core.Stopped,
+			},
+			wantAction:   "shutdown",
+			wantEndpoint: "/virtual_machines/virtual_machine/shutdown",
 		},
 		{
 			name:      "opposite transition settles before shutdown",
@@ -105,6 +122,20 @@ func TestVirtualMachinePowerReconciliation(t *testing.T) {
 			},
 			wantAction:   "shutdown",
 			wantEndpoint: "/virtual_machines/virtual_machine/shutdown",
+		},
+		{
+			name:      "starting can revert to stopped target without action",
+			poweredOn: false,
+			states: []core.VirtualMachineStateEnum{
+				core.Starting, core.Stopped, core.Stopped,
+			},
+		},
+		{
+			name:      "shutting down can revert to started target without action",
+			poweredOn: true,
+			states: []core.VirtualMachineStateEnum{
+				core.ShuttingDown, core.Started, core.Started,
+			},
 		},
 		{
 			name:      "ambiguous transition settles before start",

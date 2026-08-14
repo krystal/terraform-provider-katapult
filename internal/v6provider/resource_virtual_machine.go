@@ -77,7 +77,10 @@ type virtualMachinePackageReader interface {
 	) (*core.GetVirtualMachinePackageResponse, error)
 }
 
-const virtualMachineDiskSizeAttribute = "size"
+const (
+	virtualMachineDiskSizeAttribute   = "size"
+	virtualMachineShutdownActionLabel = "shutdown"
+)
 
 var vmNetworkInterfaceAttrTypes = map[string]attr.Type{
 	"id":                 types.StringType,
@@ -1641,46 +1644,20 @@ func reconcileVirtualMachinePowerState(
 				"cannot reconcile virtual machine %s from terminal state %s to %s",
 				vmID, state, target,
 			)
-		case core.Starting:
-			if err = waitForVirtualMachineState(
-				ctx, m, vmID, virtualMachineExactStatePending(core.Started),
-				[]core.VirtualMachineStateEnum{core.Started}, timeout,
+		case core.Starting, core.Stopping, core.ShuttingDown:
+			if err = waitForVirtualMachineStableState(
+				ctx, m, vmID, timeout,
 			); err != nil {
-				return virtualMachineStateWaitError(vmID, state, core.Started, err)
-			}
-			if target == core.Started {
-				return nil
-			}
-			continue
-		case core.Stopping, core.ShuttingDown:
-			if err = waitForVirtualMachineState(
-				ctx, m, vmID, virtualMachineExactStatePending(core.Stopped),
-				[]core.VirtualMachineStateEnum{core.Stopped}, timeout,
-			); err != nil {
-				return virtualMachineStateWaitError(vmID, state, core.Stopped, err)
-			}
-			if target == core.Stopped {
-				return nil
+				return fmt.Errorf(
+					"error waiting for virtual machine %s to settle from %s: %w",
+					vmID, state, err,
+				)
 			}
 			continue
 		case core.Allocated, core.Allocating, core.Resetting, core.Migrating,
 			core.Transferring:
-			if err = waitForVirtualMachineState(
-				ctx,
-				m,
-				vmID,
-				[]core.VirtualMachineStateEnum{
-					core.Allocated,
-					core.Allocating,
-					core.Resetting,
-					core.Migrating,
-					core.Transferring,
-					core.Starting,
-					core.Stopping,
-					core.ShuttingDown,
-				},
-				[]core.VirtualMachineStateEnum{core.Started, core.Stopped},
-				timeout,
+			if err = waitForVirtualMachineStableState(
+				ctx, m, vmID, timeout,
 			); err != nil {
 				return fmt.Errorf(
 					"error waiting for virtual machine %s to settle from %s: %w",
@@ -1757,7 +1734,7 @@ func queueVirtualMachinePowerAction(
 		return *res.JSON200.Task.Id, action, nil
 	}
 
-	action = "shutdown"
+	action = virtualMachineShutdownActionLabel
 	res, actionErr := m.Core.PostVirtualMachineShutdownWithResponse(
 		ctx,
 		core.PostVirtualMachineShutdownJSONRequestBody{VirtualMachine: lookup},
@@ -1843,6 +1820,31 @@ func waitForVirtualMachineState(
 	}
 
 	return nil
+}
+
+func waitForVirtualMachineStableState(
+	ctx context.Context,
+	m *Meta,
+	vmID string,
+	timeout time.Duration,
+) error {
+	return waitForVirtualMachineState(
+		ctx,
+		m,
+		vmID,
+		[]core.VirtualMachineStateEnum{
+			core.Allocated,
+			core.Allocating,
+			core.Resetting,
+			core.Migrating,
+			core.Transferring,
+			core.Starting,
+			core.Stopping,
+			core.ShuttingDown,
+		},
+		[]core.VirtualMachineStateEnum{core.Started, core.Stopped},
+		timeout,
+	)
 }
 
 func virtualMachineExactStatePending(
