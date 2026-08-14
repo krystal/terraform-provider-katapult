@@ -139,6 +139,73 @@ func TestAccKatapultVirtualMachine_update_package_downgrade_stopped(
 	})
 }
 
+func TestAccKatapultVirtualMachine_update_package_downgrade_powered_off(
+	t *testing.T,
+) {
+	tt := newTestTools(t)
+	name := tt.ResourceName("package-downgrade-power")
+	var vmID string
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: virtualMachineManagedPackageTestConfig(
+					name,
+					"rock-3",
+					true,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					virtualMachinePackageTestChecks("rock-3", &vmID, false),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "state", "started",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "powered_on", "true",
+					),
+				),
+			},
+			{
+				Config: virtualMachineManagedPackageTestConfig(
+					name,
+					"rock-1",
+					false,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					virtualMachinePackageTestChecks("rock-1", &vmID, true),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "state", "stopped",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "powered_on", "false",
+					),
+				),
+			},
+			{
+				Config: virtualMachineManagedPackageTestConfig(
+					name,
+					"rock-1",
+					true,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					virtualMachinePackageTestChecks("rock-1", &vmID, true),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "state", "started",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "powered_on", "true",
+					),
+				),
+			},
+		},
+	})
+}
+
 func TestAccKatapultVirtualMachine_update_package_upgrade_stopped(
 	t *testing.T,
 ) {
@@ -190,6 +257,36 @@ func virtualMachinePackageTestConfig(name string, pkg string) string {
 		name,
 		name+"-host",
 		pkg,
+	)
+}
+
+func virtualMachineManagedPackageTestConfig(
+	name string,
+	pkg string,
+	poweredOn bool,
+) string {
+	return undent.Stringf(`
+		resource "katapult_ip" "web" {}
+
+		resource "katapult_virtual_machine" "base" {
+			name          = "%s"
+			hostname      = "%s"
+			package       = "%s"
+			powered_on    = %t
+			disk_template = "ubuntu-18-04"
+			disk_template_options = {
+				install_agent = true
+			}
+			ip_address_ids = [katapult_ip.web.id]
+
+			timeouts {
+				update = "10m"
+			}
+		}`,
+		name,
+		name+"-host",
+		pkg,
+		poweredOn,
 	)
 }
 
