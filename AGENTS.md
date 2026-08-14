@@ -83,6 +83,11 @@ Use the narrowest relevant command while working, then broaden before handoff:
 without explicit authorization for live acceptance testing. After tests, check
 `git status` for cassette or random-ID drift.
 
+`mise run test:acceptance` hardcodes `VCR=replay`; an authorized recording must
+use the project environment directly, for example `mise exec -- env VCR=rec
+TEST=./internal/v6provider TESTARGS='-run ^TestName$' make testacc`. Prefixing
+the Mise task with `VCR=rec` does not override its replay setting.
+
 `retry.StateChangeConf.Refresh` runs in a goroutine. Use the value returned by
 `WaitForStateContext`; do not capture refresh results for unsynchronized reads
 outside the callback because cancellation can return before a refresh finishes.

@@ -300,6 +300,7 @@ func TestVirtualMachineResourceUpdateClearsDescriptionWithoutUnknownName(
 		Description:  types.StringValue("Old description"),
 		Package:      types.StringValue("rock-3"),
 		DiskTemplate: types.StringValue("ubuntu-18-04"),
+		SystemDisk:   knownTestSystemDisk(t, "disk_vm_test"),
 	}
 	planModel := stateModel
 	planModel.Name = types.StringUnknown()
@@ -408,6 +409,7 @@ func TestVirtualMachineResourceUpdateShutsDownBeforePackageDowngrade(
 		PoweredOn:         types.BoolValue(true),
 		Package:           types.StringValue("rock-3"),
 		DiskTemplate:      types.StringValue("ubuntu-18-04"),
+		SystemDisk:        knownTestSystemDisk(t, "disk_vm_downgrade"),
 		IPAddressIDs:      emptyStrings,
 		IPAddresses:       emptyStrings,
 		VirtualNetworkIDs: emptyStrings,
@@ -507,6 +509,7 @@ func TestVirtualMachineResourceUpdatePoweredOnNoDriftQueuesNoPowerAction(
 		PoweredOn:         types.BoolValue(true),
 		Package:           types.StringValue("rock-3"),
 		DiskTemplate:      types.StringValue("ubuntu-18-04"),
+		SystemDisk:        knownTestSystemDisk(t, "disk_vm_started"),
 		IPAddressIDs:      emptyStrings,
 		IPAddresses:       emptyStrings,
 		VirtualNetworkIDs: emptyStrings,
@@ -733,6 +736,41 @@ func TestVMReadPreservesConfiguredEmptyOptionalStrings(t *testing.T) {
 			require.True(t, model.GroupID.Equal(tt.wantGroupID))
 		})
 	}
+}
+
+func TestVMReadBootDiscoveryFailureRequiresPriorIdentity(t *testing.T) {
+	t.Parallel()
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == "/virtual_machines/virtual_machine/disks" {
+			writeTestJSON(w, http.StatusInternalServerError, `{"error":{"code":"temporary_failure"}}`)
+			return
+		}
+		virtualMachineReadTestHandler(w, req)
+	})
+	r := &VirtualMachineResource{M: &Meta{Core: client, testMode: true}}
+
+	t.Run("missing prior boot identity returns discovery error", func(t *testing.T) {
+		t.Parallel()
+		model := VirtualMachineResourceModel{ID: types.StringValue("vm_test")}
+		err := r.vmRead(context.Background(), &model)
+		require.ErrorContains(t, err, "discovering boot disk")
+	})
+
+	t.Run("known prior boot identity is preserved", func(t *testing.T) {
+		t.Parallel()
+		prior := VirtualMachineSystemDiskModel{
+			ID: types.StringValue("disk_boot"), Name: types.StringValue("System Disk"),
+			SizeInGB: types.Int64Value(20), ResizeMethod: types.StringValue("offline"),
+			WWN: types.StringNull(), State: types.StringValue("built"),
+		}
+		value, diags := virtualMachineSystemDiskValue(context.Background(), prior)
+		require.False(t, diags.HasError(), diags.Errors())
+		model := VirtualMachineResourceModel{ID: types.StringValue("vm_test"), SystemDisk: value}
+		require.NoError(t, r.vmRead(context.Background(), &model))
+		got, gotDiags := decodeVirtualMachineSystemDisk(context.Background(), model.SystemDisk)
+		require.False(t, gotDiags.HasError(), gotDiags.Errors())
+		require.Equal(t, "disk_boot", got.ID.ValueString())
+	})
 }
 
 func TestVirtualMachineDataSourceSDKv2CompatibilityAttributes(t *testing.T) {
@@ -1076,6 +1114,17 @@ func legacyDiskModels(sizes ...int64) []VirtualMachineDiskModel {
 	return disks
 }
 
+func knownTestSystemDisk(t *testing.T, id string) types.Object {
+	t.Helper()
+	value, diags := virtualMachineSystemDiskValue(context.Background(), VirtualMachineSystemDiskModel{
+		ID: types.StringValue(id), Name: types.StringValue("System Disk"),
+		SizeInGB: types.Int64Value(20), ResizeMethod: types.StringValue("offline"),
+		WWN: types.StringNull(), State: types.StringValue("built"),
+	})
+	require.False(t, diags.HasError(), diags.Errors())
+	return value
+}
+
 func legacyDiskList(t *testing.T, disks []VirtualMachineDiskModel) types.List {
 	t.Helper()
 	value, diags := types.ListValueFrom(context.Background(), types.ObjectType{
@@ -1316,6 +1365,20 @@ func virtualMachineReadTestHandler(w http.ResponseWriter, r *http.Request) {
 		writeTestJSON(w, http.StatusOK, `{
 			"pagination": {"total_pages": 1},
 			"virtual_machine_network_interfaces": []
+		}`)
+	case "/virtual_machines/virtual_machine/disks":
+		writeTestJSON(w, http.StatusOK, `{
+			"pagination": {"total_pages": 1},
+			"disks": [{
+				"disk": {"id": "disk_boot", "name": "System Disk", "size_in_gb": 20, "state": "built"},
+				"attach_on_boot": true,
+				"boot": true,
+				"state": "attached"
+			}]
+		}`)
+	case "/disks/disk":
+		writeTestJSON(w, http.StatusOK, `{
+			"disk": {"id": "disk_boot", "name": "System Disk", "size_in_gb": 20, "state": "built"}
 		}`)
 	default:
 		http.NotFound(w, r)

@@ -1891,6 +1891,11 @@ func (r *VirtualMachineResource) vmRead(
 		return fmt.Errorf("reading system_disk state: %s", systemDiags)
 	}
 	bootDisk, bootErr := fetchVirtualMachineBootDisk(ctx, r.M, vmID, priorSystem.ID.ValueString())
+	priorSystemAuthoritative := !priorSystem.ID.IsNull() && !priorSystem.ID.IsUnknown() &&
+		priorSystem.ID.ValueString() != ""
+	if bootErr != nil && !priorSystemAuthoritative {
+		return fmt.Errorf("discovering boot disk: %w", bootErr)
+	}
 	if bootErr == nil {
 		if diags := populateVirtualMachineSystemDisk(ctx, model, bootDisk); diags.HasError() {
 			return fmt.Errorf("populating system_disk state: %s", diags)
