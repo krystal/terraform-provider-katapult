@@ -43,6 +43,7 @@ type (
 		Description         types.String   `tfsdk:"description"`
 		FQDN                types.String   `tfsdk:"fqdn"`
 		State               types.String   `tfsdk:"state"`
+		PoweredOn           types.Bool     `tfsdk:"powered_on"`
 		Package             types.String   `tfsdk:"package"`
 		DiskTemplate        types.String   `tfsdk:"disk_template"`
 		DiskTemplateOptions types.Map      `tfsdk:"disk_template_options"`
@@ -76,7 +77,10 @@ type virtualMachinePackageReader interface {
 	) (*core.GetVirtualMachinePackageResponse, error)
 }
 
-const virtualMachineDiskSizeAttribute = "size"
+const (
+	virtualMachineDiskSizeAttribute   = "size"
+	virtualMachineShutdownActionLabel = "shutdown"
+)
 
 var vmNetworkInterfaceAttrTypes = map[string]attr.Type{
 	"id":                 types.StringType,
@@ -159,11 +163,20 @@ func (r *VirtualMachineResource) ModifyPlan(
 		return
 	}
 
+	var poweredOn types.Bool
+	resp.Diagnostics.Append(
+		req.Config.GetAttribute(ctx, path.Root("powered_on"), &poweredOn)...,
+	)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	err := validateVirtualMachinePackageChange(
 		ctx,
 		r.M.Core,
 		state.ID.ValueString(),
 		plan.Package.ValueString(),
+		poweredOn,
 	)
 	if err != nil {
 		resp.Diagnostics.AddAttributeError(
@@ -184,7 +197,13 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 			"~> **Warning:** Deleting a virtual machine resource will by " +
 			"default purge the VM from Katapult's trash, permanently " +
 			"deleting it. Set `skip_trash_object_purge` on the " +
-			"provider to keep it in the trash instead.",
+			"provider to keep it in the trash instead.\n\n" +
+			"Set `powered_on` explicitly to opt into ongoing power-state " +
+			"management. Omitting it leaves power state unmanaged after " +
+			"creation. A VM created with `powered_on = false` is initially " +
+			"started by Katapult's build process and then gracefully shut " +
+			"down before creation completes, so connection-based provisioners " +
+			"cannot run against the stopped result.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -231,14 +250,23 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 				MarkdownDescription: "The current state of the " +
 					"Virtual Machine.",
 			},
+			"powered_on": schema.BoolAttribute{
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "Whether the Virtual Machine should be " +
+					"powered on. Set this explicitly to opt into ongoing power " +
+					"state management; omit it to observe power state without " +
+					"managing it. Powering off uses a graceful shutdown.",
+			},
 			"package": schema.StringAttribute{
 				Required: true,
 				MarkdownDescription: "Permalink or ID of a Virtual Machine " +
 					"Package. Changing this will resize the Virtual Machine " +
 					"to the new package in place. Note: Downgrades (to " +
 					"packages with fewer vCPUs or memory) require the " +
-					"Virtual Machine to be stopped before the change can be " +
-					"applied.",
+					"Virtual Machine to be stopped. To stop and downgrade in " +
+					"one apply, explicitly set `powered_on = false`; set it " +
+					"to true in a later apply to start the VM again.",
 				Validators: []validator.String{
 					stringValidatorNotEmpty(),
 				},
@@ -395,6 +423,14 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 ) {
 	var plan VirtualMachineResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var configuredPoweredOn types.Bool
+	resp.Diagnostics.Append(req.Config.GetAttribute(
+		ctx, path.Root("powered_on"), &configuredPoweredOn,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -789,6 +825,17 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 		return
 	}
 
+	if !configuredPoweredOn.IsNull() &&
+		!configuredPoweredOn.IsUnknown() &&
+		!configuredPoweredOn.ValueBool() {
+		if err = reconcileVirtualMachinePowerState(
+			ctx, r.M, vmID, false, timeout,
+		); err != nil {
+			resp.Diagnostics.AddError("Create Error", err.Error())
+			return
+		}
+	}
+
 	if err := r.vmRead(ctx, &plan); err != nil {
 		resp.Diagnostics.AddError("Read Error", err.Error())
 		return
@@ -844,6 +891,25 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		return
 	}
 	vmID := state.ID.ValueString()
+
+	var configuredPoweredOn types.Bool
+	resp.Diagnostics.Append(req.Config.GetAttribute(
+		ctx, path.Root("powered_on"), &configuredPoweredOn,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	powerManaged := !configuredPoweredOn.IsNull() &&
+		!configuredPoweredOn.IsUnknown()
+
+	if powerManaged && !configuredPoweredOn.ValueBool() {
+		if err := reconcileVirtualMachinePowerState(
+			ctx, r.M, vmID, false, timeout,
+		); err != nil {
+			resp.Diagnostics.AddError("Update Error", err.Error())
+			return
+		}
+	}
 
 	if !plan.Package.Equal(state.Package) {
 		err := changeVirtualMachinePackage(
@@ -1119,6 +1185,15 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 			ctx, r.M, vmID, permalink, timeout,
 		); e != nil {
 			resp.Diagnostics.AddError("Update Error", e.Error())
+			return
+		}
+	}
+
+	if powerManaged && configuredPoweredOn.ValueBool() {
+		if err := reconcileVirtualMachinePowerState(
+			ctx, r.M, vmID, true, timeout,
+		); err != nil {
+			resp.Diagnostics.AddError("Update Error", err.Error())
 			return
 		}
 	}
@@ -1410,7 +1485,7 @@ func (r *VirtualMachineResource) vmRead(
 	model.FQDN = types.StringPointerValue(vm.Fqdn)
 
 	if vm.State != nil {
-		model.State = types.StringValue(string(*vm.State))
+		populateVirtualMachinePowerState(model, *vm.State)
 	}
 
 	if desc, err2 := vm.Description.Get(); err2 == nil && desc != "" {
@@ -1509,26 +1584,346 @@ func optionalOnlyStringAbsentValue(current types.String) types.String {
 	return types.StringNull()
 }
 
+func virtualMachinePoweredOnProjection(
+	state core.VirtualMachineStateEnum,
+	previous types.Bool,
+) types.Bool {
+	switch state { //nolint:exhaustive
+	case core.Started, core.Starting:
+		return types.BoolValue(true)
+	case core.Stopped, core.Stopping, core.ShuttingDown:
+		return types.BoolValue(false)
+	default:
+		if !previous.IsNull() && !previous.IsUnknown() {
+			return previous
+		}
+
+		return types.BoolNull()
+	}
+}
+
+func populateVirtualMachinePowerState(
+	model *VirtualMachineResourceModel,
+	state core.VirtualMachineStateEnum,
+) {
+	model.State = types.StringValue(string(state))
+	model.PoweredOn = virtualMachinePoweredOnProjection(state, model.PoweredOn)
+}
+
+func reconcileVirtualMachinePowerState(
+	ctx context.Context,
+	m *Meta,
+	vmID string,
+	poweredOn bool,
+	timeout time.Duration,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	target := core.Stopped
+	if poweredOn {
+		target = core.Started
+	}
+
+	for {
+		state, err := fetchVirtualMachineState(ctx, m, vmID)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to fetch virtual machine %s while reconciling to %s: %w",
+				vmID, target, err,
+			)
+		}
+
+		if state == target {
+			return nil
+		}
+
+		switch state {
+		case core.Failed, core.Orphaned:
+			return fmt.Errorf(
+				"cannot reconcile virtual machine %s from terminal state %s to %s",
+				vmID, state, target,
+			)
+		case core.Starting, core.Stopping, core.ShuttingDown:
+			if err = waitForVirtualMachineStableState(
+				ctx, m, vmID, timeout,
+			); err != nil {
+				return fmt.Errorf(
+					"error waiting for virtual machine %s to settle from %s: %w",
+					vmID, state, err,
+				)
+			}
+			continue
+		case core.Allocated, core.Allocating, core.Resetting, core.Migrating,
+			core.Transferring:
+			if err = waitForVirtualMachineStableState(
+				ctx, m, vmID, timeout,
+			); err != nil {
+				return fmt.Errorf(
+					"error waiting for virtual machine %s to settle from %s: %w",
+					vmID, state, err,
+				)
+			}
+			continue
+		case core.Started, core.Stopped:
+			// Queue the required action below.
+		default:
+			return fmt.Errorf(
+				"cannot reconcile virtual machine %s from unsupported state %q to %s",
+				vmID, state, target,
+			)
+		}
+
+		taskID, action, err := queueVirtualMachinePowerAction(
+			ctx, m, vmID, poweredOn,
+		)
+		if err != nil {
+			return err
+		}
+		if err = waitForTaskCompletion(ctx, m, timeout, taskID); err != nil {
+			return fmt.Errorf(
+				"error waiting for virtual machine %s %s task: %w",
+				vmID, action, err,
+			)
+		}
+		if err = waitForVirtualMachineState(
+			ctx,
+			m,
+			vmID,
+			virtualMachineExactStatePending(target),
+			[]core.VirtualMachineStateEnum{target},
+			timeout,
+		); err != nil {
+			return virtualMachineStateWaitError(vmID, state, target, err)
+		}
+
+		return nil
+	}
+}
+
+func queueVirtualMachinePowerAction(
+	ctx context.Context,
+	m *Meta,
+	vmID string,
+	poweredOn bool,
+) (taskID string, action string, err error) {
+	lookup := core.VirtualMachineLookup{Id: &vmID}
+	if poweredOn {
+		action = "start"
+		res, actionErr := m.Core.PostVirtualMachineStartWithResponse(
+			ctx,
+			core.PostVirtualMachineStartJSONRequestBody{VirtualMachine: lookup},
+		)
+		if actionErr != nil {
+			if res != nil {
+				actionErr = genericAPIError(actionErr, res.Body)
+			}
+			return "", action, fmt.Errorf(
+				"failed to queue start for virtual machine %s: %w",
+				vmID, actionErr,
+			)
+		}
+		if res == nil || res.JSON200 == nil || res.JSON200.Task.Id == nil ||
+			*res.JSON200.Task.Id == "" {
+			return "", action, fmt.Errorf(
+				"unexpected empty task response queueing start for virtual machine %s",
+				vmID,
+			)
+		}
+
+		return *res.JSON200.Task.Id, action, nil
+	}
+
+	action = virtualMachineShutdownActionLabel
+	res, actionErr := m.Core.PostVirtualMachineShutdownWithResponse(
+		ctx,
+		core.PostVirtualMachineShutdownJSONRequestBody{VirtualMachine: lookup},
+	)
+	if actionErr != nil {
+		if res != nil {
+			actionErr = genericAPIError(actionErr, res.Body)
+		}
+		return "", action, fmt.Errorf(
+			"failed to queue graceful shutdown for virtual machine %s: %w",
+			vmID, actionErr,
+		)
+	}
+	if res == nil || res.JSON200 == nil || res.JSON200.Task.Id == nil ||
+		*res.JSON200.Task.Id == "" {
+		return "", action, fmt.Errorf(
+			"unexpected empty task response queueing graceful shutdown for virtual machine %s",
+			vmID,
+		)
+	}
+
+	return *res.JSON200.Task.Id, action, nil
+}
+
+func fetchVirtualMachineState(
+	ctx context.Context,
+	m *Meta,
+	vmID string,
+) (core.VirtualMachineStateEnum, error) {
+	res, err := m.Core.GetVirtualMachineWithResponse(
+		ctx,
+		&core.GetVirtualMachineParams{VirtualMachineId: &vmID},
+	)
+	if err != nil {
+		if res != nil {
+			err = genericAPIError(err, res.Body)
+		}
+		return "", err
+	}
+	if res == nil || res.JSON200 == nil {
+		return "", fmt.Errorf("unexpected empty response polling VM state")
+	}
+	if res.JSON200.VirtualMachine.State == nil {
+		return "", fmt.Errorf("virtual machine state is nil")
+	}
+
+	return *res.JSON200.VirtualMachine.State, nil
+}
+
+func waitForVirtualMachineState(
+	ctx context.Context,
+	m *Meta,
+	vmID string,
+	pending []core.VirtualMachineStateEnum,
+	target []core.VirtualMachineStateEnum,
+	timeout time.Duration,
+) error {
+	waiter := &retry.StateChangeConf{
+		Pending:                   virtualMachineStateStrings(pending),
+		Target:                    virtualMachineStateStrings(target),
+		Timeout:                   timeout,
+		Delay:                     m.stateChangeDelay(1 * time.Second),
+		MinTimeout:                m.stateChangeDelay(5 * time.Second),
+		PollInterval:              m.stateChangePollInterval(),
+		ContinuousTargetOccurence: 1,
+	}
+	waiter.Refresh = func() (interface{}, string, error) {
+		state, err := fetchVirtualMachineState(ctx, m, vmID)
+		if err != nil {
+			return nil, "", err
+		}
+
+		return state, string(state), nil
+	}
+
+	raw, err := waiter.WaitForStateContext(ctx)
+	if err != nil {
+		return err
+	}
+	_, ok := raw.(core.VirtualMachineStateEnum)
+	if !ok {
+		return fmt.Errorf("unexpected virtual machine state result %T", raw)
+	}
+
+	return nil
+}
+
+func waitForVirtualMachineStableState(
+	ctx context.Context,
+	m *Meta,
+	vmID string,
+	timeout time.Duration,
+) error {
+	return waitForVirtualMachineState(
+		ctx,
+		m,
+		vmID,
+		[]core.VirtualMachineStateEnum{
+			core.Allocated,
+			core.Allocating,
+			core.Resetting,
+			core.Migrating,
+			core.Transferring,
+			core.Starting,
+			core.Stopping,
+			core.ShuttingDown,
+		},
+		[]core.VirtualMachineStateEnum{core.Started, core.Stopped},
+		timeout,
+	)
+}
+
+func virtualMachineExactStatePending(
+	target core.VirtualMachineStateEnum,
+) []core.VirtualMachineStateEnum {
+	states := []core.VirtualMachineStateEnum{
+		core.Allocated,
+		core.Allocating,
+		core.Migrating,
+		core.Resetting,
+		core.ShuttingDown,
+		core.Started,
+		core.Starting,
+		core.Stopped,
+		core.Stopping,
+		core.Transferring,
+	}
+	pending := make([]core.VirtualMachineStateEnum, 0, len(states)-1)
+	for _, state := range states {
+		if state != target {
+			pending = append(pending, state)
+		}
+	}
+
+	return pending
+}
+
+func virtualMachineStateStrings(
+	states []core.VirtualMachineStateEnum,
+) []string {
+	values := make([]string, len(states))
+	for i, state := range states {
+		values[i] = string(state)
+	}
+
+	return values
+}
+
+func virtualMachineStateWaitError(
+	vmID string,
+	from core.VirtualMachineStateEnum,
+	target core.VirtualMachineStateEnum,
+	err error,
+) error {
+	return fmt.Errorf(
+		"error waiting for virtual machine %s to reach %s from %s: %w",
+		vmID, target, from, err,
+	)
+}
+
 // validateVirtualMachinePackageChange fails when a package change would
-// downgrade a running Virtual Machine. Katapult requires the VM to be stopped
-// before its vCPU count or memory can be reduced.
+// downgrade a Virtual Machine that cannot be stopped by the same apply.
+// Katapult requires the VM to be stopped before its vCPU count or memory can
+// be reduced.
 func validateVirtualMachinePackageChange(
 	ctx context.Context,
 	client virtualMachinePackageReader,
 	vmID string,
 	pkgRef string,
+	poweredOn types.Bool,
 ) error {
 	vm, err := virtualMachineForPackageValidation(ctx, client, vmID)
 	if err != nil {
 		return err
 	}
-	if vm == nil || vm.State == nil || *vm.State != core.Started ||
-		!vm.Package.IsSpecified() || vm.Package.IsNull() {
+	if vm == nil {
 		return nil
+	}
+	if !vm.Package.IsSpecified() || vm.Package.IsNull() {
+		return fmt.Errorf("virtual machine response is missing package details")
 	}
 
 	currentPkg, _ := vm.Package.Get()
 	if virtualMachinePackageMatches(currentPkg, pkgRef) {
+		return nil
+	}
+	// Every package change is safe while the VM is already stopped, so there
+	// is no need to fetch the target package merely to classify the change.
+	if vm.State != nil && *vm.State == core.Stopped {
 		return nil
 	}
 
@@ -1544,11 +1939,27 @@ func validateVirtualMachinePackageChange(
 
 	if *newPkg.CpuCores < *currentPkg.CpuCores ||
 		*newPkg.MemoryInGb < *currentPkg.MemoryInGb {
+		if vm.State == nil {
+			return fmt.Errorf("virtual machine response is missing state")
+		}
+		allowed, stateErr := virtualMachineDowngradeAllowed(
+			*vm.State, poweredOn,
+		)
+		if stateErr != nil {
+			return stateErr
+		}
+		if allowed {
+			return nil
+		}
+
 		return fmt.Errorf(
-			"cannot downgrade package while Virtual Machine is running: "+
+			"cannot downgrade package unless the Virtual Machine is already "+
+				"stopped or powered_on = false is explicitly configured in "+
+				"the same plan: "+
 				"current package has %d vCPU(s) and %dGB memory, new "+
-				"package has %d vCPU(s) and %dGB memory. Stop the "+
-				"Virtual Machine before downgrading",
+				"package has %d vCPU(s) and %dGB memory. Apply the "+
+				"downgrade with powered_on = false, then set it to true "+
+				"in a later apply to start the Virtual Machine again",
 			*currentPkg.CpuCores,
 			*currentPkg.MemoryInGb,
 			*newPkg.CpuCores,
@@ -1557,6 +1968,31 @@ func validateVirtualMachinePackageChange(
 	}
 
 	return nil
+}
+
+func virtualMachineDowngradeAllowed(
+	state core.VirtualMachineStateEnum,
+	poweredOn types.Bool,
+) (bool, error) {
+	switch state {
+	case core.Stopped:
+		return true, nil
+	case core.Failed, core.Orphaned:
+		return false, fmt.Errorf(
+			"cannot downgrade package while Virtual Machine is in %s state",
+			state,
+		)
+	case core.Started, core.Starting, core.Stopping, core.ShuttingDown,
+		core.Allocated, core.Allocating, core.Resetting, core.Migrating,
+		core.Transferring:
+		return !poweredOn.IsNull() && !poweredOn.IsUnknown() &&
+			!poweredOn.ValueBool(), nil
+	default:
+		return false, fmt.Errorf(
+			"cannot downgrade package while Virtual Machine is in unsupported state %q",
+			state,
+		)
+	}
 }
 
 func virtualMachineForPackageValidation(
@@ -2232,45 +2668,18 @@ func waitForVMToStop(
 	vmID string,
 	timeout time.Duration,
 ) error {
-	waiter := &retry.StateChangeConf{
-		Pending: []string{
-			string(core.Started),
-			string(core.Stopping),
-			string(core.ShuttingDown),
+	err := waitForVirtualMachineState(
+		ctx,
+		m,
+		vmID,
+		[]core.VirtualMachineStateEnum{
+			core.Started,
+			core.Stopping,
+			core.ShuttingDown,
 		},
-		Target: []string{
-			string(core.Stopped),
-		},
-		Refresh: func() (interface{}, string, error) {
-			res, e := m.Core.GetVirtualMachineWithResponse(ctx,
-				&core.GetVirtualMachineParams{
-					VirtualMachineId: &vmID,
-				})
-			if e != nil {
-				if res != nil {
-					e = genericAPIError(e, res.Body)
-				}
-				return nil, "", e
-			}
-			if res.JSON200 == nil {
-				return nil, "", fmt.Errorf(
-					"unexpected empty response polling VM state",
-				)
-			}
-			v := res.JSON200.VirtualMachine
-			if v.State == nil {
-				return v, "", fmt.Errorf("vm state is nil")
-			}
-			return v, string(*v.State), nil
-		},
-		Timeout:                   timeout,
-		Delay:                     m.stateChangeDelay(1 * time.Second),
-		MinTimeout:                m.stateChangeDelay(5 * time.Second),
-		PollInterval:              m.stateChangePollInterval(),
-		ContinuousTargetOccurence: 1,
-	}
-
-	_, err := waiter.WaitForStateContext(ctx)
+		[]core.VirtualMachineStateEnum{core.Stopped},
+		timeout,
+	)
 
 	return err
 }

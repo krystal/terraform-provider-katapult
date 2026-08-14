@@ -102,7 +102,7 @@ func TestAccKatapultVirtualMachine_update_package_downgrade_error(
 			{
 				Config: virtualMachinePackageTestConfig(name, "rock-1"),
 				ExpectError: regexp.MustCompile(
-					"cannot downgrade package while Virtual Machine is running",
+					"cannot downgrade package unless the Virtual Machine is already",
 				),
 			},
 		},
@@ -134,6 +134,73 @@ func TestAccKatapultVirtualMachine_update_package_downgrade_stopped(
 				},
 				Config: virtualMachinePackageTestConfig(name, "rock-1"),
 				Check:  virtualMachinePackageTestChecks("rock-1", &vmID, true),
+			},
+		},
+	})
+}
+
+func TestAccKatapultVirtualMachine_update_package_downgrade_powered_off(
+	t *testing.T,
+) {
+	tt := newTestTools(t)
+	name := tt.ResourceName("package-downgrade-power")
+	var vmID string
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultIPDestroy(tt),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: virtualMachineManagedPackageTestConfig(
+					name,
+					"rock-3",
+					true,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					virtualMachinePackageTestChecks("rock-3", &vmID, false),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "state", "started",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "powered_on", "true",
+					),
+				),
+			},
+			{
+				Config: virtualMachineManagedPackageTestConfig(
+					name,
+					"rock-1",
+					false,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					virtualMachinePackageTestChecks("rock-1", &vmID, true),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "state", "stopped",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "powered_on", "false",
+					),
+				),
+			},
+			{
+				Config: virtualMachineManagedPackageTestConfig(
+					name,
+					"rock-1",
+					true,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					virtualMachinePackageTestChecks("rock-1", &vmID, true),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "state", "started",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_virtual_machine.base", "powered_on", "true",
+					),
+				),
 			},
 		},
 	})
@@ -190,6 +257,36 @@ func virtualMachinePackageTestConfig(name string, pkg string) string {
 		name,
 		name+"-host",
 		pkg,
+	)
+}
+
+func virtualMachineManagedPackageTestConfig(
+	name string,
+	pkg string,
+	poweredOn bool,
+) string {
+	return undent.Stringf(`
+		resource "katapult_ip" "web" {}
+
+		resource "katapult_virtual_machine" "base" {
+			name          = "%s"
+			hostname      = "%s"
+			package       = "%s"
+			powered_on    = %t
+			disk_template = "ubuntu-18-04"
+			disk_template_options = {
+				install_agent = true
+			}
+			ip_address_ids = [katapult_ip.web.id]
+
+			timeouts {
+				update = "10m"
+			}
+		}`,
+		name,
+		name+"-host",
+		pkg,
+		poweredOn,
 	)
 }
 

@@ -23,6 +23,10 @@ resource "katapult_virtual_machine" "base" {
   hostname    = "web-2"
   description = "A web server."
 
+  # Explicitly opt into ongoing power-state management. Set this to false to
+  # gracefully shut down the VM and keep it stopped.
+  powered_on = true
+
   group_id = katapult_virtual_machine_group.web.id
   tags     = ["web", "public"]
 
