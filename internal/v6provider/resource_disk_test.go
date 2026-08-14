@@ -7,10 +7,13 @@ import (
 	"strings"
 	"testing"
 
+	frameworkresource "github.com/hashicorp/terraform-plugin-framework/resource"
+	resourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/next/core"
+	"github.com/stretchr/testify/require"
 )
 
 func init() { //nolint:gochecknoinits
@@ -18,6 +21,24 @@ func init() { //nolint:gochecknoinits
 		Name: "katapult_disk",
 		F:    testSweepDisks,
 	})
+}
+
+func TestDiskResourceResizeSchema(t *testing.T) {
+	t.Parallel()
+	r := &DiskResource{}
+	resp := &frameworkresource.SchemaResponse{}
+	r.Schema(context.Background(), frameworkresource.SchemaRequest{}, resp)
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+
+	size := resp.Schema.Attributes["size_in_gb"].(resourceschema.Int64Attribute)
+	require.Empty(t, size.PlanModifiers)
+	require.NotEmpty(t, size.Validators)
+	method := resp.Schema.Attributes["resize_method"].(resourceschema.StringAttribute)
+	require.True(t, method.Optional)
+	require.True(t, method.Computed)
+	require.NotNil(t, method.Default)
+	_, ok := resp.Schema.Blocks["timeouts"].(resourceschema.SingleNestedBlock)
+	require.True(t, ok)
 }
 
 func testSweepDisks(_ string) error {
@@ -119,10 +140,9 @@ func TestAccKatapultDisk_basic(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:            "katapult_disk.test",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"resize_method"},
+				ResourceName:      "katapult_disk.test",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

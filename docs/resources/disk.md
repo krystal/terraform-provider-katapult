@@ -4,21 +4,33 @@ page_title: "katapult_disk Resource - terraform-provider-katapult"
 subcategory: "Storage"
 description: |-
   Manages a standalone disk in Katapult.
-  Destroying a katapult_virtual_machine only detaches its attached disks — it does not delete them. The disk is deleted only when this resource itself is destroyed. Use lifecycle { prevent_destroy = true } to guard important data.
+  Assignment lifecycle is owned by katapult_disk_assignment. This resource refuses deletion while any assignment remains and never detaches or unassigns a relationship itself. Remove the assignment first so Terraform's dependency graph orders detach and unassign before disk deletion. The disk is deleted only when this resource itself is destroyed; use lifecycle { prevent_destroy = true } to guard important data.
+  Offline resize requires the disk to be physically detached. Because an in-place disk resize and an in-place katapult_disk_assignment.attached = false update cannot be ordered safely in one Terraform graph, perform them in two applies: detach first, then change size_in_gb. Online growth leaves guest partition and filesystem expansion to the operator. Shrink is always offline and may require a larger update timeout.
 ---
 
 # katapult_disk (Resource)
 
 Manages a standalone disk in Katapult.
 
-Destroying a `katapult_virtual_machine` only detaches its attached disks — it does **not** delete them. The disk is deleted only when this resource itself is destroyed. Use `lifecycle { prevent_destroy = true }` to guard important data.
+Assignment lifecycle is owned by `katapult_disk_assignment`. This resource refuses deletion while any assignment remains and never detaches or unassigns a relationship itself. Remove the assignment first so Terraform's dependency graph orders detach and unassign before disk deletion. The disk is deleted only when this resource itself is destroyed; use `lifecycle { prevent_destroy = true }` to guard important data.
+
+Offline resize requires the disk to be physically detached. Because an in-place disk resize and an in-place `katapult_disk_assignment.attached = false` update cannot be ordered safely in one Terraform graph, perform them in two applies: detach first, then change `size_in_gb`. Online growth leaves guest partition and filesystem expansion to the operator. Shrink is always offline and may require a larger update timeout.
 
 ## Example Usage
 
 ```terraform
 resource "katapult_disk" "data" {
-  name       = "web-data"
-  size_in_gb = 200
+	name       = "web-data"
+	size_in_gb = 200
+
+	# Offline is the default and includes filesystem-aware resizing. Detach the
+	# disk (or stop its VM) before changing size. Explicit online growth leaves
+	# guest partition/filesystem expansion to the operator.
+	resize_method = "offline"
+
+	timeouts {
+		update = "4h"
+	}
 }
 ```
 
@@ -28,22 +40,32 @@ resource "katapult_disk" "data" {
 ### Required
 
 - `name` (String) The name of the disk.
-- `size_in_gb` (Number) Size of the disk in GB. Can only be increased; decreasing triggers replacement.
+- `size_in_gb` (Number) Size of the disk in GB. Growth and shrink are performed in place when the configured resize method and physical attachment state permit it.
 
 ### Optional
 
 - `bus_type` (String) Bus type for the disk: `virtio` or `scsi`.
 - `io_profile_id` (String) The ID of the IO profile to apply.
-- `resize_method` (String) Resize method when growing the disk: `online` or `offline`. Write-only — not returned by the API.
+- `resize_method` (String) Preferred method for growing the disk: `online` or `offline`. Defaults to filesystem-aware offline resizing. Shrinks and detached growth always use offline.
 - `storage_speed` (String) Storage speed for the disk: `ssd` or `nvme`. Cannot be changed after creation (requires replacement).
 
 ~> **Note:** Available storage tiers vary by data center. For portable configurations, omit this attribute and the data center's default tier will be used.
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
 - `id` (String) The unique identifier of the disk.
 - `state` (String) Current state of the disk.
 - `wwn` (String) World Wide Name identifier of the disk.
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+- `delete` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.
+- `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
 
 ## Import
 

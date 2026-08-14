@@ -36,15 +36,9 @@ resource "katapult_virtual_machine" "base" {
     install_agent = true
   }
 
-  # First defined disk becomes the boot disk that the OS is installed on.
-  disk {
-    name = "System Disk" # Optional
-    size = 20            # GB
-  }
-
-  disk {
-    name = "Data" # Optional
-    size = 100    # GB
+  system_disk = {
+    name       = "System Disk"
+    size_in_gb = 20
   }
 
   ip_address_ids = [
@@ -55,4 +49,16 @@ resource "katapult_virtual_machine" "base" {
   # Use katapult_network_speed_profiles data source to get list of available
   # profiles.
   network_speed_profile = "1gbps"
+}
+
+# Additional disks are independent objects and are assigned after the VM's
+# first boot. The assignment is the sole owner of attach/detach lifecycle.
+resource "katapult_disk" "web-2-data" {
+  name       = "Data"
+  size_in_gb = 100
+}
+
+resource "katapult_disk_assignment" "web-2-data" {
+  virtual_machine_id = katapult_virtual_machine.base.id
+  disk_id            = katapult_disk.web-2-data.id
 }

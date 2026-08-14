@@ -1,48 +1,81 @@
 package v6provider
 
 import (
+	"context"
+	"fmt"
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/krystal/go-katapult/next/core"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestIsAdditionalDiskAttachment(t *testing.T) {
+//nolint:lll // Compact table rows keep boot-selection scenarios comparable.
+func TestSelectBootDiskAssignment(t *testing.T) {
 	t.Parallel()
 
 	trueValue := true
 	falseValue := false
-
-	tests := []struct {
-		name       string
-		attachment core.GetVirtualMachineDisks200ResponseDisks
-		want       bool
-	}{
-		{
-			name: "explicit additional disk",
-			attachment: core.GetVirtualMachineDisks200ResponseDisks{
-				Boot: &falseValue,
-			},
-			want: true,
-		},
-		{
-			name: "explicit boot disk",
-			attachment: core.GetVirtualMachineDisks200ResponseDisks{
-				Boot: &trueValue,
-			},
-			want: false,
-		},
-		{
-			name:       "missing boot flag treated as boot",
-			attachment: core.GetVirtualMachineDisks200ResponseDisks{},
-			want:       false,
-		},
+	disk := func(id string, boot *bool) core.GetVirtualMachineDisks200ResponseDisks {
+		return core.GetVirtualMachineDisks200ResponseDisks{Boot: boot, Disk: &core.GetVirtualMachineDisksPartDisk{Id: &id}}
 	}
-
+	tests := []struct {
+		name        string
+		attachments []core.GetVirtualMachineDisks200ResponseDisks
+		prior       string
+		want        string
+		ok          bool
+	}{
+		{name: "explicit true", attachments: []core.GetVirtualMachineDisks200ResponseDisks{disk("data", &falseValue), disk("boot", &trueValue)}, want: "boot", ok: true},
+		{name: "prior fallback", attachments: []core.GetVirtualMachineDisks200ResponseDisks{disk("boot", &falseValue), disk("data", &falseValue)}, prior: "boot", want: "boot", ok: true},
+		{name: "one nil fallback", attachments: []core.GetVirtualMachineDisks200ResponseDisks{disk("boot", nil), disk("data", &falseValue)}, want: "boot", ok: true},
+		{name: "missing prior", attachments: []core.GetVirtualMachineDisks200ResponseDisks{disk("data", &falseValue)}, prior: "missing", ok: false},
+		{name: "no boot evidence", attachments: []core.GetVirtualMachineDisks200ResponseDisks{disk("data", &falseValue)}, ok: false},
+		{name: "ambiguous nil", attachments: []core.GetVirtualMachineDisks200ResponseDisks{disk("a", nil), disk("b", nil)}, ok: false},
+		{name: "multiple explicit", attachments: []core.GetVirtualMachineDisks200ResponseDisks{disk("a", &trueValue), disk("b", &trueValue)}, ok: false},
+	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, test.want, isAdditionalDiskAttachment(test.attachment))
+			selected, ok := selectBootDiskAssignment(test.attachments, test.prior)
+			assert.Equal(t, test.ok, ok)
+			if test.ok {
+				assert.Equal(t, test.want, *selected.Disk.Id)
+			}
+		})
+	}
+}
+
+func TestWaitForDiskSizeRequiresAPIConvergence(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		size    int
+		wantErr bool
+	}{
+		{name: "target observed", size: 30},
+		{name: "task success without size change", size: 20, wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
+				writeTestJSON(w, http.StatusOK, fmt.Sprintf(`{"disk":{"id":"disk_test","size_in_gb":%d}}`, test.size))
+			})
+			err := waitForDiskSize(
+				context.Background(),
+				&Meta{Core: client, testMode: true},
+				"disk_test",
+				30,
+				20*time.Millisecond,
+			)
+			if test.wantErr {
+				require.ErrorContains(t, err, "waiting for disk disk_test size 30 GB")
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 }

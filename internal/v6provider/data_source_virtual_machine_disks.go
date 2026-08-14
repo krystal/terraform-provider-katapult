@@ -34,6 +34,7 @@ type (
 	}
 )
 
+//nolint:goconst // Terraform attribute names are clearer inline in the shared type map.
 var vmDiskAttrTypes = map[string]attr.Type{
 	"id":               types.StringType,
 	"name":             types.StringType,
@@ -44,6 +45,8 @@ var vmDiskAttrTypes = map[string]attr.Type{
 	"wwn":              types.StringType,
 	stateAttributeName: types.StringType,
 	"boot":             types.BoolType,
+	"attach_on_boot":   types.BoolType,
+	"attachment_state": types.StringType,
 }
 
 func (d *VirtualMachineDisksDataSource) Metadata(
@@ -75,14 +78,15 @@ func (d *VirtualMachineDisksDataSource) Configure(
 	d.M = meta
 }
 
+//nolint:lll // Preserve the complete nullable-boot schema description.
 func (d *VirtualMachineDisksDataSource) Schema(
 	_ context.Context,
 	_ datasource.SchemaRequest,
 	resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Lists all disks (boot and additional) " +
-			"attached to a Virtual Machine.",
+		MarkdownDescription: "Lists every disk assignment for a Virtual Machine, " +
+			"including physically detached assignments.",
 		Attributes: map[string]schema.Attribute{
 			"virtual_machine_id": schema.StringAttribute{
 				Required:            true,
@@ -90,7 +94,7 @@ func (d *VirtualMachineDisksDataSource) Schema(
 			},
 			"disks": schema.ListNestedAttribute{
 				Computed:            true,
-				MarkdownDescription: "The list of disks attached to the VM.",
+				MarkdownDescription: "Every disk assigned to the VM, including physically detached disks.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
@@ -127,7 +131,15 @@ func (d *VirtualMachineDisksDataSource) Schema(
 						},
 						"boot": schema.BoolAttribute{
 							Computed:            true,
-							MarkdownDescription: "Whether this is the boot disk.",
+							MarkdownDescription: "Raw nullable boot flag, normalized to true only when boot selection is authoritative.",
+						},
+						"attach_on_boot": schema.BoolAttribute{
+							Computed:            true,
+							MarkdownDescription: "Observed attach-on-boot policy.",
+						},
+						"attachment_state": schema.StringAttribute{
+							Computed:            true,
+							MarkdownDescription: "Observed physical attachment state.",
 						},
 					},
 				},
@@ -163,8 +175,13 @@ func (d *VirtualMachineDisksDataSource) Read(
 
 	diskObjType := types.ObjectType{AttrTypes: vmDiskAttrTypes}
 	elems := make([]attr.Value, 0, len(disks))
+	selectedBoot, authoritative := selectBootDiskAssignment(attachments, "")
+	selectedBootID := ""
+	if authoritative && selectedBoot != nil && selectedBoot.Disk != nil && selectedBoot.Disk.Id != nil {
+		selectedBootID = *selectedBoot.Disk.Id
+	}
 	for i, disk := range disks {
-		obj, diags := buildDiskAttrObject(disk, attachments[i].Boot)
+		obj, diags := buildDiskAttrObject(disk, attachments[i], selectedBootID)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -230,7 +247,8 @@ func fetchDiskDetailsForAttachments(
 // flag into the data source's nested-object value.
 func buildDiskAttrObject(
 	disk *core.GetDisk200ResponseDisk,
-	bootFlag *bool,
+	attachment core.GetVirtualMachineDisks200ResponseDisks,
+	selectedBootID string,
 ) (attr.Value, diag.Diagnostics) {
 	if disk == nil {
 		return types.ObjectNull(vmDiskAttrTypes), nil
@@ -272,9 +290,20 @@ func buildDiskAttrObject(
 	if disk.State != nil {
 		diskState = types.StringValue(string(*disk.State))
 	}
-	boot := types.BoolValue(false)
-	if bootFlag != nil {
-		boot = types.BoolValue(*bootFlag)
+	boot := types.BoolNull()
+	if attachment.Boot != nil {
+		boot = types.BoolValue(*attachment.Boot)
+	}
+	if disk.Id != nil && selectedBootID != "" && *disk.Id == selectedBootID {
+		boot = types.BoolValue(true)
+	}
+	attachOnBoot := types.BoolNull()
+	if attachment.AttachOnBoot != nil {
+		attachOnBoot = types.BoolValue(*attachment.AttachOnBoot)
+	}
+	attachmentState := types.StringNull()
+	if attachment.State != nil {
+		attachmentState = types.StringValue(string(*attachment.State))
 	}
 
 	return types.ObjectValue(vmDiskAttrTypes, map[string]attr.Value{
@@ -287,5 +316,7 @@ func buildDiskAttrObject(
 		"wwn":              wwn,
 		stateAttributeName: diskState,
 		"boot":             boot,
+		"attach_on_boot":   attachOnBoot,
+		"attachment_state": attachmentState,
 	})
 }

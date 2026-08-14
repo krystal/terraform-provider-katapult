@@ -1,0 +1,1 @@
+terraform import katapult_disk_assignment.data vm_abc123/disk_abc123

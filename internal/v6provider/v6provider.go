@@ -257,6 +257,7 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource { return &ObjectStorageAccessKeyResource{} },
 		func() resource.Resource { return &VirtualMachineGroupResource{} },
 		func() resource.Resource { return &DiskResource{} },
+		func() resource.Resource { return &DiskAssignmentResource{} },
 		func() resource.Resource { return &VirtualMachineResource{} },
 	}
 }

@@ -40,11 +40,16 @@ func TestAccKatapultDataSourceVirtualMachineDisks_basic(t *testing.T) {
 					    install_agent = true
 					  }
 					  ip_address_ids = [katapult_ip.web.id]
-					  disk_ids       = [katapult_disk.data.id]
+					}
+
+					resource "katapult_disk_assignment" "data" {
+					  virtual_machine_id = katapult_virtual_machine.base.id
+					  disk_id            = katapult_disk.data.id
 					}
 
 					data "katapult_virtual_machine_disks" "all" {
 					  virtual_machine_id = katapult_virtual_machine.base.id
+					  depends_on         = [katapult_disk_assignment.data]
 					}`, diskName,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(

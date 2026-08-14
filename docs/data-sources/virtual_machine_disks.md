@@ -3,12 +3,12 @@
 page_title: "katapult_virtual_machine_disks Data Source - terraform-provider-katapult"
 subcategory: "Storage"
 description: |-
-  Lists all disks (boot and additional) attached to a Virtual Machine.
+  Lists every disk assignment for a Virtual Machine, including physically detached assignments.
 ---
 
 # katapult_virtual_machine_disks (Data Source)
 
-Lists all disks (boot and additional) attached to a Virtual Machine.
+Lists every disk assignment for a Virtual Machine, including physically detached assignments.
 
 
 
@@ -21,14 +21,16 @@ Lists all disks (boot and additional) attached to a Virtual Machine.
 
 ### Read-Only
 
-- `disks` (Attributes List) The list of disks attached to the VM. (see [below for nested schema](#nestedatt--disks))
+- `disks` (Attributes List) Every disk assigned to the VM, including physically detached disks. (see [below for nested schema](#nestedatt--disks))
 
 <a id="nestedatt--disks"></a>
 ### Nested Schema for `disks`
 
 Read-Only:
 
-- `boot` (Boolean) Whether this is the boot disk.
+- `attach_on_boot` (Boolean) Observed attach-on-boot policy.
+- `attachment_state` (String) Observed physical attachment state.
+- `boot` (Boolean) Raw nullable boot flag, normalized to true only when boot selection is authoritative.
 - `bus_type` (String) Bus type of the disk.
 - `id` (String) The unique identifier of the disk.
 - `io_profile_id` (String) The IO profile ID of the disk.

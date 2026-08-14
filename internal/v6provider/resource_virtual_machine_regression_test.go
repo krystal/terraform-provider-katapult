@@ -3,6 +3,7 @@ package v6provider
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -15,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	frameworkresource "github.com/hashicorp/terraform-plugin-framework/resource"
 	resourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	frameworkvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -920,7 +920,7 @@ func TestVirtualMachineResourcePoweredOnSchemaIsNullableObservation(t *testing.T
 	require.Empty(t, attribute.PlanModifiers)
 }
 
-func TestVirtualMachineResourceDiskSizeChangeRequiresReplace(t *testing.T) {
+func TestVirtualMachineResourceLegacyDiskReplacementIsResourceLevel(t *testing.T) {
 	t.Parallel()
 
 	resource := &VirtualMachineResource{}
@@ -933,56 +933,273 @@ func TestVirtualMachineResourceDiskSizeChangeRequiresReplace(t *testing.T) {
 	diskBlockValue := schemaResp.Schema.Blocks["disk"]
 	diskBlock, ok := diskBlockValue.(resourceschema.ListNestedBlock)
 	require.True(t, ok)
-	require.NotEmpty(t, diskBlock.PlanModifiers)
+	require.Empty(t, diskBlock.PlanModifiers)
+	require.NotEmpty(t, diskBlock.DeprecationMessage)
+	size := diskBlock.NestedObject.Attributes[virtualMachineDiskSizeAttribute].(resourceschema.Int64Attribute)
+	require.Empty(t, size.Validators)
+}
 
-	diskAttrTypes := map[string]attr.Type{
-		"name":                          types.StringType,
-		virtualMachineDiskSizeAttribute: types.Int64Type,
-	}
-	diskValue := func(size int64) types.List {
-		name := types.StringValue("System")
-		return types.ListValueMust(
-			types.ObjectType{AttrTypes: diskAttrTypes},
-			[]attr.Value{types.ObjectValueMust(
-				diskAttrTypes,
-				map[string]attr.Value{
-					"name":                          name,
-					virtualMachineDiskSizeAttribute: types.Int64Value(size),
-				},
-			)},
-		)
-	}
-
-	stateDisk := diskValue(20)
-	planDisk := diskValue(40)
-	state := virtualMachineTestState(t, resource, VirtualMachineResourceModel{
-		ID:   types.StringValue("vm_test"),
-		Disk: stateDisk,
-	})
-	planState := virtualMachineTestState(
-		t,
-		resource,
-		VirtualMachineResourceModel{
-			ID:   types.StringValue("vm_test"),
-			Disk: planDisk,
+//nolint:lll // Compact model construction keeps each classifier case readable.
+func TestVirtualMachineModifyPlanLegacyDiskClassification(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name        string
+		stateDisks  []VirtualMachineDiskModel
+		planDisks   []VirtualMachineDiskModel
+		wantError   string
+		wantReplace bool
+	}{
+		{
+			name:       "unchanged historical sub minimum disk remains valid",
+			stateDisks: legacyDiskModels(8), planDisks: legacyDiskModels(8),
 		},
-	)
-	resp := &planmodifier.ListResponse{PlanValue: planDisk}
-	for _, modifier := range diskBlock.PlanModifiers {
-		modifier.PlanModifyList(
-			context.Background(),
-			planmodifier.ListRequest{
-				Plan:       tfsdk.Plan(planState),
-				PlanValue:  planDisk,
-				State:      state,
-				StateValue: stateDisk,
-			},
-			resp,
-		)
+		{
+			name:       "new sub minimum disk is rejected",
+			stateDisks: legacyDiskModels(20), planDisks: legacyDiskModels(20, 8),
+			wantError: "at least 10 GB",
+		},
+		{
+			name:       "edited sub minimum disk is rejected",
+			stateDisks: legacyDiskModels(20), planDisks: legacyDiskModels(8),
+			wantError: "at least 10 GB",
+		},
+		{
+			name:       "partial removal retaining sub minimum disk is rejected",
+			stateDisks: legacyDiskModels(8, 20), planDisks: legacyDiskModels(8),
+			wantError: "at least 10 GB",
+		},
+		{
+			name:       "valid edited disk requires replacement",
+			stateDisks: legacyDiskModels(20), planDisks: legacyDiskModels(21), wantReplace: true,
+		},
+		{
+			name:       "valid added disk requires replacement",
+			stateDisks: legacyDiskModels(20), planDisks: legacyDiskModels(20, 10), wantReplace: true,
+		},
+		{
+			name:       "partial removal requires replacement",
+			stateDisks: legacyDiskModels(20, 10), planDisks: legacyDiskModels(20), wantReplace: true,
+		},
 	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			r := &VirtualMachineResource{M: &Meta{}}
+			state := VirtualMachineResourceModel{ID: types.StringValue("vm_test"), Disk: legacyDiskList(t, test.stateDisks)}
+			plan := state
+			plan.Disk = legacyDiskList(t, test.planDisks)
+			resp := runVirtualMachineModifyPlan(t, r, state, plan, plan)
+			if test.wantError != "" {
+				require.True(t, resp.Diagnostics.HasError())
+				require.Contains(t, resp.Diagnostics.Errors()[0].Detail(), test.wantError)
+				return
+			}
+			require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+			require.Equal(t, test.wantReplace, len(resp.RequiresReplace) > 0)
+		})
+	}
+}
+
+//nolint:lll // Inline API fixtures keep each migration observation self-contained.
+func TestVirtualMachineModifyPlanFullLegacyRemoval(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name            string
+		configureSystem bool
+		ambiguousBoot   bool
+		wantError       string
+	}{
+		{name: "omitted system disk migrates without replacement"},
+		{name: "equivalent system disk migrates without replacement", configureSystem: true},
+		{name: "ambiguous boot relationship is rejected", ambiguousBoot: true, wantError: "authoritative boot disk"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+				require.Equal(t, "/virtual_machines/virtual_machine/disks", req.URL.Path)
+				bootJSON, dataBootJSON := `"boot":true`, `"boot":false`
+				if test.ambiguousBoot {
+					bootJSON = `"boot":null`
+					dataBootJSON = `"boot":null`
+				}
+				writeTestJSON(w, http.StatusOK, fmt.Sprintf(`{
+					"pagination":{"current_page":1,"total_pages":1,"total":2,"per_page":30,"large_set":false},
+					"disks":[
+						{"disk":{"id":"disk_boot","name":"System Disk","size_in_gb":20},%s,"attach_on_boot":true,"state":"attached"},
+						{"disk":{"id":"disk_data","name":"Data","size_in_gb":10},%s,"attach_on_boot":true,"state":"attached"}
+					]
+				}`, bootJSON, dataBootJSON))
+			})
+			r := &VirtualMachineResource{M: &Meta{Core: client, testMode: true}}
+			system := VirtualMachineSystemDiskModel{
+				ID: types.StringValue("disk_boot"), Name: types.StringValue("System Disk"),
+				SizeInGB: types.Int64Value(20), ResizeMethod: types.StringValue("offline"),
+				WWN: types.StringNull(), State: types.StringNull(),
+			}
+			if test.ambiguousBoot {
+				system.ID = types.StringValue("")
+			}
+			systemValue, diags := virtualMachineSystemDiskValue(context.Background(), system)
+			require.False(t, diags.HasError(), diags.Errors())
+			state := VirtualMachineResourceModel{
+				ID: types.StringValue("vm_test"), Disk: legacyDiskList(t, legacyDiskModels(20, 10)),
+				SystemDisk: systemValue,
+			}
+			plan := state
+			plan.Disk = legacyDiskList(t, nil)
+			config := plan
+			if !test.configureSystem {
+				config.SystemDisk = types.ObjectNull(virtualMachineSystemDiskAttrTypes)
+			}
+			resp := runVirtualMachineModifyPlan(t, r, state, plan, config)
+			if test.wantError != "" {
+				require.True(t, resp.Diagnostics.HasError())
+				require.Contains(t, resp.Diagnostics.Errors()[0].Detail(), test.wantError)
+				return
+			}
+			require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+			require.Empty(t, resp.RequiresReplace)
+			require.NotEmpty(t, resp.Diagnostics.Warnings())
+		})
+	}
+}
+
+func legacyDiskModels(sizes ...int64) []VirtualMachineDiskModel {
+	disks := make([]VirtualMachineDiskModel, 0, len(sizes))
+	for i, size := range sizes {
+		disks = append(disks, VirtualMachineDiskModel{
+			Name: types.StringValue(fmt.Sprintf("Disk %d", i+1)),
+			Size: types.Int64Value(size),
+		})
+	}
+	return disks
+}
+
+func legacyDiskList(t *testing.T, disks []VirtualMachineDiskModel) types.List {
+	t.Helper()
+	value, diags := types.ListValueFrom(context.Background(), types.ObjectType{
+		AttrTypes: map[string]attr.Type{"name": types.StringType, "size": types.Int64Type},
+	}, disks)
+	require.False(t, diags.HasError(), diags.Errors())
+	return value
+}
+
+func runVirtualMachineModifyPlan(
+	t *testing.T,
+	r *VirtualMachineResource,
+	stateModel, planModel, configModel VirtualMachineResourceModel,
+) frameworkresource.ModifyPlanResponse {
+	t.Helper()
+	state := virtualMachineTestState(t, r, stateModel)
+	plan := virtualMachineTestState(t, r, planModel)
+	config := virtualMachineTestState(t, r, configModel)
+	req := frameworkresource.ModifyPlanRequest{
+		Config: tfsdk.Config(config),
+		Plan:   tfsdk.Plan(plan),
+		State:  state,
+	}
+	resp := frameworkresource.ModifyPlanResponse{Plan: tfsdk.Plan(plan)}
+	r.ModifyPlan(context.Background(), req, &resp)
+	return resp
+}
+
+func TestVirtualMachineResourceSystemDiskSchema(t *testing.T) {
+	t.Parallel()
+	resource := &VirtualMachineResource{}
+	resp := &frameworkresource.SchemaResponse{}
+	resource.Schema(context.Background(), frameworkresource.SchemaRequest{}, resp)
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+
+	_, hasDiskIDs := resp.Schema.Attributes["disk_ids"]
+	require.False(t, hasDiskIDs)
+	systemDisk, ok := resp.Schema.Attributes["system_disk"].(resourceschema.SingleNestedAttribute)
+	require.True(t, ok)
+	require.True(t, systemDisk.Optional)
+	require.True(t, systemDisk.Computed)
+	require.NotEmpty(t, systemDisk.PlanModifiers)
+	size := systemDisk.Attributes["size_in_gb"].(resourceschema.Int64Attribute)
+	require.NotEmpty(t, size.Validators)
+	resizeMethod := systemDisk.Attributes["resize_method"].(resourceschema.StringAttribute)
+	require.True(t, resizeMethod.Optional)
+	require.True(t, resizeMethod.Computed)
+	require.NotNil(t, resizeMethod.Default)
+}
+
+func TestVirtualMachineModifyPlanAdoptsImportedTemplateFieldsOnce(t *testing.T) {
+	t.Parallel()
+	resource := &VirtualMachineResource{M: &Meta{}}
+	stateModel := VirtualMachineResourceModel{
+		ID:           types.StringValue("vm_imported"),
+		Package:      types.StringValue("rock-3"),
+		DiskTemplate: types.StringValue("templates/ubuntu-18-04"),
+		DiskTemplateOptions: types.MapNull(
+			types.StringType,
+		),
+	}
+	planModel := stateModel
+	planModel.DiskTemplate = types.StringValue("ubuntu-18-04")
+	planModel.DiskTemplateOptions = types.MapValueMust(
+		types.StringType,
+		map[string]attr.Value{"install_agent": types.StringValue("true")},
+	)
+
+	state := virtualMachineTestState(t, resource, stateModel)
+	plan := virtualMachineTestState(t, resource, planModel)
+	req := frameworkresource.ModifyPlanRequest{
+		Config: tfsdk.Config(plan),
+		Plan:   tfsdk.Plan(plan),
+		State:  state,
+	}
+	resp := frameworkresource.ModifyPlanResponse{Plan: tfsdk.Plan(plan)}
+	initializeResourcePrivateState(t, &req, &resp)
+	require.False(t, req.Private.SetKey(
+		context.Background(), virtualMachineImportDiskTemplatePrivateKey, []byte("true"),
+	).HasError())
+	require.False(t, req.Private.SetKey(
+		context.Background(), virtualMachineImportTemplateOptionsPrivateKey, []byte("true"),
+	).HasError())
+
+	resource.ModifyPlan(context.Background(), req, &resp)
 
 	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
-	require.True(t, resp.RequiresReplace)
+	require.Empty(t, resp.RequiresReplace)
+	for _, key := range []string{
+		virtualMachineImportDiskTemplatePrivateKey,
+		virtualMachineImportTemplateOptionsPrivateKey,
+	} {
+		value, diags := resp.Private.GetKey(context.Background(), key)
+		require.False(t, diags.HasError(), diags.Errors())
+		require.Empty(t, value)
+	}
+}
+
+func TestVirtualMachineImportMarksTemplateFieldsAdoptable(t *testing.T) {
+	t.Parallel()
+	r := &VirtualMachineResource{}
+	state := virtualMachineTestState(t, r, VirtualMachineResourceModel{})
+	resp := frameworkresource.ImportStateResponse{State: state}
+	initializeResourcePrivateState(t, &resp, &resp)
+
+	r.ImportState(
+		context.Background(),
+		frameworkresource.ImportStateRequest{ID: "vm_imported"},
+		&resp,
+	)
+
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+	var imported VirtualMachineResourceModel
+	diags := resp.State.Get(context.Background(), &imported)
+	require.False(t, diags.HasError(), diags.Errors())
+	require.Equal(t, "vm_imported", imported.ID.ValueString())
+	for _, key := range []string{
+		virtualMachineImportDiskTemplatePrivateKey,
+		virtualMachineImportTemplateOptionsPrivateKey,
+	} {
+		value, privateDiags := resp.Private.GetKey(context.Background(), key)
+		require.False(t, privateDiags.HasError(), privateDiags.Errors())
+		require.JSONEq(t, "true", string(value))
+	}
 }
 
 func virtualMachineTestState(
@@ -1008,8 +1225,8 @@ func virtualMachineTestState(
 	if model.IPAddresses.IsNull() {
 		model.IPAddresses = types.SetNull(types.StringType)
 	}
-	if model.DiskIDs.IsNull() {
-		model.DiskIDs = types.SetNull(types.StringType)
+	if model.SystemDisk.IsNull() {
+		model.SystemDisk = types.ObjectNull(virtualMachineSystemDiskAttrTypes)
 	}
 	if model.VirtualNetworkIDs.IsNull() {
 		model.VirtualNetworkIDs = types.SetNull(types.StringType)

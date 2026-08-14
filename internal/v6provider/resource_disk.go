@@ -2,21 +2,40 @@ package v6provider
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/krystal/go-katapult/next/core"
 )
+
+const diskResizeMethodPrivateKey = "disk_resize_method_v1"
+
+const diskMarkdownDescription = "Manages a standalone disk in Katapult.\n\n" +
+	"Assignment lifecycle is owned by `katapult_disk_assignment`. This resource " +
+	"refuses deletion while any assignment remains and never detaches or unassigns " +
+	"a relationship itself. Remove the assignment first so Terraform's dependency " +
+	"graph orders detach and unassign before disk deletion. The disk is deleted only " +
+	"when this resource itself is destroyed; use `lifecycle { prevent_destroy = true }` " +
+	"to guard important data.\n\n" +
+	"Offline resize requires the disk to be physically detached. Because an in-place " +
+	"disk resize and an in-place `katapult_disk_assignment.attached = false` update " +
+	"cannot be ordered safely in one Terraform graph, perform them in two applies: " +
+	"detach first, then change `size_in_gb`. Online growth leaves guest partition and " +
+	"filesystem expansion to the operator. Shrink is always offline and may require a " +
+	"larger update timeout."
 
 type (
 	DiskResource struct {
@@ -24,17 +43,65 @@ type (
 	}
 
 	DiskResourceModel struct {
-		ID           types.String `tfsdk:"id"`
-		Name         types.String `tfsdk:"name"`
-		SizeInGB     types.Int64  `tfsdk:"size_in_gb"`
-		StorageSpeed types.String `tfsdk:"storage_speed"`
-		BusType      types.String `tfsdk:"bus_type"`
-		IOProfileID  types.String `tfsdk:"io_profile_id"`
-		ResizeMethod types.String `tfsdk:"resize_method"`
-		WWN          types.String `tfsdk:"wwn"`
-		State        types.String `tfsdk:"state"`
+		ID           types.String   `tfsdk:"id"`
+		Name         types.String   `tfsdk:"name"`
+		SizeInGB     types.Int64    `tfsdk:"size_in_gb"`
+		StorageSpeed types.String   `tfsdk:"storage_speed"`
+		BusType      types.String   `tfsdk:"bus_type"`
+		IOProfileID  types.String   `tfsdk:"io_profile_id"`
+		ResizeMethod types.String   `tfsdk:"resize_method"`
+		WWN          types.String   `tfsdk:"wwn"`
+		State        types.String   `tfsdk:"state"`
+		Timeouts     timeouts.Value `tfsdk:"timeouts"`
 	}
 )
+
+var _ resource.ResourceWithModifyPlan = (*DiskResource)(nil)
+
+//nolint:lll // Keep complete operator-facing resize guidance next to each diagnostic.
+func (r *DiskResource) ModifyPlan(
+	ctx context.Context,
+	req resource.ModifyPlanRequest,
+	resp *resource.ModifyPlanResponse,
+) {
+	if r.M == nil || req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+	var plan, state DiskResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() || plan.SizeInGB.IsUnknown() ||
+		state.SizeInGB.IsNull() || plan.SizeInGB.Equal(state.SizeInGB) {
+		return
+	}
+	obs, err := readStandaloneDiskRelationship(ctx, r.M, state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(path.Root("size_in_gb"), "Cannot Validate Disk Resize", err.Error())
+		return
+	}
+	method, err := effectiveDiskResizeMethod(
+		state.SizeInGB.ValueInt64(), plan.SizeInGB.ValueInt64(),
+		plan.ResizeMethod.ValueString(), obs.assigned, obs.attachmentState,
+	)
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(path.Root("size_in_gb"), "Invalid Disk Resize", err.Error())
+		return
+	}
+	if method == core.Online {
+		resp.Diagnostics.AddAttributeWarning(path.Root("size_in_gb"), "Online Disk Growth", "Katapult grows the block device only; expand the guest partition and filesystem manually.")
+	}
+	if plan.SizeInGB.ValueInt64() < state.SizeInGB.ValueInt64() {
+		resp.Diagnostics.AddAttributeWarning(path.Root("size_in_gb"), "Offline Disk Shrink", "Katapult must shrink the filesystem and partition before the disk. Insufficient free capacity fails the task, and large disks may need a longer update timeout.")
+	}
+	encodedMethod, err := json.Marshal(string(method))
+	if err != nil {
+		resp.Diagnostics.AddError("Disk Resize Plan Error", err.Error())
+		return
+	}
+	if resp.Private != nil {
+		resp.Diagnostics.Append(resp.Private.SetKey(ctx, diskResizeMethodPrivateKey, encodedMethod)...)
+	}
+}
 
 func (r *DiskResource) Metadata(
 	_ context.Context,
@@ -65,17 +132,14 @@ func (r *DiskResource) Configure(
 	r.M = meta
 }
 
+//nolint:goconst // Terraform attribute names are clearer inline in schema declarations.
 func (r *DiskResource) Schema(
-	_ context.Context,
+	ctx context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manages a standalone disk in Katapult.\n\n" +
-			"Destroying a `katapult_virtual_machine` only detaches its " +
-			"attached disks — it does **not** delete them. The disk is " +
-			"deleted only when this resource itself is destroyed. Use " +
-			"`lifecycle { prevent_destroy = true }` to guard important data.",
+		MarkdownDescription: diskMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -90,13 +154,11 @@ func (r *DiskResource) Schema(
 			},
 			"size_in_gb": schema.Int64Attribute{
 				Required: true,
-				MarkdownDescription: "Size of the disk in GB. " +
-					"Can only be increased; decreasing triggers replacement.",
+				MarkdownDescription: "Size of the disk in GB. Growth and shrink " +
+					"are performed in place when the configured resize method and " +
+					"physical attachment state permit it.",
 				Validators: []validator.Int64{
-					int64validator.AtLeast(1),
-				},
-				PlanModifiers: []planmodifier.Int64{
-					RequiresReplaceIfDecreased(),
+					int64validator.AtLeast(10),
 				},
 			},
 			"storage_speed": schema.StringAttribute{
@@ -139,8 +201,11 @@ func (r *DiskResource) Schema(
 			},
 			"resize_method": schema.StringAttribute{
 				Optional: true,
-				MarkdownDescription: "Resize method when growing the disk: " +
-					"`online` or `offline`. Write-only — not returned by the API.",
+				Computed: true,
+				Default:  stringdefault.StaticString("offline"),
+				MarkdownDescription: "Preferred method for growing the disk: " +
+					"`online` or `offline`. Defaults to filesystem-aware offline " +
+					"resizing. Shrinks and detached growth always use offline.",
 				Validators: []validator.String{
 					stringvalidator.OneOf("online", "offline"),
 				},
@@ -160,6 +225,13 @@ func (r *DiskResource) Schema(
 				},
 			},
 		},
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{
+				Create: true,
+				Update: true,
+				Delete: true,
+			}),
+		},
 	}
 }
 
@@ -174,7 +246,11 @@ func (r *DiskResource) Create(
 		return
 	}
 
-	timeout := 10 * time.Minute
+	timeout, diags := plan.Timeouts.Create(ctx, 10*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	name := plan.Name.ValueString()
 	sizeInGB := int(plan.SizeInGB.ValueInt64())
@@ -285,21 +361,57 @@ func (r *DiskResource) Update(
 		return
 	}
 
-	timeout := 10 * time.Minute
+	timeout, diags := plan.Timeouts.Update(ctx, 2*time.Hour)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
 	diskID := state.ID.ValueString()
+	plannedResizeMethod := core.ResizeMethodEnum("")
+	if req.Private != nil {
+		encodedMethod, privateDiags := req.Private.GetKey(ctx, diskResizeMethodPrivateKey)
+		resp.Diagnostics.Append(privateDiags...)
+		if len(encodedMethod) > 0 {
+			var method string
+			if err := json.Unmarshal(encodedMethod, &method); err != nil {
+				resp.Diagnostics.AddError("Invalid Disk Resize Plan", err.Error())
+				return
+			}
+			plannedResizeMethod = core.ResizeMethodEnum(method)
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	if err := r.patchDiskProperties(ctx, diskID, &plan, &state); err != nil {
 		resp.Diagnostics.AddError("Update Error", err.Error())
 		return
 	}
 
-	if err := r.resizeDisk(ctx, diskID, &plan, &state, timeout); err != nil {
+	if err := r.resizeDisk(ctx, diskID, &plan, &state, plannedResizeMethod, timeout); err != nil {
+		observed := plan
+		refreshCtx, cancelRefresh := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+		defer cancelRefresh()
+		if readErr := r.diskRead(refreshCtx, diskID, &observed); readErr == nil {
+			resp.Diagnostics.Append(resp.State.Set(ctx, observed)...)
+		} else {
+			resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+		}
 		resp.Diagnostics.AddError("Update Error", err.Error())
 		return
 	}
 
 	if err := r.diskRead(ctx, diskID, &plan); err != nil {
 		resp.Diagnostics.AddError("Read Error", err.Error())
+		return
+	}
+	if resp.Private != nil {
+		resp.Diagnostics.Append(resp.Private.SetKey(ctx, diskResizeMethodPrivateKey, nil)...)
+	}
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -344,16 +456,22 @@ func (r *DiskResource) patchDiskProperties(
 		}
 		return err
 	}
+	if patchRes == nil || patchRes.JSON200 == nil {
+		return fmt.Errorf("unexpected empty response updating disk")
+	}
 
 	return nil
 }
 
 // resizeDisk grows the disk via PutDiskResize when size_in_gb changes,
 // waiting on the returned task. No-op when size hasn't changed.
+//
+//nolint:lll // Preserve the complete plan-staleness diagnostic.
 func (r *DiskResource) resizeDisk(
 	ctx context.Context,
 	diskID string,
 	plan, state *DiskResourceModel,
+	plannedMethod core.ResizeMethodEnum,
 	timeout time.Duration,
 ) error {
 	if plan.SizeInGB.Equal(state.SizeInGB) {
@@ -361,18 +479,26 @@ func (r *DiskResource) resizeDisk(
 	}
 
 	newSize := int(plan.SizeInGB.ValueInt64())
-
-	var resizeMethod *core.ResizeMethodEnum
-	if !plan.ResizeMethod.IsNull() && !plan.ResizeMethod.IsUnknown() {
-		rm := core.ResizeMethodEnum(plan.ResizeMethod.ValueString())
-		resizeMethod = &rm
+	obs, err := readStandaloneDiskRelationship(ctx, r.M, diskID)
+	if err != nil {
+		return fmt.Errorf("rechecking disk attachment before resize: %w", err)
+	}
+	resizeMethod, err := effectiveDiskResizeMethod(
+		state.SizeInGB.ValueInt64(), plan.SizeInGB.ValueInt64(),
+		plan.ResizeMethod.ValueString(), obs.assigned, obs.attachmentState,
+	)
+	if err != nil {
+		return err
+	}
+	if plannedMethod != "" && plannedMethod != resizeMethod {
+		return fmt.Errorf("disk attachment state changed after planning: resize was planned as %s but now requires %s; run terraform plan again", plannedMethod, resizeMethod)
 	}
 
 	resizeRes, err := r.M.Core.PutDiskResizeWithResponse(ctx,
 		core.PutDiskResizeJSONRequestBody{
 			Disk:         core.DiskLookup{Id: &diskID},
 			SizeInGb:     newSize,
-			ResizeMethod: resizeMethod,
+			ResizeMethod: &resizeMethod,
 		})
 	if err != nil {
 		if resizeRes != nil {
@@ -384,11 +510,13 @@ func (r *DiskResource) resizeDisk(
 		return fmt.Errorf("unexpected empty response resizing disk")
 	}
 
-	return waitForTaskCompletion(
-		ctx, r.M, timeout, *resizeRes.JSON200.Task.Id,
-	)
+	if err := waitForTaskCompletion(ctx, r.M, timeout, *resizeRes.JSON200.Task.Id); err != nil {
+		return err
+	}
+	return waitForDiskSize(ctx, r.M, diskID, int64(newSize), timeout)
 }
 
+//nolint:lll // Preserve the actionable relationship ownership diagnostic.
 func (r *DiskResource) Delete(
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -400,10 +528,14 @@ func (r *DiskResource) Delete(
 		return
 	}
 
-	timeout := 5 * time.Minute
+	timeout, diags := state.Timeouts.Delete(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	diskID := state.ID.ValueString()
 
-	// Check if the disk is currently assigned to a VM and detach if so.
+	// Relationship teardown belongs exclusively to katapult_disk_assignment.
 	diskRes, err := r.M.Core.GetDiskWithResponse(ctx,
 		&core.GetDiskParams{DiskId: &diskID})
 	if err != nil {
@@ -421,11 +553,12 @@ func (r *DiskResource) Delete(
 	}
 	if diskRes.JSON200 != nil {
 		disk := diskRes.JSON200.Disk
-		if disk.VirtualMachineDisk.IsSpecified() {
-			if e := detachAndUnassignDisk(ctx, r.M, diskID, timeout); e != nil {
-				resp.Diagnostics.AddError("Delete Error", e.Error())
-				return
-			}
+		if disk.VirtualMachineDisk.IsSpecified() && !disk.VirtualMachineDisk.IsNull() {
+			resp.Diagnostics.AddError("Delete Error", fmt.Sprintf(
+				"disk %s still has a Virtual Machine assignment; remove the corresponding katapult_disk_assignment first",
+				diskID,
+			))
+			return
 		}
 	}
 
@@ -512,6 +645,71 @@ func (r *DiskResource) diskRead(
 		model.State = types.StringValue(string(*disk.State))
 	}
 	// ResizeMethod is write-only — do not overwrite from API response.
+	if model.ResizeMethod.IsNull() || model.ResizeMethod.IsUnknown() {
+		model.ResizeMethod = types.StringValue("offline")
+	}
 
 	return nil
+}
+
+type standaloneDiskRelationship struct {
+	assigned        bool
+	attachmentState *core.VirtualMachineDiskAttachmentStateEnum
+}
+
+func readStandaloneDiskRelationship(ctx context.Context, m *Meta, diskID string) (standaloneDiskRelationship, error) {
+	var obs standaloneDiskRelationship
+	res, err := m.Core.GetDiskWithResponse(ctx, &core.GetDiskParams{DiskId: &diskID})
+	if err != nil {
+		if res != nil {
+			err = genericAPIError(err, res.Body)
+		}
+		return obs, err
+	}
+	if res == nil || res.JSON200 == nil {
+		return obs, fmt.Errorf("unexpected empty response fetching disk")
+	}
+	if !res.JSON200.Disk.VirtualMachineDisk.IsSpecified() ||
+		res.JSON200.Disk.VirtualMachineDisk.IsNull() {
+		return obs, nil
+	}
+	vmd, err := res.JSON200.Disk.VirtualMachineDisk.Get()
+	if err != nil {
+		return obs, err
+	}
+	obs.assigned = true
+	obs.attachmentState = vmd.State
+	return obs, nil
+}
+
+//nolint:lll,goconst // Keep the resize matrix and its actionable diagnostics together.
+func effectiveDiskResizeMethod(oldSize, newSize int64, configured string, assigned bool, attachmentState *core.VirtualMachineDiskAttachmentStateEnum) (core.ResizeMethodEnum, error) {
+	attached := false
+	if assigned {
+		if attachmentState == nil {
+			return "", fmt.Errorf("assigned disk attachment state is unknown")
+		}
+		switch *attachmentState {
+		case core.VirtualMachineDiskAttachmentStateEnumAttached:
+			attached = true
+		case core.VirtualMachineDiskAttachmentStateEnumDetached:
+		case core.VirtualMachineDiskAttachmentStateEnumAttaching,
+			core.VirtualMachineDiskAttachmentStateEnumDetaching,
+			core.VirtualMachineDiskAttachmentStateEnumFailed:
+			return "", fmt.Errorf("disk attachment state %q is transitional; retry after it settles", *attachmentState)
+		}
+	}
+	if newSize < oldSize {
+		if attached {
+			return "", fmt.Errorf("shrinking requires physical detachment; detach with katapult_disk_assignment or stop the Virtual Machine first")
+		}
+		return core.Offline, nil
+	}
+	if configured == "online" && attached {
+		return core.Online, nil
+	}
+	if attached {
+		return "", fmt.Errorf("offline growth requires physical detachment; detach with katapult_disk_assignment, stop the Virtual Machine, or explicitly set resize_method = \"online\"")
+	}
+	return core.Offline, nil
 }

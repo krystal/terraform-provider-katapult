@@ -87,6 +87,10 @@ without explicit authorization for live acceptance testing. After tests, check
 `WaitForStateContext`; do not capture refresh results for unsynchronized reads
 outside the callback because cancellation can return before a refresh finishes.
 
+The generated API nullable type reports an explicit JSON `null` as specified.
+For nullable relationships such as `Disk.VirtualMachineDisk`, check both
+`IsSpecified()` and `IsNull()` before calling `Get()`.
+
 Route every `StateChangeConf` delay, minimum timeout, and poll interval through
 the provider `Meta` timing helpers, including test sweepers. Compress any
 additional wall-clock settling window in replay mode so recorded state

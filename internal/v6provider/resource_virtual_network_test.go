@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -33,7 +34,7 @@ func testSweepVirtualNetworks(_ string) error {
 				Page:           &pageNum,
 			})
 		if err != nil {
-			if res.JSON404 != nil {
+			if errors.Is(err, core.ErrNotFound) {
 				return nil
 			}
 			return err
