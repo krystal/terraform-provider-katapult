@@ -7,8 +7,11 @@ import (
 	"testing"
 	"time"
 
+	resourcetimeouts "github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	frameworkresource "github.com/hashicorp/terraform-plugin-framework/resource"
 	resourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/krystal/go-katapult/next/core"
 	"github.com/stretchr/testify/assert"
@@ -267,4 +270,72 @@ func TestProjectDiskAssignmentAttachedPreservesRepairDiff(t *testing.T) {
 			require.Equal(t, test.want, got.ValueBool())
 		})
 	}
+}
+
+func TestDiskAssignmentLifecycleTreatsTrashedVMAsMissing(t *testing.T) {
+	t.Parallel()
+
+	for _, operation := range []string{"read", "delete"} {
+		t.Run(operation, func(t *testing.T) {
+			t.Parallel()
+			diskRequests := 0
+			client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+				switch req.URL.Path {
+				case "/virtual_machines/virtual_machine":
+					writeObjectInTrashResponse(w)
+				case "/disks/disk":
+					diskRequests++
+					http.Error(w, "unexpected disk request", http.StatusInternalServerError)
+				default:
+					http.NotFound(w, req)
+				}
+			})
+			r := &DiskAssignmentResource{M: &Meta{Core: client, testMode: true}}
+			state := diskAssignmentTestState(t, r, DiskAssignmentResourceModel{
+				ID:               types.StringValue("vm_test/disk_test"),
+				VirtualMachineID: types.StringValue("vm_test"),
+				DiskID:           types.StringValue("disk_test"),
+				Attached:         types.BoolValue(true),
+				AttachOnBoot:     types.BoolValue(true),
+				AttachmentState:  types.StringValue("attached"),
+			})
+
+			switch operation {
+			case "read":
+				resp := frameworkresource.ReadResponse{State: state}
+				r.Read(context.Background(), frameworkresource.ReadRequest{State: state}, &resp)
+				require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+				require.True(t, resp.State.Raw.IsNull())
+			case "delete":
+				resp := frameworkresource.DeleteResponse{State: state}
+				r.Delete(context.Background(), frameworkresource.DeleteRequest{State: state}, &resp)
+				require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+			}
+			require.Zero(t, diskRequests)
+		})
+	}
+}
+
+func diskAssignmentTestState(
+	t *testing.T,
+	r *DiskAssignmentResource,
+	model DiskAssignmentResourceModel,
+) tfsdk.State {
+	t.Helper()
+	if len(model.Timeouts.AttributeTypes(context.Background())) == 0 {
+		model.Timeouts = resourcetimeouts.Value{Object: types.ObjectNull(
+			map[string]attr.Type{
+				"create": types.StringType,
+				"update": types.StringType,
+				"delete": types.StringType,
+			},
+		)}
+	}
+	resp := &frameworkresource.SchemaResponse{}
+	r.Schema(context.Background(), frameworkresource.SchemaRequest{}, resp)
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+	state := tfsdk.State{Schema: resp.Schema}
+	diags := state.Set(context.Background(), model)
+	require.False(t, diags.HasError(), diags.Errors())
+	return state
 }

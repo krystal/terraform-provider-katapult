@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -11,6 +12,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type errorHTTPDoer struct {
+	err error
+}
+
+func (d errorHTTPDoer) Do(*http.Request) (*http.Response, error) {
+	return nil, d.err
+}
 
 //nolint:lll // Compact table rows keep boot-selection scenarios comparable.
 func TestSelectBootDiskAssignment(t *testing.T) {
@@ -78,4 +87,24 @@ func TestWaitForDiskSizeRequiresAPIConvergence(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPurgeTrashObjectPreservesTransportErrorWithNilResponse(t *testing.T) {
+	t.Parallel()
+	wantErr := errors.New("transport unavailable")
+	client, err := core.NewClientWithResponses(
+		"https://api.example.test",
+		"test-token",
+		core.WithHTTPClient(errorHTTPDoer{err: wantErr}),
+	)
+	require.NoError(t, err)
+
+	err = purgeTrashObjectByObjectID(
+		context.Background(),
+		&Meta{Core: client, testMode: true},
+		time.Second,
+		"vm_test",
+	)
+
+	require.ErrorIs(t, err, wantErr)
 }

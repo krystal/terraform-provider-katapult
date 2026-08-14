@@ -205,7 +205,13 @@ func (r *VirtualMachineResource) ModifyPlan(
 		resp.Diagnostics.AddError("Conflicting Disk Configuration", "Configure either deprecated disk blocks or system_disk, not both.")
 		return
 	}
-	if req.State.Raw.IsNull() || r.M == nil {
+	if req.State.Raw.IsNull() {
+		if err := validateChangedLegacyDiskSizes(ctx, types.List{}, plan.Disk); err != nil {
+			resp.Diagnostics.AddAttributeError(path.Root("disk"), "Invalid Legacy Disk Size", err.Error())
+		}
+		return
+	}
+	if r.M == nil {
 		return
 	}
 
@@ -216,6 +222,19 @@ func (r *VirtualMachineResource) ModifyPlan(
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	templateImportEligible := false
+	templateOptionsImportEligible := false
+	if req.Private != nil {
+		value, diags := req.Private.GetKey(ctx, virtualMachineImportDiskTemplatePrivateKey)
+		resp.Diagnostics.Append(diags...)
+		templateImportEligible = len(value) > 0
+		value, diags = req.Private.GetKey(ctx, virtualMachineImportTemplateOptionsPrivateKey)
+		resp.Diagnostics.Append(diags...)
+		templateOptionsImportEligible = len(value) > 0
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
 	priorLegacy := !state.Disk.IsNull() && !state.Disk.IsUnknown() && len(state.Disk.Elements()) > 0
 	plannedLegacy := !plan.Disk.IsNull() && !plan.Disk.IsUnknown() && len(plan.Disk.Elements()) > 0
 	if err := validateChangedLegacyDiskSizes(ctx, state.Disk, plan.Disk); err != nil {
@@ -225,6 +244,14 @@ func (r *VirtualMachineResource) ModifyPlan(
 	switch {
 	case priorLegacy && plannedLegacy && !plan.Disk.Equal(state.Disk):
 		resp.RequiresReplace = append(resp.RequiresReplace, path.Root("disk"))
+	case !priorLegacy && plannedLegacy && legacyConfigured &&
+		(templateImportEligible || templateOptionsImportEligible):
+		resp.Diagnostics.AddAttributeError(
+			path.Root("disk"),
+			"Imported Virtual Machine Legacy Disk Configuration",
+			"Deprecated disk blocks cannot safely adopt an imported Virtual Machine's existing disks. Leave disk unset, manage the existing boot disk through system_disk, import each additional disk into katapult_disk, and import each VM/disk relationship into katapult_disk_assignment.",
+		)
+		return
 	case !priorLegacy && plannedLegacy:
 		resp.RequiresReplace = append(resp.RequiresReplace, path.Root("disk"))
 	case priorLegacy && !plannedLegacy:
@@ -247,20 +274,6 @@ func (r *VirtualMachineResource) ModifyPlan(
 			"The deprecated disk blocks are being removed without changing remote disks. Observed additional relationships: %s. Import each additional disk into katapult_disk and each relationship into katapult_disk_assignment before applying if Terraform should continue to own them.",
 			additionalRelationships,
 		))
-	}
-
-	templateImportEligible := false
-	templateOptionsImportEligible := false
-	if req.Private != nil {
-		value, diags := req.Private.GetKey(ctx, virtualMachineImportDiskTemplatePrivateKey)
-		resp.Diagnostics.Append(diags...)
-		templateImportEligible = len(value) > 0
-		value, diags = req.Private.GetKey(ctx, virtualMachineImportTemplateOptionsPrivateKey)
-		resp.Diagnostics.Append(diags...)
-		templateOptionsImportEligible = len(value) > 0
-		if resp.Diagnostics.HasError() {
-			return
-		}
 	}
 
 	if templateImportEligible && !configuredDiskTemplate.IsNull() && !configuredDiskTemplate.IsUnknown() {
@@ -1276,16 +1289,39 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 			resp.Diagnostics.AddAttributeError(path.Root("system_disk"), "Unknown Boot Disk", "Cannot rename or resize the boot disk until its identity is authoritative.")
 			return
 		}
-		if !plannedSystemDisk.Name.IsUnknown() && !plannedSystemDisk.Name.Equal(priorSystemDisk.Name) {
+		nameChanged := !plannedSystemDisk.Name.IsUnknown() &&
+			!plannedSystemDisk.Name.Equal(priorSystemDisk.Name)
+		sizeChanged := !plannedSystemDisk.SizeInGB.IsUnknown() &&
+			!plannedSystemDisk.SizeInGB.Equal(priorSystemDisk.SizeInGB)
+		if nameChanged || sizeChanged {
+			currentBootDisk, err := fetchVirtualMachineBootDisk(coupledCtx, r.M, vmID, diskID)
+			if err != nil {
+				resp.Diagnostics.AddAttributeError(path.Root("system_disk"), "Cannot Validate Boot Disk", err.Error())
+				return
+			}
+			if currentBootDisk.Id == nil || *currentBootDisk.Id != diskID {
+				currentID := "<unavailable>"
+				if currentBootDisk.Id != nil {
+					currentID = *currentBootDisk.Id
+				}
+				resp.Diagnostics.AddAttributeError(path.Root("system_disk"), "System Disk State Changed After Planning", fmt.Sprintf("planned boot disk %s no longer matches the current boot disk %s; refresh state and run terraform plan again", diskID, currentID))
+				return
+			}
+		}
+		if nameChanged {
 			if err := patchDiskName(coupledCtx, r.M, diskID, plannedSystemDisk.Name.ValueString()); err != nil {
 				resp.Diagnostics.AddError("Update Error", err.Error())
 				return
 			}
 		}
-		if !plannedSystemDisk.SizeInGB.IsUnknown() && !plannedSystemDisk.SizeInGB.Equal(priorSystemDisk.SizeInGB) {
+		if sizeChanged {
 			vmState, err := fetchVirtualMachineState(coupledCtx, r.M, vmID)
 			if err != nil {
 				resp.Diagnostics.AddError("Update Error", err.Error())
+				return
+			}
+			if vmState != core.Started && vmState != core.Stopped {
+				resp.Diagnostics.AddAttributeError(path.Root("system_disk").AtName("size_in_gb"), "Cannot Resize System Disk", fmt.Sprintf("Virtual Machine is in transitional or unknown state %s; retry after it settles", vmState))
 				return
 			}
 			attached := vmState == core.Started
@@ -1891,32 +1927,28 @@ func (r *VirtualMachineResource) vmRead(
 		return fmt.Errorf("reading system_disk state: %s", systemDiags)
 	}
 	bootDisk, bootErr := fetchVirtualMachineBootDisk(ctx, r.M, vmID, priorSystem.ID.ValueString())
-	priorSystemAuthoritative := !priorSystem.ID.IsNull() && !priorSystem.ID.IsUnknown() &&
-		priorSystem.ID.ValueString() != ""
-	if bootErr != nil && !priorSystemAuthoritative {
+	if bootErr != nil {
 		return fmt.Errorf("discovering boot disk: %w", bootErr)
 	}
-	if bootErr == nil {
-		if diags := populateVirtualMachineSystemDisk(ctx, model, bootDisk); diags.HasError() {
-			return fmt.Errorf("populating system_disk state: %s", diags)
-		}
-		if bootDisk.Installation.IsSpecified() {
-			if installation, e := bootDisk.Installation.Get(); e == nil &&
-				installation.DiskTemplateVersion != nil &&
-				installation.DiskTemplateVersion.DiskTemplate != nil {
-				template := installation.DiskTemplateVersion.DiskTemplate
-				configured := model.DiskTemplate.ValueString()
-				switch {
-				case strings.HasPrefix(configured, "dtpl_") && template.Id != nil:
-					model.DiskTemplate = types.StringValue(*template.Id)
-				case configured != "" && template.Permalink != nil &&
-					(*template.Permalink == configured || *template.Permalink == "templates/"+configured):
-					model.DiskTemplate = types.StringValue(configured)
-				case template.Permalink != nil:
-					model.DiskTemplate = types.StringValue(*template.Permalink)
-				case template.Id != nil:
-					model.DiskTemplate = types.StringValue(*template.Id)
-				}
+	if diags := populateVirtualMachineSystemDisk(ctx, model, bootDisk); diags.HasError() {
+		return fmt.Errorf("populating system_disk state: %s", diags)
+	}
+	if bootDisk.Installation.IsSpecified() {
+		if installation, e := bootDisk.Installation.Get(); e == nil &&
+			installation.DiskTemplateVersion != nil &&
+			installation.DiskTemplateVersion.DiskTemplate != nil {
+			template := installation.DiskTemplateVersion.DiskTemplate
+			configured := model.DiskTemplate.ValueString()
+			switch {
+			case strings.HasPrefix(configured, "dtpl_") && template.Id != nil:
+				model.DiskTemplate = types.StringValue(*template.Id)
+			case configured != "" && template.Permalink != nil &&
+				(*template.Permalink == configured || *template.Permalink == "templates/"+configured):
+				model.DiskTemplate = types.StringValue(configured)
+			case template.Permalink != nil:
+				model.DiskTemplate = types.StringValue(*template.Permalink)
+			case template.Id != nil:
+				model.DiskTemplate = types.StringValue(*template.Id)
 			}
 		}
 	}

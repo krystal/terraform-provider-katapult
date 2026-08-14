@@ -492,13 +492,14 @@ func parseAssignmentID(id string) (string, string, error) {
 	return parts[0], parts[1], nil
 }
 
-//nolint:lll // Generated API method signatures make the observation boundary long.
+//nolint:gocyclo,lll // Endpoint absence normalization keeps the observation boundary explicit.
 func readDiskAssignmentObservation(ctx context.Context, m *Meta, vmID, diskID string) (diskAssignmentObservation, error) {
 	obs := diskAssignmentObservation{}
 	vmRes, err := m.Core.GetVirtualMachineWithResponse(ctx,
 		&core.GetVirtualMachineParams{VirtualMachineId: &vmID})
 	if err != nil {
-		if errors.Is(err, core.ErrNotFound) {
+		if errors.Is(err, core.ErrNotFound) ||
+			(vmRes != nil && isErrNotFoundOrInTrash(err, vmRes.JSON406)) {
 			return obs, core.ErrNotFound
 		}
 		if vmRes != nil {

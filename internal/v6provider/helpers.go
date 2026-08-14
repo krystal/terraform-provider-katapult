@@ -29,6 +29,9 @@ func fetchAllVMDisks(
 				Page:             &p,
 			})
 		if err != nil {
+			if res != nil && isErrNotFoundOrInTrash(err, res.JSON406) {
+				return nil, core.ErrNotFound
+			}
 			if res != nil {
 				return nil, genericAPIError(err, res.Body)
 			}
@@ -82,7 +85,7 @@ func purgeTrashObject(
 			TrashObject: lookup,
 		})
 	if err != nil {
-		if res.JSON404 != nil {
+		if res != nil && res.JSON404 != nil {
 			return nil
 		}
 		return err
