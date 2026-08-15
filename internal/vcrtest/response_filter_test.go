@@ -46,6 +46,7 @@ func TestRedactSensitiveResponseFields(t *testing.T) {
 				"installation": {
 					"attributes": [
 						{"key": "root_password", "value": "secret", "protect": true},
+						{"key": "api_token", "protect": true, "value": "token"},
 						{"key": "hostname", "value": "example", "protect": false}
 					]
 				}
@@ -67,6 +68,7 @@ func TestRedactSensitiveResponseFields(t *testing.T) {
 		"installation": {
 			"attributes": [
 				{"key": "root_password", "value": "[REDACTED]", "protect": true},
+				{"key": "api_token", "protect": true, "value": "[REDACTED]"},
 				{"key": "hostname", "value": "example", "protect": false}
 			]
 		}

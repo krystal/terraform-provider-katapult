@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -32,10 +33,14 @@ func testSweepAddressLists(_ string) error {
 				Page:           &pageNum,
 			})
 		if err != nil {
-			if res.JSON404 != nil {
+			if errors.Is(err, core.ErrNotFound) ||
+				(res != nil && res.JSON404 != nil) {
 				return nil
 			}
 			return err
+		}
+		if res == nil || res.JSON200 == nil {
+			return fmt.Errorf("unexpected empty response listing address lists")
 		}
 
 		resp := res.JSON200

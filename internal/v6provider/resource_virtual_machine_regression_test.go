@@ -750,6 +750,20 @@ func TestVMReadPreservesConfiguredEmptyOptionalStrings(t *testing.T) {
 	}
 }
 
+func TestVMReadHandlesNullBootDiskInstallation(t *testing.T) {
+	t.Parallel()
+
+	client := newVirtualMachineTestClient(t, virtualMachineReadTestHandler)
+	r := &VirtualMachineResource{M: &Meta{Core: client, testMode: true}}
+	model := VirtualMachineResourceModel{
+		ID:           types.StringValue("vm_test"),
+		DiskTemplate: types.StringValue("ubuntu-18-04"),
+	}
+
+	require.NoError(t, r.vmRead(context.Background(), &model))
+	require.Equal(t, "ubuntu-18-04", model.DiskTemplate.ValueString())
+}
+
 func TestVMReadBootDiscoveryFailureRequiresPriorIdentity(t *testing.T) {
 	t.Parallel()
 	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
@@ -1297,12 +1311,19 @@ func TestVirtualMachineResourceSystemDiskSchema(t *testing.T) {
 	require.True(t, systemDisk.Optional)
 	require.True(t, systemDisk.Computed)
 	require.NotEmpty(t, systemDisk.PlanModifiers)
+	require.NotEmpty(t, systemDisk.Attributes["id"].(resourceschema.StringAttribute).MarkdownDescription)
+	require.NotEmpty(t, systemDisk.Attributes["name"].(resourceschema.StringAttribute).MarkdownDescription)
 	size := systemDisk.Attributes["size_in_gb"].(resourceschema.Int64Attribute)
 	require.NotEmpty(t, size.Validators)
+	require.NotEmpty(t, size.MarkdownDescription)
 	resizeMethod := systemDisk.Attributes["resize_method"].(resourceschema.StringAttribute)
 	require.True(t, resizeMethod.Optional)
 	require.True(t, resizeMethod.Computed)
 	require.NotNil(t, resizeMethod.Default)
+	require.Contains(t, resizeMethod.MarkdownDescription, "`online`")
+	require.Contains(t, resizeMethod.MarkdownDescription, "`offline`")
+	require.NotEmpty(t, systemDisk.Attributes["wwn"].(resourceschema.StringAttribute).MarkdownDescription)
+	require.NotEmpty(t, systemDisk.Attributes[stateAttributeName].(resourceschema.StringAttribute).MarkdownDescription)
 }
 
 func TestVirtualMachineModifyPlanAdoptsImportedTemplateFieldsOnce(t *testing.T) {
@@ -1559,7 +1580,7 @@ func virtualMachineReadTestHandler(w http.ResponseWriter, r *http.Request) {
 		}`)
 	case "/disks/disk":
 		writeTestJSON(w, http.StatusOK, `{
-			"disk": {"id": "disk_boot", "name": "System Disk", "size_in_gb": 20, "state": "built"}
+			"disk": {"id": "disk_boot", "name": "System Disk", "size_in_gb": 20, "state": "built", "installation": null}
 		}`)
 	default:
 		http.NotFound(w, r)

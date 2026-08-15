@@ -557,31 +557,45 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 				},
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Computed:      true,
-						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+						Computed:            true,
+						MarkdownDescription: "The unique identifier of the VM-owned system disk.",
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
 					"name": schema.StringAttribute{
-						Optional:      true,
-						Computed:      true,
-						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+						Optional:            true,
+						Computed:            true,
+						MarkdownDescription: "The name of the system disk.",
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
 					"size_in_gb": schema.Int64Attribute{ //nolint:goconst // Terraform attribute name.
-						Optional:      true,
-						Computed:      true,
+						Optional: true,
+						Computed: true,
+						MarkdownDescription: "Size of the system disk in GB, with a " +
+							"minimum of 10 GB. Resizes are performed in place when the " +
+							"selected method and VM power state permit it.",
 						Validators:    []validator.Int64{int64validator.AtLeast(10)},
 						PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
 					},
 					"resize_method": schema.StringAttribute{
-						Optional:   true,
-						Computed:   true,
-						Default:    stringdefault.StaticString("offline"),
+						Optional: true,
+						Computed: true,
+						Default:  stringdefault.StaticString("offline"),
+						MarkdownDescription: "Resize method: `offline` (the default) " +
+							"requires the VM to be stopped and resizes the filesystem as " +
+							"well as the disk; `online` permits growth while the VM runs " +
+							"but resizes only the block device, so the guest filesystem " +
+							"must be expanded manually. Shrink is always offline.",
 						Validators: []validator.String{stringvalidator.OneOf("online", "offline")},
 					},
 					"wwn": schema.StringAttribute{ //nolint:goconst // Terraform attribute name.
-						Computed:      true,
-						PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+						Computed:            true,
+						MarkdownDescription: "World Wide Name identifier of the system disk.",
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
-					stateAttributeName: schema.StringAttribute{Computed: true},
+					stateAttributeName: schema.StringAttribute{
+						Computed:            true,
+						MarkdownDescription: "Current state of the system disk.",
+					},
 				},
 			},
 			"ip_address_ids": schema.SetAttribute{
@@ -1933,7 +1947,7 @@ func (r *VirtualMachineResource) vmRead(
 	if diags := populateVirtualMachineSystemDisk(ctx, model, bootDisk); diags.HasError() {
 		return fmt.Errorf("populating system_disk state: %s", diags)
 	}
-	if bootDisk.Installation.IsSpecified() {
+	if bootDisk.Installation.IsSpecified() && !bootDisk.Installation.IsNull() {
 		if installation, e := bootDisk.Installation.Get(); e == nil &&
 			installation.DiskTemplateVersion != nil &&
 			installation.DiskTemplateVersion.DiskTemplate != nil {

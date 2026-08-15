@@ -188,9 +188,10 @@ func diskSummaryDataSourceModel(
 func diskSummaryDataSourceModels(
 	disks []core.GetOrganizationDisks200ResponseDisk,
 ) []DiskSummaryDataSourceModel {
-	sort.SliceStable(disks, func(i, j int) bool {
-		iID, iOK := nonNilString(disks[i].Id)
-		jID, jOK := nonNilString(disks[j].Id)
+	sortedDisks := append([]core.GetOrganizationDisks200ResponseDisk(nil), disks...)
+	sort.SliceStable(sortedDisks, func(i, j int) bool {
+		iID, iOK := nonNilString(sortedDisks[i].Id)
+		jID, jOK := nonNilString(sortedDisks[j].Id)
 		switch {
 		case iOK && jOK:
 			return iID < jID
@@ -201,9 +202,9 @@ func diskSummaryDataSourceModels(
 		}
 	})
 
-	models := make([]DiskSummaryDataSourceModel, len(disks))
-	for i := range disks {
-		models[i] = diskSummaryDataSourceModel(&disks[i])
+	models := make([]DiskSummaryDataSourceModel, len(sortedDisks))
+	for i := range sortedDisks {
+		models[i] = diskSummaryDataSourceModel(&sortedDisks[i])
 	}
 	return models
 }

@@ -4,11 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 
+	resourcetimeouts "github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	frameworkresource "github.com/hashicorp/terraform-plugin-framework/resource"
 	resourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
@@ -39,6 +44,105 @@ func TestDiskResourceResizeSchema(t *testing.T) {
 	require.NotNil(t, method.Default)
 	_, ok := resp.Schema.Blocks["timeouts"].(resourceschema.SingleNestedBlock)
 	require.True(t, ok)
+}
+
+func TestDiskResourceCreateRejectsMalformedSuccessResponse(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		contentType string
+		body        string
+		want        string
+	}{
+		{name: "empty response", contentType: "text/plain", body: "", want: "unexpected empty response creating disk"},
+		{name: "missing disk ID", body: `{"disk":{},"task":{"id":"task_test"}}`, want: "missing disk ID"},
+		{name: "missing task ID", body: `{"disk":{"id":"disk_test"},"task":{}}`, want: "missing task ID"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+				if req.Method != http.MethodPost || req.URL.Path != "/organizations/organization/disks" {
+					http.NotFound(w, req)
+					return
+				}
+				if test.contentType != "" {
+					w.Header().Set("Content-Type", test.contentType)
+					w.WriteHeader(http.StatusCreated)
+					_, _ = w.Write([]byte(test.body))
+					return
+				}
+				writeTestJSON(w, http.StatusCreated, test.body)
+			})
+			r := &DiskResource{M: &Meta{
+				Core: client, confDataCenter: "test-dc", confOrganization: "test-org", testMode: true,
+			}}
+			plan := diskTestState(t, r, DiskResourceModel{
+				Name: types.StringValue("Test Disk"), SizeInGB: types.Int64Value(20),
+			})
+			resp := frameworkresource.CreateResponse{State: tfsdk.State{Schema: plan.Schema}}
+
+			require.NotPanics(t, func() {
+				r.Create(context.Background(), frameworkresource.CreateRequest{Plan: tfsdk.Plan(plan)}, &resp)
+			})
+			require.True(t, resp.Diagnostics.HasError())
+			require.Contains(t, resp.Diagnostics.Errors()[0].Detail(), test.want)
+		})
+	}
+}
+
+func TestDiskReadClearsNullableRelationships(t *testing.T) {
+	t.Parallel()
+
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodGet || req.URL.Path != "/disks/disk" {
+			http.NotFound(w, req)
+			return
+		}
+		writeTestJSON(w, http.StatusOK, `{
+			"disk": {
+				"id": "disk_test",
+				"name": "Test Disk",
+				"size_in_gb": 20,
+				"bus_type": null,
+				"io_profile": null
+			}
+		}`)
+	})
+	r := &DiskResource{M: &Meta{Core: client, testMode: true}}
+	model := DiskResourceModel{
+		BusType: types.StringValue("virtio"), IOProfileID: types.StringValue("iop_stale"),
+	}
+
+	require.NoError(t, r.diskRead(context.Background(), "disk_test", &model))
+	require.True(t, model.BusType.IsNull())
+	require.True(t, model.IOProfileID.IsNull())
+}
+
+func diskTestState(
+	t *testing.T,
+	r *DiskResource,
+	model DiskResourceModel,
+) tfsdk.State {
+	t.Helper()
+	if len(model.Timeouts.AttributeTypes(context.Background())) == 0 {
+		model.Timeouts = resourcetimeouts.Value{Object: types.ObjectNull(
+			map[string]attr.Type{
+				"create": types.StringType,
+				"update": types.StringType,
+				"delete": types.StringType,
+			},
+		)}
+	}
+	resp := &frameworkresource.SchemaResponse{}
+	r.Schema(context.Background(), frameworkresource.SchemaRequest{}, resp)
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+	state := tfsdk.State{Schema: resp.Schema}
+	diags := state.Set(context.Background(), model)
+	require.False(t, diags.HasError(), diags.Errors())
+	return state
 }
 
 func testSweepDisks(_ string) error {
@@ -313,26 +417,33 @@ func testAccCheckKatapultDiskDestroy(
 
 			diskRes, err := m.Core.GetDiskWithResponse(tt.Ctx,
 				&core.GetDiskParams{DiskId: &rs.Primary.ID})
-			if err == nil && diskRes.JSON200 != nil {
+			if err == nil && diskRes != nil && diskRes.JSON200 != nil {
 				return fmt.Errorf(
 					"katapult_disk %s was not destroyed",
 					rs.Primary.ID,
 				)
 			}
-			if err != nil && !errors.Is(err, core.ErrNotFound) {
-				return err
+			if err != nil {
+				if !errors.Is(err, core.ErrNotFound) &&
+					(diskRes == nil || diskRes.JSON404 == nil) {
+					return err
+				}
 			}
 
 			trashRes, err := m.Core.GetTrashObjectWithResponse(tt.Ctx,
 				&core.GetTrashObjectParams{
 					TrashObjectObjectId: &rs.Primary.ID,
 				})
-			if err == nil && trashRes.JSON200 != nil {
+			if err == nil && trashRes != nil && trashRes.JSON200 != nil {
 				return fmt.Errorf(
 					"katapult_disk %s was deleted "+
 						"but not purged from trash",
 					rs.Primary.ID,
 				)
+			}
+			if err != nil && !errors.Is(err, core.ErrNotFound) &&
+				(trashRes == nil || trashRes.JSON404 == nil) {
+				return err
 			}
 		}
 

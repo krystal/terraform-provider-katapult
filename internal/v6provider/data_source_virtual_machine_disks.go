@@ -298,18 +298,8 @@ func buildDiskAttrObject(
 	if disk.StorageSpeed != nil {
 		storageSpeed = types.StringValue(string(*disk.StorageSpeed))
 	}
-	busType := types.StringNull()
-	if disk.BusType.IsSpecified() {
-		if bt, e := disk.BusType.Get(); e == nil {
-			busType = types.StringValue(string(bt))
-		}
-	}
-	ioProfileID := types.StringNull()
-	if disk.IoProfile.IsSpecified() {
-		if iop, e := disk.IoProfile.Get(); e == nil && iop.Id != nil {
-			ioProfileID = types.StringValue(*iop.Id)
-		}
-	}
+	busType := vmDiskBusTypeValue(disk)
+	ioProfileID := vmDiskIOProfileIDValue(disk)
 	wwn := types.StringNull()
 	if disk.Wwn != nil {
 		wwn = types.StringValue(*disk.Wwn)
@@ -347,4 +337,22 @@ func buildDiskAttrObject(
 		"attach_on_boot":   attachOnBoot,
 		"attachment_state": attachmentState,
 	})
+}
+
+func vmDiskBusTypeValue(disk *core.GetDisk200ResponseDisk) types.String {
+	if disk.BusType.IsSpecified() && !disk.BusType.IsNull() {
+		if busType, err := disk.BusType.Get(); err == nil {
+			return types.StringValue(string(busType))
+		}
+	}
+	return types.StringNull()
+}
+
+func vmDiskIOProfileIDValue(disk *core.GetDisk200ResponseDisk) types.String {
+	if disk.IoProfile.IsSpecified() && !disk.IoProfile.IsNull() {
+		if ioProfile, err := disk.IoProfile.Get(); err == nil && ioProfile.Id != nil {
+			return types.StringValue(*ioProfile.Id)
+		}
+	}
+	return types.StringNull()
 }

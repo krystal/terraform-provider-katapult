@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -67,6 +68,7 @@ func TestEffectiveDiskResizeMethod(t *testing.T) {
 	t.Parallel()
 	attached := core.VirtualMachineDiskAttachmentStateEnumAttached
 	detached := core.VirtualMachineDiskAttachmentStateEnumDetached
+	unknown := core.VirtualMachineDiskAttachmentStateEnum("future_state")
 	tests := []struct {
 		name       string
 		oldSize    int64
@@ -85,6 +87,7 @@ func TestEffectiveDiskResizeMethod(t *testing.T) {
 		{name: "attached shrink rejected", oldSize: 30, newSize: 20, configured: "online", assigned: true, state: &attached, wantErr: true},
 		{name: "unassigned growth offline", oldSize: 20, newSize: 30, configured: "offline", want: core.Offline},
 		{name: "unknown assigned state rejected", oldSize: 20, newSize: 30, configured: "online", assigned: true, wantErr: true},
+		{name: "unrecognized assigned state rejected", oldSize: 20, newSize: 30, configured: "online", assigned: true, state: &unknown, wantErr: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -98,6 +101,51 @@ func TestEffectiveDiskResizeMethod(t *testing.T) {
 			assert.Equal(t, test.want, method)
 		})
 	}
+}
+
+func TestDiskAssignmentDeleteRejectsTransitionalAttachmentBeforeMutation(t *testing.T) {
+	t.Parallel()
+
+	var patchCalls atomic.Int32
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+		switch {
+		case req.Method == http.MethodGet && req.URL.Path == "/virtual_machines/virtual_machine":
+			writeTestJSON(w, http.StatusOK, `{"virtual_machine":{"id":"vm_test","state":"stopped"}}`)
+		case req.Method == http.MethodGet && req.URL.Path == "/disks/disk":
+			writeTestJSON(w, http.StatusOK, `{
+				"disk": {
+					"id": "disk_test",
+					"virtual_machine_disk": {
+						"virtual_machine": {"id": "vm_test"},
+						"boot": false,
+						"attach_on_boot": true,
+						"state": "attaching"
+					}
+				}
+			}`)
+		case req.Method == http.MethodPatch && req.URL.Path == "/disks/disk":
+			patchCalls.Add(1)
+			http.Error(w, "unexpected mutation", http.StatusInternalServerError)
+		default:
+			http.NotFound(w, req)
+		}
+	})
+	r := &DiskAssignmentResource{M: &Meta{Core: client, testMode: true}}
+	state := diskAssignmentTestState(t, r, DiskAssignmentResourceModel{
+		ID:               types.StringValue("vm_test/disk_test"),
+		VirtualMachineID: types.StringValue("vm_test"),
+		DiskID:           types.StringValue("disk_test"),
+		Attached:         types.BoolValue(true),
+		AttachOnBoot:     types.BoolValue(true),
+		AttachmentState:  types.StringValue("attaching"),
+	})
+	resp := frameworkresource.DeleteResponse{State: state}
+
+	r.Delete(context.Background(), frameworkresource.DeleteRequest{State: state}, &resp)
+
+	require.True(t, resp.Diagnostics.HasError())
+	require.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "transitional or unknown")
+	require.Zero(t, patchCalls.Load())
 }
 
 //nolint:lll // Inline JSON keeps each API error scenario self-contained.

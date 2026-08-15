@@ -985,6 +985,12 @@ func TestAccKatapultVirtualMachine_disk_assignment(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"katapult_disk_assignment.data", "attached", "true",
 					),
+					resource.TestCheckResourceAttr(
+						"katapult_disk_assignment.data", "attach_on_boot", "true",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_disk_assignment.data", "attachment_state", "attached",
+					),
 				),
 			},
 			{

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
@@ -33,8 +34,19 @@ func TestSortVMDiskAttachmentsByIDPreservesPairing(t *testing.T) {
 	assert.Nil(t, attachments[2].Disk)
 
 	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/disks/disk" {
+			http.NotFound(w, r)
+			return
+		}
 		id := r.URL.Query().Get("disk[id]")
-		writeTestJSON(w, http.StatusOK, fmt.Sprintf(`{"disk":{"id":%q}}`, id))
+		switch id {
+		case "disk_a":
+			writeTestJSON(w, http.StatusOK, `{"disk":{"id":"disk_a"}}`)
+		case "disk_z":
+			writeTestJSON(w, http.StatusOK, `{"disk":{"id":"disk_z"}}`)
+		default:
+			http.Error(w, "unexpected disk ID", http.StatusNotFound)
+		}
 	})
 	disks, err := fetchDiskDetailsForAttachments(
 		context.Background(), &Meta{Core: client}, attachments,
@@ -44,6 +56,23 @@ func TestSortVMDiskAttachmentsByIDPreservesPairing(t *testing.T) {
 	assert.Equal(t, "disk_a", *disks[0].Id)
 	assert.Equal(t, "disk_z", *disks[1].Id)
 	assert.Nil(t, disks[2])
+}
+
+func TestBuildDiskAttrObjectHandlesNullRelationships(t *testing.T) {
+	t.Parallel()
+
+	disk := core.GetDisk200ResponseDisk{Id: ptr("disk_test")}
+	disk.BusType.SetNull()
+	disk.IoProfile.SetNull()
+
+	value, diags := buildDiskAttrObject(
+		&disk, core.GetVirtualMachineDisks200ResponseDisks{}, "",
+	)
+	require.False(t, diags.HasError(), diags.Errors())
+	object, ok := value.(types.Object)
+	require.True(t, ok)
+	require.True(t, object.Attributes()["bus_type"].IsNull())
+	require.True(t, object.Attributes()["io_profile_id"].IsNull())
 }
 
 func TestAccKatapultDataSourceVirtualMachineDisks_basic(t *testing.T) {

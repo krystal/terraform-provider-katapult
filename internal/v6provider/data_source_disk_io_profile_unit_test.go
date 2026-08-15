@@ -90,16 +90,19 @@ func TestFetchAllOrganizationDiskIOProfilesPaginationSortingEmptyAndErrors(t *te
 		var requests atomic.Int32
 		client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, r *http.Request) {
 			requests.Add(1)
-			require.Equal(t, "/organizations/organization/disk_io_profiles", r.URL.Path)
-			require.Equal(t, "test-org", r.URL.Query().Get("organization[sub_domain]"))
-			require.Equal(t, "200", r.URL.Query().Get("per_page"))
+			if r.URL.Path != "/organizations/organization/disk_io_profiles" ||
+				r.URL.Query().Get("organization[sub_domain]") != "test-org" ||
+				r.URL.Query().Get("per_page") != "200" {
+				http.NotFound(w, r)
+				return
+			}
 			switch r.URL.Query().Get("page") {
 			case "1":
 				writeTestJSON(w, http.StatusOK, `{"disk_io_profiles":[{"id":"iop_z"}],"pagination":{"total_pages":2}}`)
 			case "2":
 				writeTestJSON(w, http.StatusOK, `{"disk_io_profiles":[{"id":"iop_a"}],"pagination":{"total_pages":2}}`)
 			default:
-				t.Errorf("unexpected page %q", r.URL.Query().Get("page"))
+				http.Error(w, "unexpected page", http.StatusNotFound)
 			}
 		})
 

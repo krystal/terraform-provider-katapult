@@ -143,15 +143,15 @@ Optional:
 
 Optional:
 
-- `name` (String)
-- `resize_method` (String)
-- `size_in_gb` (Number)
+- `name` (String) The name of the system disk.
+- `resize_method` (String) Resize method: `offline` (the default) requires the VM to be stopped and resizes the filesystem as well as the disk; `online` permits growth while the VM runs but resizes only the block device, so the guest filesystem must be expanded manually. Shrink is always offline.
+- `size_in_gb` (Number) Size of the system disk in GB, with a minimum of 10 GB. Resizes are performed in place when the selected method and VM power state permit it.
 
 Read-Only:
 
-- `id` (String)
-- `state` (String)
-- `wwn` (String)
+- `id` (String) The unique identifier of the VM-owned system disk.
+- `state` (String) Current state of the system disk.
+- `wwn` (String) World Wide Name identifier of the system disk.
 
 
 <a id="nestedblock--timeouts"></a>

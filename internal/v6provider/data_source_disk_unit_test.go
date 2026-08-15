@@ -100,6 +100,9 @@ func TestDiskSummaryDataSourceModelsAssignmentAndSorting(t *testing.T) {
 	assert.Equal(t, "disk_z", models[1].ID.ValueString())
 	assert.True(t, models[1].VirtualMachineID.IsNull())
 	assert.True(t, models[2].ID.IsNull())
+	assert.Equal(t, "disk_z", *disks[0].Id)
+	assert.Nil(t, disks[1].Id)
+	assert.Equal(t, "disk_a", *disks[2].Id)
 }
 
 func TestFetchAllOrganizationDisksPaginationEmptyErrorAndNoFanOut(t *testing.T) {
@@ -110,16 +113,19 @@ func TestFetchAllOrganizationDisksPaginationEmptyErrorAndNoFanOut(t *testing.T) 
 		var requests atomic.Int32
 		client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, r *http.Request) {
 			requests.Add(1)
-			require.Equal(t, "/organizations/organization/disks", r.URL.Path)
-			require.Equal(t, "test-org", r.URL.Query().Get("organization[sub_domain]"))
-			require.Equal(t, "200", r.URL.Query().Get("per_page"))
+			if r.URL.Path != "/organizations/organization/disks" ||
+				r.URL.Query().Get("organization[sub_domain]") != "test-org" ||
+				r.URL.Query().Get("per_page") != "200" {
+				http.NotFound(w, r)
+				return
+			}
 			switch r.URL.Query().Get("page") {
 			case "1":
 				writeTestJSON(w, http.StatusOK, `{"disk":[{"id":"disk_z"}],"pagination":{"total_pages":2}}`)
 			case "2":
 				writeTestJSON(w, http.StatusOK, `{"disk":[{"id":"disk_a"}],"pagination":{"total_pages":2}}`)
 			default:
-				t.Errorf("unexpected page %q", r.URL.Query().Get("page"))
+				http.Error(w, "unexpected page", http.StatusNotFound)
 			}
 		})
 

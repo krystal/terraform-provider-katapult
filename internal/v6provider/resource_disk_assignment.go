@@ -327,11 +327,27 @@ func (r *DiskAssignmentResource) Delete(
 		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Virtual Machine %s is in transitional state %s; retry after it settles", vmID, obs.vmState))
 		return
 	}
+	if obs.attachmentState == nil {
+		resp.Diagnostics.AddError("Delete Error", "disk attachment state is transitional or unknown; retry after it settles")
+		return
+	}
+	switch *obs.attachmentState {
+	case core.VirtualMachineDiskAttachmentStateEnumAttached,
+		core.VirtualMachineDiskAttachmentStateEnumDetached:
+	case core.VirtualMachineDiskAttachmentStateEnumAttaching,
+		core.VirtualMachineDiskAttachmentStateEnumDetaching,
+		core.VirtualMachineDiskAttachmentStateEnumFailed:
+		resp.Diagnostics.AddError("Delete Error", "disk attachment state is transitional or unknown; retry after it settles")
+		return
+	default:
+		resp.Diagnostics.AddError("Delete Error", "disk attachment state is transitional or unknown; retry after it settles")
+		return
+	}
 	if err = patchDiskAttachOnBoot(ctx, r.M, diskID, false); err != nil {
 		resp.Diagnostics.AddError("Delete Error", err.Error())
 		return
 	}
-	if obs.attachmentState != nil && *obs.attachmentState == core.VirtualMachineDiskAttachmentStateEnumAttached {
+	if *obs.attachmentState == core.VirtualMachineDiskAttachmentStateEnumAttached {
 		if err = detachDiskAndWait(ctx, r.M, diskID, timeout); err != nil {
 			detachErr := err
 			if errors.Is(err, core.ErrNotFound) {
@@ -343,9 +359,6 @@ func (r *DiskAssignmentResource) Delete(
 			resp.Diagnostics.AddError("Delete Error", detachErr.Error())
 			return
 		}
-	} else if obs.attachmentState == nil || *obs.attachmentState != core.VirtualMachineDiskAttachmentStateEnumDetached {
-		resp.Diagnostics.AddError("Delete Error", "disk attachment state is transitional or unknown; retry after it settles")
-		return
 	}
 
 	unassignRes, err := r.M.Core.PostDiskUnassignWithResponse(ctx,

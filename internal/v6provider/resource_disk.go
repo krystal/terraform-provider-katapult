@@ -290,9 +290,19 @@ func (r *DiskResource) Create(
 		resp.Diagnostics.AddError("Create Error", err.Error())
 		return
 	}
-	if createRes.JSON201 == nil {
+	if createRes == nil || createRes.JSON201 == nil {
 		resp.Diagnostics.AddError("Create Error",
 			"unexpected empty response creating disk")
+		return
+	}
+	if createRes.JSON201.Disk.Id == nil {
+		resp.Diagnostics.AddError("Create Error",
+			"unexpected response creating disk: missing disk ID")
+		return
+	}
+	if createRes.JSON201.Task.Id == nil {
+		resp.Diagnostics.AddError("Create Error",
+			"unexpected response creating disk: missing task ID")
 		return
 	}
 
@@ -626,17 +636,17 @@ func (r *DiskResource) diskRead(
 	if disk.StorageSpeed != nil {
 		model.StorageSpeed = types.StringValue(string(*disk.StorageSpeed))
 	}
-	if disk.BusType.IsSpecified() {
+	model.BusType = types.StringNull()
+	if disk.BusType.IsSpecified() && !disk.BusType.IsNull() {
 		if bt, e := disk.BusType.Get(); e == nil {
 			model.BusType = types.StringValue(string(bt))
 		}
 	}
-	if disk.IoProfile.IsSpecified() {
+	model.IOProfileID = types.StringNull()
+	if disk.IoProfile.IsSpecified() && !disk.IoProfile.IsNull() {
 		if iop, e := disk.IoProfile.Get(); e == nil && iop.Id != nil {
 			model.IOProfileID = types.StringValue(*iop.Id)
 		}
-	} else if !model.IOProfileID.IsNull() {
-		model.IOProfileID = types.StringNull()
 	}
 	if disk.Wwn != nil {
 		model.WWN = types.StringValue(*disk.Wwn)
@@ -697,6 +707,8 @@ func effectiveDiskResizeMethod(oldSize, newSize int64, configured string, assign
 			core.VirtualMachineDiskAttachmentStateEnumDetaching,
 			core.VirtualMachineDiskAttachmentStateEnumFailed:
 			return "", fmt.Errorf("disk attachment state %q is transitional; retry after it settles", *attachmentState)
+		default:
+			return "", fmt.Errorf("disk attachment state %q is unknown", *attachmentState)
 		}
 	}
 	if newSize < oldSize {
