@@ -300,21 +300,24 @@ func (r *DiskResource) Create(
 			"unexpected response creating disk: missing disk ID")
 		return
 	}
+
+	diskID := *createRes.JSON201.Disk.Id
+
+	// Persist the disk ID as soon as the API returns it so state is preserved
+	// even when the accompanying task response is incomplete.
+	plan.ID = types.StringValue(diskID)
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	if createRes.JSON201.Task.Id == nil {
 		resp.Diagnostics.AddError("Create Error",
 			"unexpected response creating disk: missing task ID")
 		return
 	}
 
-	diskID := *createRes.JSON201.Disk.Id
 	taskID := *createRes.JSON201.Task.Id
-
-	// Persist the disk ID immediately so state is preserved if poll times out.
-	plan.ID = types.StringValue(diskID)
-	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 
 	if err := waitForTaskCompletion(ctx, r.M, timeout, taskID); err != nil {
 		resp.Diagnostics.AddError("Create Error",

@@ -54,10 +54,14 @@ func TestDiskResourceCreateRejectsMalformedSuccessResponse(t *testing.T) {
 		contentType string
 		body        string
 		want        string
+		wantID      string
 	}{
 		{name: "empty response", contentType: "text/plain", body: "", want: "unexpected empty response creating disk"},
 		{name: "missing disk ID", body: `{"disk":{},"task":{"id":"task_test"}}`, want: "missing disk ID"},
-		{name: "missing task ID", body: `{"disk":{"id":"disk_test"},"task":{}}`, want: "missing task ID"},
+		{
+			name: "missing task ID", body: `{"disk":{"id":"disk_test"},"task":{}}`,
+			want: "missing task ID", wantID: "disk_test",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -89,6 +93,12 @@ func TestDiskResourceCreateRejectsMalformedSuccessResponse(t *testing.T) {
 			})
 			require.True(t, resp.Diagnostics.HasError())
 			require.Contains(t, resp.Diagnostics.Errors()[0].Detail(), test.want)
+			if test.wantID != "" {
+				var state DiskResourceModel
+				diags := resp.State.Get(context.Background(), &state)
+				require.False(t, diags.HasError(), diags.Errors())
+				require.Equal(t, test.wantID, state.ID.ValueString())
+			}
 		})
 	}
 }
