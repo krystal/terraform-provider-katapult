@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	resourcetimeouts "github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
@@ -243,6 +244,49 @@ func TestVirtualMachineResourceDeleteRacePurgesByObjectID(t *testing.T) {
 	require.Nil(t, purgeBody.TrashObject.Id)
 	require.NotNil(t, purgeBody.TrashObject.ObjectId)
 	require.Equal(t, "vm_race", *purgeBody.TrashObject.ObjectId)
+}
+
+func TestVirtualMachineDeleteRejectsRemainingNonBootAssignmentBeforeMutation(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	var deleteRequests atomic.Int32
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet &&
+			r.URL.Path == "/virtual_machines/virtual_machine/disks":
+			writeTestJSON(w, http.StatusOK, `{
+				"disks":[
+					{"disk":{"id":"disk_boot"},"boot":true,"attach_on_boot":true,"state":"attached"},
+					{"disk":{"id":"disk_data"},"boot":false,"attach_on_boot":true,"state":"attached"}
+				],
+				"pagination":{"total_pages":1}
+			}`)
+		case r.Method == http.MethodDelete:
+			deleteRequests.Add(1)
+			http.Error(w, "unexpected delete", http.StatusInternalServerError)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+	r := &VirtualMachineResource{M: &Meta{Core: client, testMode: true}}
+	state := virtualMachineTestState(t, r, VirtualMachineResourceModel{
+		ID:         types.StringValue("vm_test"),
+		SystemDisk: knownTestSystemDisk(t, "disk_boot"),
+	})
+	resp := frameworkresource.DeleteResponse{State: state}
+
+	r.Delete(
+		context.Background(), frameworkresource.DeleteRequest{State: state}, &resp,
+	)
+	require.True(t, resp.Diagnostics.HasError())
+	require.Contains(
+		t,
+		resp.Diagnostics.Errors()[0].Detail(),
+		"still has non-boot disk relationships",
+	)
+	require.Zero(t, deleteRequests.Load())
 }
 
 func TestVirtualMachineResourceUpdateClearsDescriptionWithoutUnknownName(

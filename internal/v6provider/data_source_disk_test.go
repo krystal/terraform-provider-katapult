@@ -1,6 +1,7 @@
 package v6provider
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -16,6 +17,10 @@ func TestAccKatapultDataSourceDisk_basic(t *testing.T) {
 		ProtoV6ProviderFactories: tt.ProviderFactories,
 		CheckDestroy:             testAccCheckKatapultDiskDestroy(tt),
 		Steps: []resource.TestStep{
+			{
+				Config:      `data "katapult_disk" "missing" { id = "disk_missing" }`,
+				ExpectError: regexp.MustCompile(`(?i)(disk_missing|not found)`),
+			},
 			{
 				Config: undent.Stringf(`
 					resource "katapult_disk" "data" {

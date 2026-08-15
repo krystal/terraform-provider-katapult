@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -386,13 +387,114 @@ func TestAccKatapultVirtualMachine_basic(t *testing.T) {
 	})
 }
 
-// TestAccKatapultVirtualMachine_custom_disks verifies that a VM can be created
-// with custom disk sizes. Full disk detail verification is omitted as the API
-// does not currently return disk details after creation.
+// TestAccKatapultVirtualMachine_custom_disks verifies the documented migration
+// from deprecated nested disk blocks to first-class disk and assignment
+// resources without replacing the VM or any disk.
 func TestAccKatapultVirtualMachine_custom_disks(t *testing.T) {
 	tt := newTestTools(t)
 
 	name := tt.ResourceName()
+	var vmID, bootDiskID, dataDiskAID, dataDiskBID string
+
+	legacyConfig := undent.Stringf(`
+		resource "katapult_ip" "web" {}
+
+		resource "katapult_virtual_machine" "base" {
+			name          = "%s"
+			hostname      = "%s"
+			description   = "A web server."
+			package       = "rock-3"
+			disk_template = "ubuntu-18-04"
+			disk_template_options = {
+				install_agent = true
+			}
+			ip_address_ids = [katapult_ip.web.id]
+			disk {
+				name = "System"
+				size = 20
+			}
+			disk {
+				name = "Data A"
+				size = 10
+			}
+			disk {
+				name = "Data B"
+				size = 10
+			}
+		}
+
+		data "katapult_virtual_machine_disks" "all" {
+			virtual_machine_id = katapult_virtual_machine.base.id
+		}`, name, name+"-host")
+
+	importConfig := legacyConfig + "\n" + undent.String(`
+		resource "katapult_disk" "data_a" {
+			name       = "Data A"
+			size_in_gb = 10
+		}
+
+		resource "katapult_disk" "data_b" {
+			name       = "Data B"
+			size_in_gb = 10
+		}
+
+		resource "katapult_disk_assignment" "data_a" {
+			virtual_machine_id = katapult_virtual_machine.base.id
+			disk_id            = katapult_disk.data_a.id
+		}
+
+		resource "katapult_disk_assignment" "data_b" {
+			virtual_machine_id = katapult_virtual_machine.base.id
+			disk_id            = katapult_disk.data_b.id
+		}
+	`)
+
+	firstClassConfig := undent.Stringf(`
+		resource "katapult_ip" "web" {}
+
+		resource "katapult_virtual_machine" "base" {
+			name          = "%s"
+			hostname      = "%s"
+			description   = "A web server."
+			package       = "rock-3"
+			disk_template = "ubuntu-18-04"
+			disk_template_options = {
+				install_agent = true
+			}
+			ip_address_ids = [katapult_ip.web.id]
+			system_disk = {
+				name       = "System"
+				size_in_gb = 20
+			}
+		}
+
+		resource "katapult_disk" "data_a" {
+			name       = "Data A"
+			size_in_gb = 10
+		}
+
+		resource "katapult_disk" "data_b" {
+			name       = "Data B"
+			size_in_gb = 10
+		}
+
+		resource "katapult_disk_assignment" "data_a" {
+			virtual_machine_id = katapult_virtual_machine.base.id
+			disk_id            = katapult_disk.data_a.id
+		}
+
+		resource "katapult_disk_assignment" "data_b" {
+			virtual_machine_id = katapult_virtual_machine.base.id
+			disk_id            = katapult_disk.data_b.id
+		}
+
+		data "katapult_virtual_machine_disks" "all" {
+			virtual_machine_id = katapult_virtual_machine.base.id
+			depends_on = [
+				katapult_disk_assignment.data_a,
+				katapult_disk_assignment.data_b,
+			]
+		}`, name, name+"-host")
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -403,33 +505,7 @@ func TestAccKatapultVirtualMachine_custom_disks(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: undent.Stringf(`
-					resource "katapult_ip" "web" {}
-
-					resource "katapult_virtual_machine" "base" {
-						name          = "%s"
-						hostname      = "%s"
-						description   = "A web server."
-						package       = "rock-3"
-						disk_template = "ubuntu-18-04"
-						disk_template_options = {
-							install_agent = true
-						}
-						ip_address_ids = [katapult_ip.web.id]
-						disk {
-							name = "System"
-							size = 20
-						}
-						disk {
-							name = "Data"
-							size = 10
-						}
-						disk {
-							size = 10
-						}
-					}`,
-					name, name+"-host",
-				),
+				Config: legacyConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckKatapultVirtualMachineExists(
 						tt, "katapult_virtual_machine.base",
@@ -442,10 +518,99 @@ func TestAccKatapultVirtualMachine_custom_disks(t *testing.T) {
 						"katapult_virtual_machine.base",
 						"package", "rock-3",
 					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_virtual_machine_disks.all", "disks.#", "3",
+					),
+					captureResourceAttr("katapult_virtual_machine.base", "id", &vmID),
+					captureResourceAttr("katapult_virtual_machine.base", "system_disk.id", &bootDiskID),
+					captureVMDiskIDByName("data.katapult_virtual_machine_disks.all", "Data A", &dataDiskAID),
+					captureVMDiskIDByName("data.katapult_virtual_machine_disks.all", "Data B", &dataDiskBID),
 				),
+			},
+			{
+				Config:             importConfig,
+				ResourceName:       "katapult_disk.data_a",
+				ImportState:        true,
+				ImportStatePersist: true,
+				ImportStateIdFunc: func(*terraform.State) (string, error) {
+					return dataDiskAID, nil
+				},
+			},
+			{
+				Config:             importConfig,
+				ResourceName:       "katapult_disk.data_b",
+				ImportState:        true,
+				ImportStatePersist: true,
+				ImportStateIdFunc: func(*terraform.State) (string, error) {
+					return dataDiskBID, nil
+				},
+			},
+			{
+				Config:             importConfig,
+				ResourceName:       "katapult_disk_assignment.data_a",
+				ImportState:        true,
+				ImportStatePersist: true,
+				ImportStateIdFunc: func(*terraform.State) (string, error) {
+					return assignmentID(vmID, dataDiskAID), nil
+				},
+			},
+			{
+				Config:             importConfig,
+				ResourceName:       "katapult_disk_assignment.data_b",
+				ImportState:        true,
+				ImportStatePersist: true,
+				ImportStateIdFunc: func(*terraform.State) (string, error) {
+					return assignmentID(vmID, dataDiskBID), nil
+				},
+			},
+			{
+				Config: firstClassConfig,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr("katapult_virtual_machine.base", "id", &vmID),
+					resource.TestCheckResourceAttrPtr("katapult_virtual_machine.base", "system_disk.id", &bootDiskID),
+					resource.TestCheckResourceAttrPtr("katapult_disk.data_a", "id", &dataDiskAID),
+					resource.TestCheckResourceAttrPtr("katapult_disk.data_b", "id", &dataDiskBID),
+					resource.TestCheckResourceAttr("katapult_disk_assignment.data_a", "attached", "true"),
+					resource.TestCheckResourceAttr("katapult_disk_assignment.data_b", "attached", "true"),
+					resource.TestCheckResourceAttr("data.katapult_virtual_machine_disks.all", "disks.#", "3"),
+				),
+			},
+			{
+				Config:   firstClassConfig,
+				PlanOnly: true,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
 			},
 		},
 	})
+}
+
+func captureVMDiskIDByName(
+	dataSourceAddress, name string,
+	target *string,
+) resource.TestCheckFunc {
+	return func(state *terraform.State) error {
+		dataSource, ok := state.RootModule().Resources[dataSourceAddress]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", dataSourceAddress)
+		}
+		count, err := strconv.Atoi(dataSource.Primary.Attributes["disks.#"])
+		if err != nil {
+			return fmt.Errorf("reading %s disk count: %w", dataSourceAddress, err)
+		}
+		for i := range count {
+			prefix := fmt.Sprintf("disks.%d.", i)
+			if dataSource.Primary.Attributes[prefix+"name"] == name {
+				*target = dataSource.Primary.Attributes[prefix+"id"]
+				if *target == "" {
+					return fmt.Errorf("disk %q has no ID in %s", name, dataSourceAddress)
+				}
+				return nil
+			}
+		}
+		return fmt.Errorf("disk %q not found in %s", name, dataSourceAddress)
+	}
 }
 
 func TestAccKatapultVirtualMachine_update(t *testing.T) {
@@ -1058,8 +1223,17 @@ func TestAccKatapultVirtualMachine_disk_assignment(t *testing.T) {
 func TestAccKatapultVirtualMachine_system_disk(t *testing.T) {
 	tt := newTestTools(t)
 	name := tt.ResourceName()
+	var vmID, diskID string
 
-	config := func(diskName string, size int) string {
+	config := func(diskName string, size *int, poweredOn bool, method string) string {
+		sizeConfig := ""
+		if size != nil {
+			sizeConfig = fmt.Sprintf("size_in_gb = %d", *size)
+		}
+		methodConfig := ""
+		if method != "" {
+			methodConfig = fmt.Sprintf("resize_method = %q", method)
+		}
 		return undent.Stringf(`
 			resource "katapult_ip" "web" {}
 
@@ -1071,14 +1245,20 @@ func TestAccKatapultVirtualMachine_system_disk(t *testing.T) {
 			    install_agent = true
 			  }
 			  ip_address_ids = [katapult_ip.web.id]
-			  powered_on    = false
+			  powered_on    = %t
 
 			  system_disk = {
-			    name       = "%s"
-			    size_in_gb = %d
+			    name = "%s"
+			    %s
+			    %s
 			  }
-			}`, name, diskName, size)
+
+			  timeouts {
+			    update = "45m"
+			  }
+			}`, name, poweredOn, diskName, sizeConfig, methodConfig)
 	}
+	size30, size40 := 30, 40
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -1089,20 +1269,51 @@ func TestAccKatapultVirtualMachine_system_disk(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: config("System Disk", 20),
+				// Supplying only a name keeps package sizing for VM creation and
+				// renames the authoritative boot disk after it is discovered.
+				Config: config("System Disk", nil, true, ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "system_disk.name", "System Disk"),
-					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "system_disk.size_in_gb", "20"),
+					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "system_disk.size_in_gb", "25"),
 					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "system_disk.resize_method", "offline"),
-					resource.TestCheckResourceAttrSet("katapult_virtual_machine.base", "system_disk.id"),
+					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "powered_on", "true"),
+					captureResourceAttr("katapult_virtual_machine.base", "id", &vmID),
+					captureResourceAttr("katapult_virtual_machine.base", "system_disk.id", &diskID),
 				),
 			},
 			{
-				Config: config("System Disk Resized", 30),
+				// Running system disks require an explicit online resize opt-in.
+				Config: config("System Disk", &size30, true, "online"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "system_disk.size_in_gb", "30"),
+					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "system_disk.resize_method", "online"),
+					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "powered_on", "true"),
+					resource.TestCheckResourceAttrPtr("katapult_virtual_machine.base", "id", &vmID),
+					resource.TestCheckResourceAttrPtr("katapult_virtual_machine.base", "system_disk.id", &diskID),
+				),
+			},
+			{
+				// One apply must shut the VM down before performing the offline
+				// boot-disk resize; both identities remain stable.
+				Config: config("System Disk Resized", &size40, false, "offline"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "system_disk.name", "System Disk Resized"),
-					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "system_disk.size_in_gb", "30"),
+					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "system_disk.size_in_gb", "40"),
 					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "powered_on", "false"),
+					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "state", "stopped"),
+					resource.TestCheckResourceAttrPtr("katapult_virtual_machine.base", "id", &vmID),
+					resource.TestCheckResourceAttrPtr("katapult_virtual_machine.base", "system_disk.id", &diskID),
+				),
+			},
+			{
+				// A stopped system disk can be shrunk offline; the task must
+				// complete and the API must converge before state is updated.
+				Config: config("System Disk Resized", &size30, false, "offline"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "system_disk.size_in_gb", "30"),
+					resource.TestCheckResourceAttr("katapult_virtual_machine.base", "state", "stopped"),
+					resource.TestCheckResourceAttrPtr("katapult_virtual_machine.base", "id", &vmID),
+					resource.TestCheckResourceAttrPtr("katapult_virtual_machine.base", "system_disk.id", &diskID),
 				),
 			},
 		},

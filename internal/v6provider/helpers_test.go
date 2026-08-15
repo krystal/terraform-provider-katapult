@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -87,6 +88,44 @@ func TestWaitForDiskSizeRequiresAPIConvergence(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFetchAllVMDisksPaginates(t *testing.T) {
+	t.Parallel()
+
+	var requests atomic.Int32
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		if r.Method != http.MethodGet ||
+			r.URL.Path != "/virtual_machines/virtual_machine/disks" ||
+			r.URL.Query().Get("virtual_machine[id]") != "vm_test" {
+			http.NotFound(w, r)
+			return
+		}
+		switch r.URL.Query().Get("page") {
+		case "1":
+			writeTestJSON(w, http.StatusOK, `{
+				"disks":[{"disk":{"id":"disk_z"}}],
+				"pagination":{"total_pages":2}
+			}`)
+		case "2":
+			writeTestJSON(w, http.StatusOK, `{
+				"disks":[{"disk":{"id":"disk_a"}}],
+				"pagination":{"total_pages":2}
+			}`)
+		default:
+			http.Error(w, "unexpected page", http.StatusNotFound)
+		}
+	})
+
+	disks, err := fetchAllVMDisks(
+		context.Background(), &Meta{Core: client}, "vm_test",
+	)
+	require.NoError(t, err)
+	require.Len(t, disks, 2)
+	require.Equal(t, int32(2), requests.Load())
+	require.Equal(t, "disk_z", *disks[0].Disk.Id)
+	require.Equal(t, "disk_a", *disks[1].Disk.Id)
 }
 
 func TestPurgeTrashObjectPreservesTransportErrorWithNilResponse(t *testing.T) {

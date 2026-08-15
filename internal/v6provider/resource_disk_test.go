@@ -2,11 +2,14 @@ package v6provider
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	resourcetimeouts "github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -15,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/next/core"
@@ -129,6 +133,138 @@ func TestDiskReadClearsNullableRelationships(t *testing.T) {
 	require.NoError(t, r.diskRead(context.Background(), "disk_test", &model))
 	require.True(t, model.BusType.IsNull())
 	require.True(t, model.IOProfileID.IsNull())
+}
+
+func TestDiskResizePropagatesFailedTaskWithoutChangingModels(t *testing.T) {
+	t.Parallel()
+
+	var resizeRequests atomic.Int32
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+		switch {
+		case req.Method == http.MethodGet && req.URL.Path == "/disks/disk":
+			writeTestJSON(w, http.StatusOK, `{
+				"disk":{"id":"disk_test","size_in_gb":20,"virtual_machine_disk":null}
+			}`)
+		case req.Method == http.MethodPut && req.URL.Path == "/disks/disk/resize":
+			resizeRequests.Add(1)
+			writeTestJSON(w, http.StatusOK, `{"task":{"id":"task_failed"}}`)
+		case req.Method == http.MethodGet && req.URL.Path == "/tasks/task":
+			writeTestJSON(w, http.StatusOK, `{
+				"task":{"id":"task_failed","status":"failed"}
+			}`)
+		default:
+			http.NotFound(w, req)
+		}
+	})
+	r := &DiskResource{M: &Meta{Core: client, testMode: true}}
+	state := &DiskResourceModel{
+		SizeInGB: types.Int64Value(20), ResizeMethod: types.StringValue("offline"),
+	}
+	plan := &DiskResourceModel{
+		SizeInGB: types.Int64Value(30), ResizeMethod: types.StringValue("offline"),
+	}
+
+	err := r.resizeDisk(
+		context.Background(), "disk_test", plan, state, core.Offline, time.Second,
+	)
+	require.ErrorContains(t, err, "task failed")
+	require.Equal(t, int32(1), resizeRequests.Load())
+	require.Equal(t, int64(20), state.SizeInGB.ValueInt64())
+	require.Equal(t, int64(30), plan.SizeInGB.ValueInt64())
+}
+
+func TestDiskIOProfileUpdateUsesDedicatedTaskOperation(t *testing.T) {
+	t.Parallel()
+
+	var patchRequests, profileRequests atomic.Int32
+	var profileBody core.PutDiskIoProfileJSONRequestBody
+	var profileBodyErr error
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+		switch {
+		case req.Method == http.MethodPatch:
+			patchRequests.Add(1)
+			http.Error(w, "unexpected patch", http.StatusInternalServerError)
+		case req.Method == http.MethodPut && req.URL.Path == "/disks/disk/io_profile":
+			profileRequests.Add(1)
+			profileBodyErr = json.NewDecoder(req.Body).Decode(&profileBody)
+			writeTestJSON(w, http.StatusOK, `{
+				"disk":{"id":"disk_test"},
+				"task":{"id":"task_profile","status":"pending"}
+			}`)
+		case req.Method == http.MethodGet && req.URL.Path == "/tasks/task":
+			writeTestJSON(w, http.StatusOK, `{
+				"task":{"id":"task_profile","status":"completed"}
+			}`)
+		default:
+			http.NotFound(w, req)
+		}
+	})
+	r := &DiskResource{M: &Meta{Core: client, testMode: true}}
+	state := &DiskResourceModel{
+		Name: types.StringValue("Data"), BusType: types.StringValue("virtio"),
+		IOProfileID: types.StringValue("iop_old"),
+	}
+	plan := &DiskResourceModel{
+		Name: types.StringValue("Data"), BusType: types.StringValue("virtio"),
+		IOProfileID: types.StringValue("iop_new"),
+	}
+
+	require.NoError(t, r.patchDiskProperties(
+		context.Background(), "disk_test", plan, state, time.Second,
+	))
+	require.Zero(t, patchRequests.Load())
+	require.Equal(t, int32(1), profileRequests.Load())
+	require.NoError(t, profileBodyErr)
+	require.NotNil(t, profileBody.Disk.Id)
+	require.Equal(t, "disk_test", *profileBody.Disk.Id)
+	require.NotNil(t, profileBody.IoProfile.Id)
+	require.Equal(t, "iop_new", *profileBody.IoProfile.Id)
+}
+
+func TestDiskDeleteRejectsRemainingAssignmentBeforeMutation(t *testing.T) {
+	t.Parallel()
+
+	var deleteRequests atomic.Int32
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+		switch {
+		case req.Method == http.MethodGet && req.URL.Path == "/disks/disk":
+			writeTestJSON(w, http.StatusOK, `{
+				"disk":{
+					"id":"disk_test",
+					"virtual_machine_disk":{
+						"boot":false,
+						"attach_on_boot":true,
+						"state":"attached",
+						"virtual_machine":{"id":"vm_test"}
+					}
+				}
+			}`)
+		case req.Method == http.MethodDelete:
+			deleteRequests.Add(1)
+			http.Error(w, "unexpected delete", http.StatusInternalServerError)
+		default:
+			http.NotFound(w, req)
+		}
+	})
+	r := &DiskResource{M: &Meta{Core: client, testMode: true}}
+	state := diskTestState(t, r, DiskResourceModel{
+		ID:           types.StringValue("disk_test"),
+		Name:         types.StringValue("Data"),
+		SizeInGB:     types.Int64Value(20),
+		ResizeMethod: types.StringValue("offline"),
+	})
+	resp := frameworkresource.DeleteResponse{State: state}
+
+	r.Delete(
+		context.Background(), frameworkresource.DeleteRequest{State: state}, &resp,
+	)
+	require.True(t, resp.Diagnostics.HasError())
+	require.Contains(
+		t,
+		resp.Diagnostics.Errors()[0].Detail(),
+		"still has a Virtual Machine assignment",
+	)
+	require.Zero(t, deleteRequests.Load())
 }
 
 func diskTestState(
@@ -287,6 +423,24 @@ func TestAccKatapultDisk_storage_speed_nvme(t *testing.T) {
 					),
 				),
 			},
+			{
+				Config: undent.Stringf(`
+					resource "katapult_disk" "test" {
+					  name          = "%s"
+					  size_in_gb    = 20
+					  storage_speed = "ssd"
+					}`, name,
+				),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"katapult_disk.test", plancheck.ResourceActionReplace,
+						),
+					},
+				},
+			},
 		},
 	})
 }
@@ -296,6 +450,7 @@ func TestAccKatapultDisk_update(t *testing.T) {
 
 	name := tt.ResourceName()
 	nameUpdated := name + "-updated"
+	var diskID string
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -304,10 +459,15 @@ func TestAccKatapultDisk_update(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
+					data "katapult_disk_io_profile" "selected" {
+					  permalink = "100k"
+					}
+
 					resource "katapult_disk" "test" {
-					  name       = "%s"
-					  size_in_gb = 20
-					  bus_type   = "virtio"
+					  name          = "%s"
+					  size_in_gb    = 20
+					  bus_type      = "virtio"
+					  io_profile_id = data.katapult_disk_io_profile.selected.id
 					}`, name,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -320,14 +480,26 @@ func TestAccKatapultDisk_update(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"katapult_disk.test", "bus_type", "virtio",
 					),
+					resource.TestCheckResourceAttrPair(
+						"katapult_disk.test", "io_profile_id",
+						"data.katapult_disk_io_profile.selected", "id",
+					),
+					captureResourceAttr(
+						"katapult_disk.test", "id", &diskID,
+					),
 				),
 			},
 			{
 				Config: undent.Stringf(`
+					data "katapult_disk_io_profile" "selected" {
+					  permalink = "unrestricted"
+					}
+
 					resource "katapult_disk" "test" {
-					  name       = "%s"
-					  size_in_gb = 20
-					  bus_type   = "scsi"
+					  name          = "%s"
+					  size_in_gb    = 20
+					  bus_type      = "scsi"
+					  io_profile_id = data.katapult_disk_io_profile.selected.id
 					}`, nameUpdated,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -338,10 +510,14 @@ func TestAccKatapultDisk_update(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"katapult_disk.test", "bus_type", "scsi",
 					),
-					// Same resource — ID must not change.
-					testAccCheckKatapultDiskExists(
-						tt, "katapult_disk.test",
+					resource.TestCheckResourceAttrPair(
+						"katapult_disk.test", "io_profile_id",
+						"data.katapult_disk_io_profile.selected", "id",
 					),
+					resource.TestCheckResourceAttrPtr(
+						"katapult_disk.test", "id", &diskID,
+					),
+					testAccCheckKatapultDiskExists(tt, "katapult_disk.test"),
 				),
 			},
 		},
@@ -352,6 +528,7 @@ func TestAccKatapultDisk_resize(t *testing.T) {
 	tt := newTestTools(t)
 
 	name := tt.ResourceName()
+	var diskID string
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -365,8 +542,11 @@ func TestAccKatapultDisk_resize(t *testing.T) {
 					  size_in_gb = 20
 					}`, name,
 				),
-				Check: resource.TestCheckResourceAttr(
-					"katapult_disk.test", "size_in_gb", "20",
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"katapult_disk.test", "size_in_gb", "20",
+					),
+					captureResourceAttr("katapult_disk.test", "id", &diskID),
 				),
 			},
 			{
@@ -377,8 +557,13 @@ func TestAccKatapultDisk_resize(t *testing.T) {
 					  resize_method = "offline"
 					}`, name,
 				),
-				Check: resource.TestCheckResourceAttr(
-					"katapult_disk.test", "size_in_gb", "30",
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"katapult_disk.test", "size_in_gb", "30",
+					),
+					resource.TestCheckResourceAttrPtr(
+						"katapult_disk.test", "id", &diskID,
+					),
 				),
 			},
 		},

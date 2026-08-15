@@ -399,7 +399,7 @@ func (r *DiskResource) Update(
 		return
 	}
 
-	if err := r.patchDiskProperties(ctx, diskID, &plan, &state); err != nil {
+	if err := r.patchDiskProperties(ctx, diskID, &plan, &state, timeout); err != nil {
 		resp.Diagnostics.AddError("Update Error", err.Error())
 		return
 	}
@@ -431,12 +431,13 @@ func (r *DiskResource) Update(
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
-// patchDiskProperties applies any name / bus_type / io_profile_id changes via
-// PatchDisk. No-op when none of those attributes have changed.
+// patchDiskProperties applies mutable disk properties through the API operation
+// appropriate to each property. No-op when none have changed.
 func (r *DiskResource) patchDiskProperties(
 	ctx context.Context,
 	diskID string,
 	plan, state *DiskResourceModel,
+	timeout time.Duration,
 ) error {
 	if plan.Name.Equal(state.Name) &&
 		plan.BusType.Equal(state.BusType) &&
@@ -453,26 +454,61 @@ func (r *DiskResource) patchDiskProperties(
 		bt := core.DiskBusEnum(plan.BusType.ValueString())
 		patchArgs.BusType = &bt
 	}
-	if !plan.IOProfileID.Equal(state.IOProfileID) && !plan.IOProfileID.IsNull() {
-		ioID := plan.IOProfileID.ValueString()
-		patchArgs.IoProfile = &core.DiskIOProfileLookup{Id: &ioID}
+	if patchArgs.Name != nil || patchArgs.BusType != nil {
+		patchRes, err := r.M.Core.PatchDiskWithResponse(ctx,
+			core.PatchDiskJSONRequestBody{
+				Disk:       core.DiskLookup{Id: &diskID},
+				Properties: patchArgs,
+			})
+		if err != nil {
+			if patchRes != nil {
+				return genericAPIError(err, patchRes.Body)
+			}
+			return err
+		}
+		if patchRes == nil || patchRes.JSON200 == nil {
+			return fmt.Errorf("unexpected empty response updating disk")
+		}
 	}
 
-	patchRes, err := r.M.Core.PatchDiskWithResponse(ctx,
-		core.PatchDiskJSONRequestBody{
-			Disk:       core.DiskLookup{Id: &diskID},
-			Properties: patchArgs,
-		})
+	if !plan.IOProfileID.Equal(state.IOProfileID) && !plan.IOProfileID.IsNull() {
+		if err := r.updateDiskIOProfile(
+			ctx, diskID, plan.IOProfileID.ValueString(), timeout,
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *DiskResource) updateDiskIOProfile(
+	ctx context.Context,
+	diskID, profileID string,
+	timeout time.Duration,
+) error {
+	profileRes, err := r.M.Core.PutDiskIoProfileWithResponse(
+		ctx,
+		core.PutDiskIoProfileJSONRequestBody{
+			Disk:      core.DiskLookup{Id: &diskID},
+			IoProfile: core.DiskIOProfileLookup{Id: &profileID},
+		},
+	)
 	if err != nil {
-		if patchRes != nil {
-			return genericAPIError(err, patchRes.Body)
+		if profileRes != nil {
+			return genericAPIError(err, profileRes.Body)
 		}
 		return err
 	}
-	if patchRes == nil || patchRes.JSON200 == nil {
-		return fmt.Errorf("unexpected empty response updating disk")
+	if profileRes == nil || profileRes.JSON200 == nil ||
+		profileRes.JSON200.Task.Id == nil {
+		return fmt.Errorf("unexpected empty response updating disk I/O profile")
 	}
-
+	if err := waitForTaskCompletion(
+		ctx, r.M, timeout, *profileRes.JSON200.Task.Id,
+	); err != nil {
+		return fmt.Errorf("updating disk I/O profile: %w", err)
+	}
 	return nil
 }
 

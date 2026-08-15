@@ -11,7 +11,10 @@ import (
 	"github.com/krystal/go-katapult/next/core"
 )
 
-const stateAttributeName = "state"
+const (
+	stateAttributeName = "state"
+	unknownStateValue  = "unknown"
+)
 
 // fetchAllVMDisks returns every disk attachment for a given VM, paging as needed.
 func fetchAllVMDisks(
@@ -157,7 +160,7 @@ func waitForDiskSize(
 ) error {
 	target := fmt.Sprintf("%d", expected)
 	waiter := &retry.StateChangeConf{
-		Pending:      []string{"unknown"},
+		Pending:      []string{unknownStateValue},
 		Target:       []string{target},
 		Timeout:      timeout,
 		Delay:        m.stateChangeDelay(time.Second),
@@ -172,12 +175,12 @@ func waitForDiskSize(
 				return nil, "", err
 			}
 			if res == nil || res.JSON200 == nil || res.JSON200.Disk.SizeInGb == nil {
-				return nil, "unknown", nil
+				return nil, unknownStateValue, nil
 			}
 			size := int64(*res.JSON200.Disk.SizeInGb)
 			state := fmt.Sprintf("%d", size)
 			if size != expected {
-				state = "unknown"
+				state = unknownStateValue
 			}
 			return &res.JSON200.Disk, state, nil
 		},

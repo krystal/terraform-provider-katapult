@@ -2,7 +2,48 @@
 version: 1
 interactions:
 - request:
-    body: '{"organization":{"sub_domain":"terraform-acc-test"},"properties":{"data_center":{"permalink":"uk-lon-01"},"name":"tf-acc-test-data-source-8ygRcGP5byOD","size_in_gb":20}}'
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_missing
+    method: GET
+  response:
+    body: '{"error":{"code":"disk_not_found","description":"No disk was found matching
+      any of the criteria provided in the arguments","detail":{}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache
+      Content-Length:
+      - "136"
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 16:12:43 GMT
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Api-Schema:
+      - json-error
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "973"
+      X-Request-Id:
+      - dedf9033-671b-4943-b5f2-0098332f3c80
+    status: 404 Not Found
+    code: 404
+    duration: ""
+- request:
+    body: '{"organization":{"sub_domain":"terraform-acc-test"},"properties":{"data_center":{"permalink":"uk-lon-01"},"name":"tf-acc-test-data-source-mKu5JbeLhav3","size_in_gb":20}}'
     form: {}
     headers:
       Content-Type:
@@ -12,8 +53,8 @@ interactions:
     url: https://api.katapult.io/core/v1/organizations/organization/disks
     method: POST
   response:
-    body: '{"disk":{"id":"disk_0gqOV2qRRpQ6xkAp","name":"tf-acc-test-data-source-8ygRcGP5byOD","size_in_gb":20,"wwn":"05b6b7835d816653","state":"not_built","created_at":1786789236,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"task":{"id":"task_Y2PMj29QUKlmPn1s","name":"Build
-      disk","status":"pending","created_at":1786789236,"started_at":null,"finished_at":null,"progress":0},"annotations":[]}'
+    body: '{"disk":{"id":"disk_I4Bu3elhTjuAg16W","name":"tf-acc-test-data-source-mKu5JbeLhav3","size_in_gb":20,"wwn":"080643a44c133d4c","state":"not_built","created_at":1786810364,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"task":{"id":"task_CkH4RRbnv0A8YE2u","name":"Build
+      disk","status":"pending","created_at":1786810364,"started_at":null,"finished_at":null,"progress":0},"annotations":[]}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -28,9 +69,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:36 GMT
+      - Sat, 15 Aug 2026 16:12:44 GMT
       Etag:
-      - W/"f69cbf869c2a51ecfd12d8a5d1b70783"
+      - W/"eb18007163459ae84811414276eada4a"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -38,9 +79,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "999"
+      - "972"
       X-Request-Id:
-      - db1f518b-d4f4-4eb2-8226-89e2e9a0166d
+      - bebae5b9-5a04-4c37-9cc6-cfad453450f0
     status: 201 Created
     code: 201
     duration: ""
@@ -50,10 +91,50 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/tasks/task?task%5Bid%5D=task_Y2PMj29QUKlmPn1s
+    url: https://api.katapult.io/core/v1/tasks/task?task%5Bid%5D=task_CkH4RRbnv0A8YE2u
     method: GET
   response:
-    body: '{"task":{"id":"task_Y2PMj29QUKlmPn1s","name":"Build disk","status":"completed","created_at":1786789236,"started_at":1786789237,"finished_at":1786789237,"progress":100}}'
+    body: '{"task":{"id":"task_CkH4RRbnv0A8YE2u","name":"Build disk","status":"running","created_at":1786810364,"started_at":1786810364,"finished_at":null,"progress":37}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "159"
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 16:12:45 GMT
+      Etag:
+      - W/"a3d50e3e092605c73fd4c012c493b996"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "971"
+      X-Request-Id:
+      - f78ab202-0dab-4529-ab08-70eebbb92c83
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/tasks/task?task%5Bid%5D=task_CkH4RRbnv0A8YE2u
+    method: GET
+  response:
+    body: '{"task":{"id":"task_CkH4RRbnv0A8YE2u","name":"Build disk","status":"completed","created_at":1786810364,"started_at":1786810364,"finished_at":1786810365,"progress":100}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -68,9 +149,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:37 GMT
+      - Sat, 15 Aug 2026 16:12:50 GMT
       Etag:
-      - W/"c6773b0151b0a1812aa65f56ba4f42c1"
+      - W/"b15de99e01a5002a15c9b94f7d335a01"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -78,9 +159,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "998"
+      - "970"
       X-Request-Id:
-      - 6543e2b9-a051-4d8d-b293-2a2d05232ef6
+      - 4171f461-076a-41c8-919f-5691c8437ba7
     status: 200 OK
     code: 200
     duration: ""
@@ -90,10 +171,10 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_0gqOV2qRRpQ6xkAp
+    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_I4Bu3elhTjuAg16W
     method: GET
   response:
-    body: '{"disk":{"id":"disk_0gqOV2qRRpQ6xkAp","name":"tf-acc-test-data-source-8ygRcGP5byOD","size_in_gb":20,"wwn":"05b6b7835d816653","state":"built","created_at":1786789236,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"annotations":[]}'
+    body: '{"disk":{"id":"disk_I4Bu3elhTjuAg16W","name":"tf-acc-test-data-source-mKu5JbeLhav3","size_in_gb":20,"wwn":"080643a44c133d4c","state":"built","created_at":1786810364,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"annotations":[]}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -108,9 +189,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:37 GMT
+      - Sat, 15 Aug 2026 16:12:50 GMT
       Etag:
-      - W/"56dc4a259d7c830e68217fd9aeb258e0"
+      - W/"aed9665e0e5d5c5ac4cd66d33013eea6"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -118,9 +199,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "997"
+      - "969"
       X-Request-Id:
-      - 95446317-a3da-432e-8cfd-9164e25dd97e
+      - 7ee9cb8a-d69c-4633-b798-44156cd3a035
     status: 200 OK
     code: 200
     duration: ""
@@ -130,10 +211,10 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_0gqOV2qRRpQ6xkAp
+    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_I4Bu3elhTjuAg16W
     method: GET
   response:
-    body: '{"disk":{"id":"disk_0gqOV2qRRpQ6xkAp","name":"tf-acc-test-data-source-8ygRcGP5byOD","size_in_gb":20,"wwn":"05b6b7835d816653","state":"built","created_at":1786789236,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"annotations":[]}'
+    body: '{"disk":{"id":"disk_I4Bu3elhTjuAg16W","name":"tf-acc-test-data-source-mKu5JbeLhav3","size_in_gb":20,"wwn":"080643a44c133d4c","state":"built","created_at":1786810364,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"annotations":[]}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -148,9 +229,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:37 GMT
+      - Sat, 15 Aug 2026 16:12:50 GMT
       Etag:
-      - W/"56dc4a259d7c830e68217fd9aeb258e0"
+      - W/"aed9665e0e5d5c5ac4cd66d33013eea6"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -158,9 +239,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "996"
+      - "968"
       X-Request-Id:
-      - e51a7209-fd5a-4cdf-b74a-9914eb6e24ad
+      - 2b6f9ab7-c86f-42a0-9de3-8d0b525a3e86
     status: 200 OK
     code: 200
     duration: ""
@@ -170,10 +251,10 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_0gqOV2qRRpQ6xkAp
+    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_I4Bu3elhTjuAg16W
     method: GET
   response:
-    body: '{"disk":{"id":"disk_0gqOV2qRRpQ6xkAp","name":"tf-acc-test-data-source-8ygRcGP5byOD","size_in_gb":20,"wwn":"05b6b7835d816653","state":"built","created_at":1786789236,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"annotations":[]}'
+    body: '{"disk":{"id":"disk_I4Bu3elhTjuAg16W","name":"tf-acc-test-data-source-mKu5JbeLhav3","size_in_gb":20,"wwn":"080643a44c133d4c","state":"built","created_at":1786810364,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"annotations":[]}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -188,9 +269,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:37 GMT
+      - Sat, 15 Aug 2026 16:12:50 GMT
       Etag:
-      - W/"56dc4a259d7c830e68217fd9aeb258e0"
+      - W/"aed9665e0e5d5c5ac4cd66d33013eea6"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -198,9 +279,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "995"
+      - "967"
       X-Request-Id:
-      - 30a02266-9858-4ba1-bc37-5fbfad4f6592
+      - 2e6b7aa9-10c3-4c46-ad91-a81308093a34
     status: 200 OK
     code: 200
     duration: ""
@@ -210,10 +291,10 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_0gqOV2qRRpQ6xkAp
+    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_I4Bu3elhTjuAg16W
     method: GET
   response:
-    body: '{"disk":{"id":"disk_0gqOV2qRRpQ6xkAp","name":"tf-acc-test-data-source-8ygRcGP5byOD","size_in_gb":20,"wwn":"05b6b7835d816653","state":"built","created_at":1786789236,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"annotations":[]}'
+    body: '{"disk":{"id":"disk_I4Bu3elhTjuAg16W","name":"tf-acc-test-data-source-mKu5JbeLhav3","size_in_gb":20,"wwn":"080643a44c133d4c","state":"built","created_at":1786810364,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"annotations":[]}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -228,9 +309,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:38 GMT
+      - Sat, 15 Aug 2026 16:12:50 GMT
       Etag:
-      - W/"56dc4a259d7c830e68217fd9aeb258e0"
+      - W/"aed9665e0e5d5c5ac4cd66d33013eea6"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -238,9 +319,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "994"
+      - "966"
       X-Request-Id:
-      - 3a467aaa-f168-49ac-a285-af863d65d9ba
+      - 95b5949b-08ab-4744-b856-baa2d70e29bc
     status: 200 OK
     code: 200
     duration: ""
@@ -250,10 +331,10 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_0gqOV2qRRpQ6xkAp
+    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_I4Bu3elhTjuAg16W
     method: GET
   response:
-    body: '{"disk":{"id":"disk_0gqOV2qRRpQ6xkAp","name":"tf-acc-test-data-source-8ygRcGP5byOD","size_in_gb":20,"wwn":"05b6b7835d816653","state":"built","created_at":1786789236,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"annotations":[]}'
+    body: '{"disk":{"id":"disk_I4Bu3elhTjuAg16W","name":"tf-acc-test-data-source-mKu5JbeLhav3","size_in_gb":20,"wwn":"080643a44c133d4c","state":"built","created_at":1786810364,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"annotations":[]}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -268,9 +349,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:38 GMT
+      - Sat, 15 Aug 2026 16:12:50 GMT
       Etag:
-      - W/"56dc4a259d7c830e68217fd9aeb258e0"
+      - W/"aed9665e0e5d5c5ac4cd66d33013eea6"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -278,9 +359,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "993"
+      - "965"
       X-Request-Id:
-      - 83db831e-0c10-4bf7-a14f-0f4c93687a42
+      - 292e9d31-a043-479c-9d5e-d9b51b75936c
     status: 200 OK
     code: 200
     duration: ""
@@ -290,10 +371,10 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_0gqOV2qRRpQ6xkAp
+    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_I4Bu3elhTjuAg16W
     method: GET
   response:
-    body: '{"disk":{"id":"disk_0gqOV2qRRpQ6xkAp","name":"tf-acc-test-data-source-8ygRcGP5byOD","size_in_gb":20,"wwn":"05b6b7835d816653","state":"built","created_at":1786789236,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"annotations":[]}'
+    body: '{"disk":{"id":"disk_I4Bu3elhTjuAg16W","name":"tf-acc-test-data-source-mKu5JbeLhav3","size_in_gb":20,"wwn":"080643a44c133d4c","state":"built","created_at":1786810364,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"annotations":[]}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -308,9 +389,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:38 GMT
+      - Sat, 15 Aug 2026 16:12:51 GMT
       Etag:
-      - W/"56dc4a259d7c830e68217fd9aeb258e0"
+      - W/"aed9665e0e5d5c5ac4cd66d33013eea6"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -318,14 +399,14 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "992"
+      - "964"
       X-Request-Id:
-      - 7185b547-997e-4c42-8417-8b104e6cda56
+      - 8e2d1e56-4205-4fe4-9605-4a672841d367
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"disk":{"id":"disk_0gqOV2qRRpQ6xkAp"}}'
+    body: '{"disk":{"id":"disk_I4Bu3elhTjuAg16W"}}'
     form: {}
     headers:
       Content-Type:
@@ -335,7 +416,7 @@ interactions:
     url: https://api.katapult.io/core/v1/disks/disk
     method: DELETE
   response:
-    body: '{"disk":{"id":"disk_0gqOV2qRRpQ6xkAp","name":"tf-acc-test-data-source-8ygRcGP5byOD","size_in_gb":20,"wwn":"05b6b7835d816653","state":"built","created_at":1786789236,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"trash_object":{"id":"trsh_ES4qkwIydUtXUK7M","keep_until":1786962038,"object_id":"disk_0gqOV2qRRpQ6xkAp","object_type":"Disk"}}'
+    body: '{"disk":{"id":"disk_I4Bu3elhTjuAg16W","name":"tf-acc-test-data-source-mKu5JbeLhav3","size_in_gb":20,"wwn":"080643a44c133d4c","state":"built","created_at":1786810364,"storage_speed":"nvme","io_profile":{"id":"diop_i39iT7k0RYAdQP48","name":"Unrestricted","permalink":"unrestricted","speed_in_mb":null,"iops":null},"bus_type":"scsi","data_center":{"id":"loc_UUhPmoCbpic6UX0Y","name":"London","permalink":"uk-lon-01"},"virtual_machine_disk":null,"installation":null},"trash_object":{"id":"trsh_xa81uxUKltgrEmRE","keep_until":1786983171,"object_id":"disk_I4Bu3elhTjuAg16W","object_type":"Disk"}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -350,9 +431,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:38 GMT
+      - Sat, 15 Aug 2026 16:12:51 GMT
       Etag:
-      - W/"eaa29107be6be93eae67361e55da6b24"
+      - W/"6b28d525398b925757ed60f4b876bb0b"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -360,14 +441,14 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "991"
+      - "963"
       X-Request-Id:
-      - 14b208bd-c7aa-43e4-9b86-23d9f8a3e504
+      - 8c3071ed-1185-4db1-b22a-c0c19bd5b162
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"trash_object":{"id":"trsh_ES4qkwIydUtXUK7M"}}'
+    body: '{"trash_object":{"id":"trsh_xa81uxUKltgrEmRE"}}'
     form: {}
     headers:
       Content-Type:
@@ -377,7 +458,7 @@ interactions:
     url: https://api.katapult.io/core/v1/trash_objects/trash_object
     method: DELETE
   response:
-    body: '{"task":{"id":"task_OA4HkOvR2zOXC8rP","name":"Purge items from trash","status":"pending","created_at":1786789238,"started_at":null,"finished_at":null,"progress":0}}'
+    body: '{"task":{"id":"task_OiVcic0Mqj0mfpjm","name":"Purge items from trash","status":"pending","created_at":1786810371,"started_at":null,"finished_at":null,"progress":0}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -392,9 +473,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:38 GMT
+      - Sat, 15 Aug 2026 16:12:51 GMT
       Etag:
-      - W/"14c9438a7d4efb645a82c35a54872c0a"
+      - W/"710e6228ebc4f611c1ef7beafc5264a2"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -402,9 +483,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "990"
+      - "962"
       X-Request-Id:
-      - f9d43ecf-f951-4d28-aea0-8a5d66325c18
+      - 08fa3650-fc1c-4d4c-9eed-af0524084ca0
     status: 200 OK
     code: 200
     duration: ""
@@ -414,10 +495,10 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/trash_objects/trash_object?trash_object%5Bid%5D=trsh_ES4qkwIydUtXUK7M
+    url: https://api.katapult.io/core/v1/trash_objects/trash_object?trash_object%5Bid%5D=trsh_xa81uxUKltgrEmRE
     method: GET
   response:
-    body: '{"trash_object":{"id":"trsh_ES4qkwIydUtXUK7M","keep_until":1786962038,"object_id":"disk_0gqOV2qRRpQ6xkAp","object_type":"Disk"}}'
+    body: '{"trash_object":{"id":"trsh_xa81uxUKltgrEmRE","keep_until":1786983171,"object_id":"disk_I4Bu3elhTjuAg16W","object_type":"Disk"}}'
     headers:
       Access-Control-Allow-Headers:
       - Authorization, Content-Type
@@ -432,9 +513,9 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:39 GMT
+      - Sat, 15 Aug 2026 16:12:52 GMT
       Etag:
-      - W/"28762bf47d912388b97deefd7eeeb119"
+      - W/"f1c4039d3b7872aaacd1e38f48acd351"
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -442,9 +523,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "989"
+      - "961"
       X-Request-Id:
-      - b50e5a46-2e2c-43a1-b24b-8d1fe50ce36d
+      - 72a940a8-49f7-46b1-8bb4-0af4fab104ee
     status: 200 OK
     code: 200
     duration: ""
@@ -454,7 +535,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/trash_objects/trash_object?trash_object%5Bid%5D=trsh_ES4qkwIydUtXUK7M
+    url: https://api.katapult.io/core/v1/trash_objects/trash_object?trash_object%5Bid%5D=trsh_xa81uxUKltgrEmRE
     method: GET
   response:
     body: '{"error":{"code":"trash_object_not_found","description":"No trash object
@@ -473,7 +554,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:44 GMT
+      - Sat, 15 Aug 2026 16:12:57 GMT
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -483,9 +564,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "988"
+      - "960"
       X-Request-Id:
-      - 4e496728-11c1-4bbd-8e9b-cbd0b2e9185d
+      - 94fcd43e-7381-4b8b-9b57-c0983f0f5b5a
     status: 404 Not Found
     code: 404
     duration: ""
@@ -495,7 +576,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_0gqOV2qRRpQ6xkAp
+    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_I4Bu3elhTjuAg16W
     method: GET
   response:
     body: '{"error":{"code":"disk_not_found","description":"No disk was found matching
@@ -514,7 +595,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:44 GMT
+      - Sat, 15 Aug 2026 16:12:57 GMT
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -524,9 +605,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "987"
+      - "959"
       X-Request-Id:
-      - f5d1e073-9985-4310-8bd1-81d89514d671
+      - b16174a3-12ba-4bfc-a705-ef9361e5578f
     status: 404 Not Found
     code: 404
     duration: ""
@@ -536,7 +617,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/trash_objects/trash_object?trash_object%5Bobject_id%5D=disk_0gqOV2qRRpQ6xkAp
+    url: https://api.katapult.io/core/v1/trash_objects/trash_object?trash_object%5Bobject_id%5D=disk_I4Bu3elhTjuAg16W
     method: GET
   response:
     body: '{"error":{"code":"trash_object_not_found","description":"No trash object
@@ -555,7 +636,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:44 GMT
+      - Sat, 15 Aug 2026 16:12:57 GMT
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -565,9 +646,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "986"
+      - "958"
       X-Request-Id:
-      - ac141bf6-a5a0-46e8-b589-155857eb6e17
+      - 4bba02aa-5f1e-40bb-9fa7-78ba1e72c97a
     status: 404 Not Found
     code: 404
     duration: ""
@@ -577,7 +658,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_0gqOV2qRRpQ6xkAp
+    url: https://api.katapult.io/core/v1/disks/disk?disk%5Bid%5D=disk_I4Bu3elhTjuAg16W
     method: GET
   response:
     body: '{"error":{"code":"disk_not_found","description":"No disk was found matching
@@ -596,7 +677,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:44 GMT
+      - Sat, 15 Aug 2026 16:12:57 GMT
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -606,9 +687,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "985"
+      - "957"
       X-Request-Id:
-      - b7f81a41-2ec1-481b-a2ae-03d2cd4d998f
+      - 173239f7-faae-4448-83e6-db650cd9832d
     status: 404 Not Found
     code: 404
     duration: ""
@@ -618,7 +699,7 @@ interactions:
     headers:
       User-Agent:
       - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
-    url: https://api.katapult.io/core/v1/trash_objects/trash_object?trash_object%5Bobject_id%5D=disk_0gqOV2qRRpQ6xkAp
+    url: https://api.katapult.io/core/v1/trash_objects/trash_object?trash_object%5Bobject_id%5D=disk_I4Bu3elhTjuAg16W
     method: GET
   response:
     body: '{"error":{"code":"trash_object_not_found","description":"No trash object
@@ -637,7 +718,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Sat, 15 Aug 2026 10:20:44 GMT
+      - Sat, 15 Aug 2026 16:12:57 GMT
       Strict-Transport-Security:
       - max-age=63072000; includeSubDomains
       Vary:
@@ -647,9 +728,9 @@ interactions:
       X-Ratelimit-Permitted:
       - "1000"
       X-Ratelimit-Remaining:
-      - "984"
+      - "956"
       X-Request-Id:
-      - ba8c02df-3371-4e05-9868-dcf90a4c11d3
+      - 2a7346d2-ed71-4df0-bc5c-269f777cb010
     status: 404 Not Found
     code: 404
     duration: ""

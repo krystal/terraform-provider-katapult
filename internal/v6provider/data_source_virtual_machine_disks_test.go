@@ -130,10 +130,99 @@ func TestAccKatapultDataSourceVirtualMachineDisks_basic(t *testing.T) {
 					testAccCheckDataSourceHasOneBootDisk(
 						"data.katapult_virtual_machine_disks.all",
 					),
+					checkVMDiskDataSourceEntry(
+						"data.katapult_virtual_machine_disks.all",
+						"katapult_disk.data",
+						false,
+						true,
+						"attached",
+						20,
+					),
+					checkVMDiskDataSourceSorted(
+						"data.katapult_virtual_machine_disks.all",
+					),
 				),
 			},
 		},
 	})
+}
+
+func checkVMDiskDataSourceEntry(
+	dataSourceAddress, diskResourceAddress string,
+	boot, attachOnBoot bool,
+	attachmentState string,
+	sizeInGB int,
+) resource.TestCheckFunc {
+	return func(state *terraform.State) error {
+		dataSource, ok := state.RootModule().Resources[dataSourceAddress]
+		if !ok {
+			return fmt.Errorf("not found: %s", dataSourceAddress)
+		}
+		disk, ok := state.RootModule().Resources[diskResourceAddress]
+		if !ok {
+			return fmt.Errorf("not found: %s", diskResourceAddress)
+		}
+
+		count, err := strconv.Atoi(dataSource.Primary.Attributes["disks.#"])
+		if err != nil {
+			return fmt.Errorf("reading %s disk count: %w", dataSourceAddress, err)
+		}
+		for i := range count {
+			prefix := fmt.Sprintf("disks.%d.", i)
+			if dataSource.Primary.Attributes[prefix+"id"] != disk.Primary.ID {
+				continue
+			}
+			want := map[string]string{
+				"name":             disk.Primary.Attributes["name"],
+				"size_in_gb":       strconv.Itoa(sizeInGB),
+				"boot":             strconv.FormatBool(boot),
+				"attach_on_boot":   strconv.FormatBool(attachOnBoot),
+				"attachment_state": attachmentState,
+			}
+			for attribute, expected := range want {
+				if actual := dataSource.Primary.Attributes[prefix+attribute]; actual != expected {
+					return fmt.Errorf(
+						"%s%s: expected %q, got %q",
+						prefix, attribute, expected, actual,
+					)
+				}
+			}
+			for _, attribute := range []string{"wwn", "state", "storage_speed"} {
+				if dataSource.Primary.Attributes[prefix+attribute] == "" {
+					return fmt.Errorf("%s%s is empty", prefix, attribute)
+				}
+			}
+			return nil
+		}
+		return fmt.Errorf(
+			"disk %s not present in %s.disks",
+			disk.Primary.ID, dataSourceAddress,
+		)
+	}
+}
+
+func checkVMDiskDataSourceSorted(
+	dataSourceAddress string,
+) resource.TestCheckFunc {
+	return func(state *terraform.State) error {
+		dataSource, ok := state.RootModule().Resources[dataSourceAddress]
+		if !ok {
+			return fmt.Errorf("not found: %s", dataSourceAddress)
+		}
+		count, err := strconv.Atoi(dataSource.Primary.Attributes["disks.#"])
+		if err != nil {
+			return fmt.Errorf("reading %s disk count: %w", dataSourceAddress, err)
+		}
+		previous := ""
+		for i := range count {
+			id := dataSource.Primary.Attributes[fmt.Sprintf("disks.%d.id", i)]
+			if previous != "" && id < previous {
+				return fmt.Errorf("disk IDs are not sorted: %q before %q", previous, id)
+			}
+			previous = id
+		}
+		return nil
+	}
 }
 
 // testAccCheckDataSourceDiskMatch finds a disk in the data source matching the
