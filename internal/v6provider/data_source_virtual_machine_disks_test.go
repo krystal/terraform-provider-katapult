@@ -1,14 +1,50 @@
 package v6provider
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
+	core "github.com/krystal/go-katapult/next/core"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestSortVMDiskAttachmentsByIDPreservesPairing(t *testing.T) {
+	t.Parallel()
+
+	attachments := []core.GetVirtualMachineDisks200ResponseDisks{
+		{Disk: &core.GetVirtualMachineDisksPartDisk{Id: ptr("disk_z")}, Boot: ptr(true)},
+		{Disk: nil, Boot: ptr(false)},
+		{Disk: &core.GetVirtualMachineDisksPartDisk{Id: ptr("disk_a")}, AttachOnBoot: ptr(false)},
+	}
+	sortVMDiskAttachmentsByID(attachments)
+
+	require.Len(t, attachments, 3)
+	assert.Equal(t, "disk_a", *attachments[0].Disk.Id)
+	assert.Equal(t, false, *attachments[0].AttachOnBoot)
+	assert.Equal(t, "disk_z", *attachments[1].Disk.Id)
+	assert.Equal(t, true, *attachments[1].Boot)
+	assert.Nil(t, attachments[2].Disk)
+
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		id := r.URL.Query().Get("disk[id]")
+		writeTestJSON(w, http.StatusOK, fmt.Sprintf(`{"disk":{"id":%q}}`, id))
+	})
+	disks, err := fetchDiskDetailsForAttachments(
+		context.Background(), &Meta{Core: client}, attachments,
+	)
+	require.NoError(t, err)
+	require.Len(t, disks, 3)
+	assert.Equal(t, "disk_a", *disks[0].Id)
+	assert.Equal(t, "disk_z", *disks[1].Id)
+	assert.Nil(t, disks[2])
+}
 
 func TestAccKatapultDataSourceVirtualMachineDisks_basic(t *testing.T) {
 	tt := newTestTools(t)

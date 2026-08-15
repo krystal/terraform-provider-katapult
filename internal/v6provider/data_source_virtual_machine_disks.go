@@ -3,6 +3,7 @@ package v6provider
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -166,6 +167,7 @@ func (d *VirtualMachineDisksDataSource) Read(
 		resp.Diagnostics.AddError("Read Error", err.Error())
 		return
 	}
+	sortVMDiskAttachmentsByID(attachments)
 
 	disks, err := fetchDiskDetailsForAttachments(ctx, d.M, attachments)
 	if err != nil {
@@ -197,6 +199,32 @@ func (d *VirtualMachineDisksDataSource) Read(
 
 	state.Disks = diskList
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+}
+
+func sortVMDiskAttachmentsByID(
+	attachments []core.GetVirtualMachineDisks200ResponseDisks,
+) {
+	sort.SliceStable(attachments, func(i, j int) bool {
+		iID, iOK := vmDiskAttachmentID(attachments[i])
+		jID, jOK := vmDiskAttachmentID(attachments[j])
+		switch {
+		case iOK && jOK:
+			return iID < jID
+		case iOK:
+			return true
+		default:
+			return false
+		}
+	})
+}
+
+func vmDiskAttachmentID(
+	attachment core.GetVirtualMachineDisks200ResponseDisks,
+) (string, bool) {
+	if attachment.Disk == nil || attachment.Disk.Id == nil {
+		return "", false
+	}
+	return *attachment.Disk.Id, true
 }
 
 // fetchDiskDetailsForAttachments resolves each attachment's full disk record
