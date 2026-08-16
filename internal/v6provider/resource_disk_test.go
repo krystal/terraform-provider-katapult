@@ -46,8 +46,68 @@ func TestDiskResourceResizeSchema(t *testing.T) {
 	require.True(t, method.Optional)
 	require.True(t, method.Computed)
 	require.NotNil(t, method.Default)
+	initialFileSystem := resp.Schema.Attributes["initial_file_system"].(resourceschema.StringAttribute)
+	require.True(t, initialFileSystem.Optional)
+	require.False(t, initialFileSystem.Computed)
+	require.NotEmpty(t, initialFileSystem.Validators)
+	require.NotEmpty(t, initialFileSystem.PlanModifiers)
 	_, ok := resp.Schema.Blocks["timeouts"].(resourceschema.SingleNestedBlock)
 	require.True(t, ok)
+}
+
+func TestDiskCreateIncludesInitialFileSystem(t *testing.T) {
+	t.Parallel()
+
+	var createBody core.PostOrganizationDisksJSONRequestBody
+	var createBodyErr error
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+		switch {
+		case req.Method == http.MethodPost && req.URL.Path == "/organizations/organization/disks":
+			createBodyErr = json.NewDecoder(req.Body).Decode(&createBody)
+			writeTestJSON(w, http.StatusCreated, `{
+				"disk":{"id":"disk_test"},
+				"task":{"id":"task_build","status":"pending"}
+			}`)
+		case req.Method == http.MethodGet && req.URL.Path == "/tasks/task":
+			writeTestJSON(w, http.StatusOK, `{
+				"task":{"id":"task_build","status":"completed"}
+			}`)
+		case req.Method == http.MethodGet && req.URL.Path == "/disks/disk":
+			writeTestJSON(w, http.StatusOK, `{
+				"disk":{
+					"id":"disk_test",
+					"name":"Test Disk",
+					"size_in_gb":20,
+					"state":"built",
+					"virtual_machine_disk":null
+				}
+			}`)
+		default:
+			http.NotFound(w, req)
+		}
+	})
+	r := &DiskResource{M: &Meta{
+		Core: client, confDataCenter: "test-dc", confOrganization: "test-org", testMode: true,
+	}}
+	plan := diskTestState(t, r, DiskResourceModel{
+		Name:              types.StringValue("Test Disk"),
+		SizeInGB:          types.Int64Value(20),
+		InitialFileSystem: types.StringValue("ext4"),
+	})
+	resp := frameworkresource.CreateResponse{State: tfsdk.State{Schema: plan.Schema}}
+
+	r.Create(
+		context.Background(), frameworkresource.CreateRequest{Plan: tfsdk.Plan(plan)}, &resp,
+	)
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+	require.NoError(t, createBodyErr)
+	require.NotNil(t, createBody.Properties.InitialFileSystem)
+	require.Equal(t, core.Ext4, *createBody.Properties.InitialFileSystem)
+
+	var state DiskResourceModel
+	diags := resp.State.Get(context.Background(), &state)
+	require.False(t, diags.HasError(), diags.Errors())
+	require.Equal(t, "ext4", state.InitialFileSystem.ValueString())
 }
 
 func TestDiskResourceCreateRejectsMalformedSuccessResponse(t *testing.T) {
@@ -565,6 +625,69 @@ func TestAccKatapultDisk_resize(t *testing.T) {
 						"katapult_disk.test", "id", &diskID,
 					),
 				),
+			},
+		},
+	})
+}
+
+func TestAccKatapultDisk_shrink(t *testing.T) {
+	tt := newTestTools(t)
+
+	name := tt.ResourceName()
+	var diskID string
+	config := func(size int, fileSystem string) string {
+		return undent.Stringf(`
+			resource "katapult_disk" "test" {
+			  name                = "%s"
+			  size_in_gb          = %d
+			  initial_file_system = "%s"
+			  resize_method       = "offline"
+
+			  timeouts {
+			    update = "15m"
+			  }
+			}`, name, size, fileSystem)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultDiskDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: config(20, "ext4"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"katapult_disk.test", "size_in_gb", "20",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_disk.test", "initial_file_system", "ext4",
+					),
+					captureResourceAttr("katapult_disk.test", "id", &diskID),
+				),
+			},
+			{
+				Config: config(10, "ext4"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"katapult_disk.test", "size_in_gb", "10",
+					),
+					resource.TestCheckResourceAttrPtr(
+						"katapult_disk.test", "id", &diskID,
+					),
+				),
+			},
+			{
+				Config:             config(10, "xfs"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"katapult_disk.test", plancheck.ResourceActionReplace,
+						),
+					},
+				},
 			},
 		},
 	})

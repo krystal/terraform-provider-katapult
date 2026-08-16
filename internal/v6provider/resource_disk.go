@@ -34,8 +34,10 @@ const diskMarkdownDescription = "Manages a standalone disk in Katapult.\n\n" +
 	"disk resize and an in-place `katapult_disk_assignment.attached = false` update " +
 	"cannot be ordered safely in one Terraform graph, perform them in two applies: " +
 	"detach first, then change `size_in_gb`. Online growth leaves guest partition and " +
-	"filesystem expansion to the operator. Shrink is always offline and may require a " +
-	"larger update timeout."
+	"filesystem expansion to the operator. Shrink is always offline, requires a " +
+	"recognized partition table and shrinkable filesystem, and may require a larger " +
+	"update timeout. Set `initial_file_system = \"ext4\"` for a new disk that Terraform " +
+	"must be able to shrink; XFS cannot be shrunk."
 
 type (
 	DiskResource struct {
@@ -43,16 +45,17 @@ type (
 	}
 
 	DiskResourceModel struct {
-		ID           types.String   `tfsdk:"id"`
-		Name         types.String   `tfsdk:"name"`
-		SizeInGB     types.Int64    `tfsdk:"size_in_gb"`
-		StorageSpeed types.String   `tfsdk:"storage_speed"`
-		BusType      types.String   `tfsdk:"bus_type"`
-		IOProfileID  types.String   `tfsdk:"io_profile_id"`
-		ResizeMethod types.String   `tfsdk:"resize_method"`
-		WWN          types.String   `tfsdk:"wwn"`
-		State        types.String   `tfsdk:"state"`
-		Timeouts     timeouts.Value `tfsdk:"timeouts"`
+		ID                types.String   `tfsdk:"id"`
+		Name              types.String   `tfsdk:"name"`
+		SizeInGB          types.Int64    `tfsdk:"size_in_gb"`
+		InitialFileSystem types.String   `tfsdk:"initial_file_system"`
+		StorageSpeed      types.String   `tfsdk:"storage_speed"`
+		BusType           types.String   `tfsdk:"bus_type"`
+		IOProfileID       types.String   `tfsdk:"io_profile_id"`
+		ResizeMethod      types.String   `tfsdk:"resize_method"`
+		WWN               types.String   `tfsdk:"wwn"`
+		State             types.String   `tfsdk:"state"`
+		Timeouts          timeouts.Value `tfsdk:"timeouts"`
 	}
 )
 
@@ -161,6 +164,19 @@ func (r *DiskResource) Schema(
 					int64validator.AtLeast(10),
 				},
 			},
+			"initial_file_system": schema.StringAttribute{
+				Optional: true,
+				MarkdownDescription: "File system used to initialize the disk: " +
+					"`ext4` or `xfs`. When omitted, Katapult creates a blank disk. " +
+					"Changing this value replaces the disk. Use `ext4` when the disk " +
+					"must support offline shrink; XFS cannot be shrunk.",
+				Validators: []validator.String{
+					stringvalidator.OneOf("ext4", "xfs"),
+				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
 			"storage_speed": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
@@ -266,6 +282,10 @@ func (r *DiskResource) Create(
 	if !plan.StorageSpeed.IsNull() && !plan.StorageSpeed.IsUnknown() {
 		ss := core.StorageSpeedEnum(plan.StorageSpeed.ValueString())
 		args.StorageSpeed = &ss
+	}
+	if !plan.InitialFileSystem.IsNull() && !plan.InitialFileSystem.IsUnknown() {
+		fs := core.FileSystemEnum(plan.InitialFileSystem.ValueString())
+		args.InitialFileSystem = &fs
 	}
 	if !plan.BusType.IsNull() && !plan.BusType.IsUnknown() {
 		bt := core.DiskBusEnum(plan.BusType.ValueString())

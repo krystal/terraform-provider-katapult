@@ -5,7 +5,7 @@ subcategory: "Storage"
 description: |-
   Manages a standalone disk in Katapult.
   Assignment lifecycle is owned by katapult_disk_assignment. This resource refuses deletion while any assignment remains and never detaches or unassigns a relationship itself. Remove the assignment first so Terraform's dependency graph orders detach and unassign before disk deletion. The disk is deleted only when this resource itself is destroyed; use lifecycle { prevent_destroy = true } to guard important data.
-  Offline resize requires the disk to be physically detached. Because an in-place disk resize and an in-place katapult_disk_assignment.attached = false update cannot be ordered safely in one Terraform graph, perform them in two applies: detach first, then change size_in_gb. Online growth leaves guest partition and filesystem expansion to the operator. Shrink is always offline and may require a larger update timeout.
+  Offline resize requires the disk to be physically detached. Because an in-place disk resize and an in-place katapult_disk_assignment.attached = false update cannot be ordered safely in one Terraform graph, perform them in two applies: detach first, then change size_in_gb. Online growth leaves guest partition and filesystem expansion to the operator. Shrink is always offline, requires a recognized partition table and shrinkable filesystem, and may require a larger update timeout. Set initial_file_system = "ext4" for a new disk that Terraform must be able to shrink; XFS cannot be shrunk.
 ---
 
 # katapult_disk (Resource)
@@ -14,23 +14,25 @@ Manages a standalone disk in Katapult.
 
 Assignment lifecycle is owned by `katapult_disk_assignment`. This resource refuses deletion while any assignment remains and never detaches or unassigns a relationship itself. Remove the assignment first so Terraform's dependency graph orders detach and unassign before disk deletion. The disk is deleted only when this resource itself is destroyed; use `lifecycle { prevent_destroy = true }` to guard important data.
 
-Offline resize requires the disk to be physically detached. Because an in-place disk resize and an in-place `katapult_disk_assignment.attached = false` update cannot be ordered safely in one Terraform graph, perform them in two applies: detach first, then change `size_in_gb`. Online growth leaves guest partition and filesystem expansion to the operator. Shrink is always offline and may require a larger update timeout.
+Offline resize requires the disk to be physically detached. Because an in-place disk resize and an in-place `katapult_disk_assignment.attached = false` update cannot be ordered safely in one Terraform graph, perform them in two applies: detach first, then change `size_in_gb`. Online growth leaves guest partition and filesystem expansion to the operator. Shrink is always offline, requires a recognized partition table and shrinkable filesystem, and may require a larger update timeout. Set `initial_file_system = "ext4"` for a new disk that Terraform must be able to shrink; XFS cannot be shrunk.
 
 ## Example Usage
 
 ```terraform
 resource "katapult_disk" "data" {
-	name       = "web-data"
-	size_in_gb = 200
+  name                = "web-data"
+  size_in_gb          = 200
+  initial_file_system = "ext4"
 
-	# Offline is the default and includes filesystem-aware resizing. Detach the
-	# disk (or stop its VM) before changing size. Explicit online growth leaves
-	# guest partition/filesystem expansion to the operator.
-	resize_method = "offline"
+  # Offline is the default and includes filesystem-aware resizing. Detach the
+  # disk (or stop its VM) before changing size. ext4 supports offline growth
+  # and shrink. Explicit online growth leaves guest partition/filesystem
+  # expansion to the operator.
+  resize_method = "offline"
 
-	timeouts {
-		update = "4h"
-	}
+  timeouts {
+    update = "4h"
+  }
 }
 ```
 
@@ -45,6 +47,7 @@ resource "katapult_disk" "data" {
 ### Optional
 
 - `bus_type` (String) Bus type for the disk: `virtio` or `scsi`.
+- `initial_file_system` (String) File system used to initialize the disk: `ext4` or `xfs`. When omitted, Katapult creates a blank disk. Changing this value replaces the disk. Use `ext4` when the disk must support offline shrink; XFS cannot be shrunk.
 - `io_profile_id` (String) The ID of the IO profile to apply.
 - `resize_method` (String) Preferred method for growing the disk: `online` or `offline`. Defaults to filesystem-aware offline resizing. Shrinks and detached growth always use offline.
 - `storage_speed` (String) Storage speed for the disk: `ssd` or `nvme`. Cannot be changed after creation (requires replacement).

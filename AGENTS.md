@@ -101,6 +101,12 @@ the provider `Meta` timing helpers, including test sweepers. Compress any
 additional wall-clock settling window in replay mode so recorded state
 transitions remain fast without changing production timing.
 
+Standalone disk shrink requires a recognizable partition table and a shrinkable
+filesystem. Create shrink acceptance fixtures with
+`initial_file_system = "ext4"`; blank disks can produce a successful Katapult
+task without changing size, and XFS cannot shrink. Always assert API size
+convergence after task completion.
+
 VCR cassette YAML is massive and can exhaust agent context very quickly. Do not
 print whole cassette files or review complete cassette diffs by default. Start
 with `git diff --stat`, `git diff --numstat`, and `git diff --name-only`, then use
