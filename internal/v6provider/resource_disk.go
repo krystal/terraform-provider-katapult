@@ -21,7 +21,10 @@ import (
 	"github.com/krystal/go-katapult/next/core"
 )
 
-const diskResizeMethodPrivateKey = "disk_resize_method_v1"
+const (
+	diskImportInitialFileSystemPrivateKey = "disk_import_initial_file_system_v1"
+	diskResizeMethodPrivateKey            = "disk_resize_method_v1"
+)
 
 const diskMarkdownDescription = "Manages a standalone disk in Katapult.\n\n" +
 	"Assignment lifecycle is owned by `katapult_disk_assignment`. This resource " +
@@ -73,14 +76,29 @@ func (m requiresReplaceAfterImportAdoptionModifier) MarkdownDescription(ctx cont
 }
 
 func (requiresReplaceAfterImportAdoptionModifier) PlanModifyString(
-	_ context.Context,
+	ctx context.Context,
 	req planmodifier.StringRequest,
 	resp *planmodifier.StringResponse,
 ) {
-	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() ||
-		req.StateValue.IsNull() || req.StateValue.IsUnknown() ||
-		req.PlanValue.IsUnknown() || req.PlanValue.Equal(req.StateValue) {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() || req.PlanValue.IsUnknown() ||
+		req.StateValue.IsUnknown() || req.PlanValue.Equal(req.StateValue) {
 		return
+	}
+	if req.StateValue.IsNull() {
+		eligible := false
+		if req.Private != nil {
+			value, diags := req.Private.GetKey(ctx, diskImportInitialFileSystemPrivateKey)
+			resp.Diagnostics.Append(diags...)
+			eligible = len(value) > 0
+		}
+		if eligible {
+			if resp.Private != nil {
+				resp.Diagnostics.Append(resp.Private.SetKey(
+					ctx, diskImportInitialFileSystemPrivateKey, nil,
+				)...)
+			}
+			return
+		}
 	}
 	resp.RequiresReplace = true
 }
@@ -104,6 +122,9 @@ func (r *DiskResource) ModifyPlan(
 	}
 	obs, err := readStandaloneDiskRelationship(ctx, r.M, state.ID.ValueString())
 	if err != nil {
+		if errors.Is(err, core.ErrNotFound) {
+			return
+		}
 		resp.Diagnostics.AddAttributeError(path.Root("size_in_gb"), "Cannot Validate Disk Resize", err.Error())
 		return
 	}
@@ -196,7 +217,8 @@ func (r *DiskResource) Schema(
 					"Imported disks do not expose their existing file-system type, so " +
 					"the first configured value is adopted into Terraform state without " +
 					"recreating the disk; verify that it matches the real disk first. " +
-					"Changing an adopted or creation-time value replaces the disk. Use " +
+					"Setting a file system later on a blank disk created by this resource, " +
+					"or changing an adopted or creation-time value, replaces the disk. Use " +
 					"`ext4` when the disk must support offline shrink; XFS cannot be shrunk.",
 				Validators: []validator.String{
 					stringvalidator.OneOf("ext4", "xfs"),
@@ -693,6 +715,9 @@ func (r *DiskResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	resp.Diagnostics.Append(resp.Private.SetKey(
+		ctx, diskImportInitialFileSystemPrivateKey, []byte("true"),
+	)...)
 }
 
 func (r *DiskResource) diskRead(

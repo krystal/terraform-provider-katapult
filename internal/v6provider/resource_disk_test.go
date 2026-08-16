@@ -65,11 +65,16 @@ func TestInitialFileSystemReplacementAfterImportAdoption(t *testing.T) {
 		name        string
 		state       types.String
 		plan        types.String
+		imported    bool
 		wantReplace bool
 	}{
 		{
 			name:  "imported null adopts configured filesystem",
-			state: types.StringNull(), plan: types.StringValue("ext4"),
+			state: types.StringNull(), plan: types.StringValue("ext4"), imported: true,
+		},
+		{
+			name:  "managed blank disk requires replacement",
+			state: types.StringNull(), plan: types.StringValue("ext4"), wantReplace: true,
 		},
 		{name: "unchanged managed filesystem", state: types.StringValue("ext4"), plan: types.StringValue("ext4")},
 		{
@@ -85,16 +90,78 @@ func TestInitialFileSystemReplacementAfterImportAdoption(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			resp := &planmodifier.StringResponse{PlanValue: test.plan}
-			modifier.PlanModifyString(context.Background(), planmodifier.StringRequest{
+			req := planmodifier.StringRequest{
 				State:      tfsdk.State{Raw: tftypes.NewValue(tftypes.String, "state")},
 				Plan:       tfsdk.Plan{Raw: tftypes.NewValue(tftypes.String, "plan")},
 				StateValue: test.state,
 				PlanValue:  test.plan,
-			}, resp)
+			}
+			resp := &planmodifier.StringResponse{PlanValue: test.plan}
+			initializeResourcePrivateState(t, &req, resp)
+			if test.imported {
+				diags := req.Private.SetKey(
+					context.Background(), diskImportInitialFileSystemPrivateKey, []byte("true"),
+				)
+				require.False(t, diags.HasError(), diags.Errors())
+			}
+			modifier.PlanModifyString(context.Background(), req, resp)
 			require.Equal(t, test.wantReplace, resp.RequiresReplace)
+			if test.imported {
+				value, diags := resp.Private.GetKey(
+					context.Background(), diskImportInitialFileSystemPrivateKey,
+				)
+				require.False(t, diags.HasError(), diags.Errors())
+				require.Empty(t, value)
+			}
 		})
 	}
+}
+
+func TestDiskImportMarksInitialFileSystemAdoptable(t *testing.T) {
+	t.Parallel()
+
+	r := &DiskResource{}
+	state := diskTestState(t, r, DiskResourceModel{})
+	resp := frameworkresource.ImportStateResponse{State: state}
+	initializeResourcePrivateState(t, &resp, &resp)
+
+	r.ImportState(
+		context.Background(), frameworkresource.ImportStateRequest{ID: "disk_imported"}, &resp,
+	)
+
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+	value, diags := resp.Private.GetKey(
+		context.Background(), diskImportInitialFileSystemPrivateKey,
+	)
+	require.False(t, diags.HasError(), diags.Errors())
+	require.NotEmpty(t, value)
+}
+
+func TestDiskModifyPlanSkipsResizeValidationForMissingDisk(t *testing.T) {
+	t.Parallel()
+
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeTestJSON(w, http.StatusNotFound, `{
+			"error":{"code":"disk_not_found","description":"No disk was found"}
+		}`)
+	})
+	r := &DiskResource{M: &Meta{Core: client, testMode: true}}
+	state := diskTestState(t, r, DiskResourceModel{
+		ID: types.StringValue("disk_missing"), Name: types.StringValue("Data"),
+		SizeInGB: types.Int64Value(20), ResizeMethod: types.StringValue("offline"),
+	})
+	plan := diskTestState(t, r, DiskResourceModel{
+		ID: types.StringValue("disk_missing"), Name: types.StringValue("Data"),
+		SizeInGB: types.Int64Value(30), ResizeMethod: types.StringValue("offline"),
+	})
+	req := frameworkresource.ModifyPlanRequest{
+		Config: tfsdk.Config(plan), Plan: tfsdk.Plan(plan), State: state,
+	}
+	resp := frameworkresource.ModifyPlanResponse{Plan: tfsdk.Plan(plan)}
+
+	r.ModifyPlan(context.Background(), req, &resp)
+
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
 }
 
 func TestDiskCreateIncludesInitialFileSystem(t *testing.T) {
@@ -153,8 +220,6 @@ func TestDiskCreateIncludesInitialFileSystem(t *testing.T) {
 }
 
 func TestDiskResourceCreateRejectsMalformedSuccessResponse(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		name        string
 		contentType string
@@ -171,8 +236,6 @@ func TestDiskResourceCreateRejectsMalformedSuccessResponse(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
 			client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
 				if req.Method != http.MethodPost || req.URL.Path != "/organizations/organization/disks" {
 					http.NotFound(w, req)
@@ -587,7 +650,7 @@ func TestAccKatapultDisk_storage_speed_nvme(t *testing.T) {
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PostApplyPostRefresh: []plancheck.PlanCheck{
+					PostApplyPreRefresh: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction(
 							"katapult_disk.test", plancheck.ResourceActionReplace,
 						),
@@ -775,7 +838,7 @@ func TestAccKatapultDisk_shrink(t *testing.T) {
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PostApplyPostRefresh: []plancheck.PlanCheck{
+					PostApplyPreRefresh: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction(
 							"katapult_disk.test", plancheck.ResourceActionReplace,
 						),

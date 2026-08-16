@@ -73,6 +73,8 @@ func TestDiskAssignmentCreateCheckpointsIdentityBeforeMutationResponse(t *testin
 		VirtualMachineID: types.StringValue("vm_test"),
 		DiskID:           types.StringValue("disk_test"),
 		Attached:         types.BoolValue(true),
+		AttachOnBoot:     types.BoolUnknown(),
+		AttachmentState:  types.StringUnknown(),
 	})
 	resp := frameworkresource.CreateResponse{State: tfsdk.State{Schema: plan.Schema}}
 
@@ -84,6 +86,8 @@ func TestDiskAssignmentCreateCheckpointsIdentityBeforeMutationResponse(t *testin
 	diags := resp.State.Get(context.Background(), &state)
 	require.False(t, diags.HasError(), diags.Errors())
 	require.Equal(t, "vm_test/disk_test", state.ID.ValueString())
+	require.True(t, state.AttachOnBoot.IsNull())
+	require.True(t, state.AttachmentState.IsNull())
 }
 
 func TestParseAssignmentID(t *testing.T) {
@@ -144,26 +148,30 @@ func TestDiskAssignmentDeleteRejectsUnsafeAttachmentBeforeMutation(t *testing.T)
 	t.Parallel()
 
 	for _, test := range []struct {
-		state string
-		want  string
+		vmState         string
+		attachmentState string
+		want            string
 	}{
-		{state: "attaching", want: "transitional or unknown"},
-		{state: "failed", want: "repair the failed attachment"},
+		{vmState: "stopped", attachmentState: "attaching", want: "transitional or unknown"},
+		{vmState: "stopped", attachmentState: "failed", want: "repair the failed attachment"},
+		{vmState: "starting", attachmentState: "detached", want: "transitional state starting"},
 	} {
-		t.Run(test.state, func(t *testing.T) {
+		t.Run(test.vmState+"_"+test.attachmentState, func(t *testing.T) {
 			t.Parallel()
 			var patchCalls atomic.Int32
 			client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
 				switch {
 				case req.Method == http.MethodGet && req.URL.Path == "/virtual_machines/virtual_machine":
-					writeTestJSON(w, http.StatusOK, `{"virtual_machine":{"id":"vm_test","state":"stopped"}}`)
+					writeTestJSON(w, http.StatusOK, fmt.Sprintf(
+						`{"virtual_machine":{"id":"vm_test","state":%q}}`, test.vmState,
+					))
 				case req.Method == http.MethodGet && req.URL.Path == "/disks/disk":
 					writeTestJSON(w, http.StatusOK, fmt.Sprintf(`{
 						"disk":{"id":"disk_test","virtual_machine_disk":{
 							"virtual_machine":{"id":"vm_test"},"boot":false,
 							"attach_on_boot":true,"state":%q
 						}}
-					}`, test.state))
+					}`, test.attachmentState))
 				case req.Method == http.MethodPatch && req.URL.Path == "/disks/disk":
 					patchCalls.Add(1)
 					http.Error(w, "unexpected mutation", http.StatusInternalServerError)
@@ -175,7 +183,8 @@ func TestDiskAssignmentDeleteRejectsUnsafeAttachmentBeforeMutation(t *testing.T)
 			state := diskAssignmentTestState(t, r, DiskAssignmentResourceModel{
 				ID: types.StringValue("vm_test/disk_test"), VirtualMachineID: types.StringValue("vm_test"),
 				DiskID: types.StringValue("disk_test"), Attached: types.BoolValue(true),
-				AttachOnBoot: types.BoolValue(true), AttachmentState: types.StringValue(test.state),
+				AttachOnBoot:    types.BoolValue(true),
+				AttachmentState: types.StringValue(test.attachmentState),
 			})
 			resp := frameworkresource.DeleteResponse{State: state}
 

@@ -423,6 +423,9 @@ func validateLegacyDiskMigration(
 	if err != nil {
 		return nil, fmt.Errorf("refreshing VM disk relationships: %w", err)
 	}
+	if _, err := virtualMachineDiskAttachmentIDs(attachments); err != nil {
+		return nil, fmt.Errorf("cannot inventory VM disk relationships: %w", err)
+	}
 	boot, authoritative := selectBootDiskAssignment(attachments, priorSystem.ID.ValueString())
 	if !authoritative || boot == nil || boot.Disk == nil || boot.Disk.Id == nil {
 		return nil, fmt.Errorf("cannot identify one authoritative boot disk; refresh state and resolve ambiguous boot relationships before removing deprecated disk blocks")
@@ -1339,6 +1342,7 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 			return
 		}
 		nameChanged := !plannedSystemDisk.Name.IsUnknown() &&
+			!plannedSystemDisk.Name.IsNull() &&
 			!plannedSystemDisk.Name.Equal(priorSystemDisk.Name)
 		sizeChanged := !plannedSystemDisk.SizeInGB.IsUnknown() &&
 			!plannedSystemDisk.SizeInGB.Equal(priorSystemDisk.SizeInGB)

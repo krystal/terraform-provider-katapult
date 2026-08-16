@@ -107,6 +107,11 @@ filesystem. Create shrink acceptance fixtures with
 task without changing size, and XFS cannot shrink. Always assert API size
 convergence after task completion.
 
+Do not infer import adoption from a null API field alone. For create-only values
+that the API cannot read back, mark imported state explicitly in resource-private
+state, consume that marker on the first adoption plan, and require replacement
+for the same null-to-configured transition on provider-created resources.
+
 Never infer deprecated VM disk ownership from relationship counts during
 deletion. Exact disk IDs captured in resource-private state are authoritative;
 older VM state without those IDs must migrate additional relationships to

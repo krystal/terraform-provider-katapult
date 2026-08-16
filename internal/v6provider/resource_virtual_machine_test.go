@@ -501,6 +501,7 @@ func TestAccKatapultVirtualMachine_custom_disks(t *testing.T) {
 		ProtoV6ProviderFactories: tt.ProviderFactories,
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckKatapultVirtualMachineDestroy(tt),
+			testAccCheckKatapultDiskDestroy(tt),
 			testAccCheckKatapultIPDestroy(tt),
 		),
 		Steps: []resource.TestStep{

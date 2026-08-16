@@ -934,6 +934,40 @@ func TestVirtualMachineResourceUpdateRejectsStaleSystemDiskBeforeMutation(t *tes
 	require.Zero(t, mutations)
 }
 
+func TestVirtualMachineResourceUpdateDoesNotClearOmittedSystemDiskName(t *testing.T) {
+	t.Parallel()
+	mutations := 0
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+		if req.Method == http.MethodPatch || req.Method == http.MethodPut {
+			mutations++
+			http.Error(w, "unexpected mutation", http.StatusInternalServerError)
+			return
+		}
+		virtualMachineReadTestHandler(w, req)
+	})
+	r := &VirtualMachineResource{M: &Meta{Core: client, testMode: true}}
+	stateModel := VirtualMachineResourceModel{
+		ID:         types.StringValue("vm_test"),
+		SystemDisk: knownTestSystemDisk(t, "disk_boot"),
+	}
+	planModel := stateModel
+	planned, diags := decodeVirtualMachineSystemDisk(context.Background(), planModel.SystemDisk)
+	require.False(t, diags.HasError(), diags.Errors())
+	planned.Name = types.StringNull()
+	planModel.SystemDisk, diags = virtualMachineSystemDiskValue(context.Background(), planned)
+	require.False(t, diags.HasError(), diags.Errors())
+	state := virtualMachineTestState(t, r, stateModel)
+	plan := virtualMachineTestState(t, r, planModel)
+	resp := frameworkresource.UpdateResponse{State: tfsdk.State{Schema: state.Schema}}
+
+	r.Update(context.Background(), frameworkresource.UpdateRequest{
+		Config: tfsdk.Config(plan), Plan: tfsdk.Plan(plan), State: state,
+	}, &resp)
+
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+	require.Zero(t, mutations)
+}
+
 func TestVirtualMachineResourceUpdateRejectsTransitionalSystemDiskResizeBeforeMutation(t *testing.T) {
 	t.Parallel()
 	for _, vmState := range []string{"starting", "stopping", "failed", "future_state"} {
@@ -1458,6 +1492,31 @@ func TestValidateLegacyDiskDeleteOwnershipUsesExactIdentities(t *testing.T) {
 		[]core.GetVirtualMachineDisks200ResponseDisks{attachment("disk_boot", true)},
 		systemDisk,
 	))
+}
+
+func TestValidateLegacyDiskMigrationRejectsRelationshipWithoutIdentity(t *testing.T) {
+	t.Parallel()
+
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path != "/virtual_machines/virtual_machine/disks" {
+			http.NotFound(w, req)
+			return
+		}
+		writeTestJSON(w, http.StatusOK, `{
+			"pagination":{"total_pages":1},
+			"disks":[
+				{"disk":{"id":"disk_boot"},"boot":true},
+				{"boot":false}
+			]
+		}`)
+	})
+
+	_, err := validateLegacyDiskMigration(
+		context.Background(), &Meta{Core: client, testMode: true}, "vm_test",
+		VirtualMachineSystemDiskModel{ID: types.StringValue("disk_boot")},
+		types.ObjectNull(virtualMachineSystemDiskAttrTypes), false,
+	)
+	require.ErrorContains(t, err, "has no disk identity")
 }
 
 func TestVirtualMachineModifyPlanAdoptsImportedTemplateFieldsOnce(t *testing.T) {

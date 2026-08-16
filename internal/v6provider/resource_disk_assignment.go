@@ -193,6 +193,12 @@ func (r *DiskAssignmentResource) Create(
 	// mutation so an ambiguous transport or malformed success response remains
 	// recoverable through the normal Read path instead of requiring import.
 	plan.ID = types.StringValue(assignmentID(vmID, diskID))
+	if plan.AttachOnBoot.IsUnknown() {
+		plan.AttachOnBoot = types.BoolNull()
+	}
+	if plan.AttachmentState.IsUnknown() {
+		plan.AttachmentState = types.StringNull()
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -332,6 +338,18 @@ func (r *DiskAssignmentResource) Delete(
 	}
 	if obs.attachmentState == nil {
 		resp.Diagnostics.AddError("Delete Error", "disk attachment state is transitional or unknown; retry after it settles")
+		return
+	}
+	stableVMState := obs.vmState == core.Started || obs.vmState == core.Stopped ||
+		obs.vmState == core.Failed || obs.vmState == core.Orphaned
+	if !stableVMState {
+		resp.Diagnostics.AddError(
+			"Delete Error",
+			fmt.Sprintf(
+				"Virtual Machine %s is in transitional state %s; retry after it settles",
+				vmID, obs.vmState,
+			),
+		)
 		return
 	}
 	switch *obs.attachmentState {
