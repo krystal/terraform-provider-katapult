@@ -107,6 +107,11 @@ filesystem. Create shrink acceptance fixtures with
 task without changing size, and XFS cannot shrink. Always assert API size
 convergence after task completion.
 
+Never infer deprecated VM disk ownership from relationship counts during
+deletion. Exact disk IDs captured in resource-private state are authoritative;
+older VM state without those IDs must migrate additional relationships to
+`katapult_disk` and `katapult_disk_assignment` before destroy.
+
 VCR cassette YAML is massive and can exhaust agent context very quickly. Do not
 print whole cassette files or review complete cassette diffs by default. Start
 with `git diff --stat`, `git diff --numstat`, and `git diff --name-only`, then use

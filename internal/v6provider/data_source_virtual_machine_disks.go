@@ -167,6 +167,19 @@ func (d *VirtualMachineDisksDataSource) Read(
 		resp.Diagnostics.AddError("Read Error", err.Error())
 		return
 	}
+	validAttachments := make([]core.GetVirtualMachineDisks200ResponseDisks, 0, len(attachments))
+	for i := range attachments {
+		if attachments[i].Disk == nil || attachments[i].Disk.Id == nil {
+			resp.Diagnostics.AddWarning(
+				"Incomplete Disk Relationship",
+				"Katapult returned a Virtual Machine disk relationship without a "+
+					"disk ID; it was omitted from the result.",
+			)
+			continue
+		}
+		validAttachments = append(validAttachments, attachments[i])
+	}
+	attachments = validAttachments
 	sortVMDiskAttachmentsByID(attachments)
 
 	disks, err := fetchDiskDetailsForAttachments(ctx, d.M, attachments)

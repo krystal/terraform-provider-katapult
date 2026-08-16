@@ -15,8 +15,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	frameworkresource "github.com/hashicorp/terraform-plugin-framework/resource"
 	resourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -53,6 +55,46 @@ func TestDiskResourceResizeSchema(t *testing.T) {
 	require.NotEmpty(t, initialFileSystem.PlanModifiers)
 	_, ok := resp.Schema.Blocks["timeouts"].(resourceschema.SingleNestedBlock)
 	require.True(t, ok)
+}
+
+func TestInitialFileSystemReplacementAfterImportAdoption(t *testing.T) {
+	t.Parallel()
+
+	modifier := requiresReplaceAfterImportAdoptionModifier{}
+	for _, test := range []struct {
+		name        string
+		state       types.String
+		plan        types.String
+		wantReplace bool
+	}{
+		{
+			name:  "imported null adopts configured filesystem",
+			state: types.StringNull(), plan: types.StringValue("ext4"),
+		},
+		{name: "unchanged managed filesystem", state: types.StringValue("ext4"), plan: types.StringValue("ext4")},
+		{
+			name:  "managed filesystem change replaces",
+			state: types.StringValue("ext4"), plan: types.StringValue("xfs"),
+			wantReplace: true,
+		},
+		{
+			name:  "managed filesystem removal replaces",
+			state: types.StringValue("ext4"), plan: types.StringNull(),
+			wantReplace: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			resp := &planmodifier.StringResponse{PlanValue: test.plan}
+			modifier.PlanModifyString(context.Background(), planmodifier.StringRequest{
+				State:      tfsdk.State{Raw: tftypes.NewValue(tftypes.String, "state")},
+				Plan:       tfsdk.Plan{Raw: tftypes.NewValue(tftypes.String, "plan")},
+				StateValue: test.state,
+				PlanValue:  test.plan,
+			}, resp)
+			require.Equal(t, test.wantReplace, resp.RequiresReplace)
+		})
+	}
 }
 
 func TestDiskCreateIncludesInitialFileSystem(t *testing.T) {
@@ -188,11 +230,16 @@ func TestDiskReadClearsNullableRelationships(t *testing.T) {
 	r := &DiskResource{M: &Meta{Core: client, testMode: true}}
 	model := DiskResourceModel{
 		BusType: types.StringValue("virtio"), IOProfileID: types.StringValue("iop_stale"),
+		StorageSpeed: types.StringValue("nvme"), WWN: types.StringValue("wwn_stale"),
+		State: types.StringValue("built"),
 	}
 
 	require.NoError(t, r.diskRead(context.Background(), "disk_test", &model))
 	require.True(t, model.BusType.IsNull())
 	require.True(t, model.IOProfileID.IsNull())
+	require.True(t, model.StorageSpeed.IsNull())
+	require.True(t, model.WWN.IsNull())
+	require.True(t, model.State.IsNull())
 }
 
 func TestDiskResizePropagatesFailedTaskWithoutChangingModels(t *testing.T) {
@@ -325,6 +372,52 @@ func TestDiskDeleteRejectsRemainingAssignmentBeforeMutation(t *testing.T) {
 		"still has a Virtual Machine assignment",
 	)
 	require.Zero(t, deleteRequests.Load())
+}
+
+func TestDiskDeleteRequiresExplicitUnassignedObservation(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+		body string
+		want string
+	}{
+		{name: "empty success response", body: "", want: "incomplete API response"},
+		{name: "omitted relationship", body: `{"disk":{"id":"disk_test"}}`, want: "virtual_machine_disk was omitted"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			var deleteRequests atomic.Int32
+			client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+				switch {
+				case req.Method == http.MethodGet && req.URL.Path == "/disks/disk":
+					if test.body == "" {
+						w.Header().Set("Content-Type", "text/plain")
+						w.WriteHeader(http.StatusOK)
+					} else {
+						writeTestJSON(w, http.StatusOK, test.body)
+					}
+				case req.Method == http.MethodDelete:
+					deleteRequests.Add(1)
+					http.Error(w, "unexpected delete", http.StatusInternalServerError)
+				default:
+					http.NotFound(w, req)
+				}
+			})
+			r := &DiskResource{M: &Meta{Core: client, testMode: true}}
+			state := diskTestState(t, r, DiskResourceModel{
+				ID: types.StringValue("disk_test"), Name: types.StringValue("Data"),
+				SizeInGB: types.Int64Value(20), ResizeMethod: types.StringValue("offline"),
+			})
+			resp := frameworkresource.DeleteResponse{State: state}
+
+			r.Delete(context.Background(), frameworkresource.DeleteRequest{State: state}, &resp)
+
+			require.True(t, resp.Diagnostics.HasError())
+			require.Contains(t, resp.Diagnostics.Errors()[0].Detail(), test.want)
+			require.Zero(t, deleteRequests.Load())
+		})
+	}
 }
 
 func diskTestState(

@@ -47,7 +47,7 @@ resource "katapult_disk" "data" {
 ### Optional
 
 - `bus_type` (String) Bus type for the disk: `virtio` or `scsi`.
-- `initial_file_system` (String) File system used to initialize the disk: `ext4` or `xfs`. When omitted, Katapult creates a blank disk. Changing this value replaces the disk. Use `ext4` when the disk must support offline shrink; XFS cannot be shrunk.
+- `initial_file_system` (String) File system used to initialize the disk: `ext4` or `xfs`. When omitted, Katapult creates a blank disk. Imported disks do not expose their existing file-system type, so the first configured value is adopted into Terraform state without recreating the disk; verify that it matches the real disk first. Changing an adopted or creation-time value replaces the disk. Use `ext4` when the disk must support offline shrink; XFS cannot be shrunk.
 - `io_profile_id` (String) The ID of the IO profile to apply.
 - `resize_method` (String) Preferred method for growing the disk: `online` or `offline`. Defaults to filesystem-aware offline resizing. Shrinks and detached growth always use offline.
 - `storage_speed` (String) Storage speed for the disk: `ssd` or `nvme`. Cannot be changed after creation (requires replacement).

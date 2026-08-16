@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	frameworkdatasource "github.com/hashicorp/terraform-plugin-framework/datasource"
 	datasourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	frameworkresource "github.com/hashicorp/terraform-plugin-framework/resource"
 	resourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -808,6 +809,50 @@ func TestVMReadHandlesNullBootDiskInstallation(t *testing.T) {
 	require.Equal(t, "ubuntu-18-04", model.DiskTemplate.ValueString())
 }
 
+func TestVMReadClearsSystemDiskWhenNoRelationshipsRemain(t *testing.T) {
+	t.Parallel()
+
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == "/virtual_machines/virtual_machine/disks" {
+			writeTestJSON(w, http.StatusOK, `{"pagination":{"total_pages":1},"disks":[]}`)
+			return
+		}
+		virtualMachineReadTestHandler(w, req)
+	})
+	r := &VirtualMachineResource{M: &Meta{Core: client, testMode: true}}
+	model := VirtualMachineResourceModel{
+		ID: types.StringValue("vm_test"), SystemDisk: knownTestSystemDisk(t, "disk_boot"),
+	}
+
+	require.NoError(t, r.vmRead(context.Background(), &model))
+	require.True(t, model.SystemDisk.IsNull())
+}
+
+func TestVirtualMachineReadBootDiskNotFoundDoesNotRemoveVM(t *testing.T) {
+	t.Parallel()
+
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == "/disks/disk" {
+			writeTestJSON(w, http.StatusNotFound, `{
+				"error":{"code":"disk_not_found","description":"No disk was found"}
+			}`)
+			return
+		}
+		virtualMachineReadTestHandler(w, req)
+	})
+	r := &VirtualMachineResource{M: &Meta{Core: client, testMode: true}}
+	state := virtualMachineTestState(t, r, VirtualMachineResourceModel{
+		ID: types.StringValue("vm_test"), SystemDisk: knownTestSystemDisk(t, "disk_boot"),
+	})
+	resp := frameworkresource.ReadResponse{State: state}
+
+	r.Read(context.Background(), frameworkresource.ReadRequest{State: state}, &resp)
+
+	require.True(t, resp.Diagnostics.HasError())
+	require.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "fetching boot disk disk_boot")
+	require.False(t, resp.State.Raw.IsNull(), "a missing boot subresource must not remove the VM")
+}
+
 func TestVMReadBootDiscoveryFailureRequiresPriorIdentity(t *testing.T) {
 	t.Parallel()
 	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
@@ -1356,7 +1401,9 @@ func TestVirtualMachineResourceSystemDiskSchema(t *testing.T) {
 	require.True(t, systemDisk.Computed)
 	require.NotEmpty(t, systemDisk.PlanModifiers)
 	require.NotEmpty(t, systemDisk.Attributes["id"].(resourceschema.StringAttribute).MarkdownDescription)
-	require.NotEmpty(t, systemDisk.Attributes["name"].(resourceschema.StringAttribute).MarkdownDescription)
+	name := systemDisk.Attributes["name"].(resourceschema.StringAttribute)
+	require.NotEmpty(t, name.MarkdownDescription)
+	require.NotEmpty(t, name.Validators)
 	size := systemDisk.Attributes["size_in_gb"].(resourceschema.Int64Attribute)
 	require.NotEmpty(t, size.Validators)
 	require.NotEmpty(t, size.MarkdownDescription)
@@ -1368,6 +1415,49 @@ func TestVirtualMachineResourceSystemDiskSchema(t *testing.T) {
 	require.Contains(t, resizeMethod.MarkdownDescription, "`offline`")
 	require.NotEmpty(t, systemDisk.Attributes["wwn"].(resourceschema.StringAttribute).MarkdownDescription)
 	require.NotEmpty(t, systemDisk.Attributes[stateAttributeName].(resourceschema.StringAttribute).MarkdownDescription)
+}
+
+type virtualMachinePrivateState map[string][]byte
+
+func (p virtualMachinePrivateState) GetKey(_ context.Context, key string) ([]byte, diag.Diagnostics) {
+	return p[key], nil
+}
+
+func TestValidateLegacyDiskDeleteOwnershipUsesExactIdentities(t *testing.T) {
+	t.Parallel()
+
+	attachment := func(id string, boot bool) core.GetVirtualMachineDisks200ResponseDisks {
+		return core.GetVirtualMachineDisks200ResponseDisks{
+			Disk: &core.GetVirtualMachineDisksPartDisk{Id: ptr(id)}, Boot: ptr(boot),
+		}
+	}
+	owned, err := json.Marshal([]string{"disk_boot", "disk_legacy"})
+	require.NoError(t, err)
+	private := virtualMachinePrivateState{virtualMachineLegacyDiskIDsPrivateKey: owned}
+	systemDisk := knownTestSystemDisk(t, "disk_boot")
+
+	require.NoError(t, validateLegacyDiskDeleteOwnership(
+		context.Background(), private,
+		[]core.GetVirtualMachineDisks200ResponseDisks{attachment("disk_boot", true), attachment("disk_legacy", false)},
+		systemDisk,
+	))
+	err = validateLegacyDiskDeleteOwnership(
+		context.Background(), private,
+		[]core.GetVirtualMachineDisks200ResponseDisks{attachment("disk_boot", true), attachment("disk_foreign", false)},
+		systemDisk,
+	)
+	require.ErrorContains(t, err, "disk_foreign")
+	err = validateLegacyDiskDeleteOwnership(
+		context.Background(), nil,
+		[]core.GetVirtualMachineDisks200ResponseDisks{attachment("disk_boot", true), attachment("disk_legacy", false)},
+		systemDisk,
+	)
+	require.ErrorContains(t, err, "cannot prove ownership")
+	require.NoError(t, validateLegacyDiskDeleteOwnership(
+		context.Background(), nil,
+		[]core.GetVirtualMachineDisks200ResponseDisks{attachment("disk_boot", true)},
+		systemDisk,
+	))
 }
 
 func TestVirtualMachineModifyPlanAdoptsImportedTemplateFieldsOnce(t *testing.T) {

@@ -49,10 +49,12 @@ func redactSensitiveFields(value any) bool {
 	case map[string]any:
 		changed := false
 		if protect, ok := value["protect"].(bool); ok && protect {
-			if text, ok := value["value"].(string); ok &&
-				text != "" && text != redactedValue {
-				value["value"] = redactedValue
-				changed = true
+			if protected, exists := value["value"]; exists && protected != nil {
+				text, isString := protected.(string)
+				if (!isString || text != "") && text != redactedValue {
+					value["value"] = redactedValue
+					changed = true
+				}
 			}
 		}
 		for key, child := range value {

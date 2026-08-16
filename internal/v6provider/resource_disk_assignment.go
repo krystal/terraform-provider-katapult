@@ -189,6 +189,14 @@ func (r *DiskAssignmentResource) Create(
 		))
 		return
 	}
+	// The relationship identity is deterministic. Checkpoint it before the
+	// mutation so an ambiguous transport or malformed success response remains
+	// recoverable through the normal Read path instead of requiring import.
+	plan.ID = types.StringValue(assignmentID(vmID, diskID))
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	assignRes, err := r.M.Core.PostDiskAssignWithResponse(ctx,
 		core.PostDiskAssignJSONRequestBody{
@@ -207,13 +215,10 @@ func (r *DiskAssignmentResource) Create(
 		return
 	}
 
-	plan.ID = types.StringValue(assignmentID(vmID, diskID))
-	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 	if err = reconcileDiskAssignment(ctx, r.M, vmID, diskID, plan.Attached.ValueBool(), timeout); err != nil {
-		if readErr := r.readIntoModel(ctx, &plan); readErr == nil {
+		refreshCtx, cancelRefresh := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+		defer cancelRefresh()
+		if readErr := r.readIntoModel(refreshCtx, &plan); readErr == nil {
 			resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 		}
 		resp.Diagnostics.AddError("Create Error", err.Error())
@@ -268,7 +273,9 @@ func (r *DiskAssignmentResource) Update(
 	unlock := r.M.lockDiskAssignments(vmID)
 	defer unlock()
 	if err := reconcileDiskAssignment(ctx, r.M, vmID, diskID, plan.Attached.ValueBool(), timeout); err != nil {
-		if readErr := r.readIntoModel(ctx, &plan); readErr == nil {
+		refreshCtx, cancelRefresh := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+		defer cancelRefresh()
+		if readErr := r.readIntoModel(refreshCtx, &plan); readErr == nil {
 			resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 		}
 		resp.Diagnostics.AddError("Update Error", err.Error())
@@ -323,21 +330,23 @@ func (r *DiskAssignmentResource) Delete(
 		resp.Diagnostics.AddError("Delete Error", "refusing to unassign a boot disk")
 		return
 	}
-	if obs.vmState != core.Started && obs.vmState != core.Stopped {
-		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Virtual Machine %s is in transitional state %s; retry after it settles", vmID, obs.vmState))
-		return
-	}
 	if obs.attachmentState == nil {
 		resp.Diagnostics.AddError("Delete Error", "disk attachment state is transitional or unknown; retry after it settles")
 		return
 	}
 	switch *obs.attachmentState {
-	case core.VirtualMachineDiskAttachmentStateEnumAttached,
-		core.VirtualMachineDiskAttachmentStateEnumDetached:
+	case core.VirtualMachineDiskAttachmentStateEnumAttached:
+		if obs.vmState != core.Started {
+			resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("disk is physically attached while Virtual Machine %s is in state %s; repair the attachment before deleting it", vmID, obs.vmState))
+			return
+		}
+	case core.VirtualMachineDiskAttachmentStateEnumDetached:
 	case core.VirtualMachineDiskAttachmentStateEnumAttaching,
-		core.VirtualMachineDiskAttachmentStateEnumDetaching,
-		core.VirtualMachineDiskAttachmentStateEnumFailed:
+		core.VirtualMachineDiskAttachmentStateEnumDetaching:
 		resp.Diagnostics.AddError("Delete Error", "disk attachment state is transitional or unknown; retry after it settles")
+		return
+	case core.VirtualMachineDiskAttachmentStateEnumFailed:
+		resp.Diagnostics.AddError("Delete Error", "disk attachment state is failed; repair the failed attachment in Katapult before deleting the assignment")
 		return
 	default:
 		resp.Diagnostics.AddError("Delete Error", "disk attachment state is transitional or unknown; retry after it settles")
@@ -460,13 +469,11 @@ func projectDiskAssignmentAttached(desired types.Bool, obs diskAssignmentObserva
 	case core.Started:
 		observed = *obs.attachOnBoot &&
 			*obs.attachmentState == core.VirtualMachineDiskAttachmentStateEnumAttached
-	case core.Stopped:
+	case core.Stopped, core.Failed, core.Orphaned:
 		observed = *obs.attachOnBoot
 	case core.Allocated,
 		core.Allocating,
-		core.Failed,
 		core.Migrating,
-		core.Orphaned,
 		core.Resetting,
 		core.ShuttingDown,
 		core.Starting,
@@ -484,6 +491,8 @@ func projectDiskAssignmentAttached(desired types.Bool, obs diskAssignmentObserva
 	if desired.ValueBool() {
 		converged = *obs.attachOnBoot &&
 			(obs.vmState == core.Stopped ||
+				obs.vmState == core.Failed ||
+				obs.vmState == core.Orphaned ||
 				*obs.attachmentState == core.VirtualMachineDiskAttachmentStateEnumAttached)
 	} else {
 		converged = !*obs.attachOnBoot &&
@@ -556,7 +565,7 @@ func readDiskAssignmentObservation(ctx context.Context, m *Meta, vmID, diskID st
 	return obs, nil
 }
 
-//nolint:gocyclo,lll // The explicit state matrix keeps mutation preconditions auditable.
+//nolint:lll // The explicit state matrix keeps mutation preconditions auditable.
 func reconcileDiskAssignment(ctx context.Context, m *Meta, vmID, diskID string, attached bool, timeout time.Duration) error {
 	obs, err := readDiskAssignmentObservation(ctx, m, vmID, diskID)
 	if err != nil {
@@ -581,6 +590,9 @@ func reconcileDiskAssignment(ctx context.Context, m *Meta, vmID, diskID string, 
 		*obs.attachmentState == core.VirtualMachineDiskAttachmentStateEnumDetaching {
 		return fmt.Errorf("disk %s attachment is transitional; retry after it settles", diskID)
 	}
+	if *obs.attachmentState == core.VirtualMachineDiskAttachmentStateEnumFailed {
+		return fmt.Errorf("disk %s attachment state is failed; repair the failed attachment in Katapult before reconciling it", diskID)
+	}
 	if err = patchDiskAttachOnBoot(ctx, m, diskID, attached); err != nil {
 		return err
 	}
@@ -594,19 +606,62 @@ func reconcileDiskAssignment(ctx context.Context, m *Meta, vmID, diskID string, 
 			return err
 		}
 	}
-	verified, err := readDiskAssignmentObservation(ctx, m, vmID, diskID)
+	return waitForDiskAssignmentConvergence(ctx, m, vmID, diskID, attached, timeout)
+}
+
+func waitForDiskAssignmentConvergence(
+	ctx context.Context,
+	m *Meta,
+	vmID, diskID string,
+	attached bool,
+	timeout time.Duration,
+) error {
+	waiter := &retry.StateChangeConf{
+		Pending:      []string{"pending"},
+		Target:       []string{"converged"},
+		Timeout:      timeout,
+		Delay:        m.stateChangeDelay(time.Second),
+		MinTimeout:   m.stateChangeDelay(2 * time.Second),
+		PollInterval: m.stateChangePollInterval(),
+		Refresh: func() (interface{}, string, error) {
+			obs, err := readDiskAssignmentObservation(ctx, m, vmID, diskID)
+			if err != nil {
+				return nil, "", err
+			}
+			if !obs.assigned || obs.vmID != vmID {
+				return nil, "", fmt.Errorf("disk %s is no longer assigned to Virtual Machine %s", diskID, vmID)
+			}
+			if obs.vmState != core.Started && obs.vmState != core.Stopped {
+				return nil, "", fmt.Errorf(
+					"virtual machine %s changed to state %s while reconciling disk assignment",
+					vmID, obs.vmState,
+				)
+			}
+			if obs.attachOnBoot == nil || obs.attachmentState == nil {
+				return obs, "pending", nil
+			}
+			if *obs.attachmentState == core.VirtualMachineDiskAttachmentStateEnumFailed {
+				return nil, "", fmt.Errorf("disk %s attachment state became failed", diskID)
+			}
+			policyConverged := *obs.attachOnBoot == attached
+			var physicalConverged bool
+			switch {
+			case attached && obs.vmState == core.Stopped:
+				physicalConverged = true
+			case attached:
+				physicalConverged = *obs.attachmentState == core.VirtualMachineDiskAttachmentStateEnumAttached
+			default:
+				physicalConverged = *obs.attachmentState == core.VirtualMachineDiskAttachmentStateEnumDetached
+			}
+			if policyConverged && physicalConverged {
+				return obs, "converged", nil
+			}
+			return obs, "pending", nil
+		},
+	}
+	_, err := waiter.WaitForStateContext(ctx)
 	if err != nil {
-		return err
-	}
-	if !verified.assigned || verified.attachOnBoot == nil || *verified.attachOnBoot != attached {
-		return fmt.Errorf("disk assignment policy did not converge")
-	}
-	if attached && verified.vmState == core.Started &&
-		(verified.attachmentState == nil || *verified.attachmentState != core.VirtualMachineDiskAttachmentStateEnumAttached) {
-		return fmt.Errorf("disk did not become physically attached")
-	}
-	if !attached && (verified.attachmentState == nil || *verified.attachmentState != core.VirtualMachineDiskAttachmentStateEnumDetached) {
-		return fmt.Errorf("disk did not become physically detached")
+		return fmt.Errorf("waiting for disk assignment %s to converge: %w", assignmentID(vmID, diskID), err)
 	}
 	return nil
 }

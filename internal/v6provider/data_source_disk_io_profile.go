@@ -198,7 +198,9 @@ func fetchAllOrganizationDiskIOProfiles(
 
 		pageProfiles := res.JSON200.DiskIoProfiles
 		profiles = append(profiles, pageProfiles...)
-		if !paginationHasNext(res.JSON200.Pagination, page, len(pageProfiles)) {
+		if !paginationHasNext(
+			res.JSON200.Pagination, page, len(pageProfiles), diskDataSourcePageSize,
+		) {
 			break
 		}
 	}

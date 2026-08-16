@@ -187,8 +187,13 @@ func TestPaginationHasNext(t *testing.T) {
 
 	pagination := core.PaginationObject{}
 	pagination.TotalPages.Set(2)
-	assert.True(t, paginationHasNext(pagination, 1, 1))
-	assert.False(t, paginationHasNext(pagination, 2, 200))
-	assert.True(t, paginationHasNext(core.PaginationObject{}, 1, 200))
-	assert.False(t, paginationHasNext(core.PaginationObject{}, 1, 199))
+	assert.True(t, paginationHasNext(pagination, 1, 1, 200))
+	assert.False(t, paginationHasNext(pagination, 2, 200, 200))
+	assert.True(t, paginationHasNext(core.PaginationObject{}, 1, 200, 200))
+	assert.False(t, paginationHasNext(core.PaginationObject{}, 1, 199, 200))
+	assert.True(t, paginationHasNext(core.PaginationObject{PerPage: ptr(30)}, 1, 30, 200))
+	assert.False(t, paginationHasNext(core.PaginationObject{PerPage: ptr(30)}, 1, 29, 200))
+	nullTotal := core.PaginationObject{PerPage: ptr(1)}
+	nullTotal.TotalPages.SetNull()
+	assert.True(t, paginationHasNext(nullTotal, 1, 1, 200))
 }

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"testing"
 
+	frameworkdatasource "github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -73,6 +75,48 @@ func TestBuildDiskAttrObjectHandlesNullRelationships(t *testing.T) {
 	require.True(t, ok)
 	require.True(t, object.Attributes()["bus_type"].IsNull())
 	require.True(t, object.Attributes()["io_profile_id"].IsNull())
+}
+
+func TestVirtualMachineDisksDataSourceSkipsRelationshipWithoutDiskID(t *testing.T) {
+	t.Parallel()
+
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+		switch req.URL.Path {
+		case "/virtual_machines/virtual_machine/disks":
+			writeTestJSON(w, http.StatusOK, `{
+				"pagination":{"total_pages":1},
+				"disks":[
+					{"boot":false},
+					{"disk":{"id":"disk_valid"},"boot":false,"attach_on_boot":true,"state":"detached"}
+				]
+			}`)
+		case "/disks/disk":
+			writeTestJSON(w, http.StatusOK, `{"disk":{"id":"disk_valid","name":"Data","size_in_gb":20}}`)
+		default:
+			http.NotFound(w, req)
+		}
+	})
+	ds := &VirtualMachineDisksDataSource{M: &Meta{Core: client, testMode: true}}
+	schemaResp := &frameworkdatasource.SchemaResponse{}
+	ds.Schema(context.Background(), frameworkdatasource.SchemaRequest{}, schemaResp)
+	configState := tfsdk.State{Schema: schemaResp.Schema}
+	diags := configState.Set(context.Background(), VirtualMachineDisksDataSourceModel{
+		VirtualMachineID: types.StringValue("vm_test"),
+		Disks:            types.ListNull(types.ObjectType{AttrTypes: vmDiskAttrTypes}),
+	})
+	require.False(t, diags.HasError(), diags.Errors())
+	resp := frameworkdatasource.ReadResponse{State: tfsdk.State{Schema: schemaResp.Schema}}
+
+	ds.Read(context.Background(), frameworkdatasource.ReadRequest{
+		Config: tfsdk.Config{Raw: configState.Raw, Schema: schemaResp.Schema},
+	}, &resp)
+
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+	require.Len(t, resp.Diagnostics.Warnings(), 1)
+	var state VirtualMachineDisksDataSourceModel
+	diags = resp.State.Get(context.Background(), &state)
+	require.False(t, diags.HasError(), diags.Errors())
+	require.Len(t, state.Disks.Elements(), 1)
 }
 
 func TestAccKatapultDataSourceVirtualMachineDisks_basic(t *testing.T) {

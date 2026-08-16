@@ -11,6 +11,8 @@ import (
 	"github.com/krystal/go-katapult/next/core"
 )
 
+const virtualMachineDiskDefaultPageSize = 30
+
 const (
 	stateAttributeName = "state"
 	unknownStateValue  = "unknown"
@@ -23,8 +25,7 @@ func fetchAllVMDisks(
 	vmID string,
 ) ([]core.GetVirtualMachineDisks200ResponseDisks, error) {
 	var all []core.GetVirtualMachineDisks200ResponseDisks
-	totalPages := 1
-	for page := 1; page <= totalPages; page++ {
+	for page := 1; ; page++ {
 		p := page
 		res, err := m.Core.GetVirtualMachineDisksWithResponse(ctx,
 			&core.GetVirtualMachineDisksParams{
@@ -44,11 +45,12 @@ func fetchAllVMDisks(
 			return nil, fmt.Errorf("unexpected empty response fetching VM disks")
 		}
 		body := res.JSON200
-		if body.Pagination.TotalPages.IsSpecified() {
-			n, _ := body.Pagination.TotalPages.Get()
-			totalPages = n
-		}
 		all = append(all, body.Disks...)
+		if !paginationHasNext(
+			body.Pagination, page, len(body.Disks), virtualMachineDiskDefaultPageSize,
+		) {
+			break
+		}
 	}
 	return all, nil
 }

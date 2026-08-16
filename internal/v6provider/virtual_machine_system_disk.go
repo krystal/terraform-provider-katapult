@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -12,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/krystal/go-katapult/next/core"
 )
+
+var errNoVirtualMachineBootDisk = errors.New("virtual machine has no disk relationships")
 
 type VirtualMachineSystemDiskModel struct {
 	ID           types.String `tfsdk:"id"`
@@ -72,12 +75,12 @@ func selectBootDiskAssignment(
 	if priorID != "" {
 		for i := range attachments {
 			a := &attachments[i]
-			if a.Disk != nil && a.Disk.Id != nil && *a.Disk.Id == priorID {
+			if a.Boot == nil && a.Disk != nil && a.Disk.Id != nil && *a.Disk.Id == priorID {
 				return a, true
 			}
 		}
 	}
-	if len(nilBoot) == 1 {
+	if len(attachments) == 1 && len(nilBoot) == 1 {
 		return nilBoot[0], true
 	}
 	return nil, false
@@ -88,13 +91,27 @@ func fetchVirtualMachineBootDisk(
 	m *Meta,
 	vmID, priorID string,
 ) (*core.GetDisk200ResponseDisk, error) {
+	disk, _, err := fetchVirtualMachineBootDiskWithAttachments(ctx, m, vmID, priorID)
+	return disk, err
+}
+
+func fetchVirtualMachineBootDiskWithAttachments(
+	ctx context.Context,
+	m *Meta,
+	vmID, priorID string,
+) (*core.GetDisk200ResponseDisk, []core.GetVirtualMachineDisks200ResponseDisks, error) {
 	attachments, err := fetchAllVMDisks(ctx, m, vmID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	if len(attachments) == 0 {
+		return nil, attachments, errNoVirtualMachineBootDisk
 	}
 	selected, authoritative := selectBootDiskAssignment(attachments, priorID)
 	if !authoritative || selected == nil || selected.Disk == nil || selected.Disk.Id == nil {
-		return nil, fmt.Errorf("could not identify one authoritative boot disk for Virtual Machine %s", vmID)
+		return nil, attachments, fmt.Errorf(
+			"could not identify one authoritative boot disk for Virtual Machine %s", vmID,
+		)
 	}
 	diskID := *selected.Disk.Id
 	res, err := m.Core.GetDiskWithResponse(ctx, &core.GetDiskParams{DiskId: &diskID})
@@ -102,12 +119,14 @@ func fetchVirtualMachineBootDisk(
 		if res != nil {
 			err = genericAPIError(err, res.Body)
 		}
-		return nil, err
+		// A missing sub-resource must not be mistaken for the VM itself being
+		// absent by VirtualMachineResource.Read.
+		return nil, attachments, errors.New("fetching boot disk " + diskID + ": " + err.Error())
 	}
 	if res == nil || res.JSON200 == nil {
-		return nil, fmt.Errorf("unexpected empty response fetching boot disk %s", diskID)
+		return nil, attachments, fmt.Errorf("unexpected empty response fetching boot disk %s", diskID)
 	}
-	return &res.JSON200.Disk, nil
+	return &res.JSON200.Disk, attachments, nil
 }
 
 func populateVirtualMachineSystemDisk(

@@ -47,6 +47,7 @@ func TestRedactSensitiveResponseFields(t *testing.T) {
 					"attributes": [
 						{"key": "root_password", "value": "secret", "protect": true},
 						{"key": "api_token", "protect": true, "value": "token"},
+						{"key": "numeric_pin", "protect": true, "value": 123456},
 						{"key": "hostname", "value": "example", "protect": false}
 					]
 				}
@@ -69,6 +70,7 @@ func TestRedactSensitiveResponseFields(t *testing.T) {
 			"attributes": [
 				{"key": "root_password", "value": "[REDACTED]", "protect": true},
 				{"key": "api_token", "protect": true, "value": "[REDACTED]"},
+				{"key": "numeric_pin", "protect": true, "value": "[REDACTED]"},
 				{"key": "hostname", "value": "example", "protect": false}
 			]
 		}

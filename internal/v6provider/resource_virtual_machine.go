@@ -86,6 +86,7 @@ const (
 	virtualMachineShutdownActionLabel             = "shutdown"
 	virtualMachineImportDiskTemplatePrivateKey    = "virtual_machine_import_disk_template_v1"
 	virtualMachineImportTemplateOptionsPrivateKey = "virtual_machine_import_disk_template_options_v1"
+	virtualMachineLegacyDiskIDsPrivateKey         = "virtual_machine_legacy_disk_ids_v1"
 	virtualMachineSystemDiskResizePrivateKey      = "virtual_machine_system_disk_resize_method_v1"
 )
 
@@ -111,7 +112,10 @@ const virtualMachineMarkdownDescription = "Manages a Virtual Machine in Katapult
 	"add an equivalent `system_disk` object for the former first entry. Terraform " +
 	"providers cannot inspect whether sibling resources were imported, so skipping " +
 	"the first stage leaves additional disks unmanaged even though the VM migration " +
-	"itself is non-destructive.\n\n" +
+	"itself is non-destructive. VMs created by older provider versions do not have " +
+	"the exact deprecated disk identities needed for safe cascade deletion, so a VM " +
+	"that still has additional legacy relationships must complete this migration " +
+	"before Terraform can destroy it.\n\n" +
 	"Importing a VM discovers its boot disk but does not create sibling resources. " +
 	"Import the VM by VM ID, then import every additional disk by disk ID and " +
 	"every relationship by `VM_ID/DISK_ID`. Disk-template identity and options " +
@@ -565,6 +569,7 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 						Optional:            true,
 						Computed:            true,
 						MarkdownDescription: "The name of the system disk.",
+						Validators:          []validator.String{stringValidatorNotEmpty()},
 						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
 					"size_in_gb": schema.Int64Attribute{ //nolint:goconst // Terraform attribute name.
@@ -1173,9 +1178,25 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 		}
 	}
 
-	if err := r.vmRead(ctx, &plan); err != nil {
+	var attachments []core.GetVirtualMachineDisks200ResponseDisks
+	if err := r.vmReadWithAttachments(ctx, &plan, &attachments); err != nil {
 		resp.Diagnostics.AddError("Read Error", err.Error())
 		return
+	}
+	if !plan.Disk.IsNull() && !plan.Disk.IsUnknown() && len(plan.Disk.Elements()) > 0 {
+		legacyIDs, idsErr := virtualMachineDiskAttachmentIDs(attachments)
+		if idsErr != nil {
+			resp.Diagnostics.AddError("Create Error", idsErr.Error())
+			return
+		}
+		encodedIDs, marshalErr := json.Marshal(legacyIDs)
+		if marshalErr != nil {
+			resp.Diagnostics.AddError("Create Error", marshalErr.Error())
+			return
+		}
+		if resp.Private != nil {
+			resp.Diagnostics.Append(resp.Private.SetKey(ctx, virtualMachineLegacyDiskIDsPrivateKey, encodedIDs)...)
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
@@ -1261,6 +1282,20 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 	resp.Diagnostics.Append(priorSystemDiags...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+	if !plan.SystemDisk.IsNull() && !plan.SystemDisk.IsUnknown() &&
+		(state.SystemDisk.IsNull() || state.SystemDisk.IsUnknown()) {
+		bootDisk, bootErr := fetchVirtualMachineBootDisk(ctx, r.M, vmID, "")
+		if bootErr != nil {
+			resp.Diagnostics.AddAttributeError(path.Root("system_disk"), "Cannot Discover Boot Disk", bootErr.Error())
+			return
+		}
+		resp.Diagnostics.Append(populateVirtualMachineSystemDisk(ctx, &state, bootDisk)...)
+		priorSystemDisk, priorSystemDiags = decodeVirtualMachineSystemDisk(ctx, state.SystemDisk)
+		resp.Diagnostics.Append(priorSystemDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 	}
 	systemDiskResize := !plan.SystemDisk.IsNull() && !plan.SystemDisk.IsUnknown() &&
 		!state.SystemDisk.IsNull() && !state.SystemDisk.IsUnknown() &&
@@ -1693,8 +1728,10 @@ func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 		legacyCount = len(state.Disk.Elements())
 	}
 	if legacyCount > 0 {
-		if len(attachments) > legacyCount {
-			resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("Virtual Machine %s has %d disk relationships but deprecated disk state owns at most %d; remove additional katapult_disk_assignment resources first", vmID, len(attachments), legacyCount))
+		if ownershipErr := validateLegacyDiskDeleteOwnership(
+			ctx, req.Private, attachments, state.SystemDisk,
+		); ownershipErr != nil {
+			resp.Diagnostics.AddError("Delete Error", ownershipErr.Error())
 			return
 		}
 	} else if len(attachments) > 0 {
@@ -1910,10 +1947,93 @@ func (r *VirtualMachineResource) ImportState(
 	resp.Diagnostics.Append(resp.Private.SetKey(ctx, virtualMachineImportTemplateOptionsPrivateKey, []byte("true"))...)
 }
 
-//nolint:gocyclo,funlen
+func virtualMachineDiskAttachmentIDs(
+	attachments []core.GetVirtualMachineDisks200ResponseDisks,
+) ([]string, error) {
+	ids := make([]string, 0, len(attachments))
+	for i := range attachments {
+		if attachments[i].Disk == nil || attachments[i].Disk.Id == nil || *attachments[i].Disk.Id == "" {
+			return nil, fmt.Errorf("disk relationship %d has no disk identity", i)
+		}
+		ids = append(ids, *attachments[i].Disk.Id)
+	}
+	sort.Strings(ids)
+	return ids, nil
+}
+
+func validateLegacyDiskDeleteOwnership(
+	ctx context.Context,
+	private interface {
+		GetKey(context.Context, string) ([]byte, diag.Diagnostics)
+	},
+	attachments []core.GetVirtualMachineDisks200ResponseDisks,
+	systemDisk types.Object,
+) error {
+	remoteIDs, err := virtualMachineDiskAttachmentIDs(attachments)
+	if err != nil {
+		return fmt.Errorf("cannot verify deprecated disk ownership: %w", err)
+	}
+	var encoded []byte
+	if private != nil {
+		var diags diag.Diagnostics
+		encoded, diags = private.GetKey(ctx, virtualMachineLegacyDiskIDsPrivateKey)
+		if diags.HasError() {
+			return fmt.Errorf("reading deprecated disk ownership state: %s", diags)
+		}
+	}
+	if len(encoded) == 0 {
+		if len(attachments) == 0 {
+			return nil
+		}
+		priorSystem, diags := decodeVirtualMachineSystemDisk(ctx, systemDisk)
+		if diags.HasError() {
+			return fmt.Errorf("reading system disk identity: %s", diags)
+		}
+		boot, authoritative := selectBootDiskAssignment(attachments, priorSystem.ID.ValueString())
+		if len(attachments) == 1 && authoritative && boot != nil {
+			return nil
+		}
+		return fmt.Errorf(
+			"cannot prove ownership of deprecated additional disk relationships; " +
+				"migrate them to katapult_disk and katapult_disk_assignment before " +
+				"deleting the Virtual Machine",
+		)
+	}
+	var ownedIDs []string
+	if err := json.Unmarshal(encoded, &ownedIDs); err != nil {
+		return fmt.Errorf("decoding deprecated disk ownership state: %w", err)
+	}
+	owned := make(map[string]struct{}, len(ownedIDs))
+	for _, id := range ownedIDs {
+		if id == "" {
+			return fmt.Errorf("deprecated disk ownership state contains an empty disk identity")
+		}
+		owned[id] = struct{}{}
+	}
+	for _, id := range remoteIDs {
+		if _, ok := owned[id]; !ok {
+			return fmt.Errorf(
+				"virtual machine has disk relationship %s which is not owned by "+
+					"deprecated disk state; remove its katapult_disk_assignment first",
+				id,
+			)
+		}
+	}
+	return nil
+}
+
 func (r *VirtualMachineResource) vmRead(
 	ctx context.Context,
 	model *VirtualMachineResourceModel,
+) error {
+	return r.vmReadWithAttachments(ctx, model, nil)
+}
+
+//nolint:gocyclo,funlen
+func (r *VirtualMachineResource) vmReadWithAttachments(
+	ctx context.Context,
+	model *VirtualMachineResourceModel,
+	attachmentsOut *[]core.GetVirtualMachineDisks200ResponseDisks,
 ) error {
 	vmID := model.ID.ValueString()
 
@@ -1940,14 +2060,20 @@ func (r *VirtualMachineResource) vmRead(
 	if systemDiags.HasError() {
 		return fmt.Errorf("reading system_disk state: %s", systemDiags)
 	}
-	bootDisk, bootErr := fetchVirtualMachineBootDisk(ctx, r.M, vmID, priorSystem.ID.ValueString())
-	if bootErr != nil {
-		return fmt.Errorf("discovering boot disk: %w", bootErr)
+	bootDisk, attachments, bootErr := fetchVirtualMachineBootDiskWithAttachments(
+		ctx, r.M, vmID, priorSystem.ID.ValueString(),
+	)
+	if attachmentsOut != nil {
+		*attachmentsOut = attachments
 	}
-	if diags := populateVirtualMachineSystemDisk(ctx, model, bootDisk); diags.HasError() {
+	if errors.Is(bootErr, errNoVirtualMachineBootDisk) {
+		model.SystemDisk = types.ObjectNull(virtualMachineSystemDiskAttrTypes)
+	} else if bootErr != nil {
+		return fmt.Errorf("discovering boot disk: %w", bootErr)
+	} else if diags := populateVirtualMachineSystemDisk(ctx, model, bootDisk); diags.HasError() {
 		return fmt.Errorf("populating system_disk state: %s", diags)
 	}
-	if bootDisk.Installation.IsSpecified() && !bootDisk.Installation.IsNull() {
+	if bootDisk != nil && bootDisk.Installation.IsSpecified() && !bootDisk.Installation.IsNull() {
 		if installation, e := bootDisk.Installation.Get(); e == nil &&
 			installation.DiskTemplateVersion != nil &&
 			installation.DiskTemplateVersion.DiskTemplate != nil {

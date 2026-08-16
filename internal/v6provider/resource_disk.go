@@ -61,6 +61,30 @@ type (
 
 var _ resource.ResourceWithModifyPlan = (*DiskResource)(nil)
 
+type requiresReplaceAfterImportAdoptionModifier struct{}
+
+func (requiresReplaceAfterImportAdoptionModifier) Description(context.Context) string {
+	return "Requires replacement after a previously managed value changes, " +
+		"while allowing imported null state to adopt configuration once."
+}
+
+func (m requiresReplaceAfterImportAdoptionModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (requiresReplaceAfterImportAdoptionModifier) PlanModifyString(
+	_ context.Context,
+	req planmodifier.StringRequest,
+	resp *planmodifier.StringResponse,
+) {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() ||
+		req.StateValue.IsNull() || req.StateValue.IsUnknown() ||
+		req.PlanValue.IsUnknown() || req.PlanValue.Equal(req.StateValue) {
+		return
+	}
+	resp.RequiresReplace = true
+}
+
 //nolint:lll // Keep complete operator-facing resize guidance next to each diagnostic.
 func (r *DiskResource) ModifyPlan(
 	ctx context.Context,
@@ -73,7 +97,8 @@ func (r *DiskResource) ModifyPlan(
 	var plan, state DiskResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
-	if resp.Diagnostics.HasError() || plan.SizeInGB.IsUnknown() ||
+	if resp.Diagnostics.HasError() || len(resp.RequiresReplace) > 0 ||
+		plan.SizeInGB.IsUnknown() || plan.ResizeMethod.IsUnknown() ||
 		state.SizeInGB.IsNull() || plan.SizeInGB.Equal(state.SizeInGB) {
 		return
 	}
@@ -168,13 +193,16 @@ func (r *DiskResource) Schema(
 				Optional: true,
 				MarkdownDescription: "File system used to initialize the disk: " +
 					"`ext4` or `xfs`. When omitted, Katapult creates a blank disk. " +
-					"Changing this value replaces the disk. Use `ext4` when the disk " +
-					"must support offline shrink; XFS cannot be shrunk.",
+					"Imported disks do not expose their existing file-system type, so " +
+					"the first configured value is adopted into Terraform state without " +
+					"recreating the disk; verify that it matches the real disk first. " +
+					"Changing an adopted or creation-time value replaces the disk. Use " +
+					"`ext4` when the disk must support offline shrink; XFS cannot be shrunk.",
 				Validators: []validator.String{
 					stringvalidator.OneOf("ext4", "xfs"),
 				},
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+					requiresReplaceAfterImportAdoptionModifier{},
 				},
 			},
 			"storage_speed": schema.StringAttribute{
@@ -236,9 +264,6 @@ func (r *DiskResource) Schema(
 			stateAttributeName: schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Current state of the disk.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 		},
 		Blocks: map[string]schema.Block{
@@ -575,7 +600,7 @@ func (r *DiskResource) resizeDisk(
 		}
 		return err
 	}
-	if resizeRes.JSON200 == nil || resizeRes.JSON200.Task.Id == nil {
+	if resizeRes == nil || resizeRes.JSON200 == nil || resizeRes.JSON200.Task.Id == nil {
 		return fmt.Errorf("unexpected empty response resizing disk")
 	}
 
@@ -620,15 +645,21 @@ func (r *DiskResource) Delete(
 		resp.Diagnostics.AddError("Delete Error", err.Error())
 		return
 	}
-	if diskRes.JSON200 != nil {
-		disk := diskRes.JSON200.Disk
-		if disk.VirtualMachineDisk.IsSpecified() && !disk.VirtualMachineDisk.IsNull() {
-			resp.Diagnostics.AddError("Delete Error", fmt.Sprintf(
-				"disk %s still has a Virtual Machine assignment; remove the corresponding katapult_disk_assignment first",
-				diskID,
-			))
-			return
-		}
+	if diskRes == nil || diskRes.JSON200 == nil {
+		resp.Diagnostics.AddError("Delete Error", "cannot verify disk assignment state from an incomplete API response; refusing deletion")
+		return
+	}
+	disk := diskRes.JSON200.Disk
+	if !disk.VirtualMachineDisk.IsSpecified() {
+		resp.Diagnostics.AddError("Delete Error", "cannot verify disk assignment state because virtual_machine_disk was omitted; refusing deletion")
+		return
+	}
+	if !disk.VirtualMachineDisk.IsNull() {
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf(
+			"disk %s still has a Virtual Machine assignment; remove the corresponding katapult_disk_assignment first",
+			diskID,
+		))
+		return
 	}
 
 	delRes, err := r.M.Core.DeleteDiskWithResponse(ctx,
@@ -680,7 +711,7 @@ func (r *DiskResource) diskRead(
 		}
 		return err
 	}
-	if res.JSON200 == nil {
+	if res == nil || res.JSON200 == nil {
 		return fmt.Errorf("unexpected empty response fetching disk")
 	}
 
@@ -692,6 +723,7 @@ func (r *DiskResource) diskRead(
 	if disk.SizeInGb != nil {
 		model.SizeInGB = types.Int64Value(int64(*disk.SizeInGb))
 	}
+	model.StorageSpeed = types.StringNull()
 	if disk.StorageSpeed != nil {
 		model.StorageSpeed = types.StringValue(string(*disk.StorageSpeed))
 	}
@@ -707,9 +739,11 @@ func (r *DiskResource) diskRead(
 			model.IOProfileID = types.StringValue(*iop.Id)
 		}
 	}
+	model.WWN = types.StringNull()
 	if disk.Wwn != nil {
 		model.WWN = types.StringValue(*disk.Wwn)
 	}
+	model.State = types.StringNull()
 	if disk.State != nil {
 		model.State = types.StringValue(string(*disk.State))
 	}
@@ -730,6 +764,10 @@ func readStandaloneDiskRelationship(ctx context.Context, m *Meta, diskID string)
 	var obs standaloneDiskRelationship
 	res, err := m.Core.GetDiskWithResponse(ctx, &core.GetDiskParams{DiskId: &diskID})
 	if err != nil {
+		if errors.Is(err, core.ErrNotFound) ||
+			(res != nil && isErrNotFoundOrInTrash(err, res.JSON406)) {
+			return obs, core.ErrNotFound
+		}
 		if res != nil {
 			err = genericAPIError(err, res.Body)
 		}
@@ -763,9 +801,10 @@ func effectiveDiskResizeMethod(oldSize, newSize int64, configured string, assign
 			attached = true
 		case core.VirtualMachineDiskAttachmentStateEnumDetached:
 		case core.VirtualMachineDiskAttachmentStateEnumAttaching,
-			core.VirtualMachineDiskAttachmentStateEnumDetaching,
-			core.VirtualMachineDiskAttachmentStateEnumFailed:
+			core.VirtualMachineDiskAttachmentStateEnumDetaching:
 			return "", fmt.Errorf("disk attachment state %q is transitional; retry after it settles", *attachmentState)
+		case core.VirtualMachineDiskAttachmentStateEnumFailed:
+			return "", fmt.Errorf("disk attachment state is failed; repair or remove the failed assignment before resizing")
 		default:
 			return "", fmt.Errorf("disk attachment state %q is unknown", *attachmentState)
 		}

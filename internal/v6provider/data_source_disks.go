@@ -154,7 +154,9 @@ func fetchAllOrganizationDisks(
 
 		pageDisks := res.JSON200.Disk
 		disks = append(disks, pageDisks...)
-		if !paginationHasNext(res.JSON200.Pagination, page, len(pageDisks)) {
+		if !paginationHasNext(
+			res.JSON200.Pagination, page, len(pageDisks), diskDataSourcePageSize,
+		) {
 			break
 		}
 	}
@@ -213,6 +215,7 @@ func paginationHasNext(
 	pagination core.PaginationObject,
 	page int,
 	itemCount int,
+	fallbackPageSize int,
 ) bool {
 	if pagination.TotalPages.IsSpecified() && !pagination.TotalPages.IsNull() {
 		if totalPages, err := pagination.TotalPages.Get(); err == nil {
@@ -220,7 +223,12 @@ func paginationHasNext(
 		}
 	}
 
-	return itemCount == diskDataSourcePageSize
+	pageSize := fallbackPageSize
+	if pagination.PerPage != nil && *pagination.PerPage > 0 {
+		pageSize = *pagination.PerPage
+	}
+
+	return itemCount >= pageSize
 }
 
 func nonNilString(value *string) (string, bool) {

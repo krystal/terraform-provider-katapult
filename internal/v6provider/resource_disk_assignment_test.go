@@ -3,6 +3,7 @@ package v6provider
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"sync/atomic"
 	"testing"
@@ -51,6 +52,40 @@ func TestDiskAssignmentResourceRegisteredOnce(t *testing.T) {
 	require.Equal(t, 1, count)
 }
 
+func TestDiskAssignmentCreateCheckpointsIdentityBeforeMutationResponse(t *testing.T) {
+	t.Parallel()
+
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+		switch {
+		case req.Method == http.MethodGet && req.URL.Path == "/virtual_machines/virtual_machine":
+			writeTestJSON(w, http.StatusOK, `{"virtual_machine":{"id":"vm_test","state":"stopped"}}`)
+		case req.Method == http.MethodGet && req.URL.Path == "/disks/disk":
+			writeTestJSON(w, http.StatusOK, `{"disk":{"id":"disk_test","virtual_machine_disk":null}}`)
+		case req.Method == http.MethodPost && req.URL.Path == "/disks/disk/assign":
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.NotFound(w, req)
+		}
+	})
+	r := &DiskAssignmentResource{M: &Meta{Core: client, testMode: true}}
+	plan := diskAssignmentTestState(t, r, DiskAssignmentResourceModel{
+		VirtualMachineID: types.StringValue("vm_test"),
+		DiskID:           types.StringValue("disk_test"),
+		Attached:         types.BoolValue(true),
+	})
+	resp := frameworkresource.CreateResponse{State: tfsdk.State{Schema: plan.Schema}}
+
+	r.Create(context.Background(), frameworkresource.CreateRequest{Plan: tfsdk.Plan(plan)}, &resp)
+
+	require.True(t, resp.Diagnostics.HasError())
+	require.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "unexpected empty response assigning disk")
+	var state DiskAssignmentResourceModel
+	diags := resp.State.Get(context.Background(), &state)
+	require.False(t, diags.HasError(), diags.Errors())
+	require.Equal(t, "vm_test/disk_test", state.ID.ValueString())
+}
+
 func TestParseAssignmentID(t *testing.T) {
 	t.Parallel()
 	vmID, diskID, err := parseAssignmentID("vm_one/disk_one")
@@ -68,6 +103,7 @@ func TestEffectiveDiskResizeMethod(t *testing.T) {
 	t.Parallel()
 	attached := core.VirtualMachineDiskAttachmentStateEnumAttached
 	detached := core.VirtualMachineDiskAttachmentStateEnumDetached
+	failed := core.VirtualMachineDiskAttachmentStateEnumFailed
 	unknown := core.VirtualMachineDiskAttachmentStateEnum("future_state")
 	tests := []struct {
 		name       string
@@ -88,6 +124,7 @@ func TestEffectiveDiskResizeMethod(t *testing.T) {
 		{name: "unassigned growth offline", oldSize: 20, newSize: 30, configured: "offline", want: core.Offline},
 		{name: "unknown assigned state rejected", oldSize: 20, newSize: 30, configured: "online", assigned: true, wantErr: true},
 		{name: "unrecognized assigned state rejected", oldSize: 20, newSize: 30, configured: "online", assigned: true, state: &unknown, wantErr: true},
+		{name: "failed attachment rejected", oldSize: 20, newSize: 30, configured: "online", assigned: true, state: &failed, wantErr: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -103,49 +140,52 @@ func TestEffectiveDiskResizeMethod(t *testing.T) {
 	}
 }
 
-func TestDiskAssignmentDeleteRejectsTransitionalAttachmentBeforeMutation(t *testing.T) {
+func TestDiskAssignmentDeleteRejectsUnsafeAttachmentBeforeMutation(t *testing.T) {
 	t.Parallel()
 
-	var patchCalls atomic.Int32
-	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
-		switch {
-		case req.Method == http.MethodGet && req.URL.Path == "/virtual_machines/virtual_machine":
-			writeTestJSON(w, http.StatusOK, `{"virtual_machine":{"id":"vm_test","state":"stopped"}}`)
-		case req.Method == http.MethodGet && req.URL.Path == "/disks/disk":
-			writeTestJSON(w, http.StatusOK, `{
-				"disk": {
-					"id": "disk_test",
-					"virtual_machine_disk": {
-						"virtual_machine": {"id": "vm_test"},
-						"boot": false,
-						"attach_on_boot": true,
-						"state": "attaching"
-					}
+	for _, test := range []struct {
+		state string
+		want  string
+	}{
+		{state: "attaching", want: "transitional or unknown"},
+		{state: "failed", want: "repair the failed attachment"},
+	} {
+		t.Run(test.state, func(t *testing.T) {
+			t.Parallel()
+			var patchCalls atomic.Int32
+			client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+				switch {
+				case req.Method == http.MethodGet && req.URL.Path == "/virtual_machines/virtual_machine":
+					writeTestJSON(w, http.StatusOK, `{"virtual_machine":{"id":"vm_test","state":"stopped"}}`)
+				case req.Method == http.MethodGet && req.URL.Path == "/disks/disk":
+					writeTestJSON(w, http.StatusOK, fmt.Sprintf(`{
+						"disk":{"id":"disk_test","virtual_machine_disk":{
+							"virtual_machine":{"id":"vm_test"},"boot":false,
+							"attach_on_boot":true,"state":%q
+						}}
+					}`, test.state))
+				case req.Method == http.MethodPatch && req.URL.Path == "/disks/disk":
+					patchCalls.Add(1)
+					http.Error(w, "unexpected mutation", http.StatusInternalServerError)
+				default:
+					http.NotFound(w, req)
 				}
-			}`)
-		case req.Method == http.MethodPatch && req.URL.Path == "/disks/disk":
-			patchCalls.Add(1)
-			http.Error(w, "unexpected mutation", http.StatusInternalServerError)
-		default:
-			http.NotFound(w, req)
-		}
-	})
-	r := &DiskAssignmentResource{M: &Meta{Core: client, testMode: true}}
-	state := diskAssignmentTestState(t, r, DiskAssignmentResourceModel{
-		ID:               types.StringValue("vm_test/disk_test"),
-		VirtualMachineID: types.StringValue("vm_test"),
-		DiskID:           types.StringValue("disk_test"),
-		Attached:         types.BoolValue(true),
-		AttachOnBoot:     types.BoolValue(true),
-		AttachmentState:  types.StringValue("attaching"),
-	})
-	resp := frameworkresource.DeleteResponse{State: state}
+			})
+			r := &DiskAssignmentResource{M: &Meta{Core: client, testMode: true}}
+			state := diskAssignmentTestState(t, r, DiskAssignmentResourceModel{
+				ID: types.StringValue("vm_test/disk_test"), VirtualMachineID: types.StringValue("vm_test"),
+				DiskID: types.StringValue("disk_test"), Attached: types.BoolValue(true),
+				AttachOnBoot: types.BoolValue(true), AttachmentState: types.StringValue(test.state),
+			})
+			resp := frameworkresource.DeleteResponse{State: state}
 
-	r.Delete(context.Background(), frameworkresource.DeleteRequest{State: state}, &resp)
+			r.Delete(context.Background(), frameworkresource.DeleteRequest{State: state}, &resp)
 
-	require.True(t, resp.Diagnostics.HasError())
-	require.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "transitional or unknown")
-	require.Zero(t, patchCalls.Load())
+			require.True(t, resp.Diagnostics.HasError())
+			require.Contains(t, resp.Diagnostics.Errors()[0].Detail(), test.want)
+			require.Zero(t, patchCalls.Load())
+		})
+	}
 }
 
 //nolint:lll // Inline JSON keeps each API error scenario self-contained.
@@ -264,6 +304,38 @@ func TestWaitForDiskAssignmentAbsentAcceptsUnassignedDisk(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestWaitForDiskAssignmentConvergencePollsUntilPhysicalStateMatches(t *testing.T) {
+	t.Parallel()
+
+	var diskReads atomic.Int32
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, req *http.Request) {
+		switch req.URL.Path {
+		case "/virtual_machines/virtual_machine":
+			writeTestJSON(w, http.StatusOK, `{"virtual_machine":{"id":"vm_test","state":"started"}}`)
+		case "/disks/disk":
+			state := "detached"
+			if diskReads.Add(1) > 1 {
+				state = "attached"
+			}
+			writeTestJSON(w, http.StatusOK, fmt.Sprintf(`{
+				"disk":{"id":"disk_test","virtual_machine_disk":{
+					"virtual_machine":{"id":"vm_test"},"boot":false,
+					"attach_on_boot":true,"state":%q
+				}}
+			}`, state))
+		default:
+			http.NotFound(w, req)
+		}
+	})
+
+	err := waitForDiskAssignmentConvergence(
+		context.Background(), &Meta{Core: client, testMode: true},
+		"vm_test", "disk_test", true, time.Second,
+	)
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, diskReads.Load(), int32(2))
+}
+
 func TestProjectDiskAssignmentAttachedPreservesRepairDiff(t *testing.T) {
 	t.Parallel()
 	trueValue, falseValue := true, false
@@ -292,6 +364,16 @@ func TestProjectDiskAssignmentAttachedPreservesRepairDiff(t *testing.T) {
 			name:    "stopped desired true converges through attach on boot",
 			desired: types.BoolValue(true), state: core.Stopped,
 			policy: &trueValue, actual: &detached, want: true,
+		},
+		{
+			name:    "failed VM remains readable through attach on boot policy",
+			desired: types.BoolValue(true), state: core.Failed,
+			policy: &trueValue, actual: &detached, want: true,
+		},
+		{
+			name:    "orphaned VM remains readable through attach on boot policy",
+			desired: types.BoolValue(false), state: core.Orphaned,
+			policy: &falseValue, actual: &detached, want: false,
 		},
 		{
 			name:    "unknown import policy derives the current running observation",
