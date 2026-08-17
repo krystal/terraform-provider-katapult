@@ -1471,6 +1471,164 @@ func TestStabilizeVirtualMachinePlanUsesProjectionDependencies(t *testing.T) {
 	)
 	require.False(t, changedDiags.HasError(), changedDiags.Errors())
 	require.True(t, changedSystem.State.IsUnknown())
+
+	nullState := state
+	nullState.FQDN = types.StringNull()
+	nullState.IPAddresses = types.SetNull(types.StringType)
+	nullState.NetworkInterfaces = types.ListNull(types.ObjectType{
+		AttrTypes: vmNetworkInterfaceAttrTypes,
+	})
+	nullSystem, nullDiags := decodeVirtualMachineSystemDisk(
+		context.Background(), nullState.SystemDisk,
+	)
+	require.False(t, nullDiags.HasError(), nullDiags.Errors())
+	nullSystem.State = types.StringNull()
+	nullState.SystemDisk, nullDiags = virtualMachineSystemDiskValue(
+		context.Background(), nullSystem,
+	)
+	require.False(t, nullDiags.HasError(), nullDiags.Errors())
+
+	nullPlan := nullState
+	nullPlan.FQDN = types.StringUnknown()
+	nullPlan.IPAddresses = types.SetUnknown(types.StringType)
+	nullPlan.NetworkInterfaces = types.ListUnknown(types.ObjectType{
+		AttrTypes: vmNetworkInterfaceAttrTypes,
+	})
+	nullSystem.State = types.StringUnknown()
+	nullPlan.SystemDisk, nullDiags = virtualMachineSystemDiskValue(
+		context.Background(), nullSystem,
+	)
+	require.False(t, nullDiags.HasError(), nullDiags.Errors())
+
+	_, nullDiags = stabilizeVirtualMachinePlan(
+		context.Background(), &nullPlan, &nullState,
+	)
+	require.False(t, nullDiags.HasError(), nullDiags.Errors())
+	require.True(t, nullPlan.FQDN.IsUnknown())
+	require.True(t, nullPlan.IPAddresses.IsUnknown())
+	require.True(t, nullPlan.NetworkInterfaces.IsUnknown())
+	nullSystem, nullDiags = decodeVirtualMachineSystemDisk(
+		context.Background(), nullPlan.SystemDisk,
+	)
+	require.False(t, nullDiags.HasError(), nullDiags.Errors())
+	require.True(t, nullSystem.State.IsUnknown())
+}
+
+func TestVirtualMachineModifyPlanLeavesProjectionsUnknownOnReplacement(t *testing.T) {
+	t.Parallel()
+
+	interfaceAttrs := make(map[string]attr.Value, len(vmNetworkInterfaceAttrTypes))
+	for name, attrType := range vmNetworkInterfaceAttrTypes {
+		if _, ok := attrType.(types.SetType); ok {
+			interfaceAttrs[name] = types.SetValueMust(
+				types.StringType,
+				[]attr.Value{types.StringValue("192.0.2.1")},
+			)
+			continue
+		}
+		interfaceAttrs[name] = types.StringValue("old")
+	}
+	interfaceValue := types.ObjectValueMust(
+		vmNetworkInterfaceAttrTypes, interfaceAttrs,
+	)
+	state := VirtualMachineResourceModel{
+		ID:           types.StringValue("vm_test"),
+		Hostname:     types.StringValue("web"),
+		FQDN:         types.StringValue("web.example.test"),
+		DiskTemplate: types.StringValue("templates/ubuntu-20-04"),
+		DiskTemplateOptions: types.MapValueMust(types.StringType, map[string]attr.Value{
+			"install_agent": types.StringValue("true"),
+		}),
+		SystemDisk: knownTestSystemDisk(t, "disk_boot"),
+		IPAddressIDs: types.SetValueMust(types.StringType, []attr.Value{
+			types.StringValue("ip_old"),
+		}),
+		IPAddresses: types.SetValueMust(types.StringType, []attr.Value{
+			types.StringValue("192.0.2.1"),
+		}),
+		VirtualNetworkIDs: types.SetValueMust(types.StringType, []attr.Value{
+			types.StringValue("vnet_old"),
+		}),
+		NetworkInterfaces: types.ListValueMust(
+			types.ObjectType{AttrTypes: vmNetworkInterfaceAttrTypes},
+			[]attr.Value{interfaceValue},
+		),
+	}
+
+	for _, test := range []struct {
+		name   string
+		change func(
+			state, plan, config *VirtualMachineResourceModel,
+		)
+	}{
+		{
+			name: "disk template",
+			change: func(_, plan, config *VirtualMachineResourceModel) {
+				plan.DiskTemplate = types.StringValue("templates/debian-12")
+				config.DiskTemplate = plan.DiskTemplate
+			},
+		},
+		{
+			name: "disk template options",
+			change: func(_, plan, config *VirtualMachineResourceModel) {
+				plan.DiskTemplateOptions = types.MapValueMust(
+					types.StringType,
+					map[string]attr.Value{"install_agent": types.StringValue("false")},
+				)
+				config.DiskTemplateOptions = plan.DiskTemplateOptions
+			},
+		},
+		{
+			name: "legacy disk",
+			change: func(state, plan, config *VirtualMachineResourceModel) {
+				state.Disk = legacyDiskList(t, legacyDiskModels(20))
+				plan.Disk = legacyDiskList(t, legacyDiskModels(21))
+				config.Disk = plan.Disk
+				config.SystemDisk = types.ObjectNull(
+					virtualMachineSystemDiskAttrTypes,
+				)
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			caseState := state
+			plan := caseState
+			config := plan
+			test.change(&caseState, &plan, &config)
+			plan.FQDN = types.StringUnknown()
+			plan.IPAddresses = types.SetUnknown(types.StringType)
+			plan.NetworkInterfaces = types.ListUnknown(types.ObjectType{
+				AttrTypes: vmNetworkInterfaceAttrTypes,
+			})
+			plannedSystem, diags := decodeVirtualMachineSystemDisk(
+				context.Background(), plan.SystemDisk,
+			)
+			require.False(t, diags.HasError(), diags.Errors())
+			plannedSystem.State = types.StringUnknown()
+			plan.SystemDisk, diags = virtualMachineSystemDiskValue(
+				context.Background(), plannedSystem,
+			)
+			require.False(t, diags.HasError(), diags.Errors())
+
+			r := &VirtualMachineResource{M: &Meta{}}
+			resp := runVirtualMachineModifyPlan(t, r, caseState, plan, config)
+			require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+			require.NotEmpty(t, resp.RequiresReplace)
+
+			var got VirtualMachineResourceModel
+			diags = resp.Plan.Get(context.Background(), &got)
+			require.False(t, diags.HasError(), diags.Errors())
+			require.True(t, got.FQDN.IsUnknown())
+			require.True(t, got.IPAddresses.IsUnknown())
+			require.True(t, got.NetworkInterfaces.IsUnknown())
+			gotSystem, diags := decodeVirtualMachineSystemDisk(
+				context.Background(), got.SystemDisk,
+			)
+			require.False(t, diags.HasError(), diags.Errors())
+			require.True(t, gotSystem.State.IsUnknown())
+		})
+	}
 }
 
 func legacyDiskList(t *testing.T, disks []VirtualMachineDiskModel) types.List {

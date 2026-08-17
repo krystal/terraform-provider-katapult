@@ -171,6 +171,7 @@ func stabilizeDiskPlan(
 	replacing bool,
 ) bool {
 	if replacing || !plan.State.IsUnknown() ||
+		state.State.IsNull() || state.State.IsUnknown() ||
 		!plan.SizeInGB.Equal(state.SizeInGB) ||
 		!plan.IOProfileID.Equal(state.IOProfileID) {
 		return false

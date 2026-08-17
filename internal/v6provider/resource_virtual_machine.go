@@ -212,16 +212,7 @@ func (r *VirtualMachineResource) ModifyPlan(
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	projections, projectionDiags := stabilizeVirtualMachinePlan(
-		ctx, &plan, &state,
-	)
-	resp.Diagnostics.Append(projectionDiags...)
-	for _, projection := range projections {
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(
-			ctx, projection.path, projection.value,
-		)...)
-	}
-	if resp.Diagnostics.HasError() || r.M == nil {
+	if r.M == nil {
 		return
 	}
 	templateImportEligible := false
@@ -314,6 +305,22 @@ func (r *VirtualMachineResource) ModifyPlan(
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	if len(resp.RequiresReplace) > 0 {
+		return
+	}
+
+	projections, projectionDiags := stabilizeVirtualMachinePlan(
+		ctx, &plan, &state,
+	)
+	resp.Diagnostics.Append(projectionDiags...)
+	for _, projection := range projections {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(
+			ctx, projection.path, projection.value,
+		)...)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	if state.ID.IsNull() || state.ID.IsUnknown() {
 		return
@@ -402,13 +409,16 @@ func stabilizeVirtualMachinePlan(
 	var diags diag.Diagnostics
 	projections := make([]virtualMachinePlanProjection, 0, 4)
 
-	if plan.FQDN.IsUnknown() && plan.Hostname.Equal(state.Hostname) {
+	if plan.FQDN.IsUnknown() &&
+		isKnownTerraformValue(state.FQDN) &&
+		plan.Hostname.Equal(state.Hostname) {
 		plan.FQDN = state.FQDN
 		projections = append(projections, virtualMachinePlanProjection{
 			path: path.Root("fqdn"), value: plan.FQDN,
 		})
 	}
 	if plan.IPAddresses.IsUnknown() &&
+		isKnownTerraformValue(state.IPAddresses) &&
 		plan.IPAddressIDs.Equal(state.IPAddressIDs) {
 		plan.IPAddresses = state.IPAddresses
 		projections = append(projections, virtualMachinePlanProjection{
@@ -416,6 +426,7 @@ func stabilizeVirtualMachinePlan(
 		})
 	}
 	if plan.NetworkInterfaces.IsUnknown() &&
+		isKnownTerraformValue(state.NetworkInterfaces) &&
 		plan.IPAddressIDs.Equal(state.IPAddressIDs) &&
 		plan.VirtualNetworkIDs.Equal(state.VirtualNetworkIDs) {
 		plan.NetworkInterfaces = state.NetworkInterfaces
@@ -441,6 +452,7 @@ func stabilizeVirtualMachinePlan(
 		return projections, diags
 	}
 	if plannedSystem.State.IsUnknown() &&
+		isKnownTerraformValue(priorSystem.State) &&
 		plannedSystem.SizeInGB.Equal(priorSystem.SizeInGB) {
 		plannedSystem.State = priorSystem.State
 		var valueDiags diag.Diagnostics
@@ -455,6 +467,10 @@ func stabilizeVirtualMachinePlan(
 	}
 
 	return projections, diags
+}
+
+func isKnownTerraformValue(value attr.Value) bool {
+	return !value.IsNull() && !value.IsUnknown()
 }
 
 func validateChangedLegacyDiskSizes(ctx context.Context, state, plan types.List) error {

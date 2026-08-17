@@ -6,9 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,7 +23,6 @@ func TestNullToEmptySetPlanModifier(t *testing.T) {
 		config     types.Set
 		plan       types.Set
 		state      types.Set
-		updating   bool
 		wantResult types.Set
 	}{
 		{
@@ -43,12 +40,11 @@ func TestNullToEmptySetPlanModifier(t *testing.T) {
 			wantResult: empty,
 		},
 		{
-			name:       "updated legacy null state remains known",
+			name:       "updated legacy null state remains unknown",
 			config:     types.SetNull(types.StringType),
 			plan:       types.SetUnknown(types.StringType),
 			state:      types.SetNull(types.StringType),
-			updating:   true,
-			wantResult: types.SetNull(types.StringType),
+			wantResult: types.SetUnknown(types.StringType),
 		},
 		{
 			name:       "removed populated state",
@@ -82,11 +78,6 @@ func TestNullToEmptySetPlanModifier(t *testing.T) {
 				ConfigValue: tt.config,
 				PlanValue:   tt.plan,
 				StateValue:  tt.state,
-			}
-			if tt.updating {
-				request.State = tfsdk.State{Raw: tftypes.NewValue(
-					tftypes.String, "existing resource",
-				)}
 			}
 			NullToEmptySetPlanModifier().PlanModifySet(
 				context.Background(),

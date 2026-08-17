@@ -173,11 +173,25 @@ func TestDiskModifyPlanPreservesStateOnlyForNonLifecycleUpdates(t *testing.T) {
 		name        string
 		plannedSize int64
 		plannedIO   string
+		priorState  types.String
 		wantKnown   bool
 	}{
-		{name: "name or bus update", plannedSize: 20, plannedIO: "iop_1", wantKnown: true},
-		{name: "resize", plannedSize: 30, plannedIO: "iop_1"},
-		{name: "IO profile update", plannedSize: 20, plannedIO: "iop_2"},
+		{
+			name: "name or bus update", plannedSize: 20, plannedIO: "iop_1",
+			priorState: types.StringValue("built"), wantKnown: true,
+		},
+		{
+			name: "legacy null state", plannedSize: 20, plannedIO: "iop_1",
+			priorState: types.StringNull(),
+		},
+		{
+			name: "resize", plannedSize: 30, plannedIO: "iop_1",
+			priorState: types.StringValue("built"),
+		},
+		{
+			name: "IO profile update", plannedSize: 20, plannedIO: "iop_2",
+			priorState: types.StringValue("built"),
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -185,7 +199,7 @@ func TestDiskModifyPlanPreservesStateOnlyForNonLifecycleUpdates(t *testing.T) {
 			stateModel := DiskResourceModel{
 				ID: types.StringValue("disk_test"), Name: types.StringValue("Data"),
 				SizeInGB: types.Int64Value(20), IOProfileID: types.StringValue("iop_1"),
-				ResizeMethod: types.StringValue("offline"), State: types.StringValue("built"),
+				ResizeMethod: types.StringValue("offline"), State: test.priorState,
 			}
 			planModel := stateModel
 			planModel.Name = types.StringValue("Data updated")

@@ -112,6 +112,11 @@ that the API cannot read back, mark imported state explicitly in resource-privat
 state, consume that marker on the first adoption plan, and require replacement
 for the same null-to-configured transition on provider-created resources.
 
+When stabilizing computed values in resource `ModifyPlan`, classify every
+replacement first and leave computed projections unknown on replacement plans.
+For in-place plans, copy only known, non-null prior state; copying legacy null
+state can cause an inconsistent result when `Read` normalizes it after apply.
+
 Never infer deprecated VM disk ownership from relationship counts during
 deletion. Exact disk IDs captured in resource-private state are authoritative;
 older VM state without those IDs must migrate additional relationships to

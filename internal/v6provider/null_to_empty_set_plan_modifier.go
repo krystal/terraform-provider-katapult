@@ -37,13 +37,10 @@ func (m nullToEmptySetPlanModifier) PlanModifySet(
 	req planmodifier.SetRequest,
 	resp *planmodifier.SetResponse,
 ) {
-	// Preserve a null value from existing state. SDKv2 resources can store an
-	// omitted optional+computed set as null, which is already equivalent to an
-	// empty remote collection and should not create a migration-only diff.
+	// Leave a legacy null state alone. On update the framework-generated plan is
+	// unknown, and preserving that distinction lets Read normalize it to an
+	// empty set without producing an inconsistent result after apply.
 	if req.ConfigValue.IsNull() && req.StateValue.IsNull() {
-		if !req.State.Raw.IsNull() {
-			resp.PlanValue = req.StateValue
-		}
 		return
 	}
 
