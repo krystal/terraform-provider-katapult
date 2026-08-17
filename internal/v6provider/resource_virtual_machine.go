@@ -104,7 +104,13 @@ const virtualMachineMarkdownDescription = "Manages a Virtual Machine in Katapult
 	"`katapult_disk_assignment` after the VM's first boot. VM deletion refuses " +
 	"remaining non-boot relationships, and disk deletion refuses every remaining " +
 	"relationship; remove assignment resources first so Terraform's dependency " +
-	"graph performs detach and unassign before endpoint deletion.\n\n" +
+	"graph performs detach and unassign before endpoint deletion. System disk growth " +
+	"typically completes quickly, including filesystem-aware offline growth. Offline " +
+	"shrink can take substantially longer because Katapult must shrink the filesystem " +
+	"and partition before reducing the disk. The default VM update timeout is 10 " +
+	"minutes; increase `timeouts.update` for large system disk shrink operations. " +
+	"Reaching the timeout stops Terraform waiting but does not cancel the Katapult " +
+	"resize task, so check its state before retrying.\n\n" +
 	"To migrate deprecated `disk` blocks, first refresh and use " +
 	"`katapult_virtual_machine_disks` to inventory assignments. Keep all legacy " +
 	"blocks while declaring and importing each additional disk and its " +
@@ -699,6 +705,13 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 			"timeouts": timeouts.Block(ctx, timeouts.Opts{ //nolint:goconst // Terraform block name.
 				Create: true,
 				Update: true,
+				UpdateDescription: "Maximum time Terraform waits for a Virtual " +
+					"Machine update to complete. Defaults to 10 minutes. System disk " +
+					"growth normally completes quickly, including filesystem-aware " +
+					"offline growth. Offline system disk shrink may take substantially " +
+					"longer; consider 4 hours or more for large disks. Reaching the " +
+					"timeout stops Terraform waiting but does not cancel the Katapult " +
+					"resize task, so check its state before retrying.",
 				Delete: true,
 			}),
 			"disk": schema.ListNestedBlock{

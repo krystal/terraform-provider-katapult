@@ -36,11 +36,17 @@ const diskMarkdownDescription = "Manages a standalone disk in Katapult.\n\n" +
 	"Offline resize requires the disk to be physically detached. Because an in-place " +
 	"disk resize and an in-place `katapult_disk_assignment.attached = false` update " +
 	"cannot be ordered safely in one Terraform graph, perform them in two applies: " +
-	"detach first, then change `size_in_gb`. Online growth leaves guest partition and " +
-	"filesystem expansion to the operator. Shrink is always offline, requires a " +
-	"recognized partition table and shrinkable filesystem, and may require a larger " +
-	"update timeout. Set `initial_file_system = \"ext4\"` for a new disk that Terraform " +
-	"must be able to shrink; XFS cannot be shrunk."
+	"detach first, then change `size_in_gb`. Disk size increases typically complete " +
+	"quickly. Offline growth also expands any supported filesystem, so the additional " +
+	"capacity is available when the disk is attached again. Online growth leaves guest " +
+	"partition and filesystem expansion to the operator. Offline shrink can take " +
+	"substantially longer because Katapult must shrink the filesystem and partition " +
+	"before reducing the disk. Shrink requires a recognized partition table and " +
+	"shrinkable filesystem. The default update timeout is 2 hours; consider increasing " +
+	"it for large shrink operations. Reaching the timeout stops Terraform waiting but " +
+	"does not cancel the Katapult resize task, so check its state before retrying. Set " +
+	"`initial_file_system = \"ext4\"` for a new disk that Terraform must be able to " +
+	"shrink; XFS cannot be shrunk."
 
 type (
 	DiskResource struct {
@@ -292,6 +298,12 @@ func (r *DiskResource) Schema(
 			"timeouts": timeouts.Block(ctx, timeouts.Opts{
 				Create: true,
 				Update: true,
+				UpdateDescription: "Maximum time Terraform waits for a disk update " +
+					"to complete. Defaults to 2 hours. Disk growth normally completes " +
+					"quickly, including filesystem-aware offline growth. Offline shrink " +
+					"may take substantially longer; consider 4 hours or more for large " +
+					"disks. Reaching the timeout stops Terraform waiting but does not " +
+					"cancel the Katapult resize task, so check its state before retrying.",
 				Delete: true,
 			}),
 		},

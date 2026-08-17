@@ -9,6 +9,11 @@ resource "katapult_disk" "data" {
   # expansion to the operator.
   resize_method = "offline"
 
+  # Growth normally completes quickly, including offline growth. Offline shrink
+  # can take much longer because Katapult must shrink the filesystem and
+  # partition before reducing the disk. The default update timeout is 2h; this
+  # allows additional time for large shrink operations and is not the expected
+  # duration of an ordinary resize.
   timeouts {
     update = "4h"
   }

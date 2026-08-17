@@ -5,7 +5,7 @@ subcategory: "Storage"
 description: |-
   Manages a standalone disk in Katapult.
   Assignment lifecycle is owned by katapult_disk_assignment. This resource refuses deletion while any assignment remains and never detaches or unassigns a relationship itself. Remove the assignment first so Terraform's dependency graph orders detach and unassign before disk deletion. The disk is deleted only when this resource itself is destroyed; use lifecycle { prevent_destroy = true } to guard important data.
-  Offline resize requires the disk to be physically detached. Because an in-place disk resize and an in-place katapult_disk_assignment.attached = false update cannot be ordered safely in one Terraform graph, perform them in two applies: detach first, then change size_in_gb. Online growth leaves guest partition and filesystem expansion to the operator. Shrink is always offline, requires a recognized partition table and shrinkable filesystem, and may require a larger update timeout. Set initial_file_system = "ext4" for a new disk that Terraform must be able to shrink; XFS cannot be shrunk.
+  Offline resize requires the disk to be physically detached. Because an in-place disk resize and an in-place katapult_disk_assignment.attached = false update cannot be ordered safely in one Terraform graph, perform them in two applies: detach first, then change size_in_gb. Disk size increases typically complete quickly. Offline growth also expands any supported filesystem, so the additional capacity is available when the disk is attached again. Online growth leaves guest partition and filesystem expansion to the operator. Offline shrink can take substantially longer because Katapult must shrink the filesystem and partition before reducing the disk. Shrink requires a recognized partition table and shrinkable filesystem. The default update timeout is 2 hours; consider increasing it for large shrink operations. Reaching the timeout stops Terraform waiting but does not cancel the Katapult resize task, so check its state before retrying. Set initial_file_system = "ext4" for a new disk that Terraform must be able to shrink; XFS cannot be shrunk.
 ---
 
 # katapult_disk (Resource)
@@ -14,7 +14,7 @@ Manages a standalone disk in Katapult.
 
 Assignment lifecycle is owned by `katapult_disk_assignment`. This resource refuses deletion while any assignment remains and never detaches or unassigns a relationship itself. Remove the assignment first so Terraform's dependency graph orders detach and unassign before disk deletion. The disk is deleted only when this resource itself is destroyed; use `lifecycle { prevent_destroy = true }` to guard important data.
 
-Offline resize requires the disk to be physically detached. Because an in-place disk resize and an in-place `katapult_disk_assignment.attached = false` update cannot be ordered safely in one Terraform graph, perform them in two applies: detach first, then change `size_in_gb`. Online growth leaves guest partition and filesystem expansion to the operator. Shrink is always offline, requires a recognized partition table and shrinkable filesystem, and may require a larger update timeout. Set `initial_file_system = "ext4"` for a new disk that Terraform must be able to shrink; XFS cannot be shrunk.
+Offline resize requires the disk to be physically detached. Because an in-place disk resize and an in-place `katapult_disk_assignment.attached = false` update cannot be ordered safely in one Terraform graph, perform them in two applies: detach first, then change `size_in_gb`. Disk size increases typically complete quickly. Offline growth also expands any supported filesystem, so the additional capacity is available when the disk is attached again. Online growth leaves guest partition and filesystem expansion to the operator. Offline shrink can take substantially longer because Katapult must shrink the filesystem and partition before reducing the disk. Shrink requires a recognized partition table and shrinkable filesystem. The default update timeout is 2 hours; consider increasing it for large shrink operations. Reaching the timeout stops Terraform waiting but does not cancel the Katapult resize task, so check its state before retrying. Set `initial_file_system = "ext4"` for a new disk that Terraform must be able to shrink; XFS cannot be shrunk.
 
 ## Example Usage
 
@@ -30,6 +30,11 @@ resource "katapult_disk" "data" {
   # expansion to the operator.
   resize_method = "offline"
 
+  # Growth normally completes quickly, including offline growth. Offline shrink
+  # can take much longer because Katapult must shrink the filesystem and
+  # partition before reducing the disk. The default update timeout is 2h; this
+  # allows additional time for large shrink operations and is not the expected
+  # duration of an ordinary resize.
   timeouts {
     update = "4h"
   }
@@ -68,7 +73,7 @@ Optional:
 
 - `create` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
 - `delete` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.
-- `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+- `update` (String) Maximum time Terraform waits for a disk update to complete. Defaults to 2 hours. Disk growth normally completes quickly, including filesystem-aware offline growth. Offline shrink may take substantially longer; consider 4 hours or more for large disks. Reaching the timeout stops Terraform waiting but does not cancel the Katapult resize task, so check its state before retrying.
 
 ## Import
 
