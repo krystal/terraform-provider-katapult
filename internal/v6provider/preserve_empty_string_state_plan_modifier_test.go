@@ -27,6 +27,13 @@ func TestPreserveEmptyStringStateForNullConfig(t *testing.T) {
 			wantResult: types.StringValue(""),
 		},
 		{
+			name:       "null state remains known",
+			config:     types.StringNull(),
+			plan:       types.StringUnknown(),
+			state:      types.StringNull(),
+			wantResult: types.StringNull(),
+		},
+		{
 			name:       "configured value",
 			config:     types.StringValue("configured"),
 			plan:       types.StringValue("configured"),

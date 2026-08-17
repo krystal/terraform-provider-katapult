@@ -1392,6 +1392,87 @@ func knownTestSystemDisk(t *testing.T, id string) types.Object {
 	return value
 }
 
+func TestStabilizeVirtualMachinePlanUsesProjectionDependencies(t *testing.T) {
+	t.Parallel()
+
+	emptyStrings := types.SetValueMust(types.StringType, []attr.Value{})
+	ipIDs := types.SetValueMust(types.StringType, []attr.Value{
+		types.StringValue("ip_1"),
+	})
+	ipAddresses := types.SetValueMust(types.StringType, []attr.Value{
+		types.StringValue("192.0.2.1"),
+	})
+	interfaces := types.ListValueMust(types.StringType, []attr.Value{
+		types.StringValue("vmnet_1"),
+	})
+	state := VirtualMachineResourceModel{
+		Hostname:            types.StringValue("web"),
+		FQDN:                types.StringValue("web.example.test"),
+		SystemDisk:          knownTestSystemDisk(t, "disk_boot"),
+		IPAddressIDs:        ipIDs,
+		IPAddresses:         ipAddresses,
+		VirtualNetworkIDs:   emptyStrings,
+		NetworkInterfaces:   interfaces,
+		NetworkSpeedProfile: types.StringValue("10gbps"),
+	}
+	plan := state
+	plan.FQDN = types.StringUnknown()
+	plan.IPAddresses = types.SetUnknown(types.StringType)
+	plan.NetworkInterfaces = types.ListUnknown(types.StringType)
+	plannedSystem, diags := decodeVirtualMachineSystemDisk(
+		context.Background(), plan.SystemDisk,
+	)
+	require.False(t, diags.HasError(), diags.Errors())
+	plannedSystem.State = types.StringUnknown()
+	plan.SystemDisk, diags = virtualMachineSystemDiskValue(
+		context.Background(), plannedSystem,
+	)
+	require.False(t, diags.HasError(), diags.Errors())
+
+	_, diags = stabilizeVirtualMachinePlan(context.Background(), &plan, &state)
+	require.False(t, diags.HasError(), diags.Errors())
+	require.Equal(t, state.FQDN, plan.FQDN)
+	require.Equal(t, state.IPAddresses, plan.IPAddresses)
+	require.Equal(t, state.NetworkInterfaces, plan.NetworkInterfaces)
+	plannedSystem, diags = decodeVirtualMachineSystemDisk(
+		context.Background(), plan.SystemDisk,
+	)
+	require.False(t, diags.HasError(), diags.Errors())
+	require.Equal(t, "built", plannedSystem.State.ValueString())
+
+	changed := state
+	changed.Hostname = types.StringValue("web-renamed")
+	changed.FQDN = types.StringUnknown()
+	changed.IPAddressIDs = types.SetValueMust(types.StringType, []attr.Value{
+		types.StringValue("ip_2"),
+	})
+	changed.IPAddresses = types.SetUnknown(types.StringType)
+	changed.NetworkInterfaces = types.ListUnknown(types.StringType)
+	changedSystem, changedDiags := decodeVirtualMachineSystemDisk(
+		context.Background(), state.SystemDisk,
+	)
+	require.False(t, changedDiags.HasError(), changedDiags.Errors())
+	changedSystem.SizeInGB = types.Int64Value(30)
+	changedSystem.State = types.StringUnknown()
+	changed.SystemDisk, changedDiags = virtualMachineSystemDiskValue(
+		context.Background(), changedSystem,
+	)
+	require.False(t, changedDiags.HasError(), changedDiags.Errors())
+
+	_, changedDiags = stabilizeVirtualMachinePlan(
+		context.Background(), &changed, &state,
+	)
+	require.False(t, changedDiags.HasError(), changedDiags.Errors())
+	require.True(t, changed.FQDN.IsUnknown())
+	require.True(t, changed.IPAddresses.IsUnknown())
+	require.True(t, changed.NetworkInterfaces.IsUnknown())
+	changedSystem, changedDiags = decodeVirtualMachineSystemDisk(
+		context.Background(), changed.SystemDisk,
+	)
+	require.False(t, changedDiags.HasError(), changedDiags.Errors())
+	require.True(t, changedSystem.State.IsUnknown())
+}
+
 func legacyDiskList(t *testing.T, disks []VirtualMachineDiskModel) types.List {
 	t.Helper()
 	value, diags := types.ListValueFrom(context.Background(), types.ObjectType{

@@ -115,13 +115,21 @@ func (r *DiskResource) ModifyPlan(
 	req resource.ModifyPlanRequest,
 	resp *resource.ModifyPlanResponse,
 ) {
-	if r.M == nil || req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
 		return
 	}
 	var plan, state DiskResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
-	if resp.Diagnostics.HasError() || len(resp.RequiresReplace) > 0 ||
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if stabilizeDiskPlan(&plan, &state, len(resp.RequiresReplace) > 0) {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(
+			ctx, path.Root(stateAttributeName), plan.State,
+		)...)
+	}
+	if resp.Diagnostics.HasError() || r.M == nil || len(resp.RequiresReplace) > 0 ||
 		plan.SizeInGB.IsUnknown() || plan.ResizeMethod.IsUnknown() ||
 		state.SizeInGB.IsNull() || plan.SizeInGB.Equal(state.SizeInGB) {
 		return
@@ -156,6 +164,20 @@ func (r *DiskResource) ModifyPlan(
 	if resp.Private != nil {
 		resp.Diagnostics.Append(resp.Private.SetKey(ctx, diskResizeMethodPrivateKey, encodedMethod)...)
 	}
+}
+
+func stabilizeDiskPlan(
+	plan, state *DiskResourceModel,
+	replacing bool,
+) bool {
+	if replacing || !plan.State.IsUnknown() ||
+		!plan.SizeInGB.Equal(state.SizeInGB) ||
+		!plan.IOProfileID.Equal(state.IOProfileID) {
+		return false
+	}
+
+	plan.State = state.State
+	return true
 }
 
 func (r *DiskResource) Metadata(

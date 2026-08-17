@@ -205,15 +205,23 @@ func (r *VirtualMachineResource) ModifyPlan(
 		}
 		return
 	}
-	if r.M == nil {
-		return
-	}
-
 	var state VirtualMachineResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	priorSystem, priorSystemDiags := decodeVirtualMachineSystemDisk(ctx, state.SystemDisk)
 	resp.Diagnostics.Append(priorSystemDiags...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+	projections, projectionDiags := stabilizeVirtualMachinePlan(
+		ctx, &plan, &state,
+	)
+	resp.Diagnostics.Append(projectionDiags...)
+	for _, projection := range projections {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(
+			ctx, projection.path, projection.value,
+		)...)
+	}
+	if resp.Diagnostics.HasError() || r.M == nil {
 		return
 	}
 	templateImportEligible := false
@@ -377,6 +385,76 @@ func (r *VirtualMachineResource) ModifyPlan(
 	if resp.Private != nil {
 		resp.Diagnostics.Append(resp.Private.SetKey(ctx, virtualMachineSystemDiskResizePrivateKey, encodedMethod)...)
 	}
+}
+
+// stabilizeVirtualMachinePlan preserves API projections when none of their
+// inputs can change during the planned update. Terraform Plugin Framework
+// otherwise marks every unconfigured computed value unknown for any update.
+type virtualMachinePlanProjection struct {
+	path  path.Path
+	value attr.Value
+}
+
+func stabilizeVirtualMachinePlan(
+	ctx context.Context,
+	plan, state *VirtualMachineResourceModel,
+) ([]virtualMachinePlanProjection, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	projections := make([]virtualMachinePlanProjection, 0, 4)
+
+	if plan.FQDN.IsUnknown() && plan.Hostname.Equal(state.Hostname) {
+		plan.FQDN = state.FQDN
+		projections = append(projections, virtualMachinePlanProjection{
+			path: path.Root("fqdn"), value: plan.FQDN,
+		})
+	}
+	if plan.IPAddresses.IsUnknown() &&
+		plan.IPAddressIDs.Equal(state.IPAddressIDs) {
+		plan.IPAddresses = state.IPAddresses
+		projections = append(projections, virtualMachinePlanProjection{
+			path: path.Root("ip_addresses"), value: plan.IPAddresses,
+		})
+	}
+	if plan.NetworkInterfaces.IsUnknown() &&
+		plan.IPAddressIDs.Equal(state.IPAddressIDs) &&
+		plan.VirtualNetworkIDs.Equal(state.VirtualNetworkIDs) {
+		plan.NetworkInterfaces = state.NetworkInterfaces
+		projections = append(projections, virtualMachinePlanProjection{
+			path:  path.Root("network_interfaces"),
+			value: plan.NetworkInterfaces,
+		})
+	}
+
+	if plan.SystemDisk.IsNull() || plan.SystemDisk.IsUnknown() ||
+		state.SystemDisk.IsNull() || state.SystemDisk.IsUnknown() {
+		return projections, diags
+	}
+	plannedSystem, plannedDiags := decodeVirtualMachineSystemDisk(
+		ctx, plan.SystemDisk,
+	)
+	priorSystem, priorDiags := decodeVirtualMachineSystemDisk(
+		ctx, state.SystemDisk,
+	)
+	diags.Append(plannedDiags...)
+	diags.Append(priorDiags...)
+	if diags.HasError() {
+		return projections, diags
+	}
+	if plannedSystem.State.IsUnknown() &&
+		plannedSystem.SizeInGB.Equal(priorSystem.SizeInGB) {
+		plannedSystem.State = priorSystem.State
+		var valueDiags diag.Diagnostics
+		plan.SystemDisk, valueDiags = virtualMachineSystemDiskValue(
+			ctx, plannedSystem,
+		)
+		diags.Append(valueDiags...)
+		projections = append(projections, virtualMachinePlanProjection{
+			path:  path.Root("system_disk").AtName(stateAttributeName),
+			value: plannedSystem.State,
+		})
+	}
+
+	return projections, diags
 }
 
 func validateChangedLegacyDiskSizes(ctx context.Context, state, plan types.List) error {

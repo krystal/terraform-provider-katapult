@@ -1175,6 +1175,18 @@ func TestAccKatapultVirtualMachine_disk_assignment(t *testing.T) {
 			},
 			{
 				Config: assignmentConfig(false),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue(
+							"katapult_disk_assignment.data",
+							tfjsonpath.New("attach_on_boot"),
+						),
+						plancheck.ExpectUnknownValue(
+							"katapult_disk_assignment.data",
+							tfjsonpath.New("attachment_state"),
+						),
+					},
+				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"katapult_disk_assignment.data", "attached", "false",
@@ -1189,6 +1201,18 @@ func TestAccKatapultVirtualMachine_disk_assignment(t *testing.T) {
 			},
 			{
 				Config: assignmentConfig(true),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue(
+							"katapult_disk_assignment.data",
+							tfjsonpath.New("attach_on_boot"),
+						),
+						plancheck.ExpectUnknownValue(
+							"katapult_disk_assignment.data",
+							tfjsonpath.New("attachment_state"),
+						),
+					},
+				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"katapult_disk_assignment.data", "attached", "true",

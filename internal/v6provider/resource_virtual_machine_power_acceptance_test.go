@@ -1,11 +1,15 @@
 package v6provider
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/next/core"
 	"github.com/stretchr/testify/require"
@@ -34,6 +38,9 @@ func TestAccKatapultVirtualMachine_power_state(t *testing.T) {
 			},
 			{
 				Config: virtualMachinePowerTestConfig(name, &poweredOn),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: virtualMachinePowerStablePlanChecks(),
+				},
 				Check: virtualMachinePowerTestChecks(
 					"started", true, &vmID, true,
 				),
@@ -49,6 +56,9 @@ func TestAccKatapultVirtualMachine_power_state(t *testing.T) {
 			},
 			{
 				Config: virtualMachinePowerTestConfig(name, &poweredOff),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: virtualMachinePowerStablePlanChecks(),
+				},
 				Check: virtualMachinePowerTestChecks(
 					"stopped", false, &vmID, true,
 				),
@@ -81,6 +91,82 @@ func TestAccKatapultVirtualMachine_power_state(t *testing.T) {
 	})
 }
 
+func virtualMachinePowerStablePlanChecks() []plancheck.PlanCheck {
+	const address = "katapult_virtual_machine.base"
+
+	return []plancheck.PlanCheck{
+		plancheck.ExpectUnknownValue(address, tfjsonpath.New("state")),
+		plancheck.ExpectKnownValue(
+			address, tfjsonpath.New("fqdn"), knownvalue.NotNull(),
+		),
+		plancheck.ExpectKnownValue(
+			address, tfjsonpath.New("ip_addresses"), knownvalue.SetSizeExact(1),
+		),
+		plancheck.ExpectKnownValue(
+			address, tfjsonpath.New("network_interfaces"),
+			knownvalue.ListSizeExact(1),
+		),
+		plancheck.ExpectKnownValue(
+			address, tfjsonpath.New("system_disk").AtMapKey("state"),
+			knownvalue.StringExact("built"),
+		),
+		plancheck.ExpectKnownValue(
+			address, tfjsonpath.New("tags"), knownvalue.SetSizeExact(0),
+		),
+		plancheck.ExpectKnownValue(
+			address, tfjsonpath.New("virtual_network_ids"),
+			knownvalue.SetSizeExact(0),
+		),
+		expectKnownNullPlanValue{
+			resourceAddress: address,
+			attributePath:   tfjsonpath.New("group_id"),
+		},
+	}
+}
+
+type expectKnownNullPlanValue struct {
+	resourceAddress string
+	attributePath   tfjsonpath.Path
+}
+
+func (e expectKnownNullPlanValue) CheckPlan(
+	_ context.Context,
+	req plancheck.CheckPlanRequest,
+	resp *plancheck.CheckPlanResponse,
+) {
+	for _, change := range req.Plan.ResourceChanges {
+		if change.Address != e.resourceAddress {
+			continue
+		}
+		unknown, unknownErr := tfjsonpath.Traverse(
+			change.Change.AfterUnknown, e.attributePath,
+		)
+		if unknownErr == nil && unknown == true {
+			resp.Error = fmt.Errorf(
+				"expected known null value at %s.%s, but it was unknown",
+				e.resourceAddress, e.attributePath.String(),
+			)
+			return
+		}
+		value, err := tfjsonpath.Traverse(change.Change.After, e.attributePath)
+		if err != nil {
+			resp.Error = err
+			return
+		}
+		if value != nil {
+			resp.Error = fmt.Errorf(
+				"expected null value at %s.%s, got %v",
+				e.resourceAddress, e.attributePath.String(), value,
+			)
+		}
+		return
+	}
+
+	resp.Error = fmt.Errorf(
+		"resource %s not found in plan", e.resourceAddress,
+	)
+}
+
 func virtualMachinePowerTestConfig(name string, poweredOn *bool) string {
 	poweredOnConfig := ""
 	if poweredOn != nil {
@@ -99,6 +185,7 @@ func virtualMachinePowerTestConfig(name string, poweredOn *bool) string {
 				install_agent = true
 			}
 			ip_address_ids = [katapult_ip.web.id]
+			system_disk   = {}
 			%s
 
 			timeouts {

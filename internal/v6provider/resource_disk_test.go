@@ -20,8 +20,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/jimeh/undent"
 	"github.com/krystal/go-katapult/next/core"
 	"github.com/stretchr/testify/require"
@@ -162,6 +164,52 @@ func TestDiskModifyPlanSkipsResizeValidationForMissingDisk(t *testing.T) {
 	r.ModifyPlan(context.Background(), req, &resp)
 
 	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+}
+
+func TestDiskModifyPlanPreservesStateOnlyForNonLifecycleUpdates(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name        string
+		plannedSize int64
+		plannedIO   string
+		wantKnown   bool
+	}{
+		{name: "name or bus update", plannedSize: 20, plannedIO: "iop_1", wantKnown: true},
+		{name: "resize", plannedSize: 30, plannedIO: "iop_1"},
+		{name: "IO profile update", plannedSize: 20, plannedIO: "iop_2"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			r := &DiskResource{}
+			stateModel := DiskResourceModel{
+				ID: types.StringValue("disk_test"), Name: types.StringValue("Data"),
+				SizeInGB: types.Int64Value(20), IOProfileID: types.StringValue("iop_1"),
+				ResizeMethod: types.StringValue("offline"), State: types.StringValue("built"),
+			}
+			planModel := stateModel
+			planModel.Name = types.StringValue("Data updated")
+			planModel.SizeInGB = types.Int64Value(test.plannedSize)
+			planModel.IOProfileID = types.StringValue(test.plannedIO)
+			planModel.State = types.StringUnknown()
+			state := diskTestState(t, r, stateModel)
+			plan := diskTestState(t, r, planModel)
+			resp := frameworkresource.ModifyPlanResponse{Plan: tfsdk.Plan(plan)}
+
+			r.ModifyPlan(context.Background(), frameworkresource.ModifyPlanRequest{
+				Plan: tfsdk.Plan(plan), State: state,
+			}, &resp)
+
+			require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+			var got DiskResourceModel
+			diags := resp.Plan.Get(context.Background(), &got)
+			require.False(t, diags.HasError(), diags.Errors())
+			require.Equal(t, test.wantKnown, !got.State.IsUnknown())
+			if test.wantKnown {
+				require.Equal(t, "built", got.State.ValueString())
+			}
+		})
+	}
 }
 
 func TestDiskCreateIncludesInitialFileSystem(t *testing.T) {
@@ -701,6 +749,36 @@ func TestAccKatapultDisk_update(t *testing.T) {
 						"data.katapult_disk_io_profile.selected", "id",
 					),
 					captureResourceAttr(
+						"katapult_disk.test", "id", &diskID,
+					),
+				),
+			},
+			{
+				Config: undent.Stringf(`
+					data "katapult_disk_io_profile" "selected" {
+					  permalink = "100k"
+					}
+
+					resource "katapult_disk" "test" {
+					  name          = "%s"
+					  size_in_gb    = 20
+					  bus_type      = "virtio"
+					  io_profile_id = data.katapult_disk_io_profile.selected.id
+					}`, nameUpdated,
+				),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue(
+							"katapult_disk.test", tfjsonpath.New("state"),
+							knownvalue.StringExact("built"),
+						),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"katapult_disk.test", "name", nameUpdated,
+					),
+					resource.TestCheckResourceAttrPtr(
 						"katapult_disk.test", "id", &diskID,
 					),
 				),

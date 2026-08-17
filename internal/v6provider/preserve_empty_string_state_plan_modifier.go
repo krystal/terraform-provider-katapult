@@ -32,8 +32,11 @@ func (preserveEmptyStringStateForNullConfigModifier) PlanModifyString(
 	req planmodifier.StringRequest,
 	resp *planmodifier.StringResponse,
 ) {
-	if !req.ConfigValue.IsNull() || req.StateValue.IsNull() ||
-		req.StateValue.IsUnknown() {
+	if !req.ConfigValue.IsNull() || req.StateValue.IsUnknown() {
+		return
+	}
+	if req.StateValue.IsNull() {
+		resp.PlanValue = req.StateValue
 		return
 	}
 
