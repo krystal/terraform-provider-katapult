@@ -33,18 +33,25 @@ func testSweepVMGroups(_ string) error {
 	}
 
 	for _, vmg := range res.JSON200.VirtualMachineGroups {
+		if vmg.Name == nil {
+			continue
+		}
 		if !strings.HasPrefix(*vmg.Name, testAccResourceNamePrefix) {
 			continue
 		}
+		if vmg.Id == nil {
+			return fmt.Errorf("virtual machine group %q has no ID", *vmg.Name)
+		}
+		vmgID, vmgName := *vmg.Id, *vmg.Name
 
 		m.Logger.Info(
-			"deleting virtual machine group", "id", vmg.Id, "name", vmg.Name,
+			"deleting virtual machine group", "id", vmgID, "name", vmgName,
 		)
 
 		_, err := m.Core.DeleteVirtualMachineGroupWithResponse(ctx,
 			core.DeleteVirtualMachineGroupJSONRequestBody{
 				VirtualMachineGroup: core.VirtualMachineGroupLookup{
-					Id: vmg.Id,
+					Id: &vmgID,
 				},
 			})
 		if err != nil {

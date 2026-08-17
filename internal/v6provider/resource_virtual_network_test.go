@@ -47,17 +47,24 @@ func testSweepVirtualNetworks(_ string) error {
 	}
 
 	for _, vNet := range virtualNetwork {
+		if vNet.Name == nil {
+			continue
+		}
 		if !strings.HasPrefix(*vNet.Name, testAccResourceNamePrefix) {
 			continue
 		}
+		if vNet.Id == nil {
+			return fmt.Errorf("virtual network %q has no ID", *vNet.Name)
+		}
+		vNetID, vNetName := *vNet.Id, *vNet.Name
 
 		m.Logger.Info("deleting virtual network",
-			"id", vNet.Id,
-			"name", vNet.Name,
+			"id", vNetID,
+			"name", vNetName,
 		)
 		_, err := m.Core.DeleteVirtualNetworkWithResponse(ctx,
 			core.DeleteVirtualNetworkJSONRequestBody{
-				VirtualNetwork: core.VirtualNetworkLookup{Id: vNet.Id},
+				VirtualNetwork: core.VirtualNetworkLookup{Id: &vNetID},
 			},
 		)
 		if err != nil {

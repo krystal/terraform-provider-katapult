@@ -26,6 +26,7 @@ func init() { //nolint:gochecknoinits
 	})
 }
 
+//nolint:gocyclo // Keep the destructive stop, delete, and purge lifecycle linear and auditable.
 func testSweepVirtualMachines(_ string) error {
 	m := sweepMeta()
 	ctx := context.TODO()
@@ -47,8 +48,14 @@ func testSweepVirtualMachines(_ string) error {
 	}
 
 	for _, vmSlim := range vms {
+		if vmSlim.Name == nil {
+			continue
+		}
 		if !strings.HasPrefix(*vmSlim.Name, testAccResourceNamePrefix) {
 			continue
+		}
+		if vmSlim.Id == nil {
+			return fmt.Errorf("virtual machine %q has no ID", *vmSlim.Name)
 		}
 
 		vmRes, err := m.Core.GetVirtualMachineWithResponse(ctx,
@@ -58,10 +65,17 @@ func testSweepVirtualMachines(_ string) error {
 		if err != nil {
 			return err
 		}
+		if vmRes == nil || vmRes.JSON200 == nil {
+			return fmt.Errorf("unexpected empty response fetching virtual machine %s", *vmSlim.Id)
+		}
 
 		vm := vmRes.JSON200.VirtualMachine
+		if vm.Id == nil || vm.Name == nil || vm.State == nil {
+			return fmt.Errorf("virtual machine %s response has incomplete identity or state", *vmSlim.Id)
+		}
+		vmID, vmName := *vm.Id, *vm.Name
 
-		m.Logger.Info("deleting virtual machine", "id", vm.Id, "name", vm.Name)
+		m.Logger.Info("deleting virtual machine", "id", vmID, "name", vmName)
 
 		stopped := false
 		switch *vm.State { //nolint:exhaustive
@@ -69,7 +83,7 @@ func testSweepVirtualMachines(_ string) error {
 			_, stopErr := m.Core.PostVirtualMachineStopWithResponse(ctx,
 				core.PostVirtualMachineStopJSONRequestBody{
 					VirtualMachine: core.VirtualMachineLookup{
-						Id: vm.Id,
+						Id: &vmID,
 					},
 				})
 			if stopErr != nil {
@@ -101,7 +115,7 @@ func testSweepVirtualMachines(_ string) error {
 				Refresh: func() (interface{}, string, error) {
 					res, err2 := m.Core.GetVirtualMachineWithResponse(ctx,
 						&core.GetVirtualMachineParams{
-							VirtualMachineId: vm.Id,
+							VirtualMachineId: &vmID,
 						})
 
 					if err2 != nil {
@@ -120,7 +134,7 @@ func testSweepVirtualMachines(_ string) error {
 			}
 
 			m.Logger.Info(
-				"stopping virtual machine", "id", vm.Id, "name", vm.Name,
+				"stopping virtual machine", "id", vmID, "name", vmName,
 			)
 
 			_, err = stopWaiter.WaitForStateContext(ctx)
@@ -134,7 +148,7 @@ func testSweepVirtualMachines(_ string) error {
 		delRes, err := m.Core.DeleteVirtualMachineWithResponse(ctx,
 			core.DeleteVirtualMachineJSONRequestBody{
 				VirtualMachine: &core.VirtualMachineLookup{
-					Id: vm.Id,
+					Id: &vmID,
 				},
 			})
 		// trash, _, err := m.Core.VirtualMachines.Delete(ctx, vm.Ref())
@@ -176,7 +190,7 @@ func testSweepVirtualMachines(_ string) error {
 		}
 
 		m.Logger.Info(
-			"purging virtual machine", "id", vm.Id, "name", vm.Name,
+			"purging virtual machine", "id", vmID, "name", vmName,
 		)
 
 		_, err = trashWaiter.WaitForStateContext(ctx)

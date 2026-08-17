@@ -50,15 +50,22 @@ func testSweepAddressLists(_ string) error {
 	}
 
 	for _, list := range addressLists {
+		if list.Name == nil {
+			continue
+		}
 		if !strings.HasPrefix(*list.Name, testAccResourceNamePrefix) {
 			continue
 		}
+		if list.Id == nil {
+			return fmt.Errorf("address list %q has no ID", *list.Name)
+		}
+		listID, listName := *list.Id, *list.Name
 
-		m.Logger.Info("deleting address list", "id", list.Id, "name", list.Name)
+		m.Logger.Info("deleting address list", "id", listID, "name", listName)
 		_, err := m.Core.DeleteAddressListWithResponse(ctx,
 			core.DeleteAddressListJSONRequestBody{
 				AddressList: core.AddressListLookup{
-					Id: list.Id,
+					Id: &listID,
 				},
 			})
 		if err != nil {
