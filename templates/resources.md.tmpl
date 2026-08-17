@@ -29,6 +29,25 @@ description: |-
 
 {{ .Description | trimspace }}
 
+{{- if eq .Name "katapult_virtual_machine" }}
+
+## Guides
+
+- [Importing Existing Virtual Machines](../guides/importing-virtual-machines.md)
+- [Migrating Legacy Virtual Machine Disks](../guides/migrating-legacy-virtual-machine-disks.md)
+{{- else if eq .Name "katapult_disk" }}
+
+## Guides
+
+- [Importing Existing Virtual Machines](../guides/importing-virtual-machines.md)
+- [Migrating Legacy Virtual Machine Disks](../guides/migrating-legacy-virtual-machine-disks.md)
+{{- else if eq .Name "katapult_disk_assignment" }}
+
+## Guides
+
+- [Migrating Legacy Virtual Machine Disks](../guides/migrating-legacy-virtual-machine-disks.md)
+{{- end }}
+
 {{ if .HasExample -}}
 ## Example Usage
 

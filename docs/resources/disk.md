@@ -16,6 +16,11 @@ Assignment lifecycle is owned by `katapult_disk_assignment`. This resource refus
 
 Offline resize requires the disk to be physically detached. Because an in-place disk resize and an in-place `katapult_disk_assignment.attached = false` update cannot be ordered safely in one Terraform graph, perform them in two applies: detach first, then change `size_in_gb`. Disk size increases typically complete quickly. Offline growth also expands any supported filesystem, so the additional capacity is available when the disk is attached again. Online growth leaves guest partition and filesystem expansion to the operator. Offline shrink can take substantially longer because Katapult must shrink the filesystem and partition before reducing the disk. Shrink requires a recognized partition table and shrinkable filesystem. The default update timeout is 2 hours; consider increasing it for large shrink operations. Reaching the timeout stops Terraform waiting but does not cancel the Katapult resize task, so check its state before retrying. Set `initial_file_system = "ext4"` for a new disk that Terraform must be able to shrink; XFS cannot be shrunk.
 
+## Guides
+
+- [Importing Existing Virtual Machines](../guides/importing-virtual-machines.md)
+- [Migrating Legacy Virtual Machine Disks](../guides/migrating-legacy-virtual-machine-disks.md)
+
 ## Example Usage
 
 ```terraform

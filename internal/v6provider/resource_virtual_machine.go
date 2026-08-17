@@ -110,23 +110,7 @@ const virtualMachineMarkdownDescription = "Manages a Virtual Machine in Katapult
 	"and partition before reducing the disk. The default VM update timeout is 10 " +
 	"minutes; increase `timeouts.update` for large system disk shrink operations. " +
 	"Reaching the timeout stops Terraform waiting but does not cancel the Katapult " +
-	"resize task, so check its state before retrying.\n\n" +
-	"To migrate deprecated `disk` blocks, first refresh and use " +
-	"`katapult_virtual_machine_disks` to inventory assignments. Keep all legacy " +
-	"blocks while declaring and importing each additional disk and its " +
-	"`VM_ID/DISK_ID` assignment. Then remove every legacy block and optionally " +
-	"add an equivalent `system_disk` object for the former first entry. Terraform " +
-	"providers cannot inspect whether sibling resources were imported, so skipping " +
-	"the first stage leaves additional disks unmanaged even though the VM migration " +
-	"itself is non-destructive. VMs created by older provider versions do not have " +
-	"the exact deprecated disk identities needed for safe cascade deletion, so a VM " +
-	"that still has additional legacy relationships must complete this migration " +
-	"before Terraform can destroy it.\n\n" +
-	"Importing a VM discovers its boot disk but does not create sibling resources. " +
-	"Import the VM by VM ID, then import every additional disk by disk ID and " +
-	"every relationship by `VM_ID/DISK_ID`. Disk-template identity and options " +
-	"configured after import are adopted once when they match the discovered " +
-	"installation rather than replacing the VM."
+	"resize task, so check its state before retrying."
 
 var vmNetworkInterfaceAttrTypes = map[string]attr.Type{
 	"id":                 types.StringType,

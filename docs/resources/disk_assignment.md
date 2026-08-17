@@ -16,6 +16,10 @@ For a running VM, `attached = true` enables attach-on-boot and physically attach
 
 Import an existing relationship with `terraform import katapult_disk_assignment.NAME VM_ID/DISK_ID`. Destroy this resource before destroying its VM or disk; Terraform references provide graph-safe detach and unassign ordering without deleting either endpoint.
 
+## Guides
+
+- [Migrating Legacy Virtual Machine Disks](../guides/migrating-legacy-virtual-machine-disks.md)
+
 ## Example Usage
 
 ```terraform
