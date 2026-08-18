@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.20](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.19...v0.0.20) (2026-08-18)
+
+
+### Features
+
+* add disk and I/O profile data sources ([#197](https://github.com/krystal/terraform-provider-katapult/issues/197)) ([38b4b21](https://github.com/krystal/terraform-provider-katapult/commit/38b4b21250813aa34c29a8ba511cdb73e2ae5c57))
+* add first-class disk management ([#197](https://github.com/krystal/terraform-provider-katapult/issues/197)) ([38b4b21](https://github.com/krystal/terraform-provider-katapult/commit/38b4b21250813aa34c29a8ba511cdb73e2ae5c57))
+* add virtual machines data source ([#198](https://github.com/krystal/terraform-provider-katapult/issues/198)) ([4165b9a](https://github.com/krystal/terraform-provider-katapult/commit/4165b9a5f25e036bfe55c20fe8439e12f129b967))
+* **resource/katapult_virtual_machine:** support importing existing virtual machines ([#197](https://github.com/krystal/terraform-provider-katapult/issues/197)) ([38b4b21](https://github.com/krystal/terraform-provider-katapult/commit/38b4b21250813aa34c29a8ba511cdb73e2ae5c57))
+* **virtual-machine:** manage power state ([#196](https://github.com/krystal/terraform-provider-katapult/issues/196)) ([d10b111](https://github.com/krystal/terraform-provider-katapult/commit/d10b11179957a9b883f7936a7bd22b51e0c02849))
+* **virtual-machine:** migrate VM support to the v6 provider ([#171](https://github.com/krystal/terraform-provider-katapult/issues/171)) ([6df5287](https://github.com/krystal/terraform-provider-katapult/commit/6df52872c2e54c344d3cd267a98703b257dc9828))
+
 ## [0.0.19](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.18...v0.0.19) (2026-08-12)
 
 
