@@ -298,6 +298,7 @@ func (k *KatapultProvider) DataSources(
 		},
 		func() datasource.DataSource { return &VirtualMachineDataSource{} },
 		func() datasource.DataSource { return &VirtualMachineDisksDataSource{} },
+		func() datasource.DataSource { return &VirtualMachinesDataSource{} },
 	}
 }
 

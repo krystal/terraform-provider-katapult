@@ -96,6 +96,10 @@ The generated API nullable type reports an explicit JSON `null` as specified.
 For nullable relationships such as `Disk.VirtualMachineDisk`, check both
 `IsSpecified()` and `IsNull()` before calling `Get()`.
 
+The organization VM list endpoint may lowercase hostnames while VM resource
+state retains configured casing. Collection tests and consumers must not assume
+casing is identical across those views.
+
 Route every `StateChangeConf` delay, minimum timeout, and poll interval through
 the provider `Meta` timing helpers, including test sweepers. Compress any
 additional wall-clock settling window in replay mode so recorded state
