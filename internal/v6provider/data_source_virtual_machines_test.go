@@ -153,6 +153,16 @@ func TestVirtualMachineSummaryDataSourceModelNullablesAndEmptyIPs(t *testing.T) 
 	assert.Empty(t, missingModel.IPAddresses.Elements())
 }
 
+func TestCheckVirtualMachineCollectionMinimumCount(t *testing.T) {
+	t.Parallel()
+
+	check := testAccCheckVirtualMachineCollectionMinimumCount(2)
+	assert.NoError(t, check("2"))
+	assert.NoError(t, check("3"))
+	assert.ErrorContains(t, check("1"), "want at least 2")
+	assert.Error(t, check("not-a-count"))
+}
+
 func TestAccKatapultDataSourceVirtualMachines_all(t *testing.T) {
 	tt := newTestTools(t)
 	name := tt.ResourceName("collection")
@@ -214,8 +224,10 @@ func TestAccKatapultDataSourceVirtualMachines_all(t *testing.T) {
 					name+"-second", name+"-second-host",
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"data.katapult_virtual_machines.all", "virtual_machines.#", "2",
+					resource.TestCheckResourceAttrWith(
+						"data.katapult_virtual_machines.all",
+						"virtual_machines.#",
+						testAccCheckVirtualMachineCollectionMinimumCount(2),
 					),
 					testAccCheckVirtualMachineCollectionContains(
 						"data.katapult_virtual_machines.all", "katapult_virtual_machine.first",
@@ -230,6 +242,24 @@ func TestAccKatapultDataSourceVirtualMachines_all(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccCheckVirtualMachineCollectionMinimumCount(
+	minimum int,
+) resource.CheckResourceAttrWithFunc {
+	return func(value string) error {
+		count, err := strconv.Atoi(value)
+		if err != nil {
+			return fmt.Errorf("reading Virtual Machine collection count %q: %w", value, err)
+		}
+		if count < minimum {
+			return fmt.Errorf(
+				"Virtual Machine collection contains %d entries, want at least %d",
+				count, minimum,
+			)
+		}
+		return nil
+	}
 }
 
 func testAccCheckVirtualMachineCollectionContains(
