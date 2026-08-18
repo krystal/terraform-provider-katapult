@@ -12,15 +12,18 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -48,6 +51,7 @@ type (
 		DiskTemplate        types.String   `tfsdk:"disk_template"`
 		DiskTemplateOptions types.Map      `tfsdk:"disk_template_options"`
 		Disk                types.List     `tfsdk:"disk"`
+		SystemDisk          types.Object   `tfsdk:"system_disk"`
 		IPAddressIDs        types.Set      `tfsdk:"ip_address_ids"`
 		IPAddresses         types.Set      `tfsdk:"ip_addresses"`
 		VirtualNetworkIDs   types.Set      `tfsdk:"virtual_network_ids"`
@@ -78,9 +82,35 @@ type virtualMachinePackageReader interface {
 }
 
 const (
-	virtualMachineDiskSizeAttribute   = "size"
-	virtualMachineShutdownActionLabel = "shutdown"
+	virtualMachineDiskSizeAttribute               = "size"
+	virtualMachineShutdownActionLabel             = "shutdown"
+	virtualMachineImportDiskTemplatePrivateKey    = "virtual_machine_import_disk_template_v1"
+	virtualMachineImportTemplateOptionsPrivateKey = "virtual_machine_import_disk_template_options_v1"
+	virtualMachineLegacyDiskIDsPrivateKey         = "virtual_machine_legacy_disk_ids_v1"
+	virtualMachineSystemDiskResizePrivateKey      = "virtual_machine_system_disk_resize_method_v1"
 )
+
+const virtualMachineMarkdownDescription = "Manages a Virtual Machine in Katapult.\n\n" +
+	"~> **Warning:** Deleting a virtual machine resource will by default purge " +
+	"the VM from Katapult's trash, permanently deleting it. Set " +
+	"`skip_trash_object_purge` on the provider to keep it in the trash instead.\n\n" +
+	"Set `powered_on` explicitly to opt into ongoing power-state management. " +
+	"Omitting it leaves power state unmanaged after creation. A VM created with " +
+	"`powered_on = false` is initially started by Katapult's build process and " +
+	"then gracefully shut down before creation completes, so connection-based " +
+	"provisioners cannot run against the stopped result.\n\n" +
+	"The VM owns only its boot disk through `system_disk`. Additional disks are " +
+	"independent `katapult_disk` objects whose relationships are owned by " +
+	"`katapult_disk_assignment` after the VM's first boot. VM deletion refuses " +
+	"remaining non-boot relationships, and disk deletion refuses every remaining " +
+	"relationship; remove assignment resources first so Terraform's dependency " +
+	"graph performs detach and unassign before endpoint deletion. System disk growth " +
+	"typically completes quickly, including filesystem-aware offline growth. Offline " +
+	"shrink can take substantially longer because Katapult must shrink the filesystem " +
+	"and partition before reducing the disk. The default VM update timeout is 10 " +
+	"minutes; increase `timeouts.update` for large system disk shrink operations. " +
+	"Reaching the timeout stops Terraform waiting but does not cancel the Katapult " +
+	"resize task, so check its state before retrying."
 
 var vmNetworkInterfaceAttrTypes = map[string]attr.Type{
 	"id":                 types.StringType,
@@ -136,12 +166,13 @@ func (r *VirtualMachineResource) Configure(
 	r.M = meta
 }
 
+//nolint:funlen,gocyclo,lll // Plan-time migration and resize guards intentionally remain in evaluation order.
 func (r *VirtualMachineResource) ModifyPlan(
 	ctx context.Context,
 	req resource.ModifyPlanRequest,
 	resp *resource.ModifyPlanResponse,
 ) {
-	if r.M == nil || req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+	if req.Plan.Raw.IsNull() {
 		return
 	}
 
@@ -151,59 +182,380 @@ func (r *VirtualMachineResource) ModifyPlan(
 		return
 	}
 
+	var configuredLegacy types.List
+	var configuredSystem types.Object
+	var configuredDiskTemplate types.String
+	var configuredDiskTemplateOptions types.Map
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("disk"), &configuredLegacy)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("system_disk"), &configuredSystem)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("disk_template"), &configuredDiskTemplate)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("disk_template_options"), &configuredDiskTemplateOptions)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	legacyConfigured := !configuredLegacy.IsNull() && !configuredLegacy.IsUnknown() && len(configuredLegacy.Elements()) > 0
+	systemConfigured := !configuredSystem.IsNull() && !configuredSystem.IsUnknown()
+	if legacyConfigured && systemConfigured {
+		resp.Diagnostics.AddError("Conflicting Disk Configuration", "Configure either deprecated disk blocks or system_disk, not both.")
+		return
+	}
+	if req.State.Raw.IsNull() {
+		if err := validateChangedLegacyDiskSizes(ctx, types.List{}, plan.Disk); err != nil {
+			resp.Diagnostics.AddAttributeError(path.Root("disk"), "Invalid Legacy Disk Size", err.Error())
+		}
+		return
+	}
 	var state VirtualMachineResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	priorSystem, priorSystemDiags := decodeVirtualMachineSystemDisk(ctx, state.SystemDisk)
+	resp.Diagnostics.Append(priorSystemDiags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	if r.M == nil {
+		return
+	}
+	templateImportEligible := false
+	templateOptionsImportEligible := false
+	if req.Private != nil {
+		value, diags := req.Private.GetKey(ctx, virtualMachineImportDiskTemplatePrivateKey)
+		resp.Diagnostics.Append(diags...)
+		templateImportEligible = len(value) > 0
+		value, diags = req.Private.GetKey(ctx, virtualMachineImportTemplateOptionsPrivateKey)
+		resp.Diagnostics.Append(diags...)
+		templateOptionsImportEligible = len(value) > 0
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+	priorLegacy := !state.Disk.IsNull() && !state.Disk.IsUnknown() && len(state.Disk.Elements()) > 0
+	plannedLegacy := !plan.Disk.IsNull() && !plan.Disk.IsUnknown() && len(plan.Disk.Elements()) > 0
+	if err := validateChangedLegacyDiskSizes(ctx, state.Disk, plan.Disk); err != nil {
+		resp.Diagnostics.AddAttributeError(path.Root("disk"), "Invalid Legacy Disk Size", err.Error())
+		return
+	}
+	switch {
+	case priorLegacy && plannedLegacy && !plan.Disk.Equal(state.Disk):
+		resp.RequiresReplace = append(resp.RequiresReplace, path.Root("disk"))
+	case !priorLegacy && plannedLegacy && legacyConfigured &&
+		(templateImportEligible || templateOptionsImportEligible):
+		resp.Diagnostics.AddAttributeError(
+			path.Root("disk"),
+			"Imported Virtual Machine Legacy Disk Configuration",
+			"Deprecated disk blocks cannot safely adopt an imported Virtual Machine's existing disks. Leave disk unset, manage the existing boot disk through system_disk, import each additional disk into katapult_disk, and import each VM/disk relationship into katapult_disk_assignment.",
+		)
+		return
+	case !priorLegacy && plannedLegacy:
+		resp.RequiresReplace = append(resp.RequiresReplace, path.Root("disk"))
+	case priorLegacy && !plannedLegacy:
+		additionalIDs, err := validateLegacyDiskMigration(
+			ctx, r.M, state.ID.ValueString(), priorSystem, plan.SystemDisk, systemConfigured,
+		)
+		if err != nil {
+			resp.Diagnostics.AddAttributeError(path.Root("disk"), "Unsafe Legacy Disk Migration", err.Error())
+			return
+		}
+		additionalRelationships := "none"
+		if len(additionalIDs) > 0 {
+			relationships := make([]string, 0, len(additionalIDs))
+			for _, diskID := range additionalIDs {
+				relationships = append(relationships, assignmentID(state.ID.ValueString(), diskID))
+			}
+			additionalRelationships = strings.Join(relationships, ", ")
+		}
+		resp.Diagnostics.AddWarning("Legacy Disk Schema Migration", fmt.Sprintf(
+			"The deprecated disk blocks are being removed without changing remote disks. Observed additional relationships: %s. Import each additional disk into katapult_disk and each relationship into katapult_disk_assignment before applying if Terraform should continue to own them.",
+			additionalRelationships,
+		))
+	}
 
-	if state.ID.IsNull() || state.ID.IsUnknown() ||
-		plan.Package.IsNull() || plan.Package.IsUnknown() ||
-		plan.Package.Equal(state.Package) {
+	if templateImportEligible && !configuredDiskTemplate.IsNull() && !configuredDiskTemplate.IsUnknown() {
+		configuredRef := configuredDiskTemplate.ValueString()
+		adopt := state.DiskTemplate.IsNull() || state.DiskTemplate.IsUnknown() ||
+			virtualMachineDiskTemplateRefsEquivalent(configuredRef, state.DiskTemplate.ValueString())
+		if !adopt {
+			refs, err := fetchDiskTemplateReferences(ctx, r.M, priorSystem.ID.ValueString())
+			if err != nil {
+				resp.Diagnostics.AddAttributeError(path.Root("disk_template"), "Cannot Validate Imported Disk Template", err.Error())
+				return
+			}
+			for _, ref := range refs {
+				if virtualMachineDiskTemplateRefsEquivalent(configuredRef, ref) {
+					adopt = true
+					break
+				}
+			}
+		}
+		if adopt {
+			resp.Diagnostics.Append(resp.Private.SetKey(ctx, virtualMachineImportDiskTemplatePrivateKey, nil)...)
+		} else if !plan.DiskTemplate.Equal(state.DiskTemplate) {
+			resp.RequiresReplace = append(resp.RequiresReplace, path.Root("disk_template"))
+		}
+	} else if !state.DiskTemplate.IsNull() && !state.DiskTemplate.IsUnknown() &&
+		!plan.DiskTemplate.IsNull() && !plan.DiskTemplate.IsUnknown() &&
+		!plan.DiskTemplate.Equal(state.DiskTemplate) {
+		resp.RequiresReplace = append(resp.RequiresReplace, path.Root("disk_template"))
+	}
+	if templateOptionsImportEligible && !configuredDiskTemplateOptions.IsNull() && !configuredDiskTemplateOptions.IsUnknown() {
+		resp.Diagnostics.Append(resp.Private.SetKey(ctx, virtualMachineImportTemplateOptionsPrivateKey, nil)...)
+	} else if !state.DiskTemplateOptions.IsNull() && !state.DiskTemplateOptions.IsUnknown() &&
+		!plan.DiskTemplateOptions.Equal(state.DiskTemplateOptions) {
+		resp.RequiresReplace = append(resp.RequiresReplace, path.Root("disk_template_options"))
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if len(resp.RequiresReplace) > 0 {
 		return
 	}
 
-	var poweredOn types.Bool
-	resp.Diagnostics.Append(
-		req.Config.GetAttribute(ctx, path.Root("powered_on"), &poweredOn)...,
+	projections, projectionDiags := stabilizeVirtualMachinePlan(
+		ctx, &plan, &state,
 	)
+	resp.Diagnostics.Append(projectionDiags...)
+	for _, projection := range projections {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(
+			ctx, projection.path, projection.value,
+		)...)
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := validateVirtualMachinePackageChange(
-		ctx,
-		r.M.Core,
-		state.ID.ValueString(),
-		plan.Package.ValueString(),
-		poweredOn,
+	if state.ID.IsNull() || state.ID.IsUnknown() {
+		return
+	}
+	var poweredOn types.Bool
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("powered_on"), &poweredOn)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if !plan.Package.IsNull() && !plan.Package.IsUnknown() && !plan.Package.Equal(state.Package) {
+		err := validateVirtualMachinePackageChange(ctx, r.M.Core, state.ID.ValueString(), plan.Package.ValueString(), poweredOn)
+		if err != nil {
+			resp.Diagnostics.AddAttributeError(path.Root("package"), "Invalid Virtual Machine Package Change", err.Error())
+		}
+	}
+
+	plannedSystem, plannedSystemDiags := decodeVirtualMachineSystemDisk(ctx, plan.SystemDisk)
+	resp.Diagnostics.Append(plannedSystemDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resizingSystemDisk := !plan.SystemDisk.IsNull() && !plan.SystemDisk.IsUnknown() &&
+		!state.SystemDisk.IsNull() && !state.SystemDisk.IsUnknown() &&
+		!plannedSystem.SizeInGB.IsUnknown() && !plannedSystem.SizeInGB.Equal(priorSystem.SizeInGB)
+	if !resizingSystemDisk {
+		if resp.Private != nil {
+			resp.Diagnostics.Append(resp.Private.SetKey(ctx, virtualMachineSystemDiskResizePrivateKey, nil)...)
+		}
+		return
+	}
+
+	vmState, err := fetchVirtualMachineState(ctx, r.M, state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(path.Root("system_disk").AtName("size_in_gb"), "Cannot Validate System Disk Resize", err.Error())
+		return
+	}
+	if vmState != core.Started && vmState != core.Stopped {
+		resp.Diagnostics.AddAttributeError(path.Root("system_disk").AtName("size_in_gb"), "Cannot Validate System Disk Resize", fmt.Sprintf("Virtual Machine is in transitional state %s; retry after it settles", vmState))
+		return
+	}
+	resizeState := vmState
+	if !poweredOn.IsNull() && !poweredOn.IsUnknown() && !poweredOn.ValueBool() {
+		resizeState = core.Stopped
+	}
+	attachmentState := core.VirtualMachineDiskAttachmentStateEnumDetached
+	if resizeState == core.Started {
+		attachmentState = core.VirtualMachineDiskAttachmentStateEnumAttached
+	}
+	method, err := effectiveDiskResizeMethod(
+		priorSystem.SizeInGB.ValueInt64(), plannedSystem.SizeInGB.ValueInt64(),
+		plannedSystem.ResizeMethod.ValueString(), true, &attachmentState,
 	)
 	if err != nil {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("package"),
-			"Invalid Virtual Machine Package Change",
-			err.Error(),
-		)
+		resp.Diagnostics.AddAttributeError(path.Root("system_disk").AtName("size_in_gb"), "Invalid System Disk Resize", err.Error())
+		return
+	}
+	if method == core.Online {
+		resp.Diagnostics.AddAttributeWarning(path.Root("system_disk").AtName("size_in_gb"), "Online System Disk Growth", "Katapult grows the attached block device only; expand the guest partition and filesystem manually.")
+	}
+	if plannedSystem.SizeInGB.ValueInt64() < priorSystem.SizeInGB.ValueInt64() {
+		resp.Diagnostics.AddAttributeWarning(path.Root("system_disk").AtName("size_in_gb"), "Offline System Disk Shrink", "Katapult must shrink the filesystem and partition before the disk; insufficient capacity fails the task, and large disks may need a longer update timeout.")
+	}
+	encodedMethod, err := json.Marshal(string(method))
+	if err != nil {
+		resp.Diagnostics.AddError("System Disk Resize Plan Error", err.Error())
+		return
+	}
+	if resp.Private != nil {
+		resp.Diagnostics.Append(resp.Private.SetKey(ctx, virtualMachineSystemDiskResizePrivateKey, encodedMethod)...)
 	}
 }
 
+// stabilizeVirtualMachinePlan preserves API projections when none of their
+// inputs can change during the planned update. Terraform Plugin Framework
+// otherwise marks every unconfigured computed value unknown for any update.
+type virtualMachinePlanProjection struct {
+	path  path.Path
+	value attr.Value
+}
+
+func stabilizeVirtualMachinePlan(
+	ctx context.Context,
+	plan, state *VirtualMachineResourceModel,
+) ([]virtualMachinePlanProjection, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	projections := make([]virtualMachinePlanProjection, 0, 4)
+
+	if plan.FQDN.IsUnknown() &&
+		isKnownTerraformValue(state.FQDN) &&
+		plan.Hostname.Equal(state.Hostname) {
+		plan.FQDN = state.FQDN
+		projections = append(projections, virtualMachinePlanProjection{
+			path: path.Root("fqdn"), value: plan.FQDN,
+		})
+	}
+	if plan.IPAddresses.IsUnknown() &&
+		isKnownTerraformValue(state.IPAddresses) &&
+		plan.IPAddressIDs.Equal(state.IPAddressIDs) {
+		plan.IPAddresses = state.IPAddresses
+		projections = append(projections, virtualMachinePlanProjection{
+			path: path.Root("ip_addresses"), value: plan.IPAddresses,
+		})
+	}
+	if plan.NetworkInterfaces.IsUnknown() &&
+		isKnownTerraformValue(state.NetworkInterfaces) &&
+		plan.IPAddressIDs.Equal(state.IPAddressIDs) &&
+		plan.VirtualNetworkIDs.Equal(state.VirtualNetworkIDs) {
+		plan.NetworkInterfaces = state.NetworkInterfaces
+		projections = append(projections, virtualMachinePlanProjection{
+			path:  path.Root("network_interfaces"),
+			value: plan.NetworkInterfaces,
+		})
+	}
+
+	if plan.SystemDisk.IsNull() || plan.SystemDisk.IsUnknown() ||
+		state.SystemDisk.IsNull() || state.SystemDisk.IsUnknown() {
+		return projections, diags
+	}
+	plannedSystem, plannedDiags := decodeVirtualMachineSystemDisk(
+		ctx, plan.SystemDisk,
+	)
+	priorSystem, priorDiags := decodeVirtualMachineSystemDisk(
+		ctx, state.SystemDisk,
+	)
+	diags.Append(plannedDiags...)
+	diags.Append(priorDiags...)
+	if diags.HasError() {
+		return projections, diags
+	}
+	if plannedSystem.State.IsUnknown() &&
+		isKnownTerraformValue(priorSystem.State) &&
+		plannedSystem.SizeInGB.Equal(priorSystem.SizeInGB) {
+		plannedSystem.State = priorSystem.State
+		var valueDiags diag.Diagnostics
+		plan.SystemDisk, valueDiags = virtualMachineSystemDiskValue(
+			ctx, plannedSystem,
+		)
+		diags.Append(valueDiags...)
+		projections = append(projections, virtualMachinePlanProjection{
+			path:  path.Root("system_disk").AtName(stateAttributeName),
+			value: plannedSystem.State,
+		})
+	}
+
+	return projections, diags
+}
+
+func isKnownTerraformValue(value attr.Value) bool {
+	return !value.IsNull() && !value.IsUnknown()
+}
+
+func validateChangedLegacyDiskSizes(ctx context.Context, state, plan types.List) error {
+	if plan.IsNull() || plan.IsUnknown() || plan.Equal(state) {
+		return nil
+	}
+
+	var plannedDisks []VirtualMachineDiskModel
+	diags := plan.ElementsAs(ctx, &plannedDisks, false)
+	if diags.HasError() {
+		return fmt.Errorf("reading planned deprecated disk blocks: %s", diags)
+	}
+	for _, planned := range plannedDisks {
+		if !planned.Size.IsNull() && !planned.Size.IsUnknown() && planned.Size.ValueInt64() < 10 {
+			return fmt.Errorf(
+				"changed deprecated disk configurations require every disk to be at least 10 GB; got %d GB",
+				planned.Size.ValueInt64(),
+			)
+		}
+	}
+	return nil
+}
+
+//nolint:gocyclo,lll // Migration validation is an explicit, fail-closed sequence.
+func validateLegacyDiskMigration(
+	ctx context.Context,
+	m *Meta,
+	vmID string,
+	priorSystem VirtualMachineSystemDiskModel,
+	plannedSystemValue types.Object,
+	systemConfigured bool,
+) ([]string, error) {
+	attachments, err := fetchAllVMDisks(ctx, m, vmID)
+	if err != nil {
+		return nil, fmt.Errorf("refreshing VM disk relationships: %w", err)
+	}
+	if _, err := virtualMachineDiskAttachmentIDs(attachments); err != nil {
+		return nil, fmt.Errorf("cannot inventory VM disk relationships: %w", err)
+	}
+	boot, authoritative := selectBootDiskAssignment(attachments, priorSystem.ID.ValueString())
+	if !authoritative || boot == nil || boot.Disk == nil || boot.Disk.Id == nil {
+		return nil, fmt.Errorf("cannot identify one authoritative boot disk; refresh state and resolve ambiguous boot relationships before removing deprecated disk blocks")
+	}
+	bootID := *boot.Disk.Id
+	if priorSystem.ID.ValueString() != "" && priorSystem.ID.ValueString() != bootID {
+		return nil, fmt.Errorf("refreshed boot disk %s does not match prior system_disk identity %s", bootID, priorSystem.ID.ValueString())
+	}
+
+	if systemConfigured {
+		plannedSystem, diags := decodeVirtualMachineSystemDisk(ctx, plannedSystemValue)
+		if diags.HasError() {
+			return nil, fmt.Errorf("reading planned system_disk: %s", diags)
+		}
+		if !plannedSystem.Name.IsNull() && !plannedSystem.Name.IsUnknown() &&
+			!priorSystem.Name.IsNull() && !priorSystem.Name.IsUnknown() &&
+			!plannedSystem.Name.Equal(priorSystem.Name) {
+			return nil, fmt.Errorf("planned system_disk.name differs from the refreshed boot disk; first migrate with equivalent values, then rename in a later apply")
+		}
+		if !plannedSystem.SizeInGB.IsNull() && !plannedSystem.SizeInGB.IsUnknown() &&
+			!priorSystem.SizeInGB.IsNull() && !priorSystem.SizeInGB.IsUnknown() &&
+			!plannedSystem.SizeInGB.Equal(priorSystem.SizeInGB) {
+			return nil, fmt.Errorf("planned system_disk.size_in_gb differs from the refreshed boot disk; first migrate with equivalent values, then resize in a later apply")
+		}
+	}
+
+	additionalIDs := make([]string, 0, len(attachments)-1)
+	for i := range attachments {
+		attachment := &attachments[i]
+		if attachment.Disk == nil || attachment.Disk.Id == nil || *attachment.Disk.Id == bootID {
+			continue
+		}
+		additionalIDs = append(additionalIDs, *attachment.Disk.Id)
+	}
+	sort.Strings(additionalIDs)
+	return additionalIDs, nil
+}
+
+//nolint:lll // Keep complete schema guidance adjacent to the relevant fields.
 func (r *VirtualMachineResource) Schema( //nolint:funlen
 	ctx context.Context,
 	_ resource.SchemaRequest,
 	resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manages a Virtual Machine in Katapult.\n\n" +
-			"~> **Warning:** Deleting a virtual machine resource will by " +
-			"default purge the VM from Katapult's trash, permanently " +
-			"deleting it. Set `skip_trash_object_purge` on the " +
-			"provider to keep it in the trash instead.\n\n" +
-			"Set `powered_on` explicitly to opt into ongoing power-state " +
-			"management. Omitting it leaves power state unmanaged after " +
-			"creation. A VM created with `powered_on = false` is initially " +
-			"started by Katapult's build process and then gracefully shut " +
-			"down before creation completes, so connection-based provisioners " +
-			"cannot run against the stopped result.",
+		MarkdownDescription: virtualMachineMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -245,7 +597,7 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 				MarkdownDescription: "The fully-qualified domain name of " +
 					"the Virtual Machine.",
 			},
-			"state": schema.StringAttribute{
+			stateAttributeName: schema.StringAttribute{
 				Computed: true,
 				MarkdownDescription: "The current state of the " +
 					"Virtual Machine.",
@@ -272,14 +624,12 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 				},
 			},
 			"disk_template": schema.StringAttribute{
-				Required: true,
+				Optional: true,
+				Computed: true,
 				MarkdownDescription: "Permalink or ID of the Disk " +
 					"Template to use.",
 				Validators: []validator.String{
 					stringValidatorNotEmpty(),
-				},
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"disk_template_options": schema.MapAttribute{
@@ -287,8 +637,57 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 				ElementType: types.StringType,
 				MarkdownDescription: "Options to pass to the Disk " +
 					"Template during creation.",
-				PlanModifiers: []planmodifier.Map{
-					mapplanmodifier.RequiresReplace(),
+			},
+			"system_disk": schema.SingleNestedAttribute{
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "The VM-owned boot disk. Additional disks " +
+					"must use katapult_disk and katapult_disk_assignment.",
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Computed:            true,
+						MarkdownDescription: "The unique identifier of the VM-owned system disk.",
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"name": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						MarkdownDescription: "The name of the system disk.",
+						Validators:          []validator.String{stringValidatorNotEmpty()},
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					"size_in_gb": schema.Int64Attribute{ //nolint:goconst // Terraform attribute name.
+						Optional: true,
+						Computed: true,
+						MarkdownDescription: "Size of the system disk in GB, with a " +
+							"minimum of 10 GB. Resizes are performed in place when the " +
+							"selected method and VM power state permit it.",
+						Validators:    []validator.Int64{int64validator.AtLeast(10)},
+						PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
+					},
+					"resize_method": schema.StringAttribute{
+						Optional: true,
+						Computed: true,
+						Default:  stringdefault.StaticString("offline"),
+						MarkdownDescription: "Resize method: `offline` (the default) " +
+							"requires the VM to be stopped and resizes the filesystem as " +
+							"well as the disk; `online` permits growth while the VM runs " +
+							"but resizes only the block device, so the guest filesystem " +
+							"must be expanded manually. Shrink is always offline.",
+						Validators: []validator.String{stringvalidator.OneOf("online", "offline")},
+					},
+					"wwn": schema.StringAttribute{ //nolint:goconst // Terraform attribute name.
+						Computed:            true,
+						MarkdownDescription: "World Wide Name identifier of the system disk.",
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+					},
+					stateAttributeName: schema.StringAttribute{
+						Computed:            true,
+						MarkdownDescription: "Current state of the system disk.",
+					},
 				},
 			},
 			"ip_address_ids": schema.SetAttribute{
@@ -381,19 +780,23 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 			},
 		},
 		Blocks: map[string]schema.Block{
-			"timeouts": timeouts.Block(ctx, timeouts.Opts{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{ //nolint:goconst // Terraform block name.
 				Create: true,
 				Update: true,
+				UpdateDescription: "Maximum time Terraform waits for a Virtual " +
+					"Machine update to complete. Defaults to 10 minutes. System disk " +
+					"growth normally completes quickly, including filesystem-aware " +
+					"offline growth. Offline system disk shrink may take substantially " +
+					"longer; consider 4 hours or more for large disks. Reaching the " +
+					"timeout stops Terraform waiting but does not cancel the Katapult " +
+					"resize task, so check its state before retrying.",
 				Delete: true,
 			}),
 			"disk": schema.ListNestedBlock{
-				MarkdownDescription: "One or more disks with custom sizes " +
-					"to create and attach during creation. The first " +
-					"disk is the boot disk. If omitted, a single disk " +
-					"is created from the chosen package.",
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.RequiresReplace(),
-				},
+				MarkdownDescription: "Deprecated creation-only disk list. The first " +
+					"entry is the boot disk; migrate it to system_disk and each " +
+					"additional entry to katapult_disk plus katapult_disk_assignment.",
+				DeprecationMessage: "Use system_disk for the boot disk and katapult_disk with katapult_disk_assignment for additional disks.",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
@@ -401,9 +804,6 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 							MarkdownDescription: "Name of the disk. " +
 								"Defaults to \"System Disk\" for " +
 								"the first disk.",
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.RequiresReplace(),
-							},
 						},
 						virtualMachineDiskSizeAttribute: schema.Int64Attribute{
 							Required:            true,
@@ -416,6 +816,7 @@ func (r *VirtualMachineResource) Schema( //nolint:funlen
 	}
 }
 
+//nolint:lll // Preserve complete operator-facing creation diagnostics.
 func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 	ctx context.Context,
 	req resource.CreateRequest,
@@ -484,6 +885,10 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 	spec.Resources = &buildspec.Resources{Package: pkg}
 
 	dtplRef := plan.DiskTemplate.ValueString()
+	if dtplRef == "" {
+		resp.Diagnostics.AddAttributeError(path.Root("disk_template"), "Missing Disk Template", "disk_template is required when creating a Virtual Machine")
+		return
+	}
 	if strings.HasPrefix(dtplRef, "dtpl_") {
 		spec.DiskTemplate = &buildspec.DiskTemplate{ID: dtplRef}
 	} else {
@@ -535,6 +940,23 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 				},
 			)
 		}
+	}
+
+	systemDisk, systemDiags := decodeVirtualMachineSystemDisk(ctx, plan.SystemDisk)
+	resp.Diagnostics.Append(systemDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if !plan.SystemDisk.IsNull() && !plan.SystemDisk.IsUnknown() &&
+		!systemDisk.SizeInGB.IsNull() && !systemDisk.SizeInGB.IsUnknown() {
+		diskName := systemDisk.Name.ValueString()
+		if diskName == "" {
+			diskName = "System Disk"
+		}
+		spec.SystemDisks = append(spec.SystemDisks, &buildspec.SystemDisk{
+			Name: diskName,
+			Size: int(systemDisk.SizeInGB.ValueInt64()),
+		})
 	}
 
 	nspPermalink := plan.NetworkSpeedProfile.ValueString()
@@ -825,6 +1247,20 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 		return
 	}
 
+	if !plan.SystemDisk.IsNull() && !plan.SystemDisk.IsUnknown() &&
+		!systemDisk.Name.IsNull() && !systemDisk.Name.IsUnknown() &&
+		(systemDisk.SizeInGB.IsNull() || systemDisk.SizeInGB.IsUnknown()) {
+		bootDisk, bootErr := fetchVirtualMachineBootDisk(ctx, r.M, vmID, "")
+		if bootErr != nil || bootDisk.Id == nil {
+			resp.Diagnostics.AddError("Create Error", fmt.Sprintf("could not identify the boot disk for the requested rename: %v", bootErr))
+			return
+		}
+		if err = patchDiskName(ctx, r.M, *bootDisk.Id, systemDisk.Name.ValueString()); err != nil {
+			resp.Diagnostics.AddError("Create Error", err.Error())
+			return
+		}
+	}
+
 	if !configuredPoweredOn.IsNull() &&
 		!configuredPoweredOn.IsUnknown() &&
 		!configuredPoweredOn.ValueBool() {
@@ -836,9 +1272,25 @@ func (r *VirtualMachineResource) Create( //nolint:funlen,gocyclo
 		}
 	}
 
-	if err := r.vmRead(ctx, &plan); err != nil {
+	var attachments []core.GetVirtualMachineDisks200ResponseDisks
+	if err := r.vmReadWithAttachments(ctx, &plan, &attachments); err != nil {
 		resp.Diagnostics.AddError("Read Error", err.Error())
 		return
+	}
+	if !plan.Disk.IsNull() && !plan.Disk.IsUnknown() && len(plan.Disk.Elements()) > 0 {
+		legacyIDs, idsErr := virtualMachineDiskAttachmentIDs(attachments)
+		if idsErr != nil {
+			resp.Diagnostics.AddError("Create Error", idsErr.Error())
+			return
+		}
+		encodedIDs, marshalErr := json.Marshal(legacyIDs)
+		if marshalErr != nil {
+			resp.Diagnostics.AddError("Create Error", marshalErr.Error())
+			return
+		}
+		if resp.Private != nil {
+			resp.Diagnostics.Append(resp.Private.SetKey(ctx, virtualMachineLegacyDiskIDsPrivateKey, encodedIDs)...)
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
@@ -868,6 +1320,7 @@ func (r *VirtualMachineResource) Read(
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
+//nolint:lll // Preserve complete operator-facing update diagnostics.
 func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 	ctx context.Context,
 	req resource.UpdateRequest,
@@ -891,6 +1344,22 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		return
 	}
 	vmID := state.ID.ValueString()
+	plannedSystemResizeMethod := core.ResizeMethodEnum("")
+	if req.Private != nil {
+		encodedMethod, privateDiags := req.Private.GetKey(ctx, virtualMachineSystemDiskResizePrivateKey)
+		resp.Diagnostics.Append(privateDiags...)
+		if len(encodedMethod) > 0 {
+			var method string
+			if err := json.Unmarshal(encodedMethod, &method); err != nil {
+				resp.Diagnostics.AddError("Invalid System Disk Resize Plan", err.Error())
+				return
+			}
+			plannedSystemResizeMethod = core.ResizeMethodEnum(method)
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	var configuredPoweredOn types.Bool
 	resp.Diagnostics.Append(req.Config.GetAttribute(
@@ -901,10 +1370,41 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 	}
 	powerManaged := !configuredPoweredOn.IsNull() &&
 		!configuredPoweredOn.IsUnknown()
+	plannedSystemDisk, systemDiags := decodeVirtualMachineSystemDisk(ctx, plan.SystemDisk)
+	resp.Diagnostics.Append(systemDiags...)
+	priorSystemDisk, priorSystemDiags := decodeVirtualMachineSystemDisk(ctx, state.SystemDisk)
+	resp.Diagnostics.Append(priorSystemDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if !plan.SystemDisk.IsNull() && !plan.SystemDisk.IsUnknown() &&
+		(state.SystemDisk.IsNull() || state.SystemDisk.IsUnknown()) {
+		bootDisk, bootErr := fetchVirtualMachineBootDisk(ctx, r.M, vmID, "")
+		if bootErr != nil {
+			resp.Diagnostics.AddAttributeError(path.Root("system_disk"), "Cannot Discover Boot Disk", bootErr.Error())
+			return
+		}
+		resp.Diagnostics.Append(populateVirtualMachineSystemDisk(ctx, &state, bootDisk)...)
+		priorSystemDisk, priorSystemDiags = decodeVirtualMachineSystemDisk(ctx, state.SystemDisk)
+		resp.Diagnostics.Append(priorSystemDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+	systemDiskResize := !plan.SystemDisk.IsNull() && !plan.SystemDisk.IsUnknown() &&
+		!state.SystemDisk.IsNull() && !state.SystemDisk.IsUnknown() &&
+		!plannedSystemDisk.SizeInGB.IsUnknown() &&
+		!plannedSystemDisk.SizeInGB.Equal(priorSystemDisk.SizeInGB)
+	coupledCtx := ctx
+	if systemDiskResize {
+		var cancel context.CancelFunc
+		coupledCtx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
 
 	if powerManaged && !configuredPoweredOn.ValueBool() {
 		if err := reconcileVirtualMachinePowerState(
-			ctx, r.M, vmID, false, timeout,
+			coupledCtx, r.M, vmID, false, timeout,
 		); err != nil {
 			resp.Diagnostics.AddError("Update Error", err.Error())
 			return
@@ -922,6 +1422,88 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		if err != nil {
 			resp.Diagnostics.AddError("Update Error", err.Error())
 			return
+		}
+	}
+
+	if !plan.SystemDisk.IsNull() && !plan.SystemDisk.IsUnknown() &&
+		!state.SystemDisk.IsNull() && !state.SystemDisk.IsUnknown() {
+		diskID := priorSystemDisk.ID.ValueString()
+		if diskID == "" {
+			resp.Diagnostics.AddAttributeError(path.Root("system_disk"), "Unknown Boot Disk", "Cannot rename or resize the boot disk until its identity is authoritative.")
+			return
+		}
+		nameChanged := !plannedSystemDisk.Name.IsUnknown() &&
+			!plannedSystemDisk.Name.IsNull() &&
+			!plannedSystemDisk.Name.Equal(priorSystemDisk.Name)
+		sizeChanged := !plannedSystemDisk.SizeInGB.IsUnknown() &&
+			!plannedSystemDisk.SizeInGB.Equal(priorSystemDisk.SizeInGB)
+		if nameChanged || sizeChanged {
+			currentBootDisk, err := fetchVirtualMachineBootDisk(coupledCtx, r.M, vmID, diskID)
+			if err != nil {
+				resp.Diagnostics.AddAttributeError(path.Root("system_disk"), "Cannot Validate Boot Disk", err.Error())
+				return
+			}
+			if currentBootDisk.Id == nil || *currentBootDisk.Id != diskID {
+				currentID := "<unavailable>"
+				if currentBootDisk.Id != nil {
+					currentID = *currentBootDisk.Id
+				}
+				resp.Diagnostics.AddAttributeError(path.Root("system_disk"), "System Disk State Changed After Planning", fmt.Sprintf("planned boot disk %s no longer matches the current boot disk %s; refresh state and run terraform plan again", diskID, currentID))
+				return
+			}
+		}
+		if nameChanged {
+			if err := patchDiskName(coupledCtx, r.M, diskID, plannedSystemDisk.Name.ValueString()); err != nil {
+				resp.Diagnostics.AddError("Update Error", err.Error())
+				return
+			}
+		}
+		if sizeChanged {
+			vmState, err := fetchVirtualMachineState(coupledCtx, r.M, vmID)
+			if err != nil {
+				resp.Diagnostics.AddError("Update Error", err.Error())
+				return
+			}
+			if vmState != core.Started && vmState != core.Stopped {
+				resp.Diagnostics.AddAttributeError(path.Root("system_disk").AtName("size_in_gb"), "Cannot Resize System Disk", fmt.Sprintf("Virtual Machine is in transitional or unknown state %s; retry after it settles", vmState))
+				return
+			}
+			attached := vmState == core.Started
+			attachmentState := core.VirtualMachineDiskAttachmentStateEnumDetached
+			if attached {
+				attachmentState = core.VirtualMachineDiskAttachmentStateEnumAttached
+			}
+			method, err := effectiveDiskResizeMethod(
+				priorSystemDisk.SizeInGB.ValueInt64(), plannedSystemDisk.SizeInGB.ValueInt64(),
+				plannedSystemDisk.ResizeMethod.ValueString(), true, &attachmentState,
+			)
+			if err != nil {
+				resp.Diagnostics.AddAttributeError(path.Root("system_disk").AtName("size_in_gb"), "Invalid System Disk Resize", err.Error())
+				return
+			}
+			if plannedSystemResizeMethod != "" && plannedSystemResizeMethod != method {
+				resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+				resp.Diagnostics.AddAttributeError(path.Root("system_disk").AtName("size_in_gb"), "System Disk State Changed After Planning", fmt.Sprintf("resize was planned as %s but the current VM power state requires %s; run terraform plan again", plannedSystemResizeMethod, method))
+				return
+			}
+			if method == core.Online {
+				resp.Diagnostics.AddAttributeWarning(path.Root("system_disk").AtName("size_in_gb"), "Online System Disk Growth", "Katapult grows the attached block device only; expand the guest partition and filesystem manually.")
+			}
+			if plannedSystemDisk.SizeInGB.ValueInt64() < priorSystemDisk.SizeInGB.ValueInt64() {
+				resp.Diagnostics.AddAttributeWarning(path.Root("system_disk").AtName("size_in_gb"), "Offline System Disk Shrink", "Katapult must shrink the filesystem and partition before the disk; insufficient capacity fails the task.")
+			}
+			if err = resizeDiskAndWait(coupledCtx, r.M, diskID, plannedSystemDisk.SizeInGB.ValueInt64(), method, timeout); err != nil {
+				observed := plan
+				refreshCtx, cancelRefresh := context.WithTimeout(context.WithoutCancel(coupledCtx), 30*time.Second)
+				defer cancelRefresh()
+				if readErr := r.vmRead(refreshCtx, &observed); readErr == nil {
+					resp.Diagnostics.Append(resp.State.Set(ctx, observed)...)
+				} else {
+					resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+				}
+				resp.Diagnostics.AddError("Update Error", err.Error())
+				return
+			}
 		}
 	}
 
@@ -1109,7 +1691,7 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 				continue
 			}
 			switch *iface.State {
-			case "attached":
+			case "attached": //nolint:goconst // API state value.
 				attachedVnetIDs = append(
 					attachedVnetIDs, *vnet.Id,
 				)
@@ -1191,7 +1773,7 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 
 	if powerManaged && configuredPoweredOn.ValueBool() {
 		if err := reconcileVirtualMachinePowerState(
-			ctx, r.M, vmID, true, timeout,
+			coupledCtx, r.M, vmID, true, timeout,
 		); err != nil {
 			resp.Diagnostics.AddError("Update Error", err.Error())
 			return
@@ -1202,10 +1784,17 @@ func (r *VirtualMachineResource) Update( //nolint:funlen,gocyclo
 		resp.Diagnostics.AddError("Read Error", err.Error())
 		return
 	}
+	if resp.Private != nil {
+		resp.Diagnostics.Append(resp.Private.SetKey(ctx, virtualMachineSystemDiskResizePrivateKey, nil)...)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
+//nolint:lll // Preserve complete relationship ownership diagnostics.
 func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 	ctx context.Context,
 	req resource.DeleteRequest,
@@ -1223,6 +1812,39 @@ func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 		return
 	}
 	vmID := state.ID.ValueString()
+
+	attachments, err := fetchAllVMDisks(ctx, r.M, vmID)
+	if err != nil && !errors.Is(err, core.ErrNotFound) {
+		resp.Diagnostics.AddError("Delete Error", fmt.Sprintf("checking VM disk relationships: %s", err))
+		return
+	}
+	legacyCount := 0
+	if !state.Disk.IsNull() && !state.Disk.IsUnknown() {
+		legacyCount = len(state.Disk.Elements())
+	}
+	if legacyCount > 0 {
+		if ownershipErr := validateLegacyDiskDeleteOwnership(
+			ctx, req.Private, attachments, state.SystemDisk,
+		); ownershipErr != nil {
+			resp.Diagnostics.AddError("Delete Error", ownershipErr.Error())
+			return
+		}
+	} else if len(attachments) > 0 {
+		priorSystem, diags := decodeVirtualMachineSystemDisk(ctx, state.SystemDisk)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		boot, authoritative := selectBootDiskAssignment(attachments, priorSystem.ID.ValueString())
+		if !authoritative || boot == nil || boot.Disk == nil || boot.Disk.Id == nil {
+			resp.Diagnostics.AddError("Delete Error", "cannot identify the boot relationship; refusing to cascade unknown disk relationships")
+			return
+		}
+		if len(attachments) > 1 {
+			resp.Diagnostics.AddError("Delete Error", "Virtual Machine still has non-boot disk relationships; remove the corresponding katapult_disk_assignment resources first")
+			return
+		}
+	}
 
 	vmRes, err := r.M.Core.GetVirtualMachineWithResponse(ctx,
 		&core.GetVirtualMachineParams{VirtualMachineId: &vmID})
@@ -1416,12 +2038,97 @@ func (r *VirtualMachineResource) ImportState(
 	resp *resource.ImportStateResponse,
 ) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	resp.Diagnostics.Append(resp.Private.SetKey(ctx, virtualMachineImportDiskTemplatePrivateKey, []byte("true"))...)
+	resp.Diagnostics.Append(resp.Private.SetKey(ctx, virtualMachineImportTemplateOptionsPrivateKey, []byte("true"))...)
 }
 
-//nolint:gocyclo
+func virtualMachineDiskAttachmentIDs(
+	attachments []core.GetVirtualMachineDisks200ResponseDisks,
+) ([]string, error) {
+	ids := make([]string, 0, len(attachments))
+	for i := range attachments {
+		if attachments[i].Disk == nil || attachments[i].Disk.Id == nil || *attachments[i].Disk.Id == "" {
+			return nil, fmt.Errorf("disk relationship %d has no disk identity", i)
+		}
+		ids = append(ids, *attachments[i].Disk.Id)
+	}
+	sort.Strings(ids)
+	return ids, nil
+}
+
+func validateLegacyDiskDeleteOwnership(
+	ctx context.Context,
+	private interface {
+		GetKey(context.Context, string) ([]byte, diag.Diagnostics)
+	},
+	attachments []core.GetVirtualMachineDisks200ResponseDisks,
+	systemDisk types.Object,
+) error {
+	remoteIDs, err := virtualMachineDiskAttachmentIDs(attachments)
+	if err != nil {
+		return fmt.Errorf("cannot verify deprecated disk ownership: %w", err)
+	}
+	var encoded []byte
+	if private != nil {
+		var diags diag.Diagnostics
+		encoded, diags = private.GetKey(ctx, virtualMachineLegacyDiskIDsPrivateKey)
+		if diags.HasError() {
+			return fmt.Errorf("reading deprecated disk ownership state: %s", diags)
+		}
+	}
+	if len(encoded) == 0 {
+		if len(attachments) == 0 {
+			return nil
+		}
+		priorSystem, diags := decodeVirtualMachineSystemDisk(ctx, systemDisk)
+		if diags.HasError() {
+			return fmt.Errorf("reading system disk identity: %s", diags)
+		}
+		boot, authoritative := selectBootDiskAssignment(attachments, priorSystem.ID.ValueString())
+		if len(attachments) == 1 && authoritative && boot != nil {
+			return nil
+		}
+		return fmt.Errorf(
+			"cannot prove ownership of deprecated additional disk relationships; " +
+				"migrate them to katapult_disk and katapult_disk_assignment before " +
+				"deleting the Virtual Machine",
+		)
+	}
+	var ownedIDs []string
+	if err := json.Unmarshal(encoded, &ownedIDs); err != nil {
+		return fmt.Errorf("decoding deprecated disk ownership state: %w", err)
+	}
+	owned := make(map[string]struct{}, len(ownedIDs))
+	for _, id := range ownedIDs {
+		if id == "" {
+			return fmt.Errorf("deprecated disk ownership state contains an empty disk identity")
+		}
+		owned[id] = struct{}{}
+	}
+	for _, id := range remoteIDs {
+		if _, ok := owned[id]; !ok {
+			return fmt.Errorf(
+				"virtual machine has disk relationship %s which is not owned by "+
+					"deprecated disk state; remove its katapult_disk_assignment first",
+				id,
+			)
+		}
+	}
+	return nil
+}
+
 func (r *VirtualMachineResource) vmRead(
 	ctx context.Context,
 	model *VirtualMachineResourceModel,
+) error {
+	return r.vmReadWithAttachments(ctx, model, nil)
+}
+
+//nolint:gocyclo,funlen
+func (r *VirtualMachineResource) vmReadWithAttachments(
+	ctx context.Context,
+	model *VirtualMachineResourceModel,
+	attachmentsOut *[]core.GetVirtualMachineDisks200ResponseDisks,
 ) error {
 	vmID := model.ID.ValueString()
 
@@ -1443,6 +2150,43 @@ func (r *VirtualMachineResource) vmRead(
 		return fmt.Errorf("unexpected empty response fetching VM")
 	}
 	vm := vmRes.JSON200.VirtualMachine
+
+	priorSystem, systemDiags := decodeVirtualMachineSystemDisk(ctx, model.SystemDisk)
+	if systemDiags.HasError() {
+		return fmt.Errorf("reading system_disk state: %s", systemDiags)
+	}
+	bootDisk, attachments, bootErr := fetchVirtualMachineBootDiskWithAttachments(
+		ctx, r.M, vmID, priorSystem.ID.ValueString(),
+	)
+	if attachmentsOut != nil {
+		*attachmentsOut = attachments
+	}
+	if errors.Is(bootErr, errNoVirtualMachineBootDisk) {
+		model.SystemDisk = types.ObjectNull(virtualMachineSystemDiskAttrTypes)
+	} else if bootErr != nil {
+		return fmt.Errorf("discovering boot disk: %w", bootErr)
+	} else if diags := populateVirtualMachineSystemDisk(ctx, model, bootDisk); diags.HasError() {
+		return fmt.Errorf("populating system_disk state: %s", diags)
+	}
+	if bootDisk != nil && bootDisk.Installation.IsSpecified() && !bootDisk.Installation.IsNull() {
+		if installation, e := bootDisk.Installation.Get(); e == nil &&
+			installation.DiskTemplateVersion != nil &&
+			installation.DiskTemplateVersion.DiskTemplate != nil {
+			template := installation.DiskTemplateVersion.DiskTemplate
+			configured := model.DiskTemplate.ValueString()
+			switch {
+			case strings.HasPrefix(configured, "dtpl_") && template.Id != nil:
+				model.DiskTemplate = types.StringValue(*template.Id)
+			case configured != "" && template.Permalink != nil &&
+				(*template.Permalink == configured || *template.Permalink == "templates/"+configured):
+				model.DiskTemplate = types.StringValue(configured)
+			case template.Permalink != nil:
+				model.DiskTemplate = types.StringValue(*template.Permalink)
+			case template.Id != nil:
+				model.DiskTemplate = types.StringValue(*template.Id)
+			}
+		}
+	}
 
 	ifaces, err := fetchAllVMNetworkInterfaces(ctx, r.M, vmID)
 	if err != nil {
@@ -2286,14 +3030,19 @@ func fetchAllVMNetworkInterfaces(
 		map[string]*core.GetVMNIVMNI200ResponseVirtualMachineNetworkInterface,
 	)
 
-	totalPages := 2
+	totalPages := 1
 	for page := 1; page <= totalPages; page++ {
+		params := &core.GetVirtualMachineNetworkInterfacesParams{
+			VirtualMachineId: &vmID,
+		}
+		if page > 1 {
+			p := page
+			params.Page = &p
+		}
+
 		resp, err := m.Core.GetVirtualMachineNetworkInterfacesWithResponse(
 			ctx,
-			&core.GetVirtualMachineNetworkInterfacesParams{
-				VirtualMachineId: &vmID,
-				Page:             &page,
-			},
+			params,
 		)
 		if err != nil {
 			if resp != nil {

@@ -12,8 +12,13 @@
 {{- else if eq .Name
   "katapult_disk_template"
   "katapult_disk_templates"
+  "katapult_disk"
+  "katapult_disks"
+  "katapult_disk_io_profile"
+  "katapult_disk_io_profiles"
   "katapult_file_storage_volume"
   "katapult_file_storage_volumes"
+  "katapult_virtual_machine_disks"
 -}}
   {{- $subcategory = "Storage" -}}
 {{- else if eq .Name
@@ -53,6 +58,13 @@ description: |-
 # {{.Name}} ({{.Type}})
 
 {{ .Description | trimspace }}
+
+{{- if eq .Name "katapult_virtual_machine_disks" }}
+
+## Guides
+
+- [Migrating Legacy Virtual Machine Disks](../guides/migrating-legacy-virtual-machine-disks.md)
+{{- end }}
 
 {{ if .HasExample -}}
 ## Example Usage

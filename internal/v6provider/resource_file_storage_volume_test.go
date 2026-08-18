@@ -42,6 +42,9 @@ func testSweepFileStorageVolumes(_ string) error {
 		totalPages, _ = res.JSON200.Pagination.TotalPages.Get()
 
 		for _, fsv := range res.JSON200.FileStorageVolumes {
+			if fsv.Name == nil {
+				continue
+			}
 			if strings.HasPrefix(*fsv.Name, testAccResourceNamePrefix) {
 				toDelete = append(toDelete, fsv)
 			}
@@ -49,14 +52,19 @@ func testSweepFileStorageVolumes(_ string) error {
 	}
 
 	for _, fsv := range toDelete {
+		if fsv.Id == nil || fsv.Name == nil {
+			return fmt.Errorf("file storage volume response has incomplete identity")
+		}
+		fsvID, fsvName := *fsv.Id, *fsv.Name
+
 		m.Logger.Info("deleting file storage volume",
-			"id", fsv.Id, "name", fsv.Name,
+			"id", fsvID, "name", fsvName,
 		)
 
 		res, err := m.Core.DeleteFileStorageVolumeWithResponse(ctx,
 			core.DeleteFileStorageVolumeJSONRequestBody{
 				FileStorageVolume: core.FileStorageVolumeLookup{
-					Id: fsv.Id,
+					Id: &fsvID,
 				},
 			})
 		if err != nil {
@@ -64,7 +72,7 @@ func testSweepFileStorageVolumes(_ string) error {
 		}
 
 		m.Logger.Info("purging file storage volume",
-			"id", fsv.Id, "name", fsv.Name,
+			"id", fsvID, "name", fsvName,
 		)
 
 		_, err = m.Core.DeleteTrashObjectWithResponse(ctx,

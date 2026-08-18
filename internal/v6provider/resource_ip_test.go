@@ -45,24 +45,31 @@ func testSweepIPs(_ string) error {
 	}
 
 	for _, ip := range ips {
+		if ip.Id == nil || ip.Address == nil {
+			return fmt.Errorf("IP address response has incomplete identity")
+		}
+		ipID, ipAddress := *ip.Id, *ip.Address
+
 		if !ip.AllocationId.IsNull() && ip.AllocationType.IsSpecified() {
+			allocationID, _ := ip.AllocationId.Get()
+			allocationType, _ := ip.AllocationType.Get()
 			m.Logger.Info(
 				"skipping IP address: has allocation",
-				"id", ip.Id,
-				"address", ip.Address,
-				"allocation_id", ip.AllocationId,
-				"allocation_type", ip.AllocationType,
+				"id", ipID,
+				"address", ipAddress,
+				"allocation_id", allocationID,
+				"allocation_type", allocationType,
 			)
 
 			continue
 		}
 
-		m.Logger.Info("deleting IP address", "id", ip.Id, "address", ip.Address)
+		m.Logger.Info("deleting IP address", "id", ipID, "address", ipAddress)
 
 		_, err := m.Core.DeleteIpAddressWithResponse(ctx,
 			core.DeleteIpAddressJSONRequestBody{
 				IpAddress: core.IPAddressLookup{
-					Id: ip.Id,
+					Id: &ipID,
 				},
 			})
 		if err != nil {

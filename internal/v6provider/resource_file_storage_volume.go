@@ -66,6 +66,7 @@ func (r *FileStorageVolumeResource) Configure(
 	r.M = meta
 }
 
+//nolint:goconst // Terraform block names are clearer inline in schema declarations.
 func (r FileStorageVolumeResource) Schema(
 	ctx context.Context,
 	_ resource.SchemaRequest,

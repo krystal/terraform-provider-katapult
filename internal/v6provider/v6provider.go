@@ -156,7 +156,7 @@ func boolOrEnv(in *bool, env string) bool {
 	}
 
 	switch strings.ToLower(os.Getenv(env)) {
-	case "true", "1", "yes", "on", "y", "t":
+	case "true", "1", "yes", "on", "y", "t": //nolint:goconst
 		return true
 	}
 
@@ -256,6 +256,8 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource { return &ObjectStorageBucketResource{} },
 		func() resource.Resource { return &ObjectStorageAccessKeyResource{} },
 		func() resource.Resource { return &VirtualMachineGroupResource{} },
+		func() resource.Resource { return &DiskResource{} },
+		func() resource.Resource { return &DiskAssignmentResource{} },
 		func() resource.Resource { return &VirtualMachineResource{} },
 	}
 }
@@ -268,6 +270,10 @@ func (k *KatapultProvider) DataSources(
 		func() datasource.DataSource { return &AddressListEntriesDataSource{} },
 		func() datasource.DataSource { return &AddressListEntryDataSource{} },
 		func() datasource.DataSource { return &AddressListsDataSource{} },
+		func() datasource.DataSource { return &DiskDataSource{} },
+		func() datasource.DataSource { return &DiskIOProfileDataSource{} },
+		func() datasource.DataSource { return &DiskIOProfilesDataSource{} },
+		func() datasource.DataSource { return &DisksDataSource{} },
 		func() datasource.DataSource { return &FileStorageVolumeDataSource{} },
 		func() datasource.DataSource { return &GlobalAddressListsDataSource{} },
 		func() datasource.DataSource { return &FileStorageVolumesDataSource{} },
@@ -291,6 +297,7 @@ func (k *KatapultProvider) DataSources(
 			return &VirtualMachineGroupsDataSource{}
 		},
 		func() datasource.DataSource { return &VirtualMachineDataSource{} },
+		func() datasource.DataSource { return &VirtualMachineDisksDataSource{} },
 	}
 }
 

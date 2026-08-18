@@ -20,6 +20,12 @@ var (
 	sensitiveStringFieldPattern = regexp.MustCompile(
 		`"(backend_certificate_key|initial_root_password)"\s*:\s*"([^"]*)"`,
 	)
+	protectedValueBeforeFlagPattern = regexp.MustCompile(
+		`(?s)"value"\s*:\s*"([^"]*)"[^{}]*"protect"\s*:\s*true`,
+	)
+	protectedFlagBeforeValuePattern = regexp.MustCompile(
+		`(?s)"protect"\s*:\s*true[^{}]*"value"\s*:\s*"([^"]*)"`,
+	)
 )
 
 func TestRedactSensitiveResponseFields(t *testing.T) {
@@ -36,7 +42,15 @@ func TestRedactSensitiveResponseFields(t *testing.T) {
 					{"initial_root_password": "password"},
 					{"initial_root_password": null},
 					{"initial_root_password": ""}
-				]
+				],
+				"installation": {
+					"attributes": [
+						{"key": "root_password", "value": "secret", "protect": true},
+						{"key": "api_token", "protect": true, "value": "token"},
+						{"key": "numeric_pin", "protect": true, "value": 123456},
+						{"key": "hostname", "value": "example", "protect": false}
+					]
+				}
 			}`,
 		},
 	}
@@ -51,7 +65,15 @@ func TestRedactSensitiveResponseFields(t *testing.T) {
 			{"initial_root_password": "[REDACTED]"},
 			{"initial_root_password": null},
 			{"initial_root_password": ""}
-		]
+		],
+		"installation": {
+			"attributes": [
+				{"key": "root_password", "value": "[REDACTED]", "protect": true},
+				{"key": "api_token", "protect": true, "value": "[REDACTED]"},
+				{"key": "numeric_pin", "protect": true, "value": "[REDACTED]"},
+				{"key": "hostname", "value": "example", "protect": false}
+			]
+		}
 	}`, interaction.Response.Body)
 }
 
@@ -63,6 +85,7 @@ func TestRedactSensitiveResponseFieldsLeavesOtherBodiesUnchanged(t *testing.T) {
 		"non-JSON response":  `service unavailable`,
 		"empty response":     ``,
 		"already redacted":   `{"backend_certificate_key":"[REDACTED]"}`,
+		"unprotected value":  `{"installation":{"attributes":[{"value":"visible","protect":false}]}}`,
 	}
 
 	for name, body := range tests {
@@ -153,6 +176,21 @@ func TestCassettesDoNotContainSensitiveResponseValues(t *testing.T) {
 						relativePath,
 						match[1],
 					)
+				}
+
+				for _, pattern := range []*regexp.Regexp{
+					protectedValueBeforeFlagPattern,
+					protectedFlagBeforeValuePattern,
+				} {
+					for _, match := range pattern.FindAllSubmatch(contents, -1) {
+						assert.Contains(
+							t,
+							[]string{"", redactedValue},
+							string(match[1]),
+							"%s contains an unredacted protected installation value",
+							relativePath,
+						)
+					}
 				}
 
 				return nil

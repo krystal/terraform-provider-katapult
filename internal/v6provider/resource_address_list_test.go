@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -32,7 +33,14 @@ func testSweepAddressLists(_ string) error {
 				Page:           &pageNum,
 			})
 		if err != nil {
+			if errors.Is(err, core.ErrNotFound) ||
+				(res != nil && res.JSON404 != nil) {
+				return nil
+			}
 			return err
+		}
+		if res == nil || res.JSON200 == nil {
+			return fmt.Errorf("unexpected empty response listing address lists")
 		}
 
 		resp := res.JSON200
@@ -42,15 +50,22 @@ func testSweepAddressLists(_ string) error {
 	}
 
 	for _, list := range addressLists {
+		if list.Name == nil {
+			continue
+		}
 		if !strings.HasPrefix(*list.Name, testAccResourceNamePrefix) {
 			continue
 		}
+		if list.Id == nil {
+			return fmt.Errorf("address list %q has no ID", *list.Name)
+		}
+		listID, listName := *list.Id, *list.Name
 
-		m.Logger.Info("deleting address list", "id", list.Id, "name", list.Name)
+		m.Logger.Info("deleting address list", "id", listID, "name", listName)
 		_, err := m.Core.DeleteAddressListWithResponse(ctx,
 			core.DeleteAddressListJSONRequestBody{
 				AddressList: core.AddressListLookup{
-					Id: list.Id,
+					Id: &listID,
 				},
 			})
 		if err != nil {

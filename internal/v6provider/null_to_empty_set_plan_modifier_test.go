@@ -37,6 +37,13 @@ func TestNullToEmptySetPlanModifier(t *testing.T) {
 			config:     types.SetNull(types.StringType),
 			plan:       types.SetUnknown(types.StringType),
 			state:      populated,
+			wantResult: empty,
+		},
+		{
+			name:       "updated legacy null state remains unknown",
+			config:     types.SetNull(types.StringType),
+			plan:       types.SetUnknown(types.StringType),
+			state:      types.SetNull(types.StringType),
 			wantResult: types.SetUnknown(types.StringType),
 		},
 		{
@@ -67,13 +74,14 @@ func TestNullToEmptySetPlanModifier(t *testing.T) {
 			t.Parallel()
 
 			resp := &planmodifier.SetResponse{PlanValue: tt.plan}
+			request := planmodifier.SetRequest{
+				ConfigValue: tt.config,
+				PlanValue:   tt.plan,
+				StateValue:  tt.state,
+			}
 			NullToEmptySetPlanModifier().PlanModifySet(
 				context.Background(),
-				planmodifier.SetRequest{
-					ConfigValue: tt.config,
-					PlanValue:   tt.plan,
-					StateValue:  tt.state,
-				},
+				request,
 				resp,
 			)
 

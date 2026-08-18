@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/hashicorp/go-hclog"
@@ -28,6 +29,16 @@ type Meta struct {
 	confAPIKey       string
 	confDataCenter   string
 	confOrganization string
+
+	diskAssignmentLocks sync.Map
+}
+
+func (m *Meta) lockDiskAssignments(vmID string) func() {
+	lock, _ := m.diskAssignmentLocks.LoadOrStore(vmID, &sync.Mutex{})
+	mu := lock.(*sync.Mutex)
+	mu.Lock()
+
+	return mu.Unlock
 }
 
 // stateChangeDelay returns zero in replay mode, or d otherwise.

@@ -83,14 +83,44 @@ Use the narrowest relevant command while working, then broaden before handoff:
 without explicit authorization for live acceptance testing. After tests, check
 `git status` for cassette or random-ID drift.
 
+`mise run test:acceptance` hardcodes `VCR=replay`; an authorized recording must
+use the project environment directly, for example `mise exec -- env VCR=rec
+TEST=./internal/v6provider TESTARGS='-run ^TestName$' make testacc`. Prefixing
+the Mise task with `VCR=rec` does not override its replay setting.
+
 `retry.StateChangeConf.Refresh` runs in a goroutine. Use the value returned by
 `WaitForStateContext`; do not capture refresh results for unsynchronized reads
 outside the callback because cancellation can return before a refresh finishes.
+
+The generated API nullable type reports an explicit JSON `null` as specified.
+For nullable relationships such as `Disk.VirtualMachineDisk`, check both
+`IsSpecified()` and `IsNull()` before calling `Get()`.
 
 Route every `StateChangeConf` delay, minimum timeout, and poll interval through
 the provider `Meta` timing helpers, including test sweepers. Compress any
 additional wall-clock settling window in replay mode so recorded state
 transitions remain fast without changing production timing.
+
+Standalone disk shrink requires a recognizable partition table and a shrinkable
+filesystem. Create shrink acceptance fixtures with
+`initial_file_system = "ext4"`; blank disks can produce a successful Katapult
+task without changing size, and XFS cannot shrink. Always assert API size
+convergence after task completion.
+
+Do not infer import adoption from a null API field alone. For create-only values
+that the API cannot read back, mark imported state explicitly in resource-private
+state, consume that marker on the first adoption plan, and require replacement
+for the same null-to-configured transition on provider-created resources.
+
+When stabilizing computed values in resource `ModifyPlan`, classify every
+replacement first and leave computed projections unknown on replacement plans.
+For in-place plans, copy only known, non-null prior state; copying legacy null
+state can cause an inconsistent result when `Read` normalizes it after apply.
+
+Never infer deprecated VM disk ownership from relationship counts during
+deletion. Exact disk IDs captured in resource-private state are authoritative;
+older VM state without those IDs must migrate additional relationships to
+`katapult_disk` and `katapult_disk_assignment` before destroy.
 
 VCR cassette YAML is massive and can exhaust agent context very quickly. Do not
 print whole cassette files or review complete cassette diffs by default. Start

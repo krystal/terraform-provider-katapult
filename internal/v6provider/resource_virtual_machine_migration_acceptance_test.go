@@ -127,17 +127,48 @@ func TestAccKatapultVirtualMachine_migrate_v5_state(t *testing.T) {
 			},
 			{
 				ProtoV6ProviderFactories: tt.ProviderFactories,
+				Config:                   virtualMachineV5ImportedConfig(name+"-renamed", hostname),
 				ResourceName:             "katapult_virtual_machine.base",
 				ImportState:              true,
-				ImportStateVerify:        true,
-				ImportStateVerifyIgnore: []string{
-					"disk_template",
-					"disk_template_options",
-					"timeouts",
+				ImportStateKind:          resource.ImportBlockWithID,
+				ExpectNonEmptyPlan:       true,
+				ImportPlanChecks: resource.ImportPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"katapult_virtual_machine.base",
+							plancheck.ResourceActionUpdate,
+						),
+					},
 				},
 			},
 		},
 	})
+}
+
+func virtualMachineV5ImportedConfig(name, hostname string) string {
+	return undent.Stringf(`
+		resource "katapult_legacy_ip" "web" {}
+
+		resource "katapult_virtual_machine" "base" {
+			name          = "%s"
+			hostname      = "%s"
+			package       = "rock-3"
+			disk_template = "ubuntu-18-04"
+			disk_template_options = {
+				install_agent = true
+			}
+			ip_address_ids = [katapult_legacy_ip.web.id]
+			system_disk = {
+				name       = "System Disk"
+				size_in_gb = 25
+			}
+
+			timeouts {
+				create = "20m"
+				update = "10m"
+				delete = "10m"
+			}
+		}`, name, hostname)
 }
 
 func virtualMachineV5HandoverConfig(

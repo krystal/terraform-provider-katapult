@@ -11,6 +11,50 @@ import (
 	"github.com/krystal/go-katapult/next/core"
 )
 
+const virtualMachineDiskDefaultPageSize = 30
+
+const (
+	stateAttributeName = "state"
+	unknownStateValue  = "unknown"
+)
+
+// fetchAllVMDisks returns every disk attachment for a given VM, paging as needed.
+func fetchAllVMDisks(
+	ctx context.Context,
+	m *Meta,
+	vmID string,
+) ([]core.GetVirtualMachineDisks200ResponseDisks, error) {
+	var all []core.GetVirtualMachineDisks200ResponseDisks
+	for page := 1; ; page++ {
+		p := page
+		res, err := m.Core.GetVirtualMachineDisksWithResponse(ctx,
+			&core.GetVirtualMachineDisksParams{
+				VirtualMachineId: &vmID,
+				Page:             &p,
+			})
+		if err != nil {
+			if res != nil && isErrNotFoundOrInTrash(err, res.JSON406) {
+				return nil, core.ErrNotFound
+			}
+			if res != nil {
+				return nil, genericAPIError(err, res.Body)
+			}
+			return nil, err
+		}
+		if res.JSON200 == nil {
+			return nil, fmt.Errorf("unexpected empty response fetching VM disks")
+		}
+		body := res.JSON200
+		all = append(all, body.Disks...)
+		if !paginationHasNext(
+			body.Pagination, page, len(body.Disks), virtualMachineDiskDefaultPageSize,
+		) {
+			break
+		}
+	}
+	return all, nil
+}
+
 func isErrNotFoundOrInTrash(err error, res *core.ObjectInTrashResponse) bool {
 	return errors.Is(err, core.ErrNotFound) ||
 		(res != nil && res.Code != nil &&
@@ -41,11 +85,14 @@ func purgeTrashObject(
 		lookup.ObjectId = trashObject.ObjectId
 	}
 
-	_, err := m.Core.DeleteTrashObjectWithResponse(ctx,
+	res, err := m.Core.DeleteTrashObjectWithResponse(ctx,
 		core.DeleteTrashObjectJSONRequestBody{
 			TrashObject: lookup,
 		})
 	if err != nil {
+		if res != nil && res.JSON404 != nil {
+			return nil
+		}
 		return err
 	}
 
@@ -104,6 +151,47 @@ func waitForTaskCompletion(
 	_, err := waiter.WaitForStateContext(ctx)
 
 	return err
+}
+
+func waitForDiskSize(
+	ctx context.Context,
+	m *Meta,
+	diskID string,
+	expected int64,
+	timeout time.Duration,
+) error {
+	target := fmt.Sprintf("%d", expected)
+	waiter := &retry.StateChangeConf{
+		Pending:      []string{unknownStateValue},
+		Target:       []string{target},
+		Timeout:      timeout,
+		Delay:        m.stateChangeDelay(time.Second),
+		MinTimeout:   m.stateChangeDelay(2 * time.Second),
+		PollInterval: m.stateChangePollInterval(),
+		Refresh: func() (interface{}, string, error) {
+			res, err := m.Core.GetDiskWithResponse(ctx, &core.GetDiskParams{DiskId: &diskID})
+			if err != nil {
+				if res != nil {
+					err = genericAPIError(err, res.Body)
+				}
+				return nil, "", err
+			}
+			if res == nil || res.JSON200 == nil || res.JSON200.Disk.SizeInGb == nil {
+				return nil, unknownStateValue, nil
+			}
+			size := int64(*res.JSON200.Disk.SizeInGb)
+			state := fmt.Sprintf("%d", size)
+			if size != expected {
+				state = unknownStateValue
+			}
+			return &res.JSON200.Disk, state, nil
+		},
+	}
+	_, err := waiter.WaitForStateContext(ctx)
+	if err != nil {
+		return fmt.Errorf("waiting for disk %s size %d GB: %w", diskID, expected, err)
+	}
+	return nil
 }
 
 func stringsDiff(a, b []string) []string {

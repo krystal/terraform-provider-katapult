@@ -106,7 +106,7 @@ func (d *VirtualMachineDataSource) Schema(
 				MarkdownDescription: "The fully-qualified domain name of " +
 					"the Virtual Machine.",
 			},
-			"state": schema.StringAttribute{
+			stateAttributeName: schema.StringAttribute{
 				Computed: true,
 				MarkdownDescription: "The current state of the " +
 					"Virtual Machine.",
@@ -202,7 +202,7 @@ func (d *VirtualMachineDataSource) Schema(
 	}
 }
 
-//nolint:funlen,gocyclo
+//nolint:gocyclo
 func (d *VirtualMachineDataSource) Read(
 	ctx context.Context,
 	req datasource.ReadRequest,
@@ -328,7 +328,7 @@ func (d *VirtualMachineDataSource) Read(
 		if err2 != nil || vnet.Id == nil {
 			continue
 		}
-		if iface.State == nil || *iface.State != "attached" {
+		if iface.State == nil || *iface.State != "attached" { //nolint:goconst // API state value.
 			continue
 		}
 		vnetIDs = append(vnetIDs, types.StringValue(*vnet.Id))

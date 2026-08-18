@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -35,6 +36,9 @@ func testSweepTags(_ string) error {
 				PerPage:        &pageSize,
 			})
 		if err != nil {
+			if errors.Is(err, core.ErrNotFound) {
+				return nil
+			}
 			return err
 		}
 

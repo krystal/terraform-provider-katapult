@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -34,9 +35,11 @@ func testSweepLoadBalancers(_ string) error {
 				Page:           &pageNum,
 			})
 		if err != nil {
+			if errors.Is(err, core.ErrNotFound) {
+				return nil
+			}
 			return err
 		}
-
 		resp := res.JSON200
 
 		totalPages = resp.Pagination.TotalPages.MustGet()
@@ -44,15 +47,22 @@ func testSweepLoadBalancers(_ string) error {
 	}
 
 	for _, lb := range loadBalancers {
+		if lb.Name == nil {
+			continue
+		}
 		if !strings.HasPrefix(*lb.Name, testAccResourceNamePrefix) {
 			continue
 		}
+		if lb.Id == nil {
+			return fmt.Errorf("load balancer %q has no ID", *lb.Name)
+		}
+		lbID, lbName := *lb.Id, *lb.Name
 
-		m.Logger.Info("deleting load balancer", "id", lb.Id, "name", lb.Name)
+		m.Logger.Info("deleting load balancer", "id", lbID, "name", lbName)
 		_, err := m.Core.DeleteLoadBalancerWithResponse(ctx,
 			core.DeleteLoadBalancerJSONRequestBody{
 				LoadBalancer: core.LoadBalancerLookup{
-					Id: lb.Id,
+					Id: &lbID,
 				},
 			})
 		if err != nil {
