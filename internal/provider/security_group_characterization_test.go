@@ -14,7 +14,7 @@ import (
 )
 
 func TestAccKatapultSecurityGroup_external_rules_enable(t *testing.T) {
-	tt := newTestTools(t)
+	tt := newSecurityGroupCharacterizationTestTools(t)
 
 	name := tt.ResourceName()
 	var inboundRuleID string
@@ -60,10 +60,12 @@ func TestAccKatapultSecurityGroup_external_rules_enable(t *testing.T) {
 						tt, "katapult_security_group.my_sg",
 					),
 					testAccCaptureSecurityGroupAttr(
+						"katapult_security_group.my_sg",
 						"inbound_rule.0.id",
 						&inboundRuleID,
 					),
 					testAccCaptureSecurityGroupAttr(
+						"katapult_security_group.my_sg",
 						"outbound_rule.0.id",
 						&outboundRuleID,
 					),
@@ -101,7 +103,7 @@ func TestAccKatapultSecurityGroup_external_rules_enable(t *testing.T) {
 }
 
 func TestAccKatapultSecurityGroup_external_rules_disable(t *testing.T) {
-	tt := newTestTools(t)
+	tt := newSecurityGroupCharacterizationTestTools(t)
 
 	name := tt.ResourceName()
 	var inboundRuleID string
@@ -215,12 +217,64 @@ func TestAccKatapultSecurityGroup_external_rules_disable(t *testing.T) {
 						&inboundRuleID,
 					),
 					resource.TestCheckResourceAttr(
+						"katapult_security_group.my_sg",
+						"inbound_rule.0.direction", "inbound",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_security_group.my_sg",
+						"inbound_rule.0.protocol", "TCP",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_security_group.my_sg",
+						"inbound_rule.0.ports", "22",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_security_group.my_sg",
+						"inbound_rule.0.targets.#", "1",
+					),
+					resource.TestCheckTypeSetElemAttr(
+						"katapult_security_group.my_sg",
+						"inbound_rule.0.targets.*", "all:ipv4",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_security_group.my_sg",
+						"inbound_rule.0.notes", "Externally managed SSH",
+					),
+					resource.TestCheckResourceAttr(
 						"katapult_security_group.my_sg", "outbound_rule.#", "1",
 					),
 					resource.TestCheckResourceAttrPtr(
 						"katapult_security_group.my_sg",
 						"outbound_rule.0.id",
 						&outboundRuleID,
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_security_group.my_sg",
+						"outbound_rule.0.direction", "outbound",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_security_group.my_sg",
+						"outbound_rule.0.protocol", "UDP",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_security_group.my_sg",
+						"outbound_rule.0.ports", "53",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_security_group.my_sg",
+						"outbound_rule.0.targets.#", "2",
+					),
+					resource.TestCheckTypeSetElemAttr(
+						"katapult_security_group.my_sg",
+						"outbound_rule.0.targets.*", "all:ipv4",
+					),
+					resource.TestCheckTypeSetElemAttr(
+						"katapult_security_group.my_sg",
+						"outbound_rule.0.targets.*", "all:ipv6",
+					),
+					resource.TestCheckResourceAttr(
+						"katapult_security_group.my_sg",
+						"outbound_rule.0.notes", "Externally managed DNS",
 					),
 				),
 			},
@@ -261,7 +315,7 @@ func TestAccKatapultSecurityGroup_external_rules_disable(t *testing.T) {
 }
 
 func TestAccKatapultSecurityGroup_out_of_band_deletion(t *testing.T) {
-	tt := newTestTools(t)
+	tt := newSecurityGroupCharacterizationTestTools(t)
 
 	name := tt.ResourceName()
 	var groupID string
@@ -304,6 +358,7 @@ func TestAccKatapultSecurityGroup_out_of_band_deletion(t *testing.T) {
 				ExpectNonEmptyPlan: true,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCaptureSecurityGroupAttr(
+						"katapult_security_group.my_sg",
 						"id", &groupID,
 					),
 					testAccCaptureAndDeleteSecurityGroupRule(
@@ -342,7 +397,7 @@ func TestAccKatapultSecurityGroup_out_of_band_deletion(t *testing.T) {
 }
 
 func TestAccKatapultSecurityGroup_partial_rule_creation_failure(t *testing.T) {
-	tt := newTestTools(t)
+	tt := newSecurityGroupCharacterizationTestTools(t)
 
 	name := tt.ResourceName()
 	var groupID string
@@ -383,6 +438,7 @@ func TestAccKatapultSecurityGroup_partial_rule_creation_failure(t *testing.T) {
 				ExpectNonEmptyPlan: true,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCaptureSecurityGroupAttr(
+						"katapult_security_group.my_sg",
 						"id", &groupID,
 					),
 					testAccCheckKatapultSecurityGroupRuleCounts(
@@ -402,11 +458,10 @@ func TestAccKatapultSecurityGroup_partial_rule_creation_failure(t *testing.T) {
 }
 
 func testAccCaptureSecurityGroupAttr(
+	resourceName string, //nolint:unparam // Supports callers using any SG address.
 	attributeName string,
 	target *string,
 ) resource.TestCheckFunc {
-	const resourceName = "katapult_security_group.my_sg"
-
 	return func(state *terraform.State) error {
 		resourceState, ok := state.RootModule().Resources[resourceName]
 		if !ok {

@@ -8,7 +8,7 @@ import (
 )
 
 func TestAccKatapultSecurityGroupRule_external_rules_coexistence(t *testing.T) {
-	tt := newTestTools(t)
+	tt := newSecurityGroupCharacterizationTestTools(t)
 
 	name := tt.ResourceName()
 	config := undent.Stringf(`
@@ -79,9 +79,10 @@ func TestAccKatapultSecurityGroupRule_external_rules_coexistence(t *testing.T) {
 }
 
 func TestAccKatapultSecurityGroupRule_empty_optional_values(t *testing.T) {
-	tt := newTestTools(t)
+	tt := newSecurityGroupCharacterizationTestTools(t)
 
 	name := tt.ResourceName()
+	var ruleID string
 	omittedConfig := undent.Stringf(`
 		resource "katapult_security_group" "my_sg" {
 			name           = "%s"
@@ -130,6 +131,12 @@ func TestAccKatapultSecurityGroupRule_empty_optional_values(t *testing.T) {
 			"katapult_security_group_rule.my_rule", "notes", "",
 		),
 	)
+	stableChecks := resource.ComposeAggregateTestCheckFunc(
+		checks,
+		resource.TestCheckResourceAttrPtr(
+			"katapult_security_group_rule.my_rule", "id", &ruleID,
+		),
+	)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -141,15 +148,20 @@ func TestAccKatapultSecurityGroupRule_empty_optional_values(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: omittedConfig,
-				Check:  checks,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checks,
+					testAccCaptureRuleID(
+						"katapult_security_group_rule.my_rule", &ruleID,
+					),
+				),
 			},
 			{
 				Config: explicitConfig,
-				Check:  checks,
+				Check:  stableChecks,
 			},
 			{
 				Config: omittedConfig,
-				Check:  checks,
+				Check:  stableChecks,
 			},
 		},
 	})

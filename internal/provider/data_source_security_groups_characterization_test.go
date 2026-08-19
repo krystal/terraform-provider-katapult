@@ -1,8 +1,10 @@
 package provider
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -10,8 +12,16 @@ import (
 	"github.com/jimeh/undent"
 )
 
+type expectedSecurityGroupRuleState struct {
+	direction string
+	protocol  string
+	ports     string
+	targets   []string
+	notes     string
+}
+
 func TestAccKatapultDataSourceSecurityGroups_include_rules(t *testing.T) {
-	tt := newTestTools(t)
+	tt := newSecurityGroupCharacterizationTestTools(t)
 
 	name := tt.ResourceName()
 	config := undent.Stringf(`
@@ -57,11 +67,27 @@ func TestAccKatapultDataSourceSecurityGroups_include_rules(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckSecurityGroupCollectionRules(
 						"data.katapult_security_groups.all",
-						name+"-inbound", 1, 0, "TCP", "",
+						name+"-inbound",
+						&expectedSecurityGroupRuleState{
+							direction: "inbound",
+							protocol:  "TCP",
+							ports:     "22",
+							targets:   []string{"all:ipv4"},
+							notes:     "SSH",
+						},
+						nil,
 					),
 					testAccCheckSecurityGroupCollectionRules(
 						"data.katapult_security_groups.all",
-						name+"-outbound", 0, 1, "", "UDP",
+						name+"-outbound",
+						nil,
+						&expectedSecurityGroupRuleState{
+							direction: "outbound",
+							protocol:  "UDP",
+							ports:     "53",
+							targets:   []string{"all:ipv4", "all:ipv6"},
+							notes:     "DNS",
+						},
 					),
 				),
 			},
@@ -72,10 +98,8 @@ func TestAccKatapultDataSourceSecurityGroups_include_rules(t *testing.T) {
 func testAccCheckSecurityGroupCollectionRules(
 	resourceName string,
 	groupName string,
-	wantInbound int,
-	wantOutbound int,
-	wantInboundProtocol string,
-	wantOutboundProtocol string,
+	wantInbound *expectedSecurityGroupRuleState,
+	wantOutbound *expectedSecurityGroupRuleState,
 ) resource.TestCheckFunc {
 	return func(state *terraform.State) error {
 		resourceState, ok := state.RootModule().Resources[resourceName]
@@ -96,57 +120,47 @@ func testAccCheckSecurityGroupCollectionRules(
 				continue
 			}
 
+			wantInboundCount := 0
+			if wantInbound != nil {
+				wantInboundCount = 1
+			}
 			inbound := resourceState.Primary.Attributes[prefix+"inbound_rules.#"]
-			if inbound != strconv.Itoa(wantInbound) {
+			if inbound != strconv.Itoa(wantInboundCount) {
 				return fmt.Errorf(
 					"%s has %s inbound rules, want %d",
-					groupName, inbound, wantInbound,
+					groupName, inbound, wantInboundCount,
 				)
 			}
 
+			wantOutboundCount := 0
+			if wantOutbound != nil {
+				wantOutboundCount = 1
+			}
 			outbound := resourceState.Primary.Attributes[prefix+"outbound_rules.#"]
-			if outbound != strconv.Itoa(wantOutbound) {
+			if outbound != strconv.Itoa(wantOutboundCount) {
 				return fmt.Errorf(
 					"%s has %s outbound rules, want %d",
-					groupName, outbound, wantOutbound,
+					groupName, outbound, wantOutboundCount,
 				)
 			}
 
-			if wantInboundProtocol != "" {
-				inboundPrefix := prefix + "inbound_rules.0."
-				if id := resourceState.Primary.Attributes[inboundPrefix+"id"]; id == "" {
-					return fmt.Errorf("%s inbound rule has no ID", groupName)
-				}
-				if direction := resourceState.Primary.Attributes[inboundPrefix+"direction"]; direction != "inbound" {
-					return fmt.Errorf(
-						"%s inbound rule has direction %q", groupName, direction,
-					)
-				}
-				protocol := resourceState.Primary.Attributes[inboundPrefix+"protocol"]
-				if protocol != wantInboundProtocol {
-					return fmt.Errorf(
-						"%s inbound rule has protocol %q, want %q",
-						groupName, protocol, wantInboundProtocol,
-					)
+			if wantInbound != nil {
+				if err := testAccCheckSecurityGroupCollectionRule(
+					resourceState.Primary.Attributes,
+					prefix+"inbound_rules.0.",
+					*wantInbound,
+				); err != nil {
+					return fmt.Errorf("%s inbound rule: %w", groupName, err)
 				}
 			}
 
-			if wantOutboundProtocol != "" {
-				outboundPrefix := prefix + "outbound_rules.0."
-				if id := resourceState.Primary.Attributes[outboundPrefix+"id"]; id == "" {
-					return fmt.Errorf("%s outbound rule has no ID", groupName)
-				}
-				if direction := resourceState.Primary.Attributes[outboundPrefix+"direction"]; direction != "outbound" {
-					return fmt.Errorf(
-						"%s outbound rule has direction %q", groupName, direction,
-					)
-				}
-				protocol := resourceState.Primary.Attributes[outboundPrefix+"protocol"]
-				if protocol != wantOutboundProtocol {
-					return fmt.Errorf(
-						"%s outbound rule has protocol %q, want %q",
-						groupName, protocol, wantOutboundProtocol,
-					)
+			if wantOutbound != nil {
+				if err := testAccCheckSecurityGroupCollectionRule(
+					resourceState.Primary.Attributes,
+					prefix+"outbound_rules.0.",
+					*wantOutbound,
+				); err != nil {
+					return fmt.Errorf("%s outbound rule: %w", groupName, err)
 				}
 			}
 
@@ -155,4 +169,50 @@ func testAccCheckSecurityGroupCollectionRules(
 
 		return fmt.Errorf("security group %q not found in %s", groupName, resourceName)
 	}
+}
+
+func testAccCheckSecurityGroupCollectionRule(
+	attributes map[string]string,
+	prefix string,
+	want expectedSecurityGroupRuleState,
+) error {
+	if attributes[prefix+"id"] == "" {
+		return errors.New("ID is empty")
+	}
+
+	for attribute, expected := range map[string]string{
+		"direction": want.direction,
+		"protocol":  want.protocol,
+		"ports":     want.ports,
+		"notes":     want.notes,
+	} {
+		if actual := attributes[prefix+attribute]; actual != expected {
+			return fmt.Errorf(
+				"%s is %q, want %q", attribute, actual, expected,
+			)
+		}
+	}
+
+	targetCount, err := strconv.Atoi(attributes[prefix+"targets.#"])
+	if err != nil {
+		return fmt.Errorf("reading target count: %w", err)
+	}
+	if targetCount != len(want.targets) {
+		return fmt.Errorf("has %d targets, want %d", targetCount, len(want.targets))
+	}
+
+	targets := map[string]bool{}
+	for attribute, value := range attributes {
+		if strings.HasPrefix(attribute, prefix+"targets.") &&
+			attribute != prefix+"targets.#" {
+			targets[value] = true
+		}
+	}
+	for _, target := range want.targets {
+		if !targets[target] {
+			return fmt.Errorf("target %q is missing", target)
+		}
+	}
+
+	return nil
 }
