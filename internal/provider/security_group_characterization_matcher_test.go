@@ -69,12 +69,12 @@ func securityGroupJSONBodiesEqual(actual, recorded []byte) bool {
 
 	var actualJSON any
 	if err := json.Unmarshal(actual, &actualJSON); err != nil {
-		return false
+		return bytes.Equal(actual, recorded)
 	}
 
 	var recordedJSON any
 	if err := json.Unmarshal(recorded, &recordedJSON); err != nil {
-		return false
+		return bytes.Equal(actual, recorded)
 	}
 
 	return reflect.DeepEqual(
@@ -170,6 +170,42 @@ func TestSecurityGroupJSONMatcher(t *testing.T) {
 			want:         false,
 			wantReadable: true,
 		},
+		"reordered non-set array": {
+			method: http.MethodPost,
+			url:    "https://api.example.test/security_groups",
+			body:   `{"properties":{"tags":["b","a"]}}`,
+			recorded: cassette.Request{
+				Method: http.MethodPost,
+				URL:    "https://api.example.test/security_groups",
+				Body:   `{"properties":{"tags":["a","b"]}}`,
+			},
+			want:         false,
+			wantReadable: true,
+		},
+		"matching non-JSON bodies": {
+			method: http.MethodPost,
+			url:    "https://api.example.test/security_groups",
+			body:   "plain body",
+			recorded: cassette.Request{
+				Method: http.MethodPost,
+				URL:    "https://api.example.test/security_groups",
+				Body:   "plain body",
+			},
+			want:         true,
+			wantReadable: true,
+		},
+		"different non-JSON bodies": {
+			method: http.MethodPost,
+			url:    "https://api.example.test/security_groups",
+			body:   "actual body",
+			recorded: cassette.Request{
+				Method: http.MethodPost,
+				URL:    "https://api.example.test/security_groups",
+				Body:   "recorded body",
+			},
+			want:         false,
+			wantReadable: true,
+		},
 		"method difference": {
 			method: http.MethodPost,
 			url:    "https://api.example.test/security_groups",
@@ -232,7 +268,7 @@ func TestSecurityGroupJSONMatcher(t *testing.T) {
 			if test.wantReadable {
 				body, err := io.ReadAll(request.Body)
 				require.NoError(t, err)
-				assert.JSONEq(t, test.body, string(body))
+				assert.Equal(t, test.body, string(body))
 			}
 		})
 	}

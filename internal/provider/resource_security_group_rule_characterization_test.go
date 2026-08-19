@@ -128,6 +128,9 @@ func TestAccKatapultSecurityGroupRule_empty_optional_values(t *testing.T) {
 			"katapult_security_group_rule.my_rule", "ports", "",
 		),
 		resource.TestCheckResourceAttr(
+			"katapult_security_group_rule.my_rule", "targets.#", "0",
+		),
+		resource.TestCheckResourceAttr(
 			"katapult_security_group_rule.my_rule", "notes", "",
 		),
 	)
@@ -162,6 +165,10 @@ func TestAccKatapultSecurityGroupRule_empty_optional_values(t *testing.T) {
 			{
 				Config: omittedConfig,
 				Check:  stableChecks,
+			},
+			{
+				Config:   omittedConfig,
+				PlanOnly: true,
 			},
 		},
 	})
