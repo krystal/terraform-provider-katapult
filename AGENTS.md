@@ -136,6 +136,10 @@ Framework Security Group creates can include `allow_all_*` values that SDKv2
 applied later with PATCH. Record the affected Framework acceptance case instead
 of weakening request matching to accept explicit boolean mismatches.
 
+When the ordered Security Group cassette transport accepts a create through a
+compatibility fallback, observe the mutation before returning so synthetic
+follow-up reads use the created resource snapshot.
+
 ## Repository Rules
 
 - Treat mise as the discoverable task interface. The Makefile remains the

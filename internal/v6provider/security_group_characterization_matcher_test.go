@@ -140,6 +140,7 @@ func (transport *orderedSecurityGroupCassetteTransport) RoundTrip(request *http.
 			continue
 		}
 		transport.consumeInteraction(key, index)
+		transport.observeMutation(request, interaction)
 		return replaySecurityGroupInteraction(request, interaction), nil
 	}
 	if len(candidates) > 0 && candidates[len(candidates)-1].Code == http.StatusNotFound &&
@@ -907,6 +908,52 @@ func TestOrderedSecurityGroupCassetteTransportMatchesDistinctCreatesOutOfOrder(t
 		require.NoError(t, response.Body.Close())
 		assert.JSONEq(t, test.responseBody, string(responseBody))
 	}
+}
+
+func TestOrderedSecurityGroupCassetteTransportCompatibilityCreateSupportsRead(t *testing.T) {
+	t.Parallel()
+
+	const (
+		createURL    = "https://api.example.test/organizations/organization/security_groups"
+		readURL      = "https://api.example.test/security_groups/security_group?security_group%5Bid%5D=sg_1"
+		actualBody   = `{"organization":{"sub_domain":"test"},"properties":{"name":"web","associations":[]}}`
+		recordedBody = `{"organization":{"sub_domain":"test"},"properties":{` +
+			`"name":"web","associations":[],"allow_all_inbound":false}}`
+		responseBody = `{"security_group":{"id":"sg_1","name":"web","associations":[],"allow_all_inbound":false}}`
+	)
+	interaction := &cassette.Interaction{
+		Request: cassette.Request{
+			Method: http.MethodPost, URL: createURL, Body: recordedBody,
+		},
+		Response: cassette.Response{
+			Body: responseBody, Status: "200 OK", Code: http.StatusOK,
+		},
+	}
+	key := securityGroupCassetteRequestKey(http.MethodPost, createURL, nil)
+	transport := &orderedSecurityGroupCassetteTransport{
+		interactions:   map[string][]*cassette.Interaction{key: {interaction}},
+		next:           map[string]int{},
+		groupSnapshots: map[string]securityGroupReplaySnapshot{},
+	}
+
+	createRequest, err := http.NewRequestWithContext(
+		context.Background(), http.MethodPost, createURL, strings.NewReader(actualBody),
+	)
+	require.NoError(t, err)
+	createResponse, err := transport.RoundTrip(createRequest)
+	require.NoError(t, err)
+	require.NoError(t, createResponse.Body.Close())
+
+	readRequest, err := http.NewRequestWithContext(
+		context.Background(), http.MethodGet, readURL, nil,
+	)
+	require.NoError(t, err)
+	readResponse, err := transport.RoundTrip(readRequest)
+	require.NoError(t, err)
+	readBody, err := io.ReadAll(readResponse.Body)
+	require.NoError(t, err)
+	require.NoError(t, readResponse.Body.Close())
+	assert.JSONEq(t, responseBody, string(readBody))
 }
 
 func TestOrderedSecurityGroupCassetteTransportCreateFallbackRejectsUnknownProperties(t *testing.T) {
