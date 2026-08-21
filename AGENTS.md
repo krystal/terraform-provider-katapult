@@ -132,6 +132,10 @@ with `git diff --stat`, `git diff --numstat`, and `git diff --name-only`, then u
 `rg` and bounded file ranges to inspect only the relevant interactions. Treat
 unexpected `.cassette.rand_id` changes as generated drift.
 
+Framework Security Group creates can include `allow_all_*` values that SDKv2
+applied later with PATCH. Record the affected Framework acceptance case instead
+of weakening request matching to accept explicit boolean mismatches.
+
 ## Repository Rules
 
 - Treat mise as the discoverable task interface. The Makefile remains the

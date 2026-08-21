@@ -170,10 +170,22 @@ func securityGroupCreateBodiesCompatible(actual, recorded []byte) bool {
 	}
 	return reflect.DeepEqual(actualRequest.Organization, recordedRequest.Organization) &&
 		actualRequest.Properties.Name == recordedRequest.Properties.Name &&
+		securityGroupOptionalBoolCompatible(
+			actualRequest.Properties.AllowAllInbound,
+			recordedRequest.Properties.AllowAllInbound,
+		) &&
+		securityGroupOptionalBoolCompatible(
+			actualRequest.Properties.AllowAllOutbound,
+			recordedRequest.Properties.AllowAllOutbound,
+		) &&
 		reflect.DeepEqual(
 			actualRequest.Properties.Associations,
 			recordedRequest.Properties.Associations,
 		)
+}
+
+func securityGroupOptionalBoolCompatible(actual, recorded *bool) bool {
+	return actual == nil || recorded == nil || *actual == *recorded
 }
 
 func (transport *orderedSecurityGroupCassetteTransport) observeMutation(
@@ -859,4 +871,57 @@ func TestOrderedSecurityGroupCassetteTransportCreateFallbackRejectsUnknownProper
 
 	assert.Nil(t, response)
 	assert.ErrorIs(t, err, cassette.ErrInteractionNotFound)
+}
+
+func TestOrderedSecurityGroupCassetteTransportCreateFallbackRejectsMismatchedAllowAll(t *testing.T) {
+	t.Parallel()
+
+	const (
+		requestURL   = "https://api.example.test/organizations/_/security_groups"
+		recordedBody = `{"organization":{"sub_domain":"test"},"properties":{` +
+			`"name":"web","associations":[],` +
+			`"allow_all_inbound":false,"allow_all_outbound":false}}`
+	)
+	tests := map[string]string{
+		"inbound": `{"organization":{"sub_domain":"test"},"properties":{` +
+			`"name":"web","associations":[],` +
+			`"allow_all_inbound":true,"allow_all_outbound":false}}`,
+		"outbound": `{"organization":{"sub_domain":"test"},"properties":{` +
+			`"name":"web","associations":[],` +
+			`"allow_all_inbound":false,"allow_all_outbound":true}}`,
+	}
+	for name, actualBody := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			interaction := &cassette.Interaction{
+				Request: cassette.Request{
+					Method: http.MethodPost,
+					URL:    requestURL,
+					Body:   recordedBody,
+				},
+				Response: cassette.Response{
+					Body: `{}`, Status: "200 OK", Code: http.StatusOK,
+				},
+			}
+			key := securityGroupCassetteRequestKey(http.MethodPost, requestURL, nil)
+			transport := &orderedSecurityGroupCassetteTransport{
+				interactions: map[string][]*cassette.Interaction{key: {interaction}},
+				next:         map[string]int{},
+			}
+			request, err := http.NewRequestWithContext(
+				context.Background(), http.MethodPost, requestURL,
+				strings.NewReader(actualBody),
+			)
+			require.NoError(t, err)
+
+			response, err := transport.RoundTrip(request)
+			if response != nil {
+				require.NoError(t, response.Body.Close())
+			}
+
+			assert.Nil(t, response)
+			assert.ErrorIs(t, err, cassette.ErrInteractionNotFound)
+		})
+	}
 }
