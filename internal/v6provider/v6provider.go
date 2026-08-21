@@ -25,6 +25,7 @@ import (
 const (
 	defaultGeneratedNamePrefix = "tf"
 	uaEnvVar                   = "TF_APPEND_USER_AGENT"
+	providerTypeName           = "katapult"
 )
 
 type (
@@ -61,7 +62,7 @@ func (k *KatapultProvider) Metadata(
 	_ provider.MetadataRequest,
 	resp *provider.MetadataResponse,
 ) {
-	resp.TypeName = "katapult"
+	resp.TypeName = providerTypeName
 }
 
 func (k *KatapultProvider) Schema(
@@ -259,6 +260,8 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource { return &DiskResource{} },
 		func() resource.Resource { return &DiskAssignmentResource{} },
 		func() resource.Resource { return &VirtualMachineResource{} },
+		func() resource.Resource { return &SecurityGroupResource{} },
+		func() resource.Resource { return &SecurityGroupRuleResource{} },
 	}
 }
 
@@ -299,6 +302,10 @@ func (k *KatapultProvider) DataSources(
 		func() datasource.DataSource { return &VirtualMachineDataSource{} },
 		func() datasource.DataSource { return &VirtualMachineDisksDataSource{} },
 		func() datasource.DataSource { return &VirtualMachinesDataSource{} },
+		func() datasource.DataSource { return &SecurityGroupDataSource{} },
+		func() datasource.DataSource { return &SecurityGroupRuleDataSource{} },
+		func() datasource.DataSource { return &SecurityGroupRulesDataSource{} },
+		func() datasource.DataSource { return &SecurityGroupsDataSource{} },
 	}
 }
 

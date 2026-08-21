@@ -103,7 +103,7 @@ func NewMeta(
 
 	m := &Meta{
 		Logger: hclog.New(&hclog.LoggerOptions{
-			Name:       "katapult",
+			Name:       providerTypeName,
 			Level:      hclog.LevelFromString(logLevel),
 			TimeFormat: "2006/01/02 15:04:05",
 		}),

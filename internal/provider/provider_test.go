@@ -82,8 +82,17 @@ func providerFactories(
 		//nolint:unparam
 		"katapult": func() (*schema.Provider, error) {
 			pf := New(conf)
+			p := pf()
+			// The production names are Framework-owned. Retain the legacy
+			// implementations only in this package's characterization harness.
+			p.ResourcesMap["katapult_security_group"] = p.ResourcesMap["katapult_legacy_security_group"]
+			p.ResourcesMap["katapult_security_group_rule"] = p.ResourcesMap["katapult_legacy_security_group_rule"]
+			p.DataSourcesMap["katapult_security_group"] = p.DataSourcesMap["katapult_legacy_security_group"]
+			p.DataSourcesMap["katapult_security_group_rule"] = p.DataSourcesMap["katapult_legacy_security_group_rule"]
+			p.DataSourcesMap["katapult_security_group_rules"] = p.DataSourcesMap["katapult_legacy_security_group_rules"]
+			p.DataSourcesMap["katapult_security_groups"] = p.DataSourcesMap["katapult_legacy_security_groups"]
 
-			return pf(), nil
+			return p, nil
 		},
 	}
 }
@@ -212,18 +221,6 @@ func testDataFilePath(t *testing.T, suffix string) string {
 	}
 
 	return filepath.Join(".", "testdata", baseName)
-}
-
-func exampleResourceConfig(t *testing.T, name string) string {
-	t.Helper()
-
-	filename := filepath.Join(
-		"..", "..", "examples", "resources", name, "resource.tf",
-	)
-	data, err := os.ReadFile(filename)
-	require.NoError(t, err)
-
-	return string(data)
 }
 
 func vcrMode() recorder.Mode {

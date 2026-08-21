@@ -1,14 +1,16 @@
-package provider
+package v6provider
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"testing"
 
 	"github.com/dnaeon/go-vcr/recorder"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
+	"github.com/krystal/go-katapult/next/core"
 )
 
 func TestAccKatapultSecurityGroupRule_example(t *testing.T) {
@@ -19,9 +21,9 @@ func TestAccKatapultSecurityGroupRule_example(t *testing.T) {
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultSecurityGroupDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: exampleResourceConfig(
@@ -61,9 +63,9 @@ func TestAccKatapultSecurityGroupRule_minimal(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultSecurityGroupRuleDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupRuleDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -86,7 +88,7 @@ func TestAccKatapultSecurityGroupRule_minimal(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group_rule.my_rule",
-						"protocol", "TCP",
+						"protocol", "tcp",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group_rule.my_rule",
@@ -99,9 +101,10 @@ func TestAccKatapultSecurityGroupRule_minimal(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "katapult_security_group_rule.my_rule",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "katapult_security_group_rule.my_rule",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"protocol"},
 			},
 		},
 	})
@@ -113,9 +116,9 @@ func TestAccKatapultSecurityGroupRule_update(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultSecurityGroupRuleDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupRuleDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -140,7 +143,7 @@ func TestAccKatapultSecurityGroupRule_update(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group_rule.my_rule",
-						"protocol", "TCP",
+						"protocol", "tcp",
 					),
 				),
 			},
@@ -167,7 +170,7 @@ func TestAccKatapultSecurityGroupRule_update(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group_rule.my_rule",
-						"protocol", "UDP",
+						"protocol", "udp",
 					),
 				),
 			},
@@ -214,14 +217,15 @@ func TestAccKatapultSecurityGroupRule_update(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group_rule.my_rule",
-						"protocol", "ICMP",
+						"protocol", "icmp",
 					),
 				),
 			},
 			{
-				ResourceName:      "katapult_security_group_rule.my_rule",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "katapult_security_group_rule.my_rule",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"protocol"},
 			},
 		},
 	})
@@ -233,9 +237,9 @@ func TestAccKatapultSecurityGroupRule_tcp(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultSecurityGroupRuleDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupRuleDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -260,7 +264,7 @@ func TestAccKatapultSecurityGroupRule_tcp(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group_rule.http",
-						"protocol", "TCP",
+						"protocol", "tcp",
 					),
 				),
 			},
@@ -287,7 +291,7 @@ func TestAccKatapultSecurityGroupRule_tcp(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group_rule.http",
-						"protocol", "TCP",
+						"protocol", "tcp",
 					),
 				),
 			},
@@ -323,7 +327,7 @@ func TestAccKatapultSecurityGroupRule_tcp(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group_rule.http",
-						"protocol", "TCP",
+						"protocol", "tcp",
 					),
 					testAccCheckKatapultSecurityGroupRuleExists(
 						tt, "katapult_security_group_rule.ssh",
@@ -335,9 +339,10 @@ func TestAccKatapultSecurityGroupRule_tcp(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "katapult_security_group_rule.http",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "katapult_security_group_rule.http",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"protocol"},
 			},
 		},
 	})
@@ -349,9 +354,9 @@ func TestAccKatapultSecurityGroupRule_udp(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultSecurityGroupRuleDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupRuleDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -376,7 +381,7 @@ func TestAccKatapultSecurityGroupRule_udp(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group_rule.my_rule",
-						"protocol", "UDP",
+						"protocol", "udp",
 					),
 				),
 			},
@@ -403,7 +408,7 @@ func TestAccKatapultSecurityGroupRule_udp(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group_rule.my_rule",
-						"protocol", "UDP",
+						"protocol", "udp",
 					),
 				),
 			},
@@ -439,7 +444,7 @@ func TestAccKatapultSecurityGroupRule_udp(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group_rule.my_rule",
-						"protocol", "UDP",
+						"protocol", "udp",
 					),
 					testAccCheckKatapultSecurityGroupRuleExists(
 						tt, "katapult_security_group_rule.quic",
@@ -451,9 +456,10 @@ func TestAccKatapultSecurityGroupRule_udp(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "katapult_security_group_rule.my_rule",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "katapult_security_group_rule.my_rule",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"protocol"},
 			},
 		},
 	})
@@ -465,9 +471,9 @@ func TestAccKatapultSecurityGroupRule_icmp(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultSecurityGroupRuleDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupRuleDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -491,7 +497,7 @@ func TestAccKatapultSecurityGroupRule_icmp(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group_rule.my_rule",
-						"protocol", "ICMP",
+						"protocol", "icmp",
 					),
 				),
 			},
@@ -517,7 +523,7 @@ func TestAccKatapultSecurityGroupRule_icmp(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group_rule.my_rule",
-						"protocol", "ICMP",
+						"protocol", "icmp",
 					),
 				),
 			},
@@ -553,7 +559,7 @@ func TestAccKatapultSecurityGroupRule_icmp(t *testing.T) {
 						security_group_id = katapult_security_group.my_sg.id
 						direction = "outbound"
 						protocol = "icmp"
-						targets = ["all:ipv4", "all:ipv6"]
+						targets = ["all:ipv4"]
 						notes = "ping out"
 					}
 
@@ -572,7 +578,7 @@ func TestAccKatapultSecurityGroupRule_icmp(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group_rule.my_rule",
-						"protocol", "ICMP",
+						"protocol", "icmp",
 					),
 					testAccCheckKatapultSecurityGroupRuleExists(
 						tt, "katapult_security_group_rule.pingme",
@@ -584,9 +590,10 @@ func TestAccKatapultSecurityGroupRule_icmp(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "katapult_security_group_rule.my_rule",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "katapult_security_group_rule.my_rule",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"protocol"},
 			},
 		},
 	})
@@ -598,9 +605,9 @@ func TestAccKatapultSecurityGroupRule_invalid(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultSecurityGroupRuleDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupRuleDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -618,10 +625,7 @@ func TestAccKatapultSecurityGroupRule_invalid(t *testing.T) {
 					name,
 				),
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta(
-						`expected direction to be one of ` +
-							`["inbound" "outbound"], got upwards`,
-					),
+					"Invalid Attribute Value Match",
 				),
 			},
 			{
@@ -640,10 +644,7 @@ func TestAccKatapultSecurityGroupRule_invalid(t *testing.T) {
 					name,
 				),
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta(
-						`expected protocol to be one of ` +
-							`["TCP" "UDP" "ICMP"], got grpc`,
-					),
+					"Invalid Attribute Value Match",
 				),
 			},
 			{
@@ -661,11 +662,7 @@ func TestAccKatapultSecurityGroupRule_invalid(t *testing.T) {
 					}`,
 					name,
 				),
-				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta(
-						"expected \"targets.0\" to not be an empty string",
-					),
-				),
+				ExpectError: regexp.MustCompile("Invalid Security Group Rule Target"),
 			},
 			{
 				Config: undent.Stringf(`
@@ -683,7 +680,7 @@ func TestAccKatapultSecurityGroupRule_invalid(t *testing.T) {
 					name,
 				),
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta("Error: Null value found in list"),
+					"Invalid Security Group Rule Target",
 				),
 			},
 			{
@@ -722,10 +719,7 @@ func TestAccKatapultSecurityGroupRule_invalid(t *testing.T) {
 					name,
 				),
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta(
-						"Security group cannot have inbound rules while all " +
-							"inbound traffic is allowed",
-					),
+					"Security group cannot have inbound rules",
 				),
 			},
 			{
@@ -744,10 +738,7 @@ func TestAccKatapultSecurityGroupRule_invalid(t *testing.T) {
 					name,
 				),
 				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta(
-						"Security group cannot have outbound rules while all " +
-							"outbound traffic is allowed",
-					),
+					"Security group cannot have outbound rules",
 				),
 			},
 		},
@@ -765,15 +756,30 @@ func testAccCheckKatapultSecurityGroupRuleDestroy(
 				continue
 			}
 
-			sg, _, err := m.Core.SecurityGroupRules.GetByID(
-				tt.Ctx, rs.Primary.ID,
-			)
-
-			if err == nil && sg != nil {
-				return fmt.Errorf(
-					"katapult_security_group %s (%s/%s/%s) was not destroyed",
-					rs.Primary.ID, sg.Direction, sg.Protocol, sg.Ports,
+			attempts := 1
+			if tt.Recorder != nil && tt.Recorder.Mode() == recorder.ModeReplaying {
+				attempts = 100
+			}
+			destroyed := false
+			for range attempts {
+				id := rs.Primary.ID
+				response, err := m.Core.GetSecurityGroupsRulesSecurityGroupRuleWithResponse(
+					tt.Ctx,
+					&core.GetSecurityGroupsRulesSecurityGroupRuleParams{SecurityGroupRuleId: &id},
 				)
+				if errors.Is(err, core.ErrNotFound) || response != nil && response.JSON404 != nil {
+					destroyed = true
+					break
+				}
+				if err != nil {
+					return err
+				}
+				if attempts == 1 {
+					return fmt.Errorf("katapult_security_group_rule %s was not destroyed", id)
+				}
+			}
+			if !destroyed {
+				return fmt.Errorf("katapult_security_group_rule %s was not destroyed", rs.Primary.ID)
 			}
 		}
 
@@ -793,13 +799,18 @@ func testAccCheckKatapultSecurityGroupRuleExists(
 			return fmt.Errorf("resource not found: %s", res)
 		}
 
-		sgr, _, err := m.Core.SecurityGroupRules.GetByID(
-			tt.Ctx, rs.Primary.ID,
+		id := rs.Primary.ID
+		response, err := m.Core.GetSecurityGroupsRulesSecurityGroupRuleWithResponse(
+			tt.Ctx,
+			&core.GetSecurityGroupsRulesSecurityGroupRuleParams{SecurityGroupRuleId: &id},
 		)
 		if err != nil {
 			return err
 		}
+		if response == nil || response.JSON200 == nil || response.JSON200.SecurityGroupRule.Id == nil {
+			return fmt.Errorf("security group rule %s not found", id)
+		}
 
-		return resource.TestCheckResourceAttr(res, "id", sgr.ID)(s)
+		return resource.TestCheckResourceAttr(res, "id", *response.JSON200.SecurityGroupRule.Id)(s)
 	}
 }

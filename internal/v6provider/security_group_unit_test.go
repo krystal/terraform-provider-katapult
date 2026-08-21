@@ -1,0 +1,424 @@
+package v6provider
+
+import (
+	"context"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+//nolint:lll // Side-by-side canonical fixtures make normalization differences obvious.
+func TestSecurityGroupRuleFingerprintNormalizesProtocolAndTargets(t *testing.T) {
+	t.Parallel()
+
+	a := canonicalSecurityGroupRule{Direction: "inbound", Protocol: "tcp", Ports: "22", Targets: []string{"all:ipv6", "all:ipv4"}, Notes: "SSH"}
+	b := canonicalSecurityGroupRule{Direction: "INBOUND", Protocol: "TCP", Ports: "22", Targets: []string{"all:ipv4", "all:ipv6"}, Notes: "SSH"}
+
+	assert.Equal(t, a.fingerprint(), b.fingerprint())
+}
+
+func TestTransferSecurityGroupRuleIDsPreservesDuplicateMultiset(t *testing.T) {
+	t.Parallel()
+
+	prior := []canonicalSecurityGroupRule{
+		{ID: "rule-1", Direction: "inbound", Protocol: "TCP", Targets: []string{"all:ipv4"}},
+		{ID: "rule-2", Direction: "inbound", Protocol: "TCP", Targets: []string{"all:ipv4"}},
+	}
+	planned := []canonicalSecurityGroupRule{
+		{Direction: "inbound", Protocol: "TCP", Targets: []string{"all:ipv4"}},
+		{Direction: "inbound", Protocol: "TCP", Targets: []string{"all:ipv4"}},
+	}
+
+	result := transferSecurityGroupRuleIDs(prior, planned)
+	require.Len(t, result, 2)
+	assert.Equal(t, "rule-1", result[0].ID)
+	assert.Equal(t, "rule-2", result[1].ID)
+}
+
+func TestTransferSecurityGroupRuleIDsPrefersExplicitID(t *testing.T) {
+	t.Parallel()
+
+	prior := []canonicalSecurityGroupRule{
+		{ID: "rule-1", Direction: "outbound", Protocol: "UDP", Targets: []string{"all:ipv4"}},
+		{ID: "rule-2", Direction: "outbound", Protocol: "UDP", Targets: []string{"all:ipv4"}},
+	}
+	planned := []canonicalSecurityGroupRule{
+		{ID: "rule-2", Direction: "outbound", Protocol: "UDP", Targets: []string{"all:ipv4"}},
+		{Direction: "outbound", Protocol: "UDP", Targets: []string{"all:ipv4"}},
+	}
+
+	result := transferSecurityGroupRuleIDs(prior, planned)
+	assert.Equal(t, "rule-2", result[0].ID)
+	assert.Equal(t, "rule-1", result[1].ID)
+}
+
+//nolint:lll // Compact fixtures make reconciliation cases directly comparable.
+func TestClassifySecurityGroupRuleReconciliation(t *testing.T) {
+	t.Parallel()
+
+	ssh := canonicalSecurityGroupRule{ID: "ssh", Direction: "inbound", Protocol: "TCP", Ports: "22", Targets: []string{"all:ipv4"}, Notes: "SSH"}
+	dns := canonicalSecurityGroupRule{ID: "dns", Direction: "inbound", Protocol: "UDP", Ports: "53", Targets: []string{"all:ipv4"}, Notes: "DNS"}
+	http := canonicalSecurityGroupRule{Direction: "inbound", Protocol: "TCP", Ports: "80,443", Targets: []string{"all:ipv4"}, Notes: "HTTP"}
+	changedDNS := dns
+	changedDNS.Targets = []string{"all:ipv4", "all:ipv6"}
+
+	tests := []struct {
+		name                   string
+		prior, desired         []canonicalSecurityGroupRule
+		create, update, delete int
+	}{
+		{name: "create first", desired: []canonicalSecurityGroupRule{http}, create: 1},
+		{name: "add and reorder", prior: []canonicalSecurityGroupRule{ssh, dns}, desired: []canonicalSecurityGroupRule{{Direction: dns.Direction, Protocol: dns.Protocol, Ports: dns.Ports, Targets: dns.Targets, Notes: dns.Notes}, http, {Direction: ssh.Direction, Protocol: ssh.Protocol, Ports: ssh.Ports, Targets: ssh.Targets, Notes: ssh.Notes}}, create: 1},
+		{name: "update", prior: []canonicalSecurityGroupRule{ssh, dns}, desired: []canonicalSecurityGroupRule{ssh, changedDNS}, update: 1},
+		{name: "delete", prior: []canonicalSecurityGroupRule{ssh, dns}, desired: []canonicalSecurityGroupRule{ssh}, delete: 1},
+		{name: "create update delete", prior: []canonicalSecurityGroupRule{ssh, dns}, desired: []canonicalSecurityGroupRule{changedDNS, http}, create: 1, update: 1, delete: 1},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			result := classifySecurityGroupRuleReconciliation(test.prior, test.desired)
+			assert.Len(t, result.CreateIndexes, test.create)
+			assert.Len(t, result.UpdateIndexes, test.update)
+			assert.Len(t, result.Delete, test.delete)
+		})
+	}
+}
+
+//nolint:lll // Full rules keep duplicate pairing behavior explicit.
+func TestClassifySecurityGroupRuleReconciliationReorderAndDuplicatesAreEmpty(t *testing.T) {
+	t.Parallel()
+
+	prior := []canonicalSecurityGroupRule{
+		{ID: "ssh", Direction: "inbound", Protocol: "TCP", Ports: "22", Targets: []string{"all:ipv4", "all:ipv6"}, Notes: "SSH"},
+		{ID: "dup-1", Direction: "inbound", Protocol: "ICMP", Targets: []string{"all:ipv4"}},
+		{ID: "dup-2", Direction: "inbound", Protocol: "ICMP", Targets: []string{"all:ipv4"}},
+	}
+	desired := []canonicalSecurityGroupRule{
+		{Direction: "inbound", Protocol: "icmp", Targets: []string{"all:ipv4"}},
+		{Direction: "inbound", Protocol: "TCP", Ports: "22", Targets: []string{"all:ipv6", "all:ipv4"}, Notes: "SSH"},
+		{Direction: "inbound", Protocol: "ICMP", Targets: []string{"all:ipv4"}},
+	}
+
+	result := classifySecurityGroupRuleReconciliation(prior, desired)
+	assert.Empty(t, result.CreateIndexes)
+	assert.Empty(t, result.UpdateIndexes)
+	assert.Empty(t, result.Delete)
+	require.Len(t, result.Desired, 3)
+	assert.Equal(t, []string{"dup-1", "ssh", "dup-2"}, []string{
+		result.Desired[0].ID,
+		result.Desired[1].ID,
+		result.Desired[2].ID,
+	})
+}
+
+func TestPreserveSecurityGroupRuleStateOrder(t *testing.T) {
+	t.Parallel()
+
+	prior := []canonicalSecurityGroupRule{{ID: "second"}, {ID: "first"}}
+	remote := []canonicalSecurityGroupRule{{ID: "first"}, {ID: "new"}, {ID: "second"}}
+	ordered := preserveSecurityGroupRuleStateOrder(prior, remote)
+	require.Len(t, ordered, 3)
+	assert.Equal(t, []string{"second", "first", "new"}, []string{
+		ordered[0].ID, ordered[1].ID, ordered[2].ID,
+	})
+}
+
+func TestSecurityGroupSchemaSupportsBothRuleRepresentations(t *testing.T) {
+	t.Parallel()
+
+	var response resource.SchemaResponse
+	(&SecurityGroupResource{}).Schema(context.Background(), resource.SchemaRequest{}, &response)
+	require.False(t, response.Diagnostics.HasError())
+	assert.Contains(t, response.Schema.Attributes, "inbound_rules")
+	assert.Contains(t, response.Schema.Attributes, "outbound_rules")
+	assert.Contains(t, response.Schema.Blocks, "inbound_rule")
+	assert.Contains(t, response.Schema.Blocks, "outbound_rule")
+}
+
+func TestSecurityGroupRuleCollectionClassification(t *testing.T) {
+	t.Parallel()
+
+	empty := types.ListValueMust(securityGroupRuleObjectType(), nil)
+	nonEmpty := securityGroupTestRuleList(t, []canonicalSecurityGroupRule{{
+		Direction: "inbound", Protocol: "TCP", Targets: []string{"all:ipv4"},
+	}}, false)
+	tests := []struct {
+		name       string
+		value      types.List
+		configured bool
+		hasValues  bool
+	}{
+		{name: "omitted", value: types.ListNull(securityGroupRuleObjectType())},
+		{name: "explicit null", value: types.ListNull(securityGroupRuleObjectType())},
+		{name: "unknown", value: types.ListUnknown(securityGroupRuleObjectType())},
+		{name: "explicit empty", value: empty, configured: true},
+		{name: "configured values", value: nonEmpty, configured: true, hasValues: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, test.configured, knownCollectionConfigured(test.value))
+			assert.Equal(t, test.hasValues, knownCollectionHasValues(test.value))
+		})
+	}
+}
+
+func TestSecurityGroupValidateConfigRuleRepresentationMatrix(t *testing.T) {
+	t.Parallel()
+
+	null := types.ListNull(securityGroupRuleObjectType())
+	empty := types.ListValueMust(securityGroupRuleObjectType(), nil)
+	unknown := types.ListUnknown(securityGroupRuleObjectType())
+	inbound := securityGroupTestRuleList(t, []canonicalSecurityGroupRule{{
+		Direction: "inbound", Protocol: "TCP", Ports: "22", Targets: []string{"all:ipv4"},
+	}}, false)
+	outbound := securityGroupTestRuleList(t, []canonicalSecurityGroupRule{{
+		Direction: "outbound", Protocol: "UDP", Ports: "53", Targets: []string{"all:ipv4"},
+	}}, false)
+	tests := []struct {
+		name       string
+		configure  func(*SecurityGroupResourceModel)
+		wantDetail string
+	}{
+		{
+			name: "same direction attribute and block",
+			configure: func(model *SecurityGroupResourceModel) {
+				model.InboundRules, model.InboundRule = empty, empty
+			},
+			wantDetail: "either the plural rules attribute or the deprecated singular rule blocks",
+		},
+		{
+			name: "inbound allow all with plural rules",
+			configure: func(model *SecurityGroupResourceModel) {
+				model.AllowAllInbound, model.InboundRules = types.BoolValue(true), inbound
+			},
+			wantDetail: "Allow-all cannot be enabled",
+		},
+		{
+			name: "outbound allow all with plural rules",
+			configure: func(model *SecurityGroupResourceModel) {
+				model.AllowAllOutbound, model.OutboundRules = types.BoolValue(true), outbound
+			},
+			wantDetail: "Allow-all cannot be enabled",
+		},
+		{
+			name: "external rules with plural values",
+			configure: func(model *SecurityGroupResourceModel) {
+				model.ExternalRules, model.InboundRules = types.BoolValue(true), inbound
+			},
+			wantDetail: "external_rules cannot be enabled",
+		},
+		{
+			name: "external rules with explicit empty plural collection",
+			configure: func(model *SecurityGroupResourceModel) {
+				model.ExternalRules, model.OutboundRules = types.BoolValue(true), empty
+			},
+			wantDetail: "external_rules cannot be enabled",
+		},
+		{
+			name: "unknown plural representation defers block conflict",
+			configure: func(model *SecurityGroupResourceModel) {
+				model.InboundRules, model.InboundRule = unknown, empty
+			},
+		},
+		{
+			name: "unknown allow all defers plural conflict",
+			configure: func(model *SecurityGroupResourceModel) {
+				model.AllowAllInbound, model.InboundRules = types.BoolUnknown(), inbound
+			},
+		},
+		{
+			name: "unknown external rules defers plural conflict",
+			configure: func(model *SecurityGroupResourceModel) {
+				model.ExternalRules, model.InboundRules = types.BoolUnknown(), inbound
+			},
+		},
+		{
+			name: "known external rules defers unknown plural collection",
+			configure: func(model *SecurityGroupResourceModel) {
+				model.ExternalRules, model.InboundRules = types.BoolValue(true), unknown
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			model := securityGroupTestModel()
+			model.InboundRules, model.OutboundRules = null, null
+			model.InboundRule, model.OutboundRule = null, null
+			test.configure(&model)
+			response := runSecurityGroupValidateConfig(t, model)
+			if test.wantDetail == "" {
+				require.False(t, response.Diagnostics.HasError(), response.Diagnostics.Errors())
+				return
+			}
+			require.True(t, response.Diagnostics.HasError())
+			require.Contains(t, response.Diagnostics.Errors()[0].Detail(), test.wantDetail)
+		})
+	}
+}
+
+func TestSecurityGroupModifyPlanMigratesRuleRepresentationsWithoutReconciliation(t *testing.T) {
+	t.Parallel()
+
+	rule := canonicalSecurityGroupRule{
+		ID: "rule-1", Direction: "inbound", Protocol: "TCP", Ports: "22",
+		Targets: []string{"all:ipv4", "all:ipv6"}, Notes: "SSH",
+	}
+	known := securityGroupTestRuleList(t, []canonicalSecurityGroupRule{rule}, false)
+	planned := securityGroupTestRuleList(t, []canonicalSecurityGroupRule{{
+		Direction: "inbound", Protocol: "tcp", Ports: "22",
+		Targets: []string{"all:ipv6", "all:ipv4"}, Notes: "SSH",
+	}}, true)
+	empty := types.ListValueMust(securityGroupRuleObjectType(), nil)
+	null := types.ListNull(securityGroupRuleObjectType())
+
+	for _, test := range []struct {
+		name       string
+		stateBlock bool
+	}{
+		{name: "blocks to attributes", stateBlock: true},
+		{name: "attributes to blocks"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			state, plan := securityGroupTestModel(), securityGroupTestModel()
+			state.OutboundRules, plan.OutboundRules = empty, empty
+			state.OutboundRule, plan.OutboundRule = null, null
+			if test.stateBlock {
+				state.InboundRule, state.InboundRules = known, null
+				plan.InboundRules, plan.InboundRule = planned, null
+			} else {
+				state.InboundRules, state.InboundRule = known, null
+				plan.InboundRule, plan.InboundRules = planned, null
+			}
+			response := runSecurityGroupModifyPlan(t, state, plan, plan)
+			require.False(t, response.Diagnostics.HasError(), response.Diagnostics.Errors())
+			var got SecurityGroupResourceModel
+			diags := response.Plan.Get(context.Background(), &got)
+			require.False(t, diags.HasError(), diags.Errors())
+			selected, legacy, err := selectedRules(context.Background(), got, securityGroupDirectionInbound)
+			require.NoError(t, err)
+			require.Equal(t, !test.stateBlock, legacy)
+			require.Len(t, selected, 1)
+			assert.Equal(t, "rule-1", selected[0].ID)
+
+			reconciliation := classifySecurityGroupRuleReconciliation([]canonicalSecurityGroupRule{rule}, selected)
+			assert.Empty(t, reconciliation.CreateIndexes)
+			assert.Empty(t, reconciliation.UpdateIndexes)
+			assert.Empty(t, reconciliation.Delete)
+		})
+	}
+}
+
+func TestSecurityGroupRuleCanonicalizationNormalizesOptionalValues(t *testing.T) {
+	t.Parallel()
+
+	targets := types.SetValueMust(types.StringType, []attr.Value{
+		types.StringValue("all:ipv6"), types.StringValue("all:ipv4"),
+	})
+	model := SecurityGroupRuleModel{
+		ID: types.StringNull(), Direction: types.StringNull(),
+		Protocol: caseInsensitiveStringValueOf("tcp"), Ports: types.StringNull(),
+		Targets: targets, Notes: types.StringNull(),
+	}
+	value, diags := types.ListValueFrom(
+		context.Background(), securityGroupRuleObjectType(), []SecurityGroupRuleModel{model},
+	)
+	require.False(t, diags.HasError(), diags.Errors())
+	rules, diags := canonicalRulesFromList(context.Background(), value, securityGroupDirectionInbound)
+	require.False(t, diags.HasError(), diags.Errors())
+	require.Len(t, rules, 1)
+	assert.Equal(t, securityGroupDirectionInbound, rules[0].Direction)
+	assert.Equal(t, "tcp", rules[0].Protocol)
+	assert.Empty(t, rules[0].Ports)
+	assert.Empty(t, rules[0].Notes)
+	assert.Equal(t, canonicalSecurityGroupRule{
+		Direction: "INBOUND", Protocol: "TCP", Targets: []string{"all:ipv4", "all:ipv6"},
+	}.fingerprint(), rules[0].fingerprint())
+
+	arguments := securityGroupRuleAPIArguments(rules[0])
+	require.NotNil(t, arguments.Direction)
+	require.NotNil(t, arguments.Protocol)
+	require.NotNil(t, arguments.Ports)
+	require.NotNil(t, arguments.Notes)
+	assert.Equal(t, "inbound", string(*arguments.Direction))
+	assert.Equal(t, "TCP", string(*arguments.Protocol))
+	assert.Empty(t, *arguments.Ports)
+	assert.Empty(t, *arguments.Notes)
+}
+
+func securityGroupTestRuleList(
+	t *testing.T,
+	rules []canonicalSecurityGroupRule,
+	plan bool,
+) types.List {
+	t.Helper()
+	var value types.List
+	var diags diag.Diagnostics
+	if plan {
+		value, diags = securityGroupRulesPlanListValue(context.Background(), rules)
+	} else {
+		value, diags = securityGroupRulesListValue(context.Background(), rules)
+	}
+	require.False(t, diags.HasError(), diags.Errors())
+	return value
+}
+
+func securityGroupTestModel() SecurityGroupResourceModel {
+	null := types.ListNull(securityGroupRuleObjectType())
+	return SecurityGroupResourceModel{
+		ID: types.StringValue("security_group_test"), Name: types.StringValue("Test"),
+		Associations:    types.SetValueMust(types.StringType, nil),
+		AllowAllInbound: types.BoolValue(false), AllowAllOutbound: types.BoolValue(false),
+		ExternalRules: types.BoolValue(false),
+		InboundRules:  null, OutboundRules: null, InboundRule: null, OutboundRule: null,
+	}
+}
+
+func securityGroupTestState(t *testing.T, model SecurityGroupResourceModel) tfsdk.State {
+	t.Helper()
+	r := &SecurityGroupResource{}
+	var schemaResponse resource.SchemaResponse
+	r.Schema(context.Background(), resource.SchemaRequest{}, &schemaResponse)
+	require.False(t, schemaResponse.Diagnostics.HasError(), schemaResponse.Diagnostics.Errors())
+	state := tfsdk.State{Schema: schemaResponse.Schema}
+	diags := state.Set(context.Background(), model)
+	require.False(t, diags.HasError(), diags.Errors())
+	return state
+}
+
+func runSecurityGroupValidateConfig(
+	t *testing.T,
+	model SecurityGroupResourceModel,
+) resource.ValidateConfigResponse {
+	t.Helper()
+	state := securityGroupTestState(t, model)
+	response := resource.ValidateConfigResponse{}
+	(&SecurityGroupResource{}).ValidateConfig(context.Background(), resource.ValidateConfigRequest{
+		Config: tfsdk.Config(state),
+	}, &response)
+	return response
+}
+
+func runSecurityGroupModifyPlan(
+	t *testing.T,
+	stateModel, planModel, configModel SecurityGroupResourceModel,
+) resource.ModifyPlanResponse {
+	t.Helper()
+	state := securityGroupTestState(t, stateModel)
+	plan := securityGroupTestState(t, planModel)
+	config := securityGroupTestState(t, configModel)
+	response := resource.ModifyPlanResponse{Plan: tfsdk.Plan(plan)}
+	(&SecurityGroupResource{}).ModifyPlan(context.Background(), resource.ModifyPlanRequest{
+		State: state, Plan: tfsdk.Plan(plan),
+		Config: tfsdk.Config(config),
+	}, &response)
+	return response
+}

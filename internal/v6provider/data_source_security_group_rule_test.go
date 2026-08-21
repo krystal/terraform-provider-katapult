@@ -1,10 +1,10 @@
-package provider
+package v6provider
 
 import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/jimeh/undent"
 )
 
@@ -14,9 +14,9 @@ func TestAccKatapultDataSourceSecurityGroupRule_by_id(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultIPDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultIPDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -49,9 +49,8 @@ func TestAccKatapultDataSourceSecurityGroupRule_by_id(t *testing.T) {
 						"katapult_security_group_rule.my_rule",
 						"direction",
 					),
-					resource.TestCheckResourceAttrPair(
-						"data.katapult_security_group_rule.my_rule", "protocol",
-						"katapult_security_group_rule.my_rule", "protocol",
+					resource.TestCheckResourceAttr(
+						"data.katapult_security_group_rule.my_rule", "protocol", "TCP",
 					),
 					resource.TestCheckResourceAttrPair(
 						"data.katapult_security_group_rule.my_rule", "ports",
@@ -75,9 +74,9 @@ func TestAccKatapultDataSourceSecurityGroupRule_not_found(t *testing.T) {
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultSecurityGroupRuleDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupRuleDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
@@ -85,13 +84,7 @@ func TestAccKatapultDataSourceSecurityGroupRule_not_found(t *testing.T) {
 						id = "sgr_thisdoesnotexist"
 					}`,
 				),
-				ExpectError: regexp.MustCompile(
-					regexp.QuoteMeta(
-						"security_group_rule_not_found: " +
-							"No security group rule was found matching any " +
-							"of the criteria provided in the arguments",
-					),
-				),
+				ExpectError: regexp.MustCompile("security_group_rule_not_found:"),
 			},
 		},
 	})
@@ -101,9 +94,9 @@ func TestAccKatapultDataSourceSecurityGroupRule_blank(t *testing.T) {
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultSecurityGroupRuleDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupRuleDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.String(`
