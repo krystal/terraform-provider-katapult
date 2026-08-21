@@ -157,6 +157,53 @@ func TestPreserveSecurityGroupRuleStateOrder(t *testing.T) {
 	})
 }
 
+func TestPreserveSecurityGroupRuleStateOrderKeepsRulesWithoutIDs(t *testing.T) {
+	t.Parallel()
+
+	remote := []canonicalSecurityGroupRule{
+		{Notes: "first without ID"},
+		{Notes: "second without ID"},
+		{ID: "identified", Notes: "identified"},
+	}
+
+	ordered := preserveSecurityGroupRuleStateOrder(nil, remote)
+	require.Len(t, ordered, 3)
+	assert.Equal(t, []string{
+		"first without ID", "second without ID", "identified",
+	}, []string{ordered[0].Notes, ordered[1].Notes, ordered[2].Notes})
+}
+
+func TestSecurityGroupRuleReadClearsTargetsWhenAPIValueIsMissing(t *testing.T) {
+	t.Parallel()
+
+	client := newVirtualMachineTestClient(t, func(writer http.ResponseWriter, request *http.Request) {
+		assert.Equal(t, "/security_groups/rules/security_group_rule", request.URL.Path)
+		writeTestJSON(writer, http.StatusOK, `{
+			"security_group_rule": {
+				"id": "rule-1", "security_group": {"id": "security-group-1"},
+				"direction": "inbound", "protocol": "TCP"
+			}
+		}`)
+	})
+	resourceUnderTest := &SecurityGroupRuleResource{M: &Meta{Core: client, testMode: true}}
+	model := SecurityGroupRuleResourceModel{
+		ID: types.StringValue("rule-1"), SecurityGroupID: types.StringValue("security-group-1"),
+		Direction: types.StringValue("inbound"), Protocol: caseInsensitiveStringValueOf("TCP"),
+		Ports: types.StringValue("22"),
+		Targets: types.SetValueMust(types.StringType, []attr.Value{
+			types.StringValue("all:ipv4"),
+		}),
+		Notes: types.StringValue("stale"),
+	}
+
+	missing, err := resourceUnderTest.readMaybeMissing(context.Background(), "rule-1", &model)
+
+	require.NoError(t, err)
+	assert.False(t, missing)
+	assert.False(t, model.Targets.IsNull())
+	assert.Empty(t, model.Targets.Elements())
+}
+
 func TestSecurityGroupSchemaSupportsBothRuleRepresentations(t *testing.T) {
 	t.Parallel()
 

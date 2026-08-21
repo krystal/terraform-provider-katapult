@@ -3,12 +3,12 @@
 page_title: "katapult_security_groups Data Source - terraform-provider-katapult"
 subcategory: "Networking"
 description: |-
-  Retrieves all security groups in the organization.
+  Retrieves all security groups in the organization. Rules are omitted by default; set include_rules = true to fetch rules for every group.
 ---
 
 # katapult_security_groups (Data Source)
 
-Retrieves all security groups in the organization.
+Retrieves all security groups in the organization. Rules are omitted by default; set `include_rules = true` to fetch rules for every group.
 
 ## Example Usage
 
@@ -22,7 +22,7 @@ data "katapult_security_groups" "all" {}
 
 ### Optional
 
-- `include_rules` (Boolean)
+- `include_rules` (Boolean) Whether to fetch rules for every security group. Defaults to `false`. When `false`, each group's `inbound_rules` and `outbound_rules` are empty.
 
 ### Read-Only
 

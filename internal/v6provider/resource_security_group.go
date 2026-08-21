@@ -850,6 +850,9 @@ func preserveSecurityGroupRuleStateOrder(
 ) []canonicalSecurityGroupRule {
 	remoteByID := make(map[string]canonicalSecurityGroupRule, len(remote))
 	for _, rule := range remote {
+		if rule.ID == "" {
+			continue
+		}
 		remoteByID[rule.ID] = rule
 	}
 	ordered := make([]canonicalSecurityGroupRule, 0, len(remote))
@@ -860,6 +863,10 @@ func preserveSecurityGroupRuleStateOrder(
 		}
 	}
 	for _, rule := range remote {
+		if rule.ID == "" {
+			ordered = append(ordered, rule)
+			continue
+		}
 		if _, ok := remoteByID[rule.ID]; ok {
 			ordered = append(ordered, rule)
 			delete(remoteByID, rule.ID)

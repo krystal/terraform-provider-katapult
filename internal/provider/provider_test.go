@@ -85,15 +85,25 @@ func providerFactories(
 			p := pf()
 			// The production names are Framework-owned. Retain the legacy
 			// implementations only in this package's characterization harness.
-			p.ResourcesMap["katapult_security_group"] = p.ResourcesMap["katapult_legacy_security_group"]
-			p.ResourcesMap["katapult_security_group_rule"] = p.ResourcesMap["katapult_legacy_security_group_rule"]
-			p.DataSourcesMap["katapult_security_group"] = p.DataSourcesMap["katapult_legacy_security_group"]
-			p.DataSourcesMap["katapult_security_group_rule"] = p.DataSourcesMap["katapult_legacy_security_group_rule"]
-			p.DataSourcesMap["katapult_security_group_rules"] = p.DataSourcesMap["katapult_legacy_security_group_rules"]
-			p.DataSourcesMap["katapult_security_groups"] = p.DataSourcesMap["katapult_legacy_security_groups"]
+			aliasLegacySecurityGroupTestEntry(p.ResourcesMap, "katapult_security_group")
+			aliasLegacySecurityGroupTestEntry(p.ResourcesMap, "katapult_security_group_rule")
+			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_group")
+			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_group_rule")
+			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_group_rules")
+			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_groups")
 
 			return p, nil
 		},
+	}
+}
+
+func aliasLegacySecurityGroupTestEntry(
+	entries map[string]*schema.Resource,
+	productionName string,
+) {
+	legacyName := "katapult_legacy_" + strings.TrimPrefix(productionName, "katapult_")
+	if entry, ok := entries[legacyName]; ok {
+		entries[productionName] = entry
 	}
 }
 

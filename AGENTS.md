@@ -146,4 +146,6 @@ unexpected `.cassette.rand_id` changes as generated drift.
 - Keep GitHub Actions pinned to full commit SHAs with accurate version comments.
 - Preserve the three-day dependency maturity policy in mise, Pinact, and
   Dependabot.
+- Give required top-level `id` attributes an explicit description. Otherwise,
+  tfplugindocs 0.25.0 renders them as read-only regardless of the schema mode.
 - Use Conventional Commit messages.

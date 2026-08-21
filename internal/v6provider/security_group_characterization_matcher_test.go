@@ -134,10 +134,12 @@ func (transport *orderedSecurityGroupCassetteTransport) RoundTrip(request *http.
 		transport.next[key] = index + 1
 		return replaySecurityGroupInteraction(request, interaction), nil
 	}
-	if len(candidates) > 0 && candidates[len(candidates)-1].Code == http.StatusNotFound {
+	if len(candidates) > 0 && candidates[len(candidates)-1].Code == http.StatusNotFound &&
+		securityGroupJSONMatcher(request, candidates[len(candidates)-1].Request) {
 		return replaySecurityGroupInteraction(request, candidates[len(candidates)-1]), nil
 	}
-	if request.Method == http.MethodGet && len(candidates) > 0 {
+	if request.Method == http.MethodGet && len(candidates) > 0 &&
+		securityGroupJSONMatcher(request, candidates[len(candidates)-1].Request) {
 		return replaySecurityGroupInteraction(request, candidates[len(candidates)-1]), nil
 	}
 
@@ -148,16 +150,30 @@ func securityGroupCreateBodiesCompatible(actual, recorded []byte) bool {
 	type createRequest struct {
 		Organization map[string]any `json:"organization"`
 		Properties   struct {
-			Name         string `json:"name"`
-			Associations []any  `json:"associations"`
+			Name             string `json:"name"`
+			Associations     []any  `json:"associations"`
+			AllowAllInbound  *bool  `json:"allow_all_inbound"`
+			AllowAllOutbound *bool  `json:"allow_all_outbound"`
 		} `json:"properties"`
 	}
 	var actualRequest, recordedRequest createRequest
-	if json.Unmarshal(actual, &actualRequest) != nil ||
-		json.Unmarshal(recorded, &recordedRequest) != nil {
+	decode := func(body []byte, target *createRequest) bool {
+		decoder := json.NewDecoder(bytes.NewReader(body))
+		decoder.DisallowUnknownFields()
+		if decoder.Decode(target) != nil {
+			return false
+		}
+		return decoder.Decode(&struct{}{}) == io.EOF
+	}
+	if !decode(actual, &actualRequest) || !decode(recorded, &recordedRequest) {
 		return false
 	}
-	return reflect.DeepEqual(actualRequest, recordedRequest)
+	return reflect.DeepEqual(actualRequest.Organization, recordedRequest.Organization) &&
+		actualRequest.Properties.Name == recordedRequest.Properties.Name &&
+		reflect.DeepEqual(
+			actualRequest.Properties.Associations,
+			recordedRequest.Properties.Associations,
+		)
 }
 
 func (transport *orderedSecurityGroupCassetteTransport) observeMutation(
@@ -389,8 +405,11 @@ func securityGroupCassetteRequestKey(method, rawURL string, body []byte) string 
 }
 
 const (
-	securityGroupAssociationsJSONField = "associations"
-	securityGroupTargetsJSONField      = "targets"
+	securityGroupAssociationsJSONField     = "associations"
+	securityGroupTargetsJSONField          = "targets"
+	securityGroupDirectionJSONField        = "direction"
+	securityGroupAllowAllInboundJSONField  = "allow_all_inbound"
+	securityGroupAllowAllOutboundJSONField = "allow_all_outbound"
 )
 
 func newSecurityGroupCharacterizationTestTools(t *testing.T) *testTools {
@@ -522,7 +541,8 @@ func securityGroupJSONBodiesEqual(actual, recorded []byte) bool {
 			recordedProperties, recordedHasProperties := recordedMap["properties"].(map[string]any)
 			if actualHasProperties && recordedHasProperties {
 				for key := range actualProperties {
-					if _, ok := recordedProperties[key]; !ok {
+					if _, ok := recordedProperties[key]; !ok &&
+						securityGroupLegacyOmittableJSONProperty(key) {
 						delete(actualProperties, key)
 					}
 				}
@@ -549,6 +569,17 @@ func securityGroupJSONBodiesEqual(actual, recorded []byte) bool {
 		normalizeSecurityGroupJSON(actualJSON, ""),
 		normalizeSecurityGroupJSON(recordedJSON, ""),
 	)
+}
+
+func securityGroupLegacyOmittableJSONProperty(name string) bool {
+	switch name {
+	case "name", securityGroupAssociationsJSONField,
+		securityGroupAllowAllInboundJSONField, securityGroupAllowAllOutboundJSONField,
+		securityGroupDirectionJSONField, "protocol", "ports", securityGroupTargetsJSONField, "notes":
+		return true
+	default:
+		return false
+	}
 }
 
 func normalizeSecurityGroupJSON(value any, field string) any {
@@ -748,4 +779,84 @@ func TestSecurityGroupJSONMatcher(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSecurityGroupJSONBodiesEqualRejectsUnknownActualProperties(t *testing.T) {
+	t.Parallel()
+
+	assert.False(t, securityGroupJSONBodiesEqual(
+		[]byte(`{"properties":{"name":"web","unexpected":"regression"}}`),
+		[]byte(`{"properties":{"name":"web"}}`),
+	))
+}
+
+func TestOrderedSecurityGroupCassetteTransportGETFallbackRequiresMatchingBody(t *testing.T) {
+	t.Parallel()
+
+	const requestURL = "https://api.example.test/security_groups"
+	interaction := &cassette.Interaction{
+		Request: cassette.Request{
+			Method: http.MethodGet,
+			URL:    requestURL,
+			Body:   `{"properties":{"name":"recorded"}}`,
+		},
+		Response: cassette.Response{
+			Body: `{}`, Status: "200 OK", Code: http.StatusOK,
+		},
+	}
+	key := securityGroupCassetteRequestKey(http.MethodGet, requestURL, nil)
+	transport := &orderedSecurityGroupCassetteTransport{
+		interactions: map[string][]*cassette.Interaction{key: {interaction}},
+		next:         map[string]int{key: 1},
+	}
+	request, err := http.NewRequestWithContext(
+		context.Background(), http.MethodGet, requestURL,
+		strings.NewReader(`{"properties":{"name":"actual"}}`),
+	)
+	require.NoError(t, err)
+
+	response, err := transport.RoundTrip(request)
+	if response != nil {
+		require.NoError(t, response.Body.Close())
+	}
+
+	assert.Nil(t, response)
+	assert.ErrorIs(t, err, cassette.ErrInteractionNotFound)
+}
+
+func TestOrderedSecurityGroupCassetteTransportCreateFallbackRejectsUnknownProperties(t *testing.T) {
+	t.Parallel()
+
+	const requestURL = "https://api.example.test/organizations/_/security_groups"
+	interaction := &cassette.Interaction{
+		Request: cassette.Request{
+			Method: http.MethodPost,
+			URL:    requestURL,
+			Body:   `{"organization":{"sub_domain":"test"},"properties":{"name":"web","associations":[]}}`,
+		},
+		Response: cassette.Response{
+			Body: `{}`, Status: "200 OK", Code: http.StatusOK,
+		},
+	}
+	key := securityGroupCassetteRequestKey(http.MethodPost, requestURL, nil)
+	transport := &orderedSecurityGroupCassetteTransport{
+		interactions: map[string][]*cassette.Interaction{key: {interaction}},
+		next:         map[string]int{},
+	}
+	request, err := http.NewRequestWithContext(
+		context.Background(), http.MethodPost, requestURL,
+		strings.NewReader(
+			`{"organization":{"sub_domain":"test"},`+
+				`"properties":{"name":"web","associations":[],"unexpected":"regression"}}`,
+		),
+	)
+	require.NoError(t, err)
+
+	response, err := transport.RoundTrip(request)
+	if response != nil {
+		require.NoError(t, response.Body.Close())
+	}
+
+	assert.Nil(t, response)
+	assert.ErrorIs(t, err, cassette.ErrInteractionNotFound)
 }

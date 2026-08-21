@@ -63,7 +63,7 @@ locals {
       },
       {
         protocol = "TCP"
-        ports    = "80,433"
+        ports    = "80,443"
         targets  = ["all:ipv4", "all:ipv6"]
         notes    = "HTTP & HTTPS"
       },

@@ -16,7 +16,10 @@ func TestAccKatapultDataSourceSecurityGroupRule_by_id(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:             testAccCheckKatapultIPDestroy(tt),
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckKatapultSecurityGroupRuleDestroy(tt),
+			testAccCheckKatapultSecurityGroupDestroy(tt),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`

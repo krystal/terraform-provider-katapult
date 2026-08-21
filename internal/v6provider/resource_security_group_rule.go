@@ -355,14 +355,16 @@ func (r *SecurityGroupRuleResource) readMaybeMissing(ctx context.Context, id str
 	}
 	model.Ports = types.StringValue(nullableString(rule.Ports))
 	model.Notes = types.StringValue(nullableString(rule.Notes))
+	targets := []string{}
 	if rule.Targets != nil {
-		value, diags := types.SetValueFrom(ctx, types.StringType, *rule.Targets)
-		if diags.HasError() {
-			first := diags.Errors()[0]
-			return false, fmt.Errorf("%s: %s", first.Summary(), first.Detail())
-		}
-		model.Targets = value
+		targets = *rule.Targets
 	}
+	value, diags := types.SetValueFrom(ctx, types.StringType, targets)
+	if diags.HasError() {
+		first := diags.Errors()[0]
+		return false, fmt.Errorf("%s: %s", first.Summary(), first.Detail())
+	}
+	model.Targets = value
 	return false, nil
 }
 

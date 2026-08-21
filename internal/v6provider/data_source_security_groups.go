@@ -115,9 +115,19 @@ func (d *SecurityGroupDataSource) Configure(_ context.Context, req datasource.Co
 //nolint:lll // Compact schema supports direct parity review.
 func (d *SecurityGroupDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	attrs := computedSecurityGroupAttributes(true)
-	attrs["id"] = schema.StringAttribute{Required: true}
-	attrs["include_rules"] = schema.BoolAttribute{Optional: true}
-	resp.Schema = schema.Schema{MarkdownDescription: "Retrieves a security group by ID.", Attributes: attrs}
+	attrs["id"] = schema.StringAttribute{
+		Required: true, MarkdownDescription: "ID of the security group to retrieve.",
+	}
+	attrs["include_rules"] = schema.BoolAttribute{
+		Optional: true,
+		MarkdownDescription: "Whether to fetch rules. Defaults to `true`. When `false`, " +
+			"`inbound_rules` and `outbound_rules` are empty.",
+	}
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Retrieves a security group by ID. Rules are included by default; " +
+			"set `include_rules = false` to skip the rule-list request.",
+		Attributes: attrs,
+	}
 }
 
 func (d *SecurityGroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -185,7 +195,9 @@ func (d *SecurityGroupRuleDataSource) Configure(_ context.Context, req datasourc
 //nolint:lll // Compact schema supports direct parity review.
 func (d *SecurityGroupRuleDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	attrs := computedSecurityGroupRuleAttributes()
-	attrs["id"] = schema.StringAttribute{Required: true}
+	attrs["id"] = schema.StringAttribute{
+		Required: true, MarkdownDescription: "ID of the security group rule to retrieve.",
+	}
 	attrs["security_group_id"] = schema.StringAttribute{Computed: true}
 	resp.Schema = schema.Schema{MarkdownDescription: "Retrieves a security group rule by ID.", Attributes: attrs}
 }
@@ -305,8 +317,12 @@ func (d *SecurityGroupsDataSource) Configure(_ context.Context, req datasource.C
 
 //nolint:lll // Compact schema supports direct parity review.
 func (d *SecurityGroupsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = schema.Schema{MarkdownDescription: "Retrieves all security groups in the organization.", Attributes: map[string]schema.Attribute{
-		"id": schema.StringAttribute{Computed: true}, "include_rules": schema.BoolAttribute{Optional: true},
+	resp.Schema = schema.Schema{MarkdownDescription: "Retrieves all security groups in the organization. Rules are omitted by default; set `include_rules = true` to fetch rules for every group.", Attributes: map[string]schema.Attribute{
+		"id": schema.StringAttribute{Computed: true}, "include_rules": schema.BoolAttribute{
+			Optional: true,
+			MarkdownDescription: "Whether to fetch rules for every security group. Defaults to `false`. " +
+				"When `false`, each group's `inbound_rules` and `outbound_rules` are empty.",
+		},
 		"security_groups": schema.ListNestedAttribute{Computed: true, NestedObject: schema.NestedAttributeObject{Attributes: computedSecurityGroupAttributes(true)}},
 	}}
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
 	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/rands/randsmust"
@@ -78,6 +79,16 @@ func skipUnlessAcceptance(t *testing.T) {
 type providerFactoryList map[string]func() (tfprotov6.ProviderServer, error)
 
 type v5ProviderFactoryList map[string]func() (tfprotov5.ProviderServer, error)
+
+func aliasLegacySecurityGroupTestEntry(
+	entries map[string]*schema.Resource,
+	productionName string,
+) {
+	legacyName := "katapult_legacy_" + strings.TrimPrefix(productionName, "katapult_")
+	if entry, ok := entries[legacyName]; ok {
+		entries[productionName] = entry
+	}
+}
 
 type stopRequests struct{}
 
@@ -175,12 +186,12 @@ func newTestTools(t *testing.T) *testTools {
 		//nolint:unparam
 		"katapult": func() (tfprotov5.ProviderServer, error) {
 			p := v5provider.New(v5Config)()
-			p.ResourcesMap["katapult_security_group"] = p.ResourcesMap["katapult_legacy_security_group"]
-			p.ResourcesMap["katapult_security_group_rule"] = p.ResourcesMap["katapult_legacy_security_group_rule"]
-			p.DataSourcesMap["katapult_security_group"] = p.DataSourcesMap["katapult_legacy_security_group"]
-			p.DataSourcesMap["katapult_security_group_rule"] = p.DataSourcesMap["katapult_legacy_security_group_rule"]
-			p.DataSourcesMap["katapult_security_group_rules"] = p.DataSourcesMap["katapult_legacy_security_group_rules"]
-			p.DataSourcesMap["katapult_security_groups"] = p.DataSourcesMap["katapult_legacy_security_groups"]
+			aliasLegacySecurityGroupTestEntry(p.ResourcesMap, "katapult_security_group")
+			aliasLegacySecurityGroupTestEntry(p.ResourcesMap, "katapult_security_group_rule")
+			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_group")
+			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_group_rule")
+			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_group_rules")
+			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_groups")
 
 			return p.GRPCProvider(), nil
 		},
