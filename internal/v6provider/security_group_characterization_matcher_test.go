@@ -205,8 +205,14 @@ func securityGroupCreateBodiesCompatible(actual, recorded []byte) bool {
 			recordedRequest.Properties.AllowAllOutbound,
 		) &&
 		reflect.DeepEqual(
-			actualRequest.Properties.Associations,
-			recordedRequest.Properties.Associations,
+			normalizeSecurityGroupJSON(
+				actualRequest.Properties.Associations,
+				securityGroupAssociationsJSONField,
+			),
+			normalizeSecurityGroupJSON(
+				recordedRequest.Properties.Associations,
+				securityGroupAssociationsJSONField,
+			),
 		)
 }
 
@@ -914,12 +920,14 @@ func TestOrderedSecurityGroupCassetteTransportCompatibilityCreateSupportsRead(t 
 	t.Parallel()
 
 	const (
-		createURL    = "https://api.example.test/organizations/organization/security_groups"
-		readURL      = "https://api.example.test/security_groups/security_group?security_group%5Bid%5D=sg_1"
-		actualBody   = `{"organization":{"sub_domain":"test"},"properties":{"name":"web","associations":[]}}`
+		createURL  = "https://api.example.test/organizations/organization/security_groups"
+		readURL    = "https://api.example.test/security_groups/security_group?security_group%5Bid%5D=sg_1"
+		actualBody = `{"organization":{"sub_domain":"test"},"properties":{` +
+			`"name":"web","associations":["vmgrp_2","vmgrp_1"]}}`
 		recordedBody = `{"organization":{"sub_domain":"test"},"properties":{` +
-			`"name":"web","associations":[],"allow_all_inbound":false}}`
-		responseBody = `{"security_group":{"id":"sg_1","name":"web","associations":[],"allow_all_inbound":false}}`
+			`"name":"web","associations":["vmgrp_1","vmgrp_2"],"allow_all_inbound":false}}`
+		responseBody = `{"security_group":{"id":"sg_1","name":"web",` +
+			`"associations":["vmgrp_2","vmgrp_1"],"allow_all_inbound":false}}`
 	)
 	interaction := &cassette.Interaction{
 		Request: cassette.Request{
