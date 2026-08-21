@@ -22,6 +22,7 @@ type orderedSecurityGroupCassetteTransport struct {
 	mu             sync.Mutex
 	interactions   map[string][]*cassette.Interaction
 	next           map[string]int
+	consumed       map[string]map[int]bool
 	ruleSnapshots  map[string]securityGroupReplaySnapshot
 	deletedRules   map[string]bool
 	groupSnapshots map[string]securityGroupReplaySnapshot
@@ -47,6 +48,7 @@ func newOrderedSecurityGroupCassetteTransport(t *testing.T) http.RoundTripper {
 	transport := &orderedSecurityGroupCassetteTransport{
 		interactions:   make(map[string][]*cassette.Interaction),
 		next:           make(map[string]int),
+		consumed:       make(map[string]map[int]bool),
 		ruleSnapshots:  make(map[string]securityGroupReplaySnapshot),
 		deletedRules:   make(map[string]bool),
 		groupSnapshots: make(map[string]securityGroupReplaySnapshot),
@@ -112,6 +114,9 @@ func (transport *orderedSecurityGroupCassetteTransport) RoundTrip(request *http.
 	key := securityGroupCassetteRequestKey(request.Method, request.URL.String(), body)
 	candidates := transport.interactions[key]
 	for index := transport.next[key]; index < len(candidates); index++ {
+		if transport.consumed[key][index] {
+			continue
+		}
 		interaction := candidates[index]
 		if !securityGroupJSONMatcher(request, interaction.Request) {
 			continue
@@ -120,18 +125,21 @@ func (transport *orderedSecurityGroupCassetteTransport) RoundTrip(request *http.
 			!securityGroupRequestHasNonEmptyPorts(body) {
 			continue
 		}
-		transport.next[key] = index + 1
+		transport.consumeInteraction(key, index)
 		transport.observeMutation(request, interaction)
 		return replaySecurityGroupInteraction(request, interaction), nil
 	}
 	for index := transport.next[key]; index < len(candidates); index++ {
+		if transport.consumed[key][index] {
+			continue
+		}
 		interaction := candidates[index]
 		if request.Method != http.MethodPost ||
 			!strings.HasSuffix(request.URL.Path, "/security_groups") ||
 			!securityGroupCreateBodiesCompatible(body, []byte(interaction.Request.Body)) {
 			continue
 		}
-		transport.next[key] = index + 1
+		transport.consumeInteraction(key, index)
 		return replaySecurityGroupInteraction(request, interaction), nil
 	}
 	if len(candidates) > 0 && candidates[len(candidates)-1].Code == http.StatusNotFound &&
@@ -144,6 +152,23 @@ func (transport *orderedSecurityGroupCassetteTransport) RoundTrip(request *http.
 	}
 
 	return nil, cassette.ErrInteractionNotFound
+}
+
+func (transport *orderedSecurityGroupCassetteTransport) consumeInteraction(
+	key string,
+	index int,
+) {
+	if transport.consumed == nil {
+		transport.consumed = make(map[string]map[int]bool)
+	}
+	if transport.consumed[key] == nil {
+		transport.consumed[key] = make(map[int]bool)
+	}
+	transport.consumed[key][index] = true
+	for transport.consumed[key][transport.next[key]] {
+		delete(transport.consumed[key], transport.next[key])
+		transport.next[key]++
+	}
 }
 
 func securityGroupCreateBodiesCompatible(actual, recorded []byte) bool {
@@ -834,6 +859,54 @@ func TestOrderedSecurityGroupCassetteTransportGETFallbackRequiresMatchingBody(t 
 
 	assert.Nil(t, response)
 	assert.ErrorIs(t, err, cassette.ErrInteractionNotFound)
+}
+
+func TestOrderedSecurityGroupCassetteTransportMatchesDistinctCreatesOutOfOrder(t *testing.T) {
+	t.Parallel()
+
+	const requestURL = "https://api.example.test/organizations/organization/security_groups"
+	webBody := `{"organization":{"sub_domain":"test"},"properties":{"name":"web","associations":[]}}`
+	dynamicBody := `{"organization":{"sub_domain":"test"},"properties":{"name":"dynamic","associations":[]}}`
+	webInteraction := &cassette.Interaction{
+		Request: cassette.Request{Method: http.MethodPost, URL: requestURL, Body: webBody},
+		Response: cassette.Response{
+			Body: `{"result":"web"}`, Status: "200 OK", Code: http.StatusOK,
+		},
+	}
+	dynamicInteraction := &cassette.Interaction{
+		Request: cassette.Request{Method: http.MethodPost, URL: requestURL, Body: dynamicBody},
+		Response: cassette.Response{
+			Body: `{"result":"dynamic"}`, Status: "200 OK", Code: http.StatusOK,
+		},
+	}
+	key := securityGroupCassetteRequestKey(http.MethodPost, requestURL, nil)
+	transport := &orderedSecurityGroupCassetteTransport{
+		interactions: map[string][]*cassette.Interaction{
+			key: {webInteraction, dynamicInteraction},
+		},
+		next: map[string]int{},
+	}
+
+	for _, test := range []struct {
+		requestBody  string
+		responseBody string
+	}{
+		{requestBody: dynamicBody, responseBody: `{"result":"dynamic"}`},
+		{requestBody: webBody, responseBody: `{"result":"web"}`},
+	} {
+		request, err := http.NewRequestWithContext(
+			context.Background(), http.MethodPost, requestURL,
+			strings.NewReader(test.requestBody),
+		)
+		require.NoError(t, err)
+
+		response, err := transport.RoundTrip(request)
+		require.NoError(t, err)
+		responseBody, err := io.ReadAll(response.Body)
+		require.NoError(t, err)
+		require.NoError(t, response.Body.Close())
+		assert.JSONEq(t, test.responseBody, string(responseBody))
+	}
 }
 
 func TestOrderedSecurityGroupCassetteTransportCreateFallbackRejectsUnknownProperties(t *testing.T) {

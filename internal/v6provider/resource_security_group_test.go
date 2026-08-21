@@ -84,10 +84,6 @@ func testSweepSecurityGroups(_ string) error {
 //
 
 func TestAccKatapultSecurityGroup_example(t *testing.T) {
-	if vcrMode() == recorder.ModeReplaying {
-		t.Skip("example based tests are not supported in replay mode")
-	}
-
 	tt := newTestTools(t)
 
 	resource.ParallelTest(t, resource.TestCase{
