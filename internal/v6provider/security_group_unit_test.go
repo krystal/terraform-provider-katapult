@@ -781,11 +781,111 @@ func TestSecurityGroupModifyPlanExternalAdoptionUsesConfiguredRepresentation(t *
 				assert.Equal(t, "2222", rules["ports"].(types.String).ValueString())
 				assert.True(t, got.InboundRules.IsNull())
 			} else {
-				assert.True(t, got.InboundRules.IsUnknown())
+				rules := got.InboundRules.Elements()[0].(types.Object).Attributes()
+				assert.True(t, rules["id"].IsUnknown())
+				assert.True(t, rules["direction"].IsUnknown())
+				assert.Equal(t, "TCP", rules["protocol"].(caseInsensitiveStringValue).ValueString())
+				assert.Equal(t, "2222", rules["ports"].(types.String).ValueString())
 				assert.True(t, got.InboundRule.IsNull())
 			}
 		})
 	}
+}
+
+func TestSecurityGroupPluralExternalAdoptionModifyPlanFeedsUpdate(t *testing.T) {
+	t.Parallel()
+
+	var mutations atomic.Int32
+	client := newVirtualMachineTestClient(t, func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodGet {
+			mutations.Add(1)
+			http.Error(writer, "unexpected mutation", http.StatusInternalServerError)
+			return
+		}
+		switch request.URL.Path {
+		case "/security_groups/security_group":
+			writeTestJSON(writer, http.StatusOK, `{
+				"security_group": {
+					"id": "security_group_test", "name": "Test",
+					"allow_all_inbound": false, "allow_all_outbound": false,
+					"associations": []
+				}
+			}`)
+		case "/security_groups/security_group/rules":
+			writeTestJSON(writer, http.StatusOK, `{
+				"pagination": {"total_pages": 1},
+				"security_group_rules": [{
+					"id": "rule-1", "direction": "inbound", "protocol": "TCP",
+					"ports": "22", "targets": ["all:ipv4"], "notes": "SSH"
+				}]
+			}`)
+		default:
+			http.NotFound(writer, request)
+		}
+	})
+	resourceUnderTest := &SecurityGroupResource{M: &Meta{Core: client, testMode: true}}
+	null := types.ListNull(securityGroupRuleObjectType())
+	empty := types.ListValueMust(securityGroupRuleObjectType(), nil)
+	desired := securityGroupTestRuleList(t, []canonicalSecurityGroupRule{{
+		Direction: "inbound", Protocol: "TCP", Ports: "2222",
+		Targets: []string{"all:ipv4"}, Notes: "SSH",
+	}}, true)
+	state, plan, config := securityGroupTestModel(), securityGroupTestModel(), securityGroupTestModel()
+	state.ExternalRules = types.BoolValue(true)
+	plan.ExternalRules = types.BoolValue(true)
+	config.ExternalRules = types.BoolNull()
+	state.InboundRules, state.OutboundRules = null, null
+	state.InboundRule, state.OutboundRule = null, null
+	plan.InboundRules, config.InboundRules = desired, desired
+	plan.OutboundRules, config.OutboundRules = empty, empty
+	plan.InboundRule, config.InboundRule = null, null
+	plan.OutboundRule, config.OutboundRule = null, null
+
+	stateValue := securityGroupTestState(t, state)
+	planValue := securityGroupTestState(t, plan)
+	configValue := securityGroupTestState(t, config)
+	modifyRequest := resource.ModifyPlanRequest{
+		State: stateValue, Plan: tfsdk.Plan(planValue), Config: tfsdk.Config(configValue),
+	}
+	modifyResponse := resource.ModifyPlanResponse{Plan: tfsdk.Plan(planValue)}
+	initializeResourcePrivateState(t, &modifyRequest, &modifyResponse)
+	resourceUnderTest.ModifyPlan(context.Background(), modifyRequest, &modifyResponse)
+	require.False(t, modifyResponse.Diagnostics.HasError(), modifyResponse.Diagnostics.Errors())
+
+	var modifiedPlan SecurityGroupResourceModel
+	diagnostics := modifyResponse.Plan.Get(context.Background(), &modifiedPlan)
+	require.False(t, diagnostics.HasError(), diagnostics.Errors())
+	require.False(t, modifiedPlan.InboundRules.IsUnknown())
+	require.Empty(t, modifiedPlan.OutboundRules.Elements())
+	plannedRule := modifiedPlan.InboundRules.Elements()[0].(types.Object).Attributes()
+	assert.True(t, plannedRule["id"].IsUnknown())
+	assert.True(t, plannedRule["direction"].IsUnknown())
+	assert.Equal(t, "2222", plannedRule["ports"].(types.String).ValueString())
+
+	updateRequest := resource.UpdateRequest{
+		Config: tfsdk.Config(configValue), State: stateValue,
+		Plan: modifyResponse.Plan, Private: modifyResponse.Private,
+	}
+	updateResponse := resource.UpdateResponse{
+		State: tfsdk.State(modifyResponse.Plan), Private: modifyResponse.Private,
+	}
+	resourceUnderTest.Update(context.Background(), updateRequest, &updateResponse)
+
+	require.False(t, updateResponse.Diagnostics.HasError(), updateResponse.Diagnostics.Errors())
+	assert.Zero(t, mutations.Load())
+	marker, diagnostics := updateResponse.Private.GetKey(
+		context.Background(), securityGroupExternalAdoptionPrivateKey,
+	)
+	require.False(t, diagnostics.HasError(), diagnostics.Errors())
+	assert.NotEmpty(t, marker)
+	var got SecurityGroupResourceModel
+	diagnostics = updateResponse.State.Get(context.Background(), &got)
+	require.False(t, diagnostics.HasError(), diagnostics.Errors())
+	rules, err := listRules(context.Background(), got.InboundRules, securityGroupDirectionInbound)
+	require.NoError(t, err)
+	require.Len(t, rules, 1)
+	assert.Equal(t, "rule-1", rules[0].ID)
+	assert.Equal(t, "2222", rules[0].Ports)
 }
 
 //nolint:lll // Realistic positional IDs make each reorder failure mode explicit.

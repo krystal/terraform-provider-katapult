@@ -54,6 +54,21 @@ func TestSecurityGroupExternalRulesDisableToBlocksCassetteMutationGuard(t *testi
 	}, mutations)
 }
 
+func TestSecurityGroupExternalRulesDisableToPluralAttributesCassetteMutationGuard(t *testing.T) {
+	t.Parallel()
+	mutations := securityGroupCassetteMutations(
+		t, "testdata/SecurityGroup_external_rules_disable_to_plural_attributes.cassette.yaml",
+	)
+	require.Equal(t, []string{
+		"DELETE /security_groups/security_group",
+		"PATCH /security_groups/rules/security_group_rule",
+		"PATCH /security_groups/rules/security_group_rule",
+		"POST /organizations/organization/security_groups",
+		"POST /security_groups/{id}/rules",
+		"POST /security_groups/{id}/rules",
+	}, mutations)
+}
+
 func securityGroupCassetteMutations(t *testing.T, path string) []string {
 	t.Helper()
 	file, err := os.Open(path)

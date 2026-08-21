@@ -289,11 +289,13 @@ func (r *SecurityGroupResource) ModifyPlan(ctx context.Context, req resource.Mod
 		if adoptingExternalRules {
 			selectedName, unusedName := attrName, blockName
 			selectedValue := types.ListUnknown(securityGroupRuleObjectType())
-			if blockSelected {
-				selectedName, unusedName = blockName, attrName
+			if !representationUnconfigured {
 				value, diags := securityGroupRuleBlockPlanValue(selectedPlan)
 				resp.Diagnostics.Append(diags...)
 				selectedValue = value
+			}
+			if blockSelected {
+				selectedName, unusedName = blockName, attrName
 			}
 			resp.Diagnostics.Append(resp.Plan.SetAttribute(
 				ctx, path.Root(selectedName), selectedValue,
@@ -670,7 +672,18 @@ func (r *SecurityGroupResource) Update(ctx context.Context, req resource.UpdateR
 		}
 		adoptedRulesPresent := !securityGroupRuleCollectionsEmpty(plan)
 		for _, direction := range []string{securityGroupDirectionInbound, securityGroupDirectionOutbound} {
-			if !legacyRepresentationForDirection(configuredPlan, direction) {
+			legacy := legacyRepresentationForDirection(configuredPlan, direction)
+			configuredCollection := configuredPlan.OutboundRules
+			if direction == securityGroupDirectionInbound {
+				configuredCollection = configuredPlan.InboundRules
+			}
+			if legacy {
+				configuredCollection = configuredPlan.OutboundRule
+				if direction == securityGroupDirectionInbound {
+					configuredCollection = configuredPlan.InboundRule
+				}
+			}
+			if !knownCollectionConfigured(configuredCollection) {
 				continue
 			}
 			adopted, _, adoptedErr := selectedRules(ctx, plan, direction)
@@ -683,7 +696,7 @@ func (r *SecurityGroupResource) Update(ctx context.Context, req resource.UpdateR
 				return
 			}
 			configured = transferSecurityGroupRuleIDs(adopted, configured, true)
-			if err := setSecurityGroupRules(ctx, &plan, direction, true, configured); err != nil {
+			if err := setSecurityGroupRules(ctx, &plan, direction, legacy, configured); err != nil {
 				resp.Diagnostics.AddError("Security Group State Error", err.Error())
 				return
 			}
