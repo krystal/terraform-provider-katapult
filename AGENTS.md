@@ -132,6 +132,15 @@ with `git diff --stat`, `git diff --numstat`, and `git diff --name-only`, then u
 `rg` and bounded file ranges to inspect only the relevant interactions. Treat
 unexpected `.cassette.rand_id` changes as generated drift.
 
+Framework Security Group creates can include `allow_all_*` values that SDKv2
+applied later with PATCH. Record the affected Framework acceptance case instead
+of weakening request matching to accept explicit boolean mismatches.
+
+When the ordered Security Group cassette transport accepts a create through a
+compatibility fallback, observe the mutation before returning so synthetic
+follow-up reads use the created resource snapshot. Normalize `associations` as
+an order-insensitive set, matching the strict request matcher.
+
 ## Repository Rules
 
 - Treat mise as the discoverable task interface. The Makefile remains the
@@ -139,7 +148,13 @@ unexpected `.cassette.rand_id` changes as generated drift.
 - When migrating SDKv2 resources with `timeouts {}` configuration, use the
   Framework timeouts package's `Block` API to preserve the existing HCL syntax;
   its `Attributes` API requires `timeouts = {}` instead.
+- A configured Framework `ListNestedBlock` cannot be planned wholly unknown,
+  and its configured fields cannot be rewritten as unknown. During staged
+  adoption, preserve configured fields, leave only computed fields unknown,
+  and let refresh expose remote differences for the follow-up plan.
 - Keep GitHub Actions pinned to full commit SHAs with accurate version comments.
 - Preserve the three-day dependency maturity policy in mise, Pinact, and
   Dependabot.
+- Give required top-level `id` attributes an explicit description. Otherwise,
+  tfplugindocs 0.25.0 renders them as read-only regardless of the schema mode.
 - Use Conventional Commit messages.

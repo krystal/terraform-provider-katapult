@@ -25,10 +25,7 @@ func TestLegacyProviderRegistrations(t *testing.T) {
 
 	legacyProvider := provider.New(&provider.Config{})()
 
-	assert.Equal(t, []string{
-		"katapult_security_group",
-		"katapult_security_group_rule",
-	}, sortedKeys(legacyProvider.ResourcesMap),
+	assert.Equal(t, []string{}, sortedKeys(legacyProvider.ResourcesMap),
 		"new resources belong in internal/v6provider; "+
 			"only remove entries during migration")
 
@@ -38,10 +35,6 @@ func TestLegacyProviderRegistrations(t *testing.T) {
 		"katapult_disk_templates",
 		"katapult_network_speed_profile",
 		"katapult_network_speed_profiles",
-		"katapult_security_group",
-		"katapult_security_group_rule",
-		"katapult_security_group_rules",
-		"katapult_security_groups",
 		"katapult_virtual_machine_package",
 		"katapult_virtual_machine_packages",
 	}, sortedKeys(legacyProvider.DataSourcesMap),

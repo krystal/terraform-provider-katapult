@@ -3,12 +3,12 @@
 page_title: "katapult_security_group Data Source - terraform-provider-katapult"
 subcategory: "Networking"
 description: |-
-  Fetch details for a individual security group, including all rules.
+  Retrieves a security group by ID. Rules are included by default; set include_rules = false to skip the rule-list request.
 ---
 
 # katapult_security_group (Data Source)
 
-Fetch details for a individual security group, including all rules.
+Retrieves a security group by ID. Rules are included by default; set `include_rules = false` to skip the rule-list request.
 
 ## Example Usage
 
@@ -30,20 +30,20 @@ data "katapult_security_group" "web-plain" {
 
 ### Required
 
-- `id` (String) The ID of this resource.
+- `id` (String) ID of the security group to retrieve.
 
 ### Optional
 
-- `include_rules` (Boolean) Whether to include rules in the output. Defaults to `true`.
+- `include_rules` (Boolean) Whether to fetch rules. Defaults to `true`. When `false`, `inbound_rules` and `outbound_rules` are empty.
 
 ### Read-Only
 
-- `allow_all_inbound` (Boolean) Whether or not to allow all inbound traffic. If not explicitly set, it defaults to false, blocking all inbound traffic not covered by a inbound rule. If changed to true on a existing security group, all existing inbound rules will be deleted, hence it cannot be enabled while any inbound rules are defined.
-- `allow_all_outbound` (Boolean) Whether or not to allow all outbound traffic. If not explicitly set, it defaults to false, blocking all outbound traffic not covered by a outbound rule. If changed to true on a existing security group, all existing outbound rules will be deleted, hence it cannot be enabled while any outbound rules are defined.
-- `associations` (Set of String) The resource IDs to apply this security group to. Accepts IDs of virtual machines, virtual machine groups, and tags.
-- `inbound_rules` (List of Object) Zero or more inbound rules to apply to the security group. Each rule specifies inbound traffic which should be allowed. (see [below for nested schema](#nestedatt--inbound_rules))
-- `name` (String) The name of the security group.
-- `outbound_rules` (List of Object) Zero or more outbound rules to apply to the security group. Each rule specifies outbound traffic which should be allowed. (see [below for nested schema](#nestedatt--outbound_rules))
+- `allow_all_inbound` (Boolean)
+- `allow_all_outbound` (Boolean)
+- `associations` (Set of String)
+- `inbound_rules` (Attributes List) (see [below for nested schema](#nestedatt--inbound_rules))
+- `name` (String)
+- `outbound_rules` (Attributes List) (see [below for nested schema](#nestedatt--outbound_rules))
 
 <a id="nestedatt--inbound_rules"></a>
 ### Nested Schema for `inbound_rules`

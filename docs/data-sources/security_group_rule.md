@@ -3,12 +3,12 @@
 page_title: "katapult_security_group_rule Data Source - terraform-provider-katapult"
 subcategory: "Networking"
 description: |-
-  Fetch details for a individual security group rule.
+  Retrieves a security group rule by ID.
 ---
 
 # katapult_security_group_rule (Data Source)
 
-Fetch details for a individual security group rule.
+Retrieves a security group rule by ID.
 
 ## Example Usage
 
@@ -24,13 +24,13 @@ data "katapult_security_group_rule" "ssh" {
 
 ### Required
 
-- `id` (String) The ID of this resource.
+- `id` (String) ID of the security group rule to retrieve.
 
 ### Read-Only
 
-- `direction` (String) The direction of the rule (`inbound` or `outbound`).
-- `notes` (String) Notes for the rule. Used for human reference only.
-- `ports` (String) The port, ports, or range of ports to which the rule applies (e.g. `22`, `22,80,443`, or `3000-3999`). If not specified, the rule applies to all ports.
-- `protocol` (String) The protocol of the rule (`TCP`, `UDP`, or `ICMP`).
-- `security_group_id` (String) The ID of the security group to which the rule applies.
-- `targets` (Set of String) The targets to which the rule applies. Can be IP addresses, CIDR blocks, IDs for virtual machines, virtual machine groups, tags, address lists, or `all:ipv4` and `all:ipv6`.
+- `direction` (String)
+- `notes` (String)
+- `ports` (String)
+- `protocol` (String)
+- `security_group_id` (String)
+- `targets` (Set of String)

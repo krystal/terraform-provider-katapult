@@ -1,9 +1,9 @@
-package provider
+package v6provider
 
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/jimeh/undent"
 )
 
@@ -59,8 +59,8 @@ func TestAccKatapultSecurityGroupRule_external_rules_coexistence(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckKatapultSecurityGroupRuleDestroy(tt),
 			testAccCheckKatapultSecurityGroupDestroy(tt),
@@ -142,8 +142,8 @@ func TestAccKatapultSecurityGroupRule_empty_optional_values(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckKatapultSecurityGroupRuleDestroy(tt),
 			testAccCheckKatapultSecurityGroupDestroy(tt),
