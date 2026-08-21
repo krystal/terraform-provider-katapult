@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -78,6 +79,10 @@ func securityGroupRuleAttributes(standalone bool) map[string]schema.Attribute {
 		"targets": schema.SetAttribute{
 			Required: true, ElementType: types.StringType,
 			MarkdownDescription: "The target IPs, CIDRs, resource IDs, or `all:ipv4` and `all:ipv6` values.",
+			Validators: []validator.Set{
+				setvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)),
+				setvalidator.NoNullValues(),
+			},
 		},
 		"notes": schema.StringAttribute{
 			Optional: true, Computed: true, MarkdownDescription: "Human-readable notes for the rule.",
@@ -139,15 +144,6 @@ func (r *SecurityGroupRuleResource) ValidateConfig(
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
-	}
-	if !config.Targets.IsNull() && !config.Targets.IsUnknown() {
-		for _, target := range config.Targets.Elements() {
-			value, ok := target.(types.String)
-			if !ok || value.IsNull() || (!value.IsUnknown() && value.ValueString() == "") {
-				resp.Diagnostics.AddAttributeError(path.Root("targets"), "Invalid Security Group Rule Target", "Targets cannot contain null or empty strings.")
-				break
-			}
-		}
 	}
 	if !config.Protocol.IsNull() && !config.Protocol.IsUnknown() && strings.EqualFold(config.Protocol.ValueString(), "ICMP") &&
 		!config.Ports.IsNull() && !config.Ports.IsUnknown() && config.Ports.ValueString() != "" {

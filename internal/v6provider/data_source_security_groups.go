@@ -96,8 +96,8 @@ func computedSecurityGroupAttributes(includeRules bool) map[string]schema.Attrib
 		"allow_all_outbound":               schema.BoolAttribute{Computed: true},
 	}
 	if includeRules {
-		attrs["inbound_rules"] = schema.ListNestedAttribute{Computed: true, NestedObject: schema.NestedAttributeObject{Attributes: computedSecurityGroupRuleAttributes()}}
-		attrs["outbound_rules"] = schema.ListNestedAttribute{Computed: true, NestedObject: schema.NestedAttributeObject{Attributes: computedSecurityGroupRuleAttributes()}}
+		attrs[securityGroupInboundRulesAttribute] = schema.ListNestedAttribute{Computed: true, NestedObject: schema.NestedAttributeObject{Attributes: computedSecurityGroupRuleAttributes()}}
+		attrs[securityGroupOutboundRulesAttribute] = schema.ListNestedAttribute{Computed: true, NestedObject: schema.NestedAttributeObject{Attributes: computedSecurityGroupRuleAttributes()}}
 	}
 	return attrs
 }
@@ -243,8 +243,8 @@ func (d *SecurityGroupRulesDataSource) Configure(_ context.Context, req datasour
 func (d *SecurityGroupRulesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{MarkdownDescription: "Retrieves all rules for a security group.", Attributes: map[string]schema.Attribute{
 		"id": schema.StringAttribute{Computed: true}, "security_group_id": schema.StringAttribute{Required: true},
-		"inbound_rules":  schema.ListNestedAttribute{Computed: true, NestedObject: schema.NestedAttributeObject{Attributes: computedSecurityGroupRuleAttributes()}},
-		"outbound_rules": schema.ListNestedAttribute{Computed: true, NestedObject: schema.NestedAttributeObject{Attributes: computedSecurityGroupRuleAttributes()}},
+		securityGroupInboundRulesAttribute:  schema.ListNestedAttribute{Computed: true, NestedObject: schema.NestedAttributeObject{Attributes: computedSecurityGroupRuleAttributes()}},
+		securityGroupOutboundRulesAttribute: schema.ListNestedAttribute{Computed: true, NestedObject: schema.NestedAttributeObject{Attributes: computedSecurityGroupRuleAttributes()}},
 	}}
 }
 
@@ -339,7 +339,7 @@ func securityGroupListAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"id": types.StringType, "name": types.StringType, securityGroupAssociationsAttribute: types.SetType{ElemType: types.StringType},
 		"allow_all_inbound": types.BoolType, "allow_all_outbound": types.BoolType,
-		"inbound_rules": types.ListType{ElemType: securityGroupRuleObjectType()}, "outbound_rules": types.ListType{ElemType: securityGroupRuleObjectType()},
+		securityGroupInboundRulesAttribute: types.ListType{ElemType: securityGroupRuleObjectType()}, securityGroupOutboundRulesAttribute: types.ListType{ElemType: securityGroupRuleObjectType()},
 	}
 }
 

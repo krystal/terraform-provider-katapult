@@ -981,6 +981,64 @@ func TestAccKatapultSecurityGroup_invalid_rules(t *testing.T) {
 			{
 				Config: undent.Stringf(`
 					resource "katapult_security_group" "my_sg" {
+						name         = "%s"
+						associations = [""]
+					}`,
+					name,
+				),
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Length"),
+			},
+			{
+				Config: undent.Stringf(`
+					resource "katapult_security_group" "my_sg" {
+						name = "%s"
+
+						inbound_rule {
+							protocol = "tcp"
+							targets  = [""]
+						}
+					}`,
+					name,
+				),
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Length"),
+			},
+			{
+				Config: undent.Stringf(`
+					resource "katapult_security_group" "my_sg" {
+						name = "%s"
+
+						outbound_rules = [{
+							protocol = "udp"
+							targets  = [null]
+						}]
+					}`,
+					name,
+				),
+				ExpectError: regexp.MustCompile("Null Set Value"),
+			},
+			{
+				Config: undent.Stringf(`
+					resource "terraform_data" "external_rules" {
+						input = true
+					}
+
+					resource "katapult_security_group" "my_sg" {
+						name           = "%s"
+						external_rules = terraform_data.external_rules.output
+
+						inbound_rules = [{
+							protocol = "tcp"
+							targets  = ["all:ipv4"]
+						}]
+					}`,
+					name,
+				),
+				ExpectError: regexp.MustCompile("Conflicting Security Group Rules"),
+			},
+			{Config: "terraform {}"},
+			{
+				Config: undent.Stringf(`
+					resource "katapult_security_group" "my_sg" {
 						name = "%s"
 						allow_all_inbound = true
 

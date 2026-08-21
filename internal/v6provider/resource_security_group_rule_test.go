@@ -662,7 +662,7 @@ func TestAccKatapultSecurityGroupRule_invalid(t *testing.T) {
 					}`,
 					name,
 				),
-				ExpectError: regexp.MustCompile("Invalid Security Group Rule Target"),
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Length"),
 			},
 			{
 				Config: undent.Stringf(`
@@ -679,9 +679,7 @@ func TestAccKatapultSecurityGroupRule_invalid(t *testing.T) {
 					}`,
 					name,
 				),
-				ExpectError: regexp.MustCompile(
-					"Invalid Security Group Rule Target",
-				),
+				ExpectError: regexp.MustCompile("Null Set Value"),
 			},
 			{
 				Config: undent.Stringf(`

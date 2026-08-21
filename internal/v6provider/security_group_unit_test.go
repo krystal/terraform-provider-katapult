@@ -3,11 +3,15 @@ package v6provider
 import (
 	"context"
 	"net/http"
+	"sync/atomic"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	schemavalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/krystal/go-katapult/next/core"
@@ -165,6 +169,61 @@ func TestSecurityGroupSchemaSupportsBothRuleRepresentations(t *testing.T) {
 	assert.Contains(t, response.Schema.Blocks, "outbound_rule")
 }
 
+func TestSecurityGroupStringSetSchemasRejectEmptyAndNullValues(t *testing.T) {
+	t.Parallel()
+
+	var groupResponse, ruleResponse resource.SchemaResponse
+	(&SecurityGroupResource{}).Schema(context.Background(), resource.SchemaRequest{}, &groupResponse)
+	(&SecurityGroupRuleResource{}).Schema(context.Background(), resource.SchemaRequest{}, &ruleResponse)
+	require.False(t, groupResponse.Diagnostics.HasError(), groupResponse.Diagnostics.Errors())
+	require.False(t, ruleResponse.Diagnostics.HasError(), ruleResponse.Diagnostics.Errors())
+
+	plural := groupResponse.Schema.Attributes["inbound_rules"].(schema.ListNestedAttribute)
+	block := groupResponse.Schema.Blocks["inbound_rule"].(schema.ListNestedBlock)
+	attributes := map[string]schema.SetAttribute{
+		"associations":           groupResponse.Schema.Attributes["associations"].(schema.SetAttribute),
+		"plural rule targets":    plural.NestedObject.Attributes["targets"].(schema.SetAttribute),
+		"deprecated rule target": block.NestedObject.Attributes["targets"].(schema.SetAttribute),
+		"standalone rule target": ruleResponse.Schema.Attributes["targets"].(schema.SetAttribute),
+	}
+	values := map[string]types.Set{
+		"empty string": types.SetValueMust(types.StringType, []attr.Value{types.StringValue("")}),
+		"null element": types.SetValueMust(types.StringType, []attr.Value{types.StringNull()}),
+	}
+
+	for attributeName, attribute := range attributes {
+		for valueName, value := range values {
+			t.Run(attributeName+" "+valueName, func(t *testing.T) {
+				t.Parallel()
+				diagnostics := runSecurityGroupSetValidators(attribute, value)
+				require.True(t, diagnostics.HasError(), diagnostics)
+				require.Len(t, diagnostics.Errors(), 1, diagnostics)
+			})
+		}
+	}
+}
+
+func TestSecurityGroupRuleValidateConfigLeavesTargetsToSchemaValidators(t *testing.T) {
+	t.Parallel()
+
+	model := SecurityGroupRuleResourceModel{
+		ID:              types.StringNull(),
+		SecurityGroupID: types.StringValue("security_group_test"),
+		Direction:       types.StringValue("inbound"),
+		Protocol:        caseInsensitiveStringValueOf("TCP"),
+		Ports:           types.StringValue("22"),
+		Targets:         types.SetValueMust(types.StringType, []attr.Value{types.StringValue("")}),
+		Notes:           types.StringValue(""),
+	}
+	state := securityGroupRuleTestState(t, model)
+	response := resource.ValidateConfigResponse{}
+	(&SecurityGroupRuleResource{}).ValidateConfig(context.Background(), resource.ValidateConfigRequest{
+		Config: tfsdk.Config(state),
+	}, &response)
+
+	require.False(t, response.Diagnostics.HasError(), response.Diagnostics.Errors())
+}
+
 func TestSecurityGroupRuleCollectionClassification(t *testing.T) {
 	t.Parallel()
 
@@ -284,6 +343,141 @@ func TestSecurityGroupValidateConfigRuleRepresentationMatrix(t *testing.T) {
 			}
 			require.True(t, response.Diagnostics.HasError())
 			require.Contains(t, response.Diagnostics.Errors()[0].Detail(), test.wantDetail)
+		})
+	}
+}
+
+func TestSecurityGroupApplyRejectsResolvedInvalidConfigurationBeforeAPI(t *testing.T) {
+	t.Parallel()
+
+	null := types.ListNull(securityGroupRuleObjectType())
+	empty := types.ListValueMust(securityGroupRuleObjectType(), nil)
+	inbound := securityGroupTestRuleList(t, []canonicalSecurityGroupRule{{
+		Direction: "inbound", Protocol: "TCP", Ports: "22", Targets: []string{"all:ipv4"},
+	}}, false)
+
+	for _, test := range []struct {
+		name      string
+		configure func(*SecurityGroupResourceModel, *SecurityGroupResourceModel)
+		apply     func(*SecurityGroupResource, tfsdk.State, tfsdk.State, tfsdk.State) diag.Diagnostics
+	}{
+		{
+			name: "create external rules with inline rules",
+			configure: func(plan, config *SecurityGroupResourceModel) {
+				plan.ExternalRules, plan.InboundRules = types.BoolValue(true), inbound
+				config.ExternalRules, config.InboundRules = types.BoolUnknown(), inbound
+			},
+			apply: func(resourceUnderTest *SecurityGroupResource, _, plan, config tfsdk.State) diag.Diagnostics {
+				response := resource.CreateResponse{State: plan}
+				resourceUnderTest.Create(context.Background(), resource.CreateRequest{
+					Config: tfsdk.Config(config), Plan: tfsdk.Plan(plan),
+				}, &response)
+				return response.Diagnostics
+			},
+		},
+		{
+			name: "update dual inbound representations",
+			configure: func(plan, config *SecurityGroupResourceModel) {
+				plan.Name, config.Name = types.StringValue("Changed"), types.StringValue("Changed")
+				plan.InboundRules, plan.InboundRule = empty, empty
+				config.InboundRules = empty
+				config.InboundRule = types.ListUnknown(securityGroupRuleObjectType())
+			},
+			apply: func(resourceUnderTest *SecurityGroupResource, state, plan, config tfsdk.State) diag.Diagnostics {
+				response := resource.UpdateResponse{State: plan}
+				resourceUnderTest.Update(context.Background(), resource.UpdateRequest{
+					Config: tfsdk.Config(config), State: state, Plan: tfsdk.Plan(plan),
+				}, &response)
+				return response.Diagnostics
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			var requests atomic.Int32
+			client := newVirtualMachineTestClient(t, func(writer http.ResponseWriter, _ *http.Request) {
+				requests.Add(1)
+				http.Error(writer, "unexpected request", http.StatusInternalServerError)
+			})
+			resourceUnderTest := &SecurityGroupResource{M: &Meta{
+				Core: client, confOrganization: "terraform-acc-test", testMode: true,
+			}}
+			stateModel := securityGroupTestModel()
+			planModel := securityGroupTestModel()
+			configModel := securityGroupTestModel()
+			planModel.InboundRules, planModel.OutboundRules = null, null
+			planModel.InboundRule, planModel.OutboundRule = null, null
+			configModel.InboundRules, configModel.OutboundRules = null, null
+			configModel.InboundRule, configModel.OutboundRule = null, null
+			test.configure(&planModel, &configModel)
+
+			diagnostics := test.apply(
+				resourceUnderTest,
+				securityGroupTestState(t, stateModel),
+				securityGroupTestState(t, planModel),
+				securityGroupTestState(t, configModel),
+			)
+
+			require.True(t, diagnostics.HasError(), diagnostics)
+			assert.Zero(t, requests.Load(), "invalid apply reached the API")
+		})
+	}
+}
+
+func TestSecurityGroupApplyUnknownDecisionValidation(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name      string
+		configure func(*SecurityGroupResourceModel, *SecurityGroupResourceModel)
+		wantError bool
+	}{
+		{
+			name: "configured external rules remains unknown",
+			configure: func(plan, config *SecurityGroupResourceModel) {
+				plan.ExternalRules, config.ExternalRules = types.BoolUnknown(), types.BoolUnknown()
+			},
+			wantError: true,
+		},
+		{
+			name: "configured plural rules remain unknown",
+			configure: func(plan, config *SecurityGroupResourceModel) {
+				unknown := types.ListUnknown(securityGroupRuleObjectType())
+				plan.InboundRules, config.InboundRules = unknown, unknown
+			},
+			wantError: true,
+		},
+		{
+			name: "configured nested rule field remains unknown",
+			configure: func(plan, config *SecurityGroupResourceModel) {
+				plan.InboundRules = securityGroupTestUnknownRuleList(t, true)
+				config.InboundRules = securityGroupTestUnknownRuleList(t, false)
+			},
+			wantError: true,
+		},
+		{
+			name: "omitted optional computed values may remain unknown",
+			configure: func(plan, config *SecurityGroupResourceModel) {
+				plan.ExternalRules = types.BoolUnknown()
+				plan.InboundRules = types.ListUnknown(securityGroupRuleObjectType())
+				config.ExternalRules = types.BoolNull()
+				config.InboundRules = types.ListNull(securityGroupRuleObjectType())
+			},
+		},
+		{
+			name: "configured dynamic collection resolved to null",
+			configure: func(plan, config *SecurityGroupResourceModel) {
+				plan.InboundRules = types.ListNull(securityGroupRuleObjectType())
+				config.InboundRules = types.ListUnknown(securityGroupRuleObjectType())
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			plan, config := securityGroupTestModel(), securityGroupTestModel()
+			test.configure(&plan, &config)
+			diagnostics := validateSecurityGroupApplyUnknowns(plan, config)
+			assert.Equal(t, test.wantError, diagnostics.HasError(), diagnostics)
 		})
 	}
 }
@@ -866,14 +1060,17 @@ func TestSecurityGroupUpdateDoesNotPersistEmptyExternalAdoptionMarker(t *testing
 		}
 	})
 	r := &SecurityGroupResource{M: &Meta{Core: client, testMode: true}}
-	state, plan := securityGroupTestModel(), securityGroupTestModel()
+	state, plan, config := securityGroupTestModel(), securityGroupTestModel(), securityGroupTestModel()
 	state.ExternalRules = types.BoolValue(true)
 	plan.ExternalRules = types.BoolValue(false)
 	unknown := types.ListUnknown(securityGroupRuleObjectType())
 	plan.InboundRules, plan.OutboundRules = unknown, unknown
 	stateValue := securityGroupTestState(t, state)
 	planValue := securityGroupTestState(t, plan)
-	request := resource.UpdateRequest{State: stateValue, Plan: tfsdk.Plan(planValue)}
+	configValue := securityGroupTestState(t, config)
+	request := resource.UpdateRequest{
+		Config: tfsdk.Config(configValue), State: stateValue, Plan: tfsdk.Plan(planValue),
+	}
 	response := resource.UpdateResponse{State: planValue}
 	initializeResourcePrivateState(t, &request, &response)
 
@@ -985,6 +1182,29 @@ func securityGroupTestState(t *testing.T, model SecurityGroupResourceModel) tfsd
 	diags := state.Set(context.Background(), model)
 	require.False(t, diags.HasError(), diags.Errors())
 	return state
+}
+
+func securityGroupRuleTestState(t *testing.T, model SecurityGroupRuleResourceModel) tfsdk.State {
+	t.Helper()
+	var schemaResponse resource.SchemaResponse
+	(&SecurityGroupRuleResource{}).Schema(context.Background(), resource.SchemaRequest{}, &schemaResponse)
+	require.False(t, schemaResponse.Diagnostics.HasError(), schemaResponse.Diagnostics.Errors())
+	state := tfsdk.State{Schema: schemaResponse.Schema}
+	diagnostics := state.Set(context.Background(), model)
+	require.False(t, diagnostics.HasError(), diagnostics.Errors())
+	return state
+}
+
+func runSecurityGroupSetValidators(attribute schema.SetAttribute, value types.Set) diag.Diagnostics {
+	var diagnostics diag.Diagnostics
+	for _, setValidator := range attribute.Validators {
+		response := schemavalidator.SetResponse{}
+		setValidator.ValidateSet(context.Background(), schemavalidator.SetRequest{
+			Path: path.Root("test"), ConfigValue: value,
+		}, &response)
+		diagnostics.Append(response.Diagnostics...)
+	}
+	return diagnostics
 }
 
 func runSecurityGroupValidateConfig(

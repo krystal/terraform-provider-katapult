@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -25,6 +27,8 @@ type SecurityGroupResource struct{ M *Meta }
 const (
 	securityGroupImportPrivateKey           = "security_group_import"
 	securityGroupExternalAdoptionPrivateKey = "security_group_external_adoption_pending"
+	securityGroupInboundRulesAttribute      = "inbound_rules"
+	securityGroupOutboundRulesAttribute     = "outbound_rules"
 )
 
 type SecurityGroupResourceModel struct {
@@ -75,14 +79,14 @@ func (r *SecurityGroupResource) Schema(_ context.Context, _ resource.SchemaReque
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manages a security group, its associations, and optionally its complete inline rule set.",
 		Attributes: map[string]schema.Attribute{
-			"id":                               schema.StringAttribute{Computed: true, MarkdownDescription: "The unique identifier of the security group.", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
-			"name":                             schema.StringAttribute{Required: true, MarkdownDescription: "The security group name.", Validators: []validator.String{stringvalidator.LengthAtLeast(1)}},
-			securityGroupAssociationsAttribute: schema.SetAttribute{Optional: true, Computed: true, ElementType: types.StringType, MarkdownDescription: "Resource IDs to which the group applies.", PlanModifiers: []planmodifier.Set{NullToEmptySetPlanModifier(), setplanmodifier.UseStateForUnknown()}},
-			"allow_all_inbound":                schema.BoolAttribute{Optional: true, Computed: true, Default: booldefault.StaticBool(false), MarkdownDescription: "Allow all inbound traffic."},
-			"allow_all_outbound":               schema.BoolAttribute{Optional: true, Computed: true, Default: booldefault.StaticBool(false), MarkdownDescription: "Allow all outbound traffic."},
-			"external_rules":                   schema.BoolAttribute{Optional: true, Computed: true, MarkdownDescription: "Do not manage the group's complete rule list inline. Standalone rule resources can still be used.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}},
-			"inbound_rules":                    schema.ListNestedAttribute{Optional: true, Computed: true, MarkdownDescription: "Inbound " + ruleDescription, NestedObject: schema.NestedAttributeObject{Attributes: securityGroupRuleNestedAttributes()}},
-			"outbound_rules":                   schema.ListNestedAttribute{Optional: true, Computed: true, MarkdownDescription: "Outbound " + ruleDescription, NestedObject: schema.NestedAttributeObject{Attributes: securityGroupRuleNestedAttributes()}},
+			"id":                                schema.StringAttribute{Computed: true, MarkdownDescription: "The unique identifier of the security group.", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+			"name":                              schema.StringAttribute{Required: true, MarkdownDescription: "The security group name.", Validators: []validator.String{stringvalidator.LengthAtLeast(1)}},
+			securityGroupAssociationsAttribute:  schema.SetAttribute{Optional: true, Computed: true, ElementType: types.StringType, MarkdownDescription: "Resource IDs to which the group applies.", Validators: []validator.Set{setvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)), setvalidator.NoNullValues()}, PlanModifiers: []planmodifier.Set{NullToEmptySetPlanModifier(), setplanmodifier.UseStateForUnknown()}},
+			"allow_all_inbound":                 schema.BoolAttribute{Optional: true, Computed: true, Default: booldefault.StaticBool(false), MarkdownDescription: "Allow all inbound traffic."},
+			"allow_all_outbound":                schema.BoolAttribute{Optional: true, Computed: true, Default: booldefault.StaticBool(false), MarkdownDescription: "Allow all outbound traffic."},
+			"external_rules":                    schema.BoolAttribute{Optional: true, Computed: true, MarkdownDescription: "Do not manage the group's complete rule list inline. Standalone rule resources can still be used.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}},
+			securityGroupInboundRulesAttribute:  schema.ListNestedAttribute{Optional: true, Computed: true, MarkdownDescription: "Inbound " + ruleDescription, NestedObject: schema.NestedAttributeObject{Attributes: securityGroupRuleNestedAttributes()}},
+			securityGroupOutboundRulesAttribute: schema.ListNestedAttribute{Optional: true, Computed: true, MarkdownDescription: "Outbound " + ruleDescription, NestedObject: schema.NestedAttributeObject{Attributes: securityGroupRuleNestedAttributes()}},
 		},
 		Blocks: map[string]schema.Block{
 			"inbound_rule":  schema.ListNestedBlock{MarkdownDescription: "Deprecated inbound rule blocks.", DeprecationMessage: deprecated, NestedObject: schema.NestedBlockObject{Attributes: securityGroupRuleNestedAttributes()}},
@@ -97,6 +101,54 @@ func knownCollectionHasValues(value types.List) bool {
 	return knownCollectionConfigured(value) && len(value.Elements()) > 0
 }
 
+func validateSecurityGroupApplyUnknowns(
+	plan, config SecurityGroupResourceModel,
+) diag.Diagnostics {
+	var diagnostics diag.Diagnostics
+	for _, value := range []struct {
+		name         string
+		plan, config types.Bool
+	}{
+		{"allow_all_inbound", plan.AllowAllInbound, config.AllowAllInbound},
+		{"allow_all_outbound", plan.AllowAllOutbound, config.AllowAllOutbound},
+		{"external_rules", plan.ExternalRules, config.ExternalRules},
+	} {
+		if value.plan.IsUnknown() && !value.config.IsNull() {
+			diagnostics.AddAttributeError(
+				path.Root(value.name),
+				"Unresolved Security Group Configuration",
+				"This value remained unknown when Terraform attempted to apply the plan.",
+			)
+		}
+	}
+	for _, value := range []struct {
+		name         string
+		plan, config types.List
+	}{
+		{securityGroupInboundRulesAttribute, plan.InboundRules, config.InboundRules},
+		{securityGroupOutboundRulesAttribute, plan.OutboundRules, config.OutboundRules},
+		{"inbound_rule", plan.InboundRule, config.InboundRule},
+		{"outbound_rule", plan.OutboundRule, config.OutboundRule},
+	} {
+		if value.plan.IsUnknown() && !value.config.IsNull() {
+			diagnostics.AddAttributeError(
+				path.Root(value.name),
+				"Unresolved Security Group Rule Collection",
+				"This rule collection remained unknown when Terraform attempted to apply the plan.",
+			)
+		}
+		if !value.plan.IsNull() && !value.plan.IsUnknown() && !value.config.IsNull() &&
+			securityGroupRuleListHasUnknownConfiguredFields(value.plan) {
+			diagnostics.AddAttributeError(
+				path.Root(value.name),
+				"Unresolved Security Group Rule",
+				"A configured rule value remained unknown when Terraform attempted to apply the plan.",
+			)
+		}
+	}
+	return diagnostics
+}
+
 func legacyRepresentationForDirection(model SecurityGroupResourceModel, direction string) bool {
 	if direction == securityGroupDirectionInbound {
 		return knownCollectionConfigured(model.InboundRule) ||
@@ -108,31 +160,38 @@ func legacyRepresentationForDirection(model SecurityGroupResourceModel, directio
 }
 
 //nolint:lll // Diagnostics remain actionable at each compatibility check.
-func (r *SecurityGroupResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var conf SecurityGroupResourceModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &conf)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+func validateSecurityGroupCompatibility(model SecurityGroupResourceModel) diag.Diagnostics {
+	var diagnostics diag.Diagnostics
 	for _, direction := range []struct {
 		name        string
 		attr, block types.List
 		allow       types.Bool
 	}{
-		{securityGroupDirectionInbound, conf.InboundRules, conf.InboundRule, conf.AllowAllInbound},
-		{securityGroupDirectionOutbound, conf.OutboundRules, conf.OutboundRule, conf.AllowAllOutbound},
+		{securityGroupDirectionInbound, model.InboundRules, model.InboundRule, model.AllowAllInbound},
+		{securityGroupDirectionOutbound, model.OutboundRules, model.OutboundRule, model.AllowAllOutbound},
 	} {
 		if knownCollectionConfigured(direction.attr) && knownCollectionConfigured(direction.block) {
-			resp.Diagnostics.AddAttributeError(path.Root(direction.name+"_rules"), "Conflicting Security Group Rule Representations", "Configure either the plural rules attribute or the deprecated singular rule blocks for this direction, not both.")
+			diagnostics.AddAttributeError(path.Root(direction.name+"_rules"), "Conflicting Security Group Rule Representations", "Configure either the plural rules attribute or the deprecated singular rule blocks for this direction, not both.")
 		}
 		if !direction.allow.IsNull() && !direction.allow.IsUnknown() && direction.allow.ValueBool() && (knownCollectionHasValues(direction.attr) || knownCollectionHasValues(direction.block)) {
-			resp.Diagnostics.AddAttributeError(path.Root("allow_all_"+direction.name), "Conflicting Security Group Rules", "Allow-all cannot be enabled while rules are configured for the same direction.")
+			diagnostics.AddAttributeError(path.Root("allow_all_"+direction.name), "Conflicting Security Group Rules", "Allow-all cannot be enabled while rules are configured for the same direction.")
 		}
 	}
-	if !conf.ExternalRules.IsNull() && !conf.ExternalRules.IsUnknown() && conf.ExternalRules.ValueBool() &&
-		(knownCollectionConfigured(conf.InboundRules) || knownCollectionConfigured(conf.OutboundRules) || knownCollectionConfigured(conf.InboundRule) || knownCollectionConfigured(conf.OutboundRule)) {
-		resp.Diagnostics.AddAttributeError(path.Root("external_rules"), "Conflicting Security Group Rules", "external_rules cannot be enabled while an inline rule collection is configured.")
+	if !model.ExternalRules.IsNull() && !model.ExternalRules.IsUnknown() && model.ExternalRules.ValueBool() &&
+		(knownCollectionConfigured(model.InboundRules) || knownCollectionConfigured(model.OutboundRules) || knownCollectionConfigured(model.InboundRule) || knownCollectionConfigured(model.OutboundRule)) {
+		diagnostics.AddAttributeError(path.Root("external_rules"), "Conflicting Security Group Rules", "external_rules cannot be enabled while an inline rule collection is configured.")
 	}
+	return diagnostics
+}
+
+//nolint:lll // Framework interface signature.
+func (r *SecurityGroupResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var config SecurityGroupResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(validateSecurityGroupCompatibility(config)...)
 }
 
 func listRules(ctx context.Context, value types.List, direction string) ([]canonicalSecurityGroupRule, error) {
@@ -389,8 +448,18 @@ func selectedRules(ctx context.Context, model SecurityGroupResourceModel, direct
 
 //nolint:lll,gocyclo // Partial-state persistence and rule creation are intentionally adjacent.
 func (r *SecurityGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan SecurityGroupResourceModel
+	var plan, config SecurityGroupResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(validateSecurityGroupCompatibility(config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(validateSecurityGroupCompatibility(plan)...)
+	resp.Diagnostics.Append(validateSecurityGroupApplyUnknowns(plan, config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -511,9 +580,19 @@ func securityGroupRuleCollectionsEmpty(model SecurityGroupResourceModel) bool {
 
 //nolint:lll,gocyclo,gocritic // External-rule lifecycle branches stay together.
 func (r *SecurityGroupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state SecurityGroupResourceModel
+	var plan, state, config SecurityGroupResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(validateSecurityGroupCompatibility(config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(validateSecurityGroupCompatibility(plan)...)
+	resp.Diagnostics.Append(validateSecurityGroupApplyUnknowns(plan, config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
