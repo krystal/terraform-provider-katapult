@@ -38,8 +38,8 @@ resource "katapult_security_group" "practical" {
   # Allow all outbound traffic.
   allow_all_outbound = true
 
-  # Allow inbound SSH, HTTP, HTTPS, and QUIC traffic from anywhere.
   inbound_rules = [
+    # Allow inbound SSH, HTTP, HTTPS, and QUIC traffic from anywhere.
     {
       protocol = "TCP"
       ports    = "22"
@@ -58,6 +58,7 @@ resource "katapult_security_group" "practical" {
       targets  = ["all:ipv4", "all:ipv6"]
       notes    = "QUIC"
     },
+    # Allow inbound ICMP traffic from virtual machines in the monitoring group.
     {
       protocol = "ICMP"
       targets  = [katapult_virtual_machine_group.monitoring.id]
