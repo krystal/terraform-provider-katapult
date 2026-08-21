@@ -3,12 +3,12 @@
 page_title: "katapult_security_group Resource - terraform-provider-katapult"
 subcategory: "Networking"
 description: |-
-  Allows management of security groups, their rules, and their associations. By default all traffic is blocked, both inbound and outbound. To allow traffic you must explicitly add rules to the security group. You can also allow all traffic by setting the allow_all_inbound and allow_all_outbound attributes to true.
+  Manages a security group, its associations, and optionally its complete inline rule set.
 ---
 
 # katapult_security_group (Resource)
 
-Allows management of security groups, their rules, and their associations. By default all traffic is blocked, both inbound and outbound. To allow traffic you must explicitly add rules to the security group. You can also allow all traffic by setting the `allow_all_inbound` and `allow_all_outbound` attributes to `true`.
+Manages a security group, its associations, and optionally its complete inline rule set.
 
 ## Example Usage
 
@@ -39,34 +39,31 @@ resource "katapult_security_group" "practical" {
   allow_all_outbound = true
 
   # Allow inbound SSH, HTTP, HTTPS, and QUIC traffic from anywhere.
-  inbound_rule {
-    protocol = "TCP"
-    ports    = "22"
-    targets  = ["all:ipv4", "all:ipv6"]
-    notes    = "SSH"
-  }
-  inbound_rule {
-    protocol = "TCP"
-    ports    = "80,433"
-    targets  = ["all:ipv4", "all:ipv6"]
-    notes    = "HTTP & HTTPS"
-  }
-  inbound_rule {
-    protocol = "UDP"
-    ports    = "443"
-    targets  = ["all:ipv4", "all:ipv6"]
-    notes    = "QUIC"
-  }
-
-  # Allow inbound ICMP traffic from virtual machines in the
-  # monitoring group.
-  inbound_rule {
-    protocol = "ICMP"
-    targets = [
-      katapult_virtual_machine_group.monitoring.id
-    ]
-    notes = "ping"
-  }
+  inbound_rules = [
+    {
+      protocol = "TCP"
+      ports    = "22"
+      targets  = ["all:ipv4", "all:ipv6"]
+      notes    = "SSH"
+    },
+    {
+      protocol = "TCP"
+      ports    = "80,443"
+      targets  = ["all:ipv4", "all:ipv6"]
+      notes    = "HTTP & HTTPS"
+    },
+    {
+      protocol = "UDP"
+      ports    = "443"
+      targets  = ["all:ipv4", "all:ipv6"]
+      notes    = "QUIC"
+    },
+    {
+      protocol = "ICMP"
+      targets  = [katapult_virtual_machine_group.monitoring.id]
+      notes    = "ping"
+    },
+  ]
 }
 
 # Dynamic Rules
@@ -103,27 +100,8 @@ resource "katapult_security_group" "dynamic" {
   allow_all_inbound  = length(local.my_rules.inbound) > 0 ? false : true
   allow_all_outbound = length(local.my_rules.outbound) > 0 ? false : true
 
-  # Create inbound rules from local.my_rules.inbound values.
-  dynamic "inbound_rule" {
-    for_each = local.my_rules.inbound
-    content {
-      protocol = inbound_rule.value.protocol
-      ports    = inbound_rule.value.ports
-      targets  = inbound_rule.value.targets
-      notes    = inbound_rule.value.notes
-    }
-  }
-
-  # Create outbound rules from local.my_rules.outbound values.
-  dynamic "outbound_rule" {
-    for_each = local.my_rules.outbound
-    content {
-      protocol = outbound_rule.value.protocol
-      ports    = outbound_rule.value.ports
-      targets  = outbound_rule.value.targets
-      notes    = outbound_rule.value.notes
-    }
-  }
+  inbound_rules  = local.my_rules.inbound
+  outbound_rules = local.my_rules.outbound
 }
 ```
 
@@ -132,38 +110,59 @@ resource "katapult_security_group" "dynamic" {
 
 ### Required
 
-- `name` (String) The name of the security group.
+- `name` (String) The security group name.
 
 ### Optional
 
-- `allow_all_inbound` (Boolean) Whether or not to allow all inbound traffic. If not explicitly set, it defaults to false, blocking all inbound traffic not covered by a inbound rule. If changed to true on a existing security group, all existing inbound rules will be deleted, hence it cannot be enabled while any inbound rules are defined. Defaults to `false`.
-- `allow_all_outbound` (Boolean) Whether or not to allow all outbound traffic. If not explicitly set, it defaults to false, blocking all outbound traffic not covered by a outbound rule. If changed to true on a existing security group, all existing outbound rules will be deleted, hence it cannot be enabled while any outbound rules are defined. Defaults to `false`.
-- `associations` (Set of String) The resource IDs to apply this security group to. Accepts IDs of virtual machines, virtual machine groups, and tags.
-- `external_rules` (Boolean) When enabled, The full list of rules are not managed by Terraform. Induvidual rules can still be managed with the `katapult_security_group_rule` resource. This is required to prevent Terraform from deleting rules managed outside of Terraform. Defaults to `false`.
-- `inbound_rule` (Block List) Zero or more inbound rules to apply to the security group. Each rule specifies inbound traffic which should be allowed. (see [below for nested schema](#nestedblock--inbound_rule))
-- `outbound_rule` (Block List) Zero or more outbound rules to apply to the security group. Each rule specifies outbound traffic which should be allowed. (see [below for nested schema](#nestedblock--outbound_rule))
+- `allow_all_inbound` (Boolean) Allow all inbound traffic.
+- `allow_all_outbound` (Boolean) Allow all outbound traffic.
+- `associations` (Set of String) Resource IDs to which the group applies.
+- `external_rules` (Boolean) Do not manage the group's complete rule list inline. Standalone rule resources can still be used.
+- `inbound_rule` (Block List, Deprecated) Deprecated inbound rule blocks. (see [below for nested schema](#nestedblock--inbound_rule))
+- `inbound_rules` (Attributes List) Inbound Rules managed as an expression-friendly list. (see [below for nested schema](#nestedatt--inbound_rules))
+- `outbound_rule` (Block List, Deprecated) Deprecated outbound rule blocks. (see [below for nested schema](#nestedblock--outbound_rule))
+- `outbound_rules` (Attributes List) Outbound Rules managed as an expression-friendly list. (see [below for nested schema](#nestedatt--outbound_rules))
 
 ### Read-Only
 
-- `id` (String) The ID of the security group. This is automatically generated by the API.
+- `id` (String) The unique identifier of the security group.
 
 <a id="nestedblock--inbound_rule"></a>
 ### Nested Schema for `inbound_rule`
 
 Required:
 
-- `protocol` (String) The protocol of the rule (`TCP`, `UDP`, or `ICMP`).
-- `targets` (Set of String) The targets to which the rule applies. Can be IP addresses, CIDR blocks, IDs for virtual machines, virtual machine groups, tags, address lists, or `all:ipv4` and `all:ipv6`.
+- `protocol` (String) The rule protocol (`TCP`, `UDP`, or `ICMP`).
+- `targets` (Set of String) The target IPs, CIDRs, resource IDs, or `all:ipv4` and `all:ipv6` values.
 
 Optional:
 
-- `notes` (String) Notes for the rule. Used for human reference only.
-- `ports` (String) The port, ports, or range of ports to which the rule applies (e.g. `22`, `22,80,443`, or `3000-3999`). If not specified, the rule applies to all ports.
+- `notes` (String) Human-readable notes for the rule.
+- `ports` (String) The port, ports, or range of ports. Omit to match all ports.
 
 Read-Only:
 
-- `direction` (String) The direction of the rule (`inbound` or `outbound`).
-- `id` (String) The ID of the security group rule. This is automatically generated by the API.
+- `direction` (String) The rule direction (`inbound` or `outbound`).
+- `id` (String) The unique identifier of the security group rule.
+
+
+<a id="nestedatt--inbound_rules"></a>
+### Nested Schema for `inbound_rules`
+
+Required:
+
+- `protocol` (String) The rule protocol (`TCP`, `UDP`, or `ICMP`).
+- `targets` (Set of String) The target IPs, CIDRs, resource IDs, or `all:ipv4` and `all:ipv6` values.
+
+Optional:
+
+- `notes` (String) Human-readable notes for the rule.
+- `ports` (String) The port, ports, or range of ports. Omit to match all ports.
+
+Read-Only:
+
+- `direction` (String) The rule direction (`inbound` or `outbound`).
+- `id` (String) The unique identifier of the security group rule.
 
 
 <a id="nestedblock--outbound_rule"></a>
@@ -171,15 +170,34 @@ Read-Only:
 
 Required:
 
-- `protocol` (String) The protocol of the rule (`TCP`, `UDP`, or `ICMP`).
-- `targets` (Set of String) The targets to which the rule applies. Can be IP addresses, CIDR blocks, IDs for virtual machines, virtual machine groups, tags, address lists, or `all:ipv4` and `all:ipv6`.
+- `protocol` (String) The rule protocol (`TCP`, `UDP`, or `ICMP`).
+- `targets` (Set of String) The target IPs, CIDRs, resource IDs, or `all:ipv4` and `all:ipv6` values.
 
 Optional:
 
-- `notes` (String) Notes for the rule. Used for human reference only.
-- `ports` (String) The port, ports, or range of ports to which the rule applies (e.g. `22`, `22,80,443`, or `3000-3999`). If not specified, the rule applies to all ports.
+- `notes` (String) Human-readable notes for the rule.
+- `ports` (String) The port, ports, or range of ports. Omit to match all ports.
 
 Read-Only:
 
-- `direction` (String) The direction of the rule (`inbound` or `outbound`).
-- `id` (String) The ID of the security group rule. This is automatically generated by the API.
+- `direction` (String) The rule direction (`inbound` or `outbound`).
+- `id` (String) The unique identifier of the security group rule.
+
+
+<a id="nestedatt--outbound_rules"></a>
+### Nested Schema for `outbound_rules`
+
+Required:
+
+- `protocol` (String) The rule protocol (`TCP`, `UDP`, or `ICMP`).
+- `targets` (Set of String) The target IPs, CIDRs, resource IDs, or `all:ipv4` and `all:ipv6` values.
+
+Optional:
+
+- `notes` (String) Human-readable notes for the rule.
+- `ports` (String) The port, ports, or range of ports. Omit to match all ports.
+
+Read-Only:
+
+- `direction` (String) The rule direction (`inbound` or `outbound`).
+- `id` (String) The unique identifier of the security group rule.

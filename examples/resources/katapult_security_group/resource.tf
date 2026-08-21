@@ -24,34 +24,31 @@ resource "katapult_security_group" "practical" {
   allow_all_outbound = true
 
   # Allow inbound SSH, HTTP, HTTPS, and QUIC traffic from anywhere.
-  inbound_rule {
-    protocol = "TCP"
-    ports    = "22"
-    targets  = ["all:ipv4", "all:ipv6"]
-    notes    = "SSH"
-  }
-  inbound_rule {
-    protocol = "TCP"
-    ports    = "80,433"
-    targets  = ["all:ipv4", "all:ipv6"]
-    notes    = "HTTP & HTTPS"
-  }
-  inbound_rule {
-    protocol = "UDP"
-    ports    = "443"
-    targets  = ["all:ipv4", "all:ipv6"]
-    notes    = "QUIC"
-  }
-
-  # Allow inbound ICMP traffic from virtual machines in the
-  # monitoring group.
-  inbound_rule {
-    protocol = "ICMP"
-    targets = [
-      katapult_virtual_machine_group.monitoring.id
-    ]
-    notes = "ping"
-  }
+  inbound_rules = [
+    {
+      protocol = "TCP"
+      ports    = "22"
+      targets  = ["all:ipv4", "all:ipv6"]
+      notes    = "SSH"
+    },
+    {
+      protocol = "TCP"
+      ports    = "80,443"
+      targets  = ["all:ipv4", "all:ipv6"]
+      notes    = "HTTP & HTTPS"
+    },
+    {
+      protocol = "UDP"
+      ports    = "443"
+      targets  = ["all:ipv4", "all:ipv6"]
+      notes    = "QUIC"
+    },
+    {
+      protocol = "ICMP"
+      targets  = [katapult_virtual_machine_group.monitoring.id]
+      notes    = "ping"
+    },
+  ]
 }
 
 # Dynamic Rules
@@ -88,25 +85,6 @@ resource "katapult_security_group" "dynamic" {
   allow_all_inbound  = length(local.my_rules.inbound) > 0 ? false : true
   allow_all_outbound = length(local.my_rules.outbound) > 0 ? false : true
 
-  # Create inbound rules from local.my_rules.inbound values.
-  dynamic "inbound_rule" {
-    for_each = local.my_rules.inbound
-    content {
-      protocol = inbound_rule.value.protocol
-      ports    = inbound_rule.value.ports
-      targets  = inbound_rule.value.targets
-      notes    = inbound_rule.value.notes
-    }
-  }
-
-  # Create outbound rules from local.my_rules.outbound values.
-  dynamic "outbound_rule" {
-    for_each = local.my_rules.outbound
-    content {
-      protocol = outbound_rule.value.protocol
-      ports    = outbound_rule.value.ports
-      targets  = outbound_rule.value.targets
-      notes    = outbound_rule.value.notes
-    }
-  }
+  inbound_rules  = local.my_rules.inbound
+  outbound_rules = local.my_rules.outbound
 }

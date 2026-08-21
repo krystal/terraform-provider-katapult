@@ -3,12 +3,12 @@
 page_title: "katapult_security_groups Data Source - terraform-provider-katapult"
 subcategory: "Networking"
 description: |-
-  Fetch all security groups in the organization, optionally including all rules for each security group.
+  Retrieves all security groups in the organization.
 ---
 
 # katapult_security_groups (Data Source)
 
-Fetch all security groups in the organization, optionally including all rules for each security group.
+Retrieves all security groups in the organization.
 
 ## Example Usage
 
@@ -22,12 +22,12 @@ data "katapult_security_groups" "all" {}
 
 ### Optional
 
-- `include_rules` (Boolean) Whether to include rules in the output. Can be slow if there are a lot of security groups, as eachgroup requires a separate API call to fetch rules. Defaults to `false`.
+- `include_rules` (Boolean)
 
 ### Read-Only
 
-- `id` (String) Always set to provider organization value.
-- `security_groups` (List of Object) (see [below for nested schema](#nestedatt--security_groups))
+- `id` (String) The ID of this resource.
+- `security_groups` (Attributes List) (see [below for nested schema](#nestedatt--security_groups))
 
 <a id="nestedatt--security_groups"></a>
 ### Nested Schema for `security_groups`
@@ -38,12 +38,11 @@ Read-Only:
 - `allow_all_outbound` (Boolean)
 - `associations` (Set of String)
 - `id` (String)
-- `inbound_rules` (List of Object) (see [below for nested schema](#nestedobjatt--security_groups--inbound_rules))
-- `include_rules` (Boolean)
+- `inbound_rules` (Attributes List) (see [below for nested schema](#nestedatt--security_groups--inbound_rules))
 - `name` (String)
-- `outbound_rules` (List of Object) (see [below for nested schema](#nestedobjatt--security_groups--outbound_rules))
+- `outbound_rules` (Attributes List) (see [below for nested schema](#nestedatt--security_groups--outbound_rules))
 
-<a id="nestedobjatt--security_groups--inbound_rules"></a>
+<a id="nestedatt--security_groups--inbound_rules"></a>
 ### Nested Schema for `security_groups.inbound_rules`
 
 Read-Only:
@@ -56,7 +55,7 @@ Read-Only:
 - `targets` (Set of String)
 
 
-<a id="nestedobjatt--security_groups--outbound_rules"></a>
+<a id="nestedatt--security_groups--outbound_rules"></a>
 ### Nested Schema for `security_groups.outbound_rules`
 
 Read-Only:
