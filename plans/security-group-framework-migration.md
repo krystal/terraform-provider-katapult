@@ -91,8 +91,11 @@ counts, and cassette counts when implementation begins.
 - Inline rule collections remain list-shaped.
 - Rule order and computed IDs remain stable across refreshes.
 - Each rule's `targets` remains set-shaped and order-insensitive.
-- Protocol input remains case-insensitive and state uses the existing canonical
-  representation.
+- Protocol input and state comparison remain case-insensitive. Existing state
+  and imported API casing remain stable, newly configured casing remains as
+  written, and API requests use canonical uppercase protocol values. Framework
+  rejects StateFunc-like configured-value normalization because a planned
+  uppercase value does not exactly match lowercase configuration.
 - Omitted `ports` and `notes` retain their historical empty and null behavior.
 - Collection data sources preserve their existing ordering and IDs.
 
@@ -192,7 +195,8 @@ Both nested object forms expose the same rule fields:
 
 - `id`: computed.
 - `direction`: computed.
-- `protocol`: required, case-insensitive input with canonical state.
+- `protocol`: required and case-insensitive. Existing/imported API casing stays
+  stable, newly configured casing stays as written, and requests are uppercase.
 - `ports`: optional with legacy-compatible empty and null handling.
 - `targets`: required and set-shaped.
 - `notes`: optional with legacy-compatible empty and null handling.
@@ -281,8 +285,9 @@ creation fails.
   as `associations`.
 - Use the existing empty-string preservation modifier where nullable API values
   would otherwise disagree with legacy state.
-- Normalize protocol and direction explicitly instead of relying on SDKv2
-  `StateFunc` behavior.
+- Normalize protocol and direction for API requests while preserving
+  semantically equal configured/prior state casing. Framework does not permit
+  SDKv2 `StateFunc`-style rewriting of configured values.
 - Add explicit computed `id` attributes where SDKv2 supplied IDs implicitly,
   including the grouped-rule data source.
 - Preserve standalone-rule replacement and in-place update behavior.
@@ -349,7 +354,8 @@ Add focused tests for:
 - Configuration and state representation classification.
 - Both migration directions.
 - Null, unknown, omitted, and explicitly empty collections.
-- Canonical protocol, ports, notes, and target normalization.
+- Case-insensitive protocol matching, canonical API protocol projection, and
+  ports, notes, and target normalization.
 - Unique, reordered, and duplicate semantic matching.
 - ID transfer between representations.
 - Empty remote operation lists for equivalent migrations.

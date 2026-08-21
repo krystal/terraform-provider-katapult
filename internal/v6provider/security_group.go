@@ -185,16 +185,27 @@ func transferSecurityGroupRuleIDs(
 ) []canonicalSecurityGroupRule {
 	result := append([]canonicalSecurityGroupRule(nil), planned...)
 	used := make([]bool, len(prior))
+	positionalIDs := make([]string, len(result))
 
 	for i := range result {
 		if result[i].ID == "" {
 			continue
 		}
+		positionalIDs[i] = result[i].ID
+		matched := false
 		for j := range prior {
-			if !used[j] && prior[j].ID == result[i].ID {
+			if !used[j] && prior[j].ID == result[i].ID &&
+				prior[j].fingerprint() == result[i].fingerprint() {
 				used[j] = true
+				matched = true
 				break
 			}
+		}
+		if !matched {
+			// Nested list planning can copy computed IDs positionally. A moved
+			// rule must be paired semantically before that positional ID can be
+			// considered as the identity of a genuinely changed rule.
+			result[i].ID = ""
 		}
 	}
 	for i := range result {
@@ -209,6 +220,18 @@ func transferSecurityGroupRuleIDs(
 			result[i].ID = prior[j].ID
 			used[j] = true
 			break
+		}
+	}
+	for i := range result {
+		if result[i].ID != "" || positionalIDs[i] == "" {
+			continue
+		}
+		for j := range prior {
+			if !used[j] && prior[j].ID == positionalIDs[i] {
+				result[i].ID = prior[j].ID
+				used[j] = true
+				break
+			}
 		}
 	}
 
@@ -279,8 +302,24 @@ func getAllSecurityGroupRules(
 		for _, rule := range res.JSON200.SecurityGroupRules {
 			rules = append(rules, canonicalRuleFromListResult(rule))
 		}
-		totalPages, _ = res.JSON200.Pagination.TotalPages.Get()
+		totalPages, err = securityGroupPaginationTotalPages(
+			res.JSON200.Pagination, "security group rules",
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return rules, nil
+}
+
+func securityGroupPaginationTotalPages(
+	pagination core.PaginationObject,
+	collection string,
+) (int, error) {
+	totalPages, err := pagination.TotalPages.Get()
+	if err != nil {
+		return 0, fmt.Errorf("reading %s pagination total_pages: %w", collection, err)
+	}
+	return totalPages, nil
 }

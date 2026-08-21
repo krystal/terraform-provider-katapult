@@ -132,7 +132,7 @@ resource "katapult_security_group" "dynamic" {
 
 Required:
 
-- `protocol` (String) The rule protocol (`TCP`, `UDP`, or `ICMP`).
+- `protocol` (String) The rule protocol (`TCP`, `UDP`, or `ICMP`). Comparisons are case-insensitive. Existing and imported API casing remains stable, newly configured casing remains as written, and API requests use uppercase protocol values.
 - `targets` (Set of String) The target IPs, CIDRs, resource IDs, or `all:ipv4` and `all:ipv6` values.
 
 Optional:
@@ -142,7 +142,7 @@ Optional:
 
 Read-Only:
 
-- `direction` (String) The rule direction (`inbound` or `outbound`).
+- `direction` (String) The rule direction (`inbound` or `outbound`). Comparisons are case-insensitive and configured casing is preserved when it matches the API value.
 - `id` (String) The unique identifier of the security group rule.
 
 
@@ -151,7 +151,7 @@ Read-Only:
 
 Required:
 
-- `protocol` (String) The rule protocol (`TCP`, `UDP`, or `ICMP`).
+- `protocol` (String) The rule protocol (`TCP`, `UDP`, or `ICMP`). Comparisons are case-insensitive. Existing and imported API casing remains stable, newly configured casing remains as written, and API requests use uppercase protocol values.
 - `targets` (Set of String) The target IPs, CIDRs, resource IDs, or `all:ipv4` and `all:ipv6` values.
 
 Optional:
@@ -161,7 +161,7 @@ Optional:
 
 Read-Only:
 
-- `direction` (String) The rule direction (`inbound` or `outbound`).
+- `direction` (String) The rule direction (`inbound` or `outbound`). Comparisons are case-insensitive and configured casing is preserved when it matches the API value.
 - `id` (String) The unique identifier of the security group rule.
 
 
@@ -170,7 +170,7 @@ Read-Only:
 
 Required:
 
-- `protocol` (String) The rule protocol (`TCP`, `UDP`, or `ICMP`).
+- `protocol` (String) The rule protocol (`TCP`, `UDP`, or `ICMP`). Comparisons are case-insensitive. Existing and imported API casing remains stable, newly configured casing remains as written, and API requests use uppercase protocol values.
 - `targets` (Set of String) The target IPs, CIDRs, resource IDs, or `all:ipv4` and `all:ipv6` values.
 
 Optional:
@@ -180,7 +180,7 @@ Optional:
 
 Read-Only:
 
-- `direction` (String) The rule direction (`inbound` or `outbound`).
+- `direction` (String) The rule direction (`inbound` or `outbound`). Comparisons are case-insensitive and configured casing is preserved when it matches the API value.
 - `id` (String) The unique identifier of the security group rule.
 
 
@@ -189,7 +189,7 @@ Read-Only:
 
 Required:
 
-- `protocol` (String) The rule protocol (`TCP`, `UDP`, or `ICMP`).
+- `protocol` (String) The rule protocol (`TCP`, `UDP`, or `ICMP`). Comparisons are case-insensitive. Existing and imported API casing remains stable, newly configured casing remains as written, and API requests use uppercase protocol values.
 - `targets` (Set of String) The target IPs, CIDRs, resource IDs, or `all:ipv4` and `all:ipv6` values.
 
 Optional:
@@ -199,5 +199,5 @@ Optional:
 
 Read-Only:
 
-- `direction` (String) The rule direction (`inbound` or `outbound`).
+- `direction` (String) The rule direction (`inbound` or `outbound`). Comparisons are case-insensitive and configured casing is preserved when it matches the API value.
 - `id` (String) The unique identifier of the security group rule.

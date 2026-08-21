@@ -22,7 +22,10 @@ import (
 
 type SecurityGroupResource struct{ M *Meta }
 
-const securityGroupImportPrivateKey = "security_group_import"
+const (
+	securityGroupImportPrivateKey           = "security_group_import"
+	securityGroupExternalAdoptionPrivateKey = "security_group_external_adoption_pending"
+)
 
 type SecurityGroupResourceModel struct {
 	ID               types.String `tfsdk:"id"`
@@ -149,7 +152,7 @@ func configuredList(ctx context.Context, req resource.ModifyPlanRequest, name st
 	return value, nil
 }
 
-//nolint:lll,gocyclo,gocritic // Directional migration follows contract order.
+//nolint:lll,gocyclo,gocritic,funlen // Directional migration follows contract order.
 func (r *SecurityGroupResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	if req.Plan.Raw.IsNull() || req.State.Raw.IsNull() {
 		return
@@ -169,6 +172,16 @@ func (r *SecurityGroupResource) ModifyPlan(ctx context.Context, req resource.Mod
 		plan.ExternalRules = types.BoolValue(false)
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("external_rules"), plan.ExternalRules)...)
 	}
+	externalAdoptionPending := false
+	if req.Private != nil {
+		value, diags := req.Private.GetKey(ctx, securityGroupExternalAdoptionPrivateKey)
+		resp.Diagnostics.Append(diags...)
+		externalAdoptionPending = len(value) > 0
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+	pendingReconciliation, pendingDeferred := false, false
 
 	for _, direction := range []string{securityGroupDirectionInbound, securityGroupDirectionOutbound} {
 		attrName, blockName := direction+"_rules", direction+"_rule"
@@ -181,6 +194,13 @@ func (r *SecurityGroupResource) ModifyPlan(ctx context.Context, req resource.Mod
 		if err != nil {
 			resp.Diagnostics.AddError("Security Group Plan Error", err.Error())
 			return
+		}
+		if configuredAttr.IsUnknown() || configuredBlock.IsUnknown() {
+			// Dependency-driven attributes and dynamic blocks have not selected
+			// a representation or desired collection yet. Preserve Terraform's
+			// unknown plan so apply can evaluate the resolved configuration.
+			pendingDeferred = pendingDeferred || externalAdoptionPending
+			continue
 		}
 		attrSelected := knownCollectionConfigured(configuredAttr)
 		blockSelected := knownCollectionConfigured(configuredBlock)
@@ -208,7 +228,10 @@ func (r *SecurityGroupResource) ModifyPlan(ctx context.Context, req resource.Mod
 				prior, _ = listRules(ctx, state.InboundRules, direction)
 			}
 			if representationUnconfigured {
-				if priorLegacy {
+				if externalAdoptionPending {
+					desired = nil
+					pendingReconciliation = pendingReconciliation || len(prior) > 0
+				} else if priorLegacy {
 					desired = nil
 				} else {
 					desired = prior
@@ -227,7 +250,10 @@ func (r *SecurityGroupResource) ModifyPlan(ctx context.Context, req resource.Mod
 				prior, _ = listRules(ctx, state.OutboundRules, direction)
 			}
 			if representationUnconfigured {
-				if priorLegacy {
+				if externalAdoptionPending {
+					desired = nil
+					pendingReconciliation = pendingReconciliation || len(prior) > 0
+				} else if priorLegacy {
 					desired = nil
 				} else {
 					desired = prior
@@ -292,6 +318,9 @@ func (r *SecurityGroupResource) ModifyPlan(ctx context.Context, req resource.Mod
 	if !state.ExternalRules.IsNull() && state.ExternalRules.ValueBool() && !plan.ExternalRules.IsUnknown() && !plan.ExternalRules.ValueBool() {
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("inbound_rules"), types.ListUnknown(securityGroupRuleObjectType()))...)
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("outbound_rules"), types.ListUnknown(securityGroupRuleObjectType()))...)
+	}
+	if externalAdoptionPending && !pendingReconciliation && !pendingDeferred && resp.Private != nil {
+		resp.Diagnostics.Append(resp.Private.SetKey(ctx, securityGroupExternalAdoptionPrivateKey, nil)...)
 	}
 }
 
@@ -428,6 +457,9 @@ func (r *SecurityGroupResource) Read(ctx context.Context, req resource.ReadReque
 		state.InboundRule, state.OutboundRule = null, null
 		state.InboundRules, state.OutboundRules = null, null
 	}
+	if len(imported) > 0 && resp.Private != nil {
+		resp.Diagnostics.Append(resp.Private.SetKey(ctx, securityGroupImportPrivateKey, nil)...)
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -475,6 +507,15 @@ func (r *SecurityGroupResource) Update(ctx context.Context, req resource.UpdateR
 	}
 	wasExternal := state.ExternalRules.ValueBool()
 	isExternal := plan.ExternalRules.ValueBool()
+	externalAdoptionPending := false
+	if req.Private != nil {
+		value, privateDiags := req.Private.GetKey(ctx, securityGroupExternalAdoptionPrivateKey)
+		resp.Diagnostics.Append(privateDiags...)
+		externalAdoptionPending = len(value) > 0
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
 	if !wasExternal && isExternal {
 		for _, direction := range []string{securityGroupDirectionInbound, securityGroupDirectionOutbound} {
 			prior, _, ruleErr := selectedRules(ctx, state, direction)
@@ -515,6 +556,13 @@ func (r *SecurityGroupResource) Update(ctx context.Context, req resource.UpdateR
 			resp.Diagnostics.AddError("Security Group Read Error", err.Error())
 			return
 		}
+		if resp.Private != nil {
+			resp.Diagnostics.Append(resp.Private.SetKey(ctx, securityGroupExternalAdoptionPrivateKey, []byte("true"))...)
+		}
+	} else if externalAdoptionPending && !isExternal && resp.Private != nil {
+		resp.Diagnostics.Append(resp.Private.SetKey(ctx, securityGroupExternalAdoptionPrivateKey, nil)...)
+	} else if isExternal && externalAdoptionPending && resp.Private != nil {
+		resp.Diagnostics.Append(resp.Private.SetKey(ctx, securityGroupExternalAdoptionPrivateKey, nil)...)
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }

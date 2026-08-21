@@ -163,8 +163,11 @@ func (d *SecurityGroupDataSource) Read(ctx context.Context, req datasource.ReadR
 			return
 		}
 	} else {
-		data.InboundRules = types.ListNull(securityGroupRuleObjectType())
-		data.OutboundRules = types.ListNull(securityGroupRuleObjectType())
+		data.InboundRules, data.OutboundRules, err = directionRuleValues(ctx, nil)
+		if err != nil {
+			resp.Diagnostics.AddError("Security Group Rules Read Error", err.Error())
+			return
+		}
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -372,11 +375,19 @@ func (d *SecurityGroupsDataSource) getAll(ctx context.Context, includeRules bool
 					return nil, ruleErr
 				}
 			} else {
-				model.InboundRules, model.OutboundRules = types.ListNull(securityGroupRuleObjectType()), types.ListNull(securityGroupRuleObjectType())
+				model.InboundRules, model.OutboundRules, err = directionRuleValues(ctx, nil)
+				if err != nil {
+					return nil, err
+				}
 			}
 			models = append(models, model)
 		}
-		totalPages, _ = res.JSON200.Pagination.TotalPages.Get()
+		totalPages, err = securityGroupPaginationTotalPages(
+			res.JSON200.Pagination, "security groups",
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return models, nil
 }

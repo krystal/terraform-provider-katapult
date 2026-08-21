@@ -406,11 +406,11 @@ func TestAccKatapultDataSourceSecurityGroup_no_include_rules(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"data.katapult_security_group.my_sg",
-						"inbound_rule.#", "0",
+						"inbound_rules.#", "0",
 					),
 					resource.TestCheckResourceAttr(
 						"data.katapult_security_group.my_sg",
-						"outbound_rule.#", "0",
+						"outbound_rules.#", "0",
 					),
 				),
 			},

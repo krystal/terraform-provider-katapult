@@ -15,6 +15,12 @@ compatibility, but emit a deprecation warning.
 Equivalent syntax changes update Terraform state only. They preserve every
 rule ID and do not create, update, or delete remote rules.
 
+Protocol comparisons are case-insensitive. Existing state and imported API
+casing remain stable, while newly configured protocol casing remains exactly as
+written. Requests sent to Katapult always use canonical uppercase protocol
+values. This preserves stable Terraform plans without rewriting configured
+values behind Terraform's back.
+
 ## Blocks to attributes
 
 Replace each direction's blocks with one list attribute:

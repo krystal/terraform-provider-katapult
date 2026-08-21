@@ -163,9 +163,7 @@ func TestAccKatapultSecurityGroup_external_rules_disable(t *testing.T) {
 	)
 	reconcileConfig := undent.Stringf(`
 		resource "katapult_security_group" "my_sg" {
-			name           = "%s"
-			inbound_rules  = []
-			outbound_rules = []
+			name = "%s"
 		}
 
 		removed {
@@ -203,7 +201,8 @@ func TestAccKatapultSecurityGroup_external_rules_disable(t *testing.T) {
 				),
 			},
 			{
-				Config: adoptConfig,
+				Config:             adoptConfig,
+				ExpectNonEmptyPlan: true,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"katapult_security_group.my_sg", "external_rules", "false",

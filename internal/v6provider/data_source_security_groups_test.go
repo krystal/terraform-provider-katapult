@@ -79,6 +79,14 @@ func TestAccKatapultDataSourceSecurityGroups_default(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"data.katapult_security_groups.all",
+						"security_groups.0.inbound_rules.#", "0",
+					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_security_groups.all",
+						"security_groups.0.outbound_rules.#", "0",
+					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_security_groups.all",
 						"security_groups.1.name", name+"-2",
 					),
 					resource.TestCheckResourceAttr(
@@ -88,6 +96,14 @@ func TestAccKatapultDataSourceSecurityGroups_default(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.katapult_security_groups.all",
 						"security_groups.1.allow_all_outbound", "true",
+					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_security_groups.all",
+						"security_groups.1.inbound_rules.#", "0",
+					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_security_groups.all",
+						"security_groups.1.outbound_rules.#", "0",
 					),
 				),
 			},

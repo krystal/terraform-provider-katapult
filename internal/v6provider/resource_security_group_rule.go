@@ -59,12 +59,12 @@ func securityGroupRuleAttributes(standalone bool) map[string]schema.Attribute {
 		"id": schema.StringAttribute{Computed: true, MarkdownDescription: "The unique identifier of the security group rule.", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 		"direction": schema.StringAttribute{
 			Required: standalone, Computed: !standalone,
-			MarkdownDescription: "The rule direction (`inbound` or `outbound`).",
+			MarkdownDescription: "The rule direction (`inbound` or `outbound`). Comparisons are case-insensitive and configured casing is preserved when it matches the API value.",
 			Validators:          []validator.String{stringvalidator.OneOfCaseInsensitive("inbound", "outbound")},
 			PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 		},
 		"protocol": schema.StringAttribute{
-			Required: true, MarkdownDescription: "The rule protocol (`TCP`, `UDP`, or `ICMP`).",
+			Required: true, MarkdownDescription: "The rule protocol (`TCP`, `UDP`, or `ICMP`). Comparisons are case-insensitive. Existing and imported API casing remains stable, newly configured casing remains as written, and API requests use uppercase protocol values.",
 			CustomType: caseInsensitiveStringType{},
 			Validators: []validator.String{stringvalidator.OneOfCaseInsensitive("TCP", "UDP", "ICMP")},
 			PlanModifiers: []planmodifier.String{
@@ -208,7 +208,10 @@ func (r *SecurityGroupRuleResource) Create(ctx context.Context, req resource.Cre
 		plan.SecurityGroupID = types.StringPointerValue(created.SecurityGroup.Id)
 	}
 	if created.Direction != nil {
-		plan.Direction = types.StringValue(strings.ToLower(string(*created.Direction)))
+		remoteDirection := strings.ToLower(string(*created.Direction))
+		plan.Direction = types.StringValue(preserveCaseInsensitiveCasing(
+			plan.Direction.ValueString(), remoteDirection,
+		))
 	}
 	if created.Protocol != nil {
 		plan.Protocol = caseInsensitiveStringValueOf(strings.ToUpper(string(*created.Protocol)))
@@ -243,9 +246,14 @@ func (r *SecurityGroupRuleResource) Read(ctx context.Context, req resource.ReadR
 
 //nolint:lll // Framework lifecycle method.
 func (r *SecurityGroupRuleResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan SecurityGroupRuleResourceModel
+	var plan, state SecurityGroupRuleResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+	if securityGroupRulePropertiesEqual(state, plan) {
+		resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 		return
 	}
 	args, err := securityGroupRuleArguments(ctx, plan)
@@ -269,6 +277,15 @@ func (r *SecurityGroupRuleResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+}
+
+func securityGroupRulePropertiesEqual(state, plan SecurityGroupRuleResourceModel) bool {
+	return state.SecurityGroupID.Equal(plan.SecurityGroupID) &&
+		strings.EqualFold(state.Direction.ValueString(), plan.Direction.ValueString()) &&
+		strings.EqualFold(state.Protocol.ValueString(), plan.Protocol.ValueString()) &&
+		state.Ports.Equal(plan.Ports) &&
+		state.Targets.Equal(plan.Targets) &&
+		state.Notes.Equal(plan.Notes)
 }
 
 //nolint:lll,dupl // Idempotent rule deletion mirrors group deletion semantics.
@@ -322,13 +339,16 @@ func (r *SecurityGroupRuleResource) readMaybeMissing(ctx context.Context, id str
 		return false, core.ErrNotFound
 	}
 	rule := res.JSON200.SecurityGroupRule
+	priorDirection := model.Direction.ValueString()
 	priorProtocol := model.Protocol.ValueString()
 	model.ID = types.StringPointerValue(rule.Id)
 	if rule.SecurityGroup != nil {
 		model.SecurityGroupID = types.StringPointerValue(rule.SecurityGroup.Id)
 	}
 	if rule.Direction != nil {
-		model.Direction = types.StringValue(strings.ToLower(string(*rule.Direction)))
+		model.Direction = types.StringValue(preserveCaseInsensitiveCasing(
+			priorDirection, strings.ToLower(string(*rule.Direction)),
+		))
 	}
 	if rule.Protocol != nil {
 		remoteProtocol := strings.ToUpper(string(*rule.Protocol))
@@ -348,4 +368,11 @@ func (r *SecurityGroupRuleResource) readMaybeMissing(ctx context.Context, id str
 		model.Targets = value
 	}
 	return false, nil
+}
+
+func preserveCaseInsensitiveCasing(prior, remote string) string {
+	if prior != "" && strings.EqualFold(prior, remote) {
+		return prior
+	}
+	return remote
 }
