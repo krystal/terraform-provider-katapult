@@ -15,7 +15,6 @@ func TestAccKatapultSecurityGroup_migrate_v5_blocks_and_round_trip(t *testing.T)
 	var groupID, sshID, firstICMPID, secondICMPID, dnsID, webID string
 
 	blocks := securityGroupMigrationConfig(name, securityGroupMigrationBlockRules(), false)
-	attributes := securityGroupMigrationConfig(name, securityGroupMigrationAttributeRules(), false)
 	attributesUnknown := securityGroupMigrationConfigWithDirection(name, securityGroupMigrationUnknownAttributeRules(), false, "INBOUND") + undent.String(`
 		resource "terraform_data" "rule_dependency" {
 			input = "enabled"
@@ -24,7 +23,7 @@ func TestAccKatapultSecurityGroup_migrate_v5_blocks_and_round_trip(t *testing.T)
 	attributesMaterial := securityGroupMigrationConfig(name, securityGroupMigrationAttributeRulesWithPorts("2222", "53"), false)
 	mixedInboundBlocks := securityGroupMigrationConfig(name, securityGroupMigrationMixedRules(true, "2222", "53"), false)
 	mixedOutboundBlocks := securityGroupMigrationConfig(name, securityGroupMigrationMixedRules(false, "2222", "53"), false)
-	blocksAfterAttributes := securityGroupMigrationConfig(name, securityGroupMigrationBlockRulesWithPorts("2222", "53"), false)
+	blocksAfterAttributes := securityGroupMigrationConfig(name, securityGroupMigrationBlockRulesWithPorts("2222", "5353"), false)
 	blocksMaterial := securityGroupMigrationConfig(name, securityGroupMigrationBlockRulesWithPorts("2222", "5353"), false)
 	withDataSources := securityGroupMigrationConfig(name, securityGroupMigrationBlockRulesWithPorts("2222", "5353"), true)
 
@@ -56,16 +55,17 @@ func TestAccKatapultSecurityGroup_migrate_v5_blocks_and_round_trip(t *testing.T)
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "id", &groupID),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "inbound_rules.0.id", &firstICMPID),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "inbound_rules.1.id", &sshID),
+					resource.TestCheckResourceAttr("katapult_security_group.main", "inbound_rules.1.ports", "2222"),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "inbound_rules.2.id", &secondICMPID),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "outbound_rules.0.id", &webID),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "outbound_rules.1.id", &dnsID),
 					resource.TestCheckResourceAttr("katapult_security_group_rule.standalone", "direction", "INBOUND"),
 				),
 			},
-			{ProtoV6ProviderFactories: tt.ProviderFactories, Config: attributes},
+			{ProtoV6ProviderFactories: tt.ProviderFactories, Config: attributesMaterial},
 			{
 				ProtoV6ProviderFactories: tt.ProviderFactories,
-				Config:                   attributes,
+				Config:                   attributesMaterial,
 				PlanOnly:                 true,
 				ConfigPlanChecks:         emptyPostRefreshPlanChecks(),
 			},
@@ -98,6 +98,7 @@ func TestAccKatapultSecurityGroup_migrate_v5_blocks_and_round_trip(t *testing.T)
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "inbound_rule.1.id", &firstICMPID),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "inbound_rule.2.id", &secondICMPID),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "outbound_rule.0.id", &dnsID),
+					resource.TestCheckResourceAttr("katapult_security_group.main", "outbound_rule.0.ports", "5353"),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "outbound_rule.1.id", &webID),
 				),
 			},
@@ -279,17 +280,18 @@ func securityGroupMigrationBlockRulesWithPorts(sshPorts, dnsPorts string) string
 	`, sshPorts, dnsPorts)
 }
 
-func securityGroupMigrationAttributeRules() string {
-	return securityGroupMigrationAttributeRulesWithPorts("22", "53")
-}
-
 func securityGroupMigrationUnknownAttributeRules() string {
 	return `
-		inbound_rules = [for rule in [
+		inbound_rules = [
 			{ protocol = "icmp", targets = ["all:ipv4"] },
-			{ protocol = "TCP", ports = "22", targets = ["all:ipv6", "all:ipv4"], notes = "SSH" },
+			{
+				protocol = "TCP"
+				ports = terraform_data.rule_dependency.output == "enabled" ? "2222" : "22"
+				targets = ["all:ipv6", "all:ipv4"]
+				notes = "SSH"
+			},
 			{ protocol = "ICMP", targets = ["all:ipv4"] },
-		] : rule if terraform_data.rule_dependency.output == "enabled"]
+		]
 		outbound_rules = [
 			{ protocol = "tcp", targets = ["all:ipv6"], notes = "Web" },
 			{ protocol = "UDP", ports = "53", targets = ["all:ipv4"] },

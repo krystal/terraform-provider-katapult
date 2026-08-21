@@ -99,10 +99,12 @@ func knownCollectionHasValues(value types.List) bool {
 
 func legacyRepresentationForDirection(model SecurityGroupResourceModel, direction string) bool {
 	if direction == securityGroupDirectionInbound {
-		return knownCollectionConfigured(model.InboundRule)
+		return knownCollectionConfigured(model.InboundRule) ||
+			(model.InboundRule.IsUnknown() && model.InboundRules.IsNull())
 	}
 
-	return knownCollectionConfigured(model.OutboundRule)
+	return knownCollectionConfigured(model.OutboundRule) ||
+		(model.OutboundRule.IsUnknown() && model.OutboundRules.IsNull())
 }
 
 //nolint:lll // Diagnostics remain actionable at each compatibility check.
@@ -172,6 +174,8 @@ func (r *SecurityGroupResource) ModifyPlan(ctx context.Context, req resource.Mod
 		plan.ExternalRules = types.BoolValue(false)
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("external_rules"), plan.ExternalRules)...)
 	}
+	adoptingExternalRules := !state.ExternalRules.IsNull() && !state.ExternalRules.IsUnknown() &&
+		state.ExternalRules.ValueBool() && !plan.ExternalRules.IsUnknown() && !plan.ExternalRules.ValueBool()
 	externalAdoptionPending := false
 	if req.Private != nil {
 		value, diags := req.Private.GetKey(ctx, securityGroupExternalAdoptionPrivateKey)
@@ -213,6 +217,33 @@ func (r *SecurityGroupResource) ModifyPlan(ctx context.Context, req resource.Mod
 			blockSelected = false
 			attrSelected = true
 		}
+		selectedPlan := plan.OutboundRules
+		if direction == securityGroupDirectionInbound {
+			selectedPlan = plan.InboundRules
+		}
+		if blockSelected {
+			selectedPlan = plan.OutboundRule
+			if direction == securityGroupDirectionInbound {
+				selectedPlan = plan.InboundRule
+			}
+		}
+		if adoptingExternalRules {
+			selectedName, unusedName := attrName, blockName
+			selectedValue := types.ListUnknown(securityGroupRuleObjectType())
+			if blockSelected {
+				selectedName, unusedName = blockName, attrName
+				value, diags := securityGroupRuleBlockPlanValue(selectedPlan)
+				resp.Diagnostics.Append(diags...)
+				selectedValue = value
+			}
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(
+				ctx, path.Root(selectedName), selectedValue,
+			)...)
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(
+				ctx, path.Root(unusedName), types.ListNull(securityGroupRuleObjectType()),
+			)...)
+			continue
+		}
 		if !plan.ExternalRules.IsNull() && !plan.ExternalRules.IsUnknown() && plan.ExternalRules.ValueBool() {
 			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root(attrName), types.ListNull(securityGroupRuleObjectType()))...)
 			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root(blockName), types.ListNull(securityGroupRuleObjectType()))...)
@@ -220,7 +251,6 @@ func (r *SecurityGroupResource) ModifyPlan(ctx context.Context, req resource.Mod
 		}
 		var prior, desired []canonicalSecurityGroupRule
 		var desiredErr error
-		var selectedPlan types.List
 		if direction == securityGroupDirectionInbound {
 			if knownCollectionConfigured(state.InboundRule) {
 				prior, _ = listRules(ctx, state.InboundRule, direction)
@@ -236,12 +266,6 @@ func (r *SecurityGroupResource) ModifyPlan(ctx context.Context, req resource.Mod
 				} else {
 					desired = prior
 				}
-			} else if attrSelected {
-				selectedPlan = plan.InboundRules
-				desired, desiredErr = listRules(ctx, plan.InboundRules, direction)
-			} else {
-				selectedPlan = plan.InboundRule
-				desired, desiredErr = listRules(ctx, plan.InboundRule, direction)
 			}
 		} else {
 			if knownCollectionConfigured(state.OutboundRule) {
@@ -258,13 +282,23 @@ func (r *SecurityGroupResource) ModifyPlan(ctx context.Context, req resource.Mod
 				} else {
 					desired = prior
 				}
-			} else if attrSelected {
-				selectedPlan = plan.OutboundRules
-				desired, desiredErr = listRules(ctx, plan.OutboundRules, direction)
-			} else {
-				selectedPlan = plan.OutboundRule
-				desired, desiredErr = listRules(ctx, plan.OutboundRule, direction)
 			}
+		}
+		if !representationUnconfigured && securityGroupRuleListHasUnknownConfiguredFields(selectedPlan) {
+			value, diags := securityGroupRuleBlockPlanValue(selectedPlan)
+			resp.Diagnostics.Append(diags...)
+			if blockSelected {
+				resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root(blockName), value)...)
+				resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root(attrName), types.ListNull(securityGroupRuleObjectType()))...)
+			} else {
+				resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root(attrName), value)...)
+				resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root(blockName), types.ListNull(securityGroupRuleObjectType()))...)
+			}
+			pendingDeferred = pendingDeferred || externalAdoptionPending
+			continue
+		}
+		if !representationUnconfigured {
+			desired, desiredErr = listRules(ctx, selectedPlan, direction)
 		}
 		if representationUnconfigured && priorLegacy && len(prior) == 0 {
 			// SDKv2 records an empty compatibility block collection for groups
@@ -288,7 +322,9 @@ func (r *SecurityGroupResource) ModifyPlan(ctx context.Context, req resource.Mod
 			// Unknown configured values cannot be canonically paired yet.
 			continue
 		}
-		desired = transferSecurityGroupRuleIDs(prior, desired)
+		desired = transferSecurityGroupRuleIDs(
+			prior, desired, !representationUnconfigured,
+		)
 		if blockSelected {
 			unmatched := false
 			for _, rule := range desired {
@@ -314,10 +350,6 @@ func (r *SecurityGroupResource) ModifyPlan(ctx context.Context, req resource.Mod
 			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root(blockName), value)...)
 			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root(attrName), types.ListNull(securityGroupRuleObjectType()))...)
 		}
-	}
-	if !state.ExternalRules.IsNull() && state.ExternalRules.ValueBool() && !plan.ExternalRules.IsUnknown() && !plan.ExternalRules.ValueBool() {
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("inbound_rules"), types.ListUnknown(securityGroupRuleObjectType()))...)
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("outbound_rules"), types.ListUnknown(securityGroupRuleObjectType()))...)
 	}
 	if externalAdoptionPending && !pendingReconciliation && !pendingDeferred && resp.Private != nil {
 		resp.Diagnostics.Append(resp.Private.SetKey(ctx, securityGroupExternalAdoptionPrivateKey, nil)...)
@@ -552,12 +584,35 @@ func (r *SecurityGroupResource) Update(ctx context.Context, req resource.UpdateR
 		}
 	}
 	if wasExternal && !isExternal {
+		configuredPlan := plan
 		if err := r.read(ctx, &plan); err != nil {
 			resp.Diagnostics.AddError("Security Group Read Error", err.Error())
 			return
 		}
-		if resp.Private != nil {
+		adoptedRulesPresent := !securityGroupRuleCollectionsEmpty(plan)
+		for _, direction := range []string{securityGroupDirectionInbound, securityGroupDirectionOutbound} {
+			if !legacyRepresentationForDirection(configuredPlan, direction) {
+				continue
+			}
+			adopted, _, adoptedErr := selectedRules(ctx, plan, direction)
+			configured, _, configuredErr := selectedRules(ctx, configuredPlan, direction)
+			if adoptedErr != nil {
+				configuredErr = adoptedErr
+			}
+			if configuredErr != nil {
+				resp.Diagnostics.AddError("Security Group State Error", configuredErr.Error())
+				return
+			}
+			configured = transferSecurityGroupRuleIDs(adopted, configured, true)
+			if err := setSecurityGroupRules(ctx, &plan, direction, true, configured); err != nil {
+				resp.Diagnostics.AddError("Security Group State Error", err.Error())
+				return
+			}
+		}
+		if resp.Private != nil && adoptedRulesPresent {
 			resp.Diagnostics.Append(resp.Private.SetKey(ctx, securityGroupExternalAdoptionPrivateKey, []byte("true"))...)
+		} else if resp.Private != nil {
+			resp.Diagnostics.Append(resp.Private.SetKey(ctx, securityGroupExternalAdoptionPrivateKey, nil)...)
 		}
 	} else if externalAdoptionPending && !isExternal && resp.Private != nil {
 		resp.Diagnostics.Append(resp.Private.SetKey(ctx, securityGroupExternalAdoptionPrivateKey, nil)...)
@@ -761,7 +816,7 @@ type securityGroupRuleReconciliation struct {
 func classifySecurityGroupRuleReconciliation(
 	prior, desired []canonicalSecurityGroupRule,
 ) securityGroupRuleReconciliation {
-	desired = transferSecurityGroupRuleIDs(prior, desired)
+	desired = transferSecurityGroupRuleIDs(prior, desired, false)
 	result := securityGroupRuleReconciliation{Desired: desired}
 	priorByID := make(map[string]canonicalSecurityGroupRule, len(prior))
 	for _, rule := range prior {

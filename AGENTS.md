@@ -139,6 +139,10 @@ unexpected `.cassette.rand_id` changes as generated drift.
 - When migrating SDKv2 resources with `timeouts {}` configuration, use the
   Framework timeouts package's `Block` API to preserve the existing HCL syntax;
   its `Attributes` API requires `timeouts = {}` instead.
+- A configured Framework `ListNestedBlock` cannot be planned wholly unknown,
+  and its configured fields cannot be rewritten as unknown. During staged
+  adoption, preserve configured fields, leave only computed fields unknown,
+  and let refresh expose remote differences for the follow-up plan.
 - Keep GitHub Actions pinned to full commit SHAs with accurate version comments.
 - Preserve the three-day dependency maturity policy in mise, Pinact, and
   Dependabot.

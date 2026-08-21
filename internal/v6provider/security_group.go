@@ -85,6 +85,44 @@ func canonicalRulesFromList(
 	return rules, diags
 }
 
+func securityGroupRuleListHasUnknownConfiguredFields(value types.List) bool {
+	if value.IsUnknown() {
+		return true
+	}
+	if value.IsNull() {
+		return false
+	}
+	for _, element := range value.Elements() {
+		object, ok := element.(types.Object)
+		if !ok || object.IsUnknown() {
+			return true
+		}
+		if object.IsNull() {
+			continue
+		}
+		attributes := object.Attributes()
+		for _, name := range []string{"protocol", "ports", "notes"} {
+			field, exists := attributes[name]
+			if !exists || field.IsUnknown() {
+				return true
+			}
+		}
+		targets, ok := attributes["targets"].(types.Set)
+		if !ok || targets.IsUnknown() {
+			return true
+		}
+		if targets.IsNull() {
+			continue
+		}
+		for _, target := range targets.Elements() {
+			if target.IsUnknown() {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func securityGroupRuleModels(
 	ctx context.Context,
 	rules []canonicalSecurityGroupRule,
@@ -182,6 +220,7 @@ func securityGroupRuleObjectType() types.ObjectType {
 // matches take priority, followed by semantic matches in prior-state order.
 func transferSecurityGroupRuleIDs(
 	prior, planned []canonicalSecurityGroupRule,
+	pairSingleResidual bool,
 ) []canonicalSecurityGroupRule {
 	result := append([]canonicalSecurityGroupRule(nil), planned...)
 	used := make([]bool, len(prior))
@@ -234,8 +273,44 @@ func transferSecurityGroupRuleIDs(
 			}
 		}
 	}
-
+	if !pairSingleResidual {
+		return result
+	}
+	pairSingleResidualSecurityGroupRuleID(result, prior, used)
 	return result
+}
+
+func pairSingleResidualSecurityGroupRuleID(
+	result, prior []canonicalSecurityGroupRule,
+	used []bool,
+) {
+	unmatchedResult, unmatchedPrior := -1, -1
+	for i := range result {
+		if result[i].ID == "" {
+			if unmatchedResult != -1 {
+				unmatchedResult = -2
+				break
+			}
+			unmatchedResult = i
+		}
+	}
+	if unmatchedResult >= 0 {
+		for j := range prior {
+			if used[j] {
+				continue
+			}
+			if unmatchedPrior != -1 {
+				unmatchedPrior = -2
+				break
+			}
+			unmatchedPrior = j
+		}
+	}
+	if unmatchedResult >= 0 && unmatchedPrior >= 0 {
+		// A single residual pair is an unambiguous material edit, including
+		// representation changes whose computed destination IDs are unknown.
+		result[unmatchedResult].ID = prior[unmatchedPrior].ID
+	}
 }
 
 func nullableString(value interface {
