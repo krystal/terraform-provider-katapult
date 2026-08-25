@@ -1,4 +1,4 @@
-package provider
+package v6provider
 
 import (
 	"errors"
@@ -6,11 +6,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
-	"github.com/krystal/go-katapult"
-	"github.com/krystal/go-katapult/core"
+	"github.com/krystal/go-katapult/next/core"
 )
 
 func TestAccKatapultSecurityGroup_external_rules_enable(t *testing.T) {
@@ -49,9 +48,9 @@ func TestAccKatapultSecurityGroup_external_rules_enable(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultSecurityGroupDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: managedConfig,
@@ -186,9 +185,9 @@ func TestAccKatapultSecurityGroup_external_rules_disable(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultSecurityGroupDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: externalConfig,
@@ -209,72 +208,72 @@ func TestAccKatapultSecurityGroup_external_rules_disable(t *testing.T) {
 						"katapult_security_group.my_sg", "external_rules", "false",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_security_group.my_sg", "inbound_rule.#", "1",
+						"katapult_security_group.my_sg", "inbound_rules.#", "1",
 					),
 					resource.TestCheckResourceAttrPtr(
 						"katapult_security_group.my_sg",
-						"inbound_rule.0.id",
+						"inbound_rules.0.id",
 						&inboundRuleID,
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group.my_sg",
-						"inbound_rule.0.direction", "inbound",
+						"inbound_rules.0.direction", "inbound",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group.my_sg",
-						"inbound_rule.0.protocol", "TCP",
+						"inbound_rules.0.protocol", "TCP",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group.my_sg",
-						"inbound_rule.0.ports", "22",
+						"inbound_rules.0.ports", "22",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group.my_sg",
-						"inbound_rule.0.targets.#", "1",
+						"inbound_rules.0.targets.#", "1",
 					),
 					resource.TestCheckTypeSetElemAttr(
 						"katapult_security_group.my_sg",
-						"inbound_rule.0.targets.*", "all:ipv4",
+						"inbound_rules.0.targets.*", "all:ipv4",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group.my_sg",
-						"inbound_rule.0.notes", "Externally managed SSH",
+						"inbound_rules.0.notes", "Externally managed SSH",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_security_group.my_sg", "outbound_rule.#", "1",
+						"katapult_security_group.my_sg", "outbound_rules.#", "1",
 					),
 					resource.TestCheckResourceAttrPtr(
 						"katapult_security_group.my_sg",
-						"outbound_rule.0.id",
+						"outbound_rules.0.id",
 						&outboundRuleID,
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group.my_sg",
-						"outbound_rule.0.direction", "outbound",
+						"outbound_rules.0.direction", "outbound",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group.my_sg",
-						"outbound_rule.0.protocol", "UDP",
+						"outbound_rules.0.protocol", "UDP",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group.my_sg",
-						"outbound_rule.0.ports", "53",
+						"outbound_rules.0.ports", "53",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group.my_sg",
-						"outbound_rule.0.targets.#", "2",
+						"outbound_rules.0.targets.#", "2",
 					),
 					resource.TestCheckTypeSetElemAttr(
 						"katapult_security_group.my_sg",
-						"outbound_rule.0.targets.*", "all:ipv4",
+						"outbound_rules.0.targets.*", "all:ipv4",
 					),
 					resource.TestCheckTypeSetElemAttr(
 						"katapult_security_group.my_sg",
-						"outbound_rule.0.targets.*", "all:ipv6",
+						"outbound_rules.0.targets.*", "all:ipv6",
 					),
 					resource.TestCheckResourceAttr(
 						"katapult_security_group.my_sg",
-						"outbound_rule.0.notes", "Externally managed DNS",
+						"outbound_rules.0.notes", "Externally managed DNS",
 					),
 				),
 			},
@@ -287,10 +286,10 @@ func TestAccKatapultSecurityGroup_external_rules_disable(t *testing.T) {
 				Config: reconcileConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"katapult_security_group.my_sg", "inbound_rule.#", "0",
+						"katapult_security_group.my_sg", "inbound_rules.#", "0",
 					),
 					resource.TestCheckResourceAttr(
-						"katapult_security_group.my_sg", "outbound_rule.#", "0",
+						"katapult_security_group.my_sg", "outbound_rules.#", "0",
 					),
 					testAccCheckKatapultSecurityGroupRuleIDAbsent(
 						tt, &inboundRuleID,
@@ -309,6 +308,222 @@ func TestAccKatapultSecurityGroup_external_rules_disable(t *testing.T) {
 			{
 				Config:   reconcileConfig,
 				PlanOnly: true,
+			},
+		},
+	})
+}
+
+func TestAccKatapultSecurityGroup_external_rules_disable_to_blocks(t *testing.T) {
+	tt := newSecurityGroupCharacterizationTestTools(t)
+	name := tt.ResourceName()
+	var inboundRuleID, outboundRuleID string
+
+	externalConfig := undent.Stringf(`
+		resource "katapult_security_group" "my_sg" {
+			name           = "%s"
+			external_rules = true
+		}
+
+		resource "katapult_security_group_rule" "ssh" {
+			security_group_id = katapult_security_group.my_sg.id
+			direction         = "inbound"
+			protocol          = "tcp"
+			ports             = "22"
+			targets           = ["all:ipv4"]
+			notes             = "Externally managed SSH"
+		}
+
+		resource "katapult_security_group_rule" "dns" {
+			security_group_id = katapult_security_group.my_sg.id
+			direction         = "outbound"
+			protocol          = "udp"
+			ports             = "53"
+			targets           = ["all:ipv4", "all:ipv6"]
+			notes             = "Externally managed DNS"
+			depends_on        = [katapult_security_group_rule.ssh]
+		}
+	`, name)
+	blocksConfig := undent.Stringf(`
+		resource "katapult_security_group" "my_sg" {
+			name = "%s"
+
+			inbound_rule {
+				protocol = "tcp"
+				ports    = "2222"
+				targets  = ["all:ipv4"]
+				notes    = "Externally managed SSH"
+			}
+
+			outbound_rule {
+				protocol = "udp"
+				ports    = "5353"
+				targets  = ["all:ipv4", "all:ipv6"]
+				notes    = "Externally managed DNS"
+			}
+		}
+
+		removed {
+			from = katapult_security_group_rule.ssh
+			lifecycle { destroy = false }
+		}
+
+		removed {
+			from = katapult_security_group_rule.dns
+			lifecycle { destroy = false }
+		}
+	`, name)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: externalConfig,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCaptureRuleID("katapult_security_group_rule.ssh", &inboundRuleID),
+					testAccCaptureRuleID("katapult_security_group_rule.dns", &outboundRuleID),
+				),
+			},
+			{
+				Config:             blocksConfig,
+				ExpectNonEmptyPlan: true,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr(
+						"katapult_security_group.my_sg", "inbound_rule.0.id", &inboundRuleID,
+					),
+					resource.TestCheckResourceAttr("katapult_security_group.my_sg", "inbound_rule.0.ports", "2222"),
+					resource.TestCheckResourceAttrPtr(
+						"katapult_security_group.my_sg", "outbound_rule.0.id", &outboundRuleID,
+					),
+					resource.TestCheckResourceAttr("katapult_security_group.my_sg", "outbound_rule.0.ports", "5353"),
+				),
+			},
+			{
+				Config: blocksConfig,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr(
+						"katapult_security_group.my_sg", "inbound_rule.0.id", &inboundRuleID,
+					),
+					resource.TestCheckResourceAttr("katapult_security_group.my_sg", "inbound_rule.0.ports", "2222"),
+					resource.TestCheckResourceAttrPtr(
+						"katapult_security_group.my_sg", "outbound_rule.0.id", &outboundRuleID,
+					),
+					resource.TestCheckResourceAttr("katapult_security_group.my_sg", "outbound_rule.0.ports", "5353"),
+				),
+			},
+			{
+				Config:           blocksConfig,
+				PlanOnly:         true,
+				ConfigPlanChecks: emptyPostRefreshPlanChecks(),
+			},
+		},
+	})
+}
+
+func TestAccKatapultSecurityGroup_external_rules_disable_to_plural_attributes(t *testing.T) {
+	tt := newSecurityGroupCharacterizationTestTools(t)
+	name := tt.ResourceName()
+	var inboundRuleID, outboundRuleID string
+
+	externalConfig := undent.Stringf(`
+		resource "katapult_security_group" "my_sg" {
+			name           = "%s"
+			external_rules = true
+		}
+
+		resource "katapult_security_group_rule" "ssh" {
+			security_group_id = katapult_security_group.my_sg.id
+			direction         = "inbound"
+			protocol          = "tcp"
+			ports             = "22"
+			targets           = ["all:ipv4"]
+			notes             = "Externally managed SSH"
+		}
+
+		resource "katapult_security_group_rule" "dns" {
+			security_group_id = katapult_security_group.my_sg.id
+			direction         = "outbound"
+			protocol          = "udp"
+			ports             = "53"
+			targets           = ["all:ipv4", "all:ipv6"]
+			notes             = "Externally managed DNS"
+			depends_on        = [katapult_security_group_rule.ssh]
+		}
+	`, name)
+	pluralConfig := undent.Stringf(`
+		resource "katapult_security_group" "my_sg" {
+			name = "%s"
+
+			inbound_rules = [{
+				protocol = "tcp"
+				ports    = "2222"
+				targets  = ["all:ipv4"]
+				notes    = "Externally managed SSH"
+			}]
+
+			outbound_rules = [{
+				protocol = "udp"
+				ports    = "5353"
+				targets  = ["all:ipv4", "all:ipv6"]
+				notes    = "Externally managed DNS"
+			}]
+		}
+
+		removed {
+			from = katapult_security_group_rule.ssh
+			lifecycle { destroy = false }
+		}
+
+		removed {
+			from = katapult_security_group_rule.dns
+			lifecycle { destroy = false }
+		}
+	`, name)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: externalConfig,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCaptureRuleID("katapult_security_group_rule.ssh", &inboundRuleID),
+					testAccCaptureRuleID("katapult_security_group_rule.dns", &outboundRuleID),
+				),
+			},
+			{
+				Config:             pluralConfig,
+				ExpectNonEmptyPlan: true,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr(
+						"katapult_security_group.my_sg", "inbound_rules.0.id", &inboundRuleID,
+					),
+					resource.TestCheckResourceAttr("katapult_security_group.my_sg", "inbound_rules.0.ports", "2222"),
+					resource.TestCheckResourceAttrPtr(
+						"katapult_security_group.my_sg", "outbound_rules.0.id", &outboundRuleID,
+					),
+					resource.TestCheckResourceAttr("katapult_security_group.my_sg", "outbound_rules.0.ports", "5353"),
+				),
+			},
+			{
+				Config: pluralConfig,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr(
+						"katapult_security_group.my_sg", "inbound_rules.0.id", &inboundRuleID,
+					),
+					resource.TestCheckResourceAttr("katapult_security_group.my_sg", "inbound_rules.0.ports", "2222"),
+					resource.TestCheckResourceAttrPtr(
+						"katapult_security_group.my_sg", "outbound_rules.0.id", &outboundRuleID,
+					),
+					resource.TestCheckResourceAttr("katapult_security_group.my_sg", "outbound_rules.0.ports", "5353"),
+				),
+			},
+			{
+				Config:           pluralConfig,
+				PlanOnly:         true,
+				ConfigPlanChecks: emptyPostRefreshPlanChecks(),
 			},
 		},
 	})
@@ -346,8 +561,8 @@ func TestAccKatapultSecurityGroup_out_of_band_deletion(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckKatapultSecurityGroupRuleDestroy(tt),
 			testAccCheckKatapultSecurityGroupDestroy(tt),
@@ -423,9 +638,9 @@ func TestAccKatapultSecurityGroup_partial_rule_creation_failure(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultSecurityGroupDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: failingConfig,
@@ -514,11 +729,17 @@ func testAccCaptureAndDeleteSecurityGroupRule(
 			return fmt.Errorf("%s has no ID", resourceName)
 		}
 
-		_, _, err := tt.Meta.Core.SecurityGroupRules.Delete(
-			tt.Ctx, core.SecurityGroupRuleRef{ID: *target},
+		response, err := tt.Meta.Core.DeleteSecurityGroupsRulesSecurityGroupRuleWithResponse(
+			tt.Ctx,
+			core.DeleteSecurityGroupsRulesSecurityGroupRuleJSONRequestBody{
+				SecurityGroupRule: core.SecurityGroupRuleLookup{Id: target},
+			},
 		)
 		if err != nil {
 			return fmt.Errorf("deleting %s out of band: %w", resourceName, err)
+		}
+		if response == nil || (response.JSON200 == nil && response.StatusCode() != 204) {
+			return fmt.Errorf("unexpected response deleting %s out of band", resourceName)
 		}
 
 		return nil
@@ -534,11 +755,17 @@ func testAccDeleteSecurityGroupByID(
 			return errors.New("security group ID was not captured")
 		}
 
-		_, _, err := tt.Meta.Core.SecurityGroups.Delete(
-			tt.Ctx, core.SecurityGroupRef{ID: *groupID},
+		response, err := tt.Meta.Core.DeleteSecurityGroupWithResponse(
+			tt.Ctx,
+			core.DeleteSecurityGroupJSONRequestBody{
+				SecurityGroup: core.SecurityGroupLookup{Id: groupID},
+			},
 		)
 		if err != nil {
 			return fmt.Errorf("deleting security group out of band: %w", err)
+		}
+		if response == nil || (response.JSON200 == nil && response.StatusCode() != 204) {
+			return errors.New("unexpected response deleting security group out of band")
 		}
 
 		return nil
@@ -567,21 +794,26 @@ func testAccCheckKatapultSecurityGroupRuleCounts(
 			return fmt.Errorf("resource not found: %s", groupResourceName)
 		}
 
-		inbound, outbound, err := getAllFlattenedSecurityGroupRules(
-			tt.Ctx,
-			tt.Meta,
-			core.SecurityGroupRef{ID: groupState.Primary.ID},
-		)
+		rules, err := getAllSecurityGroupRules(tt.Ctx, tt.Meta, groupState.Primary.ID)
 		if err != nil {
 			return err
 		}
+		inbound, outbound := 0, 0
+		for _, rule := range rules {
+			switch rule.Direction {
+			case securityGroupDirectionInbound:
+				inbound++
+			case securityGroupDirectionOutbound:
+				outbound++
+			}
+		}
 
-		if len(inbound) != wantInbound || len(outbound) != wantOutbound {
+		if inbound != wantInbound || outbound != wantOutbound {
 			return fmt.Errorf(
 				"security group %s has %d inbound and %d outbound rules, want %d and %d",
 				groupState.Primary.ID,
-				len(inbound),
-				len(outbound),
+				inbound,
+				outbound,
 				wantInbound,
 				wantOutbound,
 			)
@@ -600,15 +832,21 @@ func testAccCheckKatapultSecurityGroupRuleIDAbsent(
 			return errors.New("security group rule ID was not captured")
 		}
 
-		rule, _, err := tt.Meta.Core.SecurityGroupRules.GetByID(tt.Ctx, *ruleID)
-		if errors.Is(err, katapult.ErrNotFound) {
+		response, err := tt.Meta.Core.GetSecurityGroupsRulesSecurityGroupRuleWithResponse(
+			tt.Ctx,
+			&core.GetSecurityGroupsRulesSecurityGroupRuleParams{SecurityGroupRuleId: ruleID},
+		)
+		if errors.Is(err, core.ErrNotFound) {
 			return nil
 		}
 		if err != nil {
 			return err
 		}
+		if response != nil && response.JSON404 != nil {
+			return nil
+		}
 
-		return fmt.Errorf("security group rule still exists: %s", rule.ID)
+		return fmt.Errorf("security group rule still exists: %s", *ruleID)
 	}
 }
 
@@ -621,14 +859,20 @@ func testAccCheckKatapultSecurityGroupIDAbsent(
 			return errors.New("security group ID was not captured")
 		}
 
-		group, _, err := tt.Meta.Core.SecurityGroups.GetByID(tt.Ctx, *groupID)
-		if errors.Is(err, katapult.ErrNotFound) {
+		response, err := tt.Meta.Core.GetSecurityGroupWithResponse(
+			tt.Ctx,
+			&core.GetSecurityGroupParams{SecurityGroupId: groupID},
+		)
+		if errors.Is(err, core.ErrNotFound) {
 			return nil
 		}
 		if err != nil {
 			return err
 		}
+		if response != nil && response.JSON404 != nil {
+			return nil
+		}
 
-		return fmt.Errorf("security group still exists: %s", group.ID)
+		return fmt.Errorf("security group still exists: %s", *groupID)
 	}
 }

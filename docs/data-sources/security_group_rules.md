@@ -3,12 +3,12 @@
 page_title: "katapult_security_group_rules Data Source - terraform-provider-katapult"
 subcategory: "Networking"
 description: |-
-  Fetch all rules for a given security group.
+  Retrieves all rules for a security group.
 ---
 
 # katapult_security_group_rules (Data Source)
 
-Fetch all rules for a given security group.
+Retrieves all rules for a security group.
 
 ## Example Usage
 
@@ -24,13 +24,13 @@ data "katapult_security_group_rules" "web" {
 
 ### Required
 
-- `security_group_id` (String) ID of Security Group to fetch rules for.
+- `security_group_id` (String)
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `inbound_rules` (List of Object) (see [below for nested schema](#nestedatt--inbound_rules))
-- `outbound_rules` (List of Object) (see [below for nested schema](#nestedatt--outbound_rules))
+- `inbound_rules` (Attributes List) (see [below for nested schema](#nestedatt--inbound_rules))
+- `outbound_rules` (Attributes List) (see [below for nested schema](#nestedatt--outbound_rules))
 
 <a id="nestedatt--inbound_rules"></a>
 ### Nested Schema for `inbound_rules`

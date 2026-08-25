@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
 	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/rands/randsmust"
@@ -79,6 +80,16 @@ type providerFactoryList map[string]func() (tfprotov6.ProviderServer, error)
 
 type v5ProviderFactoryList map[string]func() (tfprotov5.ProviderServer, error)
 
+func aliasLegacySecurityGroupTestEntry(
+	entries map[string]*schema.Resource,
+	productionName string,
+) {
+	legacyName := "katapult_legacy_" + strings.TrimPrefix(productionName, "katapult_")
+	if entry, ok := entries[legacyName]; ok {
+		entries[productionName] = entry
+	}
+}
+
 type stopRequests struct{}
 
 func (s *stopRequests) RoundTrip(_ *http.Request) (*http.Response, error) {
@@ -88,15 +99,16 @@ func (s *stopRequests) RoundTrip(_ *http.Request) (*http.Response, error) {
 }
 
 type testTools struct {
-	T                 *testing.T
-	Ctx               context.Context
-	Recorder          *recorder.Recorder
-	HTTPClient        *http.Client
-	Meta              *Meta
-	ProviderFactories providerFactoryList
-	LegacyVMFactories v5ProviderFactoryList
-	noHTTP            bool
-	randID            string
+	T                            *testing.T
+	Ctx                          context.Context
+	Recorder                     *recorder.Recorder
+	HTTPClient                   *http.Client
+	Meta                         *Meta
+	ProviderFactories            providerFactoryList
+	LegacyVMFactories            v5ProviderFactoryList
+	LegacySecurityGroupFactories v5ProviderFactoryList
+	noHTTP                       bool
+	randID                       string
 }
 
 func newTestTools(t *testing.T) *testTools {
@@ -108,11 +120,17 @@ func newTestTools(t *testing.T) *testTools {
 	tt.Recorder = r
 	if r != nil {
 		r.AddSaveFilter(redactObjectStorageSecret(tt))
+		if strings.Contains(t.Name(), "SecurityGroup") {
+			r.SetMatcher(securityGroupJSONMatcher)
+		}
 	}
 
 	httpClient := &http.Client{}
 	if r != nil {
 		httpClient.Transport = r
+		if strings.Contains(t.Name(), "SecurityGroup") && r.Mode() == recorder.ModeReplaying {
+			httpClient.Transport = newOrderedSecurityGroupCassetteTransport(t)
+		}
 	}
 	tt.HTTPClient = httpClient
 
@@ -160,6 +178,20 @@ func newTestTools(t *testing.T) *testTools {
 			// protocol-v5 state for migration testing.
 			legacyVM := p.ResourcesMap["katapult_legacy_virtual_machine"]
 			p.ResourcesMap["katapult_virtual_machine"] = legacyVM
+
+			return p.GRPCProvider(), nil
+		},
+	}
+	tt.LegacySecurityGroupFactories = v5ProviderFactoryList{
+		//nolint:unparam
+		"katapult": func() (tfprotov5.ProviderServer, error) {
+			p := v5provider.New(v5Config)()
+			aliasLegacySecurityGroupTestEntry(p.ResourcesMap, "katapult_security_group")
+			aliasLegacySecurityGroupTestEntry(p.ResourcesMap, "katapult_security_group_rule")
+			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_group")
+			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_group_rule")
+			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_group_rules")
+			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_groups")
 
 			return p.GRPCProvider(), nil
 		},
@@ -339,7 +371,6 @@ func testDataFilePath(t *testing.T, suffix string) string {
 	return filepath.Join(".", "testdata", baseName)
 }
 
-//nolint:unused // will be used eventually
 func exampleResourceConfig(t *testing.T, name string) string {
 	t.Helper()
 

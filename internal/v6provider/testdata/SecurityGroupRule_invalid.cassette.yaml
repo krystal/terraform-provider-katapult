@@ -1,0 +1,297 @@
+---
+version: 1
+interactions:
+- request:
+    body: '{"organization":{"sub_domain":"terraform-acc-test"},"properties":{"allow_all_inbound":true,"allow_all_outbound":false,"associations":[],"name":"tf-acc-test-invalid-OtlxDPpmz76D"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/organizations/organization/security_groups
+    method: POST
+  response:
+    body: '{"security_group":{"id":"sg_SmTNrEl9yoNbYvEj","name":"tf-acc-test-invalid-OtlxDPpmz76D","allow_all_inbound":true,"allow_all_outbound":false,"associations":[]},"annotations":[]}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "176"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 21 Aug 2026 13:17:58 GMT
+      Etag:
+      - W/"ea01b0d667517a2f567c8610bc309a66"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "999"
+      X-Request-Id:
+      - 9cf9f9bc-925d-47d6-a189-c21af6632811
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"properties":{"direction":"inbound","notes":"","ports":"","protocol":"TCP","targets":[]},"security_group":{"id":"sg_SmTNrEl9yoNbYvEj"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/security_groups/security_group/rules
+    method: POST
+  response:
+    body: '{"error":{"code":"validation_error","description":"A validation error occurred
+      with the object that was being created/updated/deleted","detail":{"errors":["Security
+      group cannot have inbound rules while all inbound traffic is allowed"]}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache
+      Content-Length:
+      - "238"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 21 Aug 2026 13:17:58 GMT
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Api-Schema:
+      - json-error
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "998"
+      X-Request-Id:
+      - 406f9eb9-8328-464c-9fd7-6fe61f40942c
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/security_groups/security_group?security_group%5Bid%5D=sg_SmTNrEl9yoNbYvEj
+    method: GET
+  response:
+    body: '{"security_group":{"id":"sg_SmTNrEl9yoNbYvEj","name":"tf-acc-test-invalid-OtlxDPpmz76D","allow_all_inbound":true,"allow_all_outbound":false,"associations":[]},"annotations":[]}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "176"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 21 Aug 2026 13:17:58 GMT
+      Etag:
+      - W/"ea01b0d667517a2f567c8610bc309a66"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "997"
+      X-Request-Id:
+      - c92bb9ee-666e-4d65-8bcf-55003f1c8d18
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/security_groups/security_group/rules?page=1&security_group%5Bid%5D=sg_SmTNrEl9yoNbYvEj
+    method: GET
+  response:
+    body: '{"pagination":{"current_page":1,"total_pages":0,"total":0,"per_page":30,"large_set":false},"security_group_rules":[]}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "117"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 21 Aug 2026 13:17:58 GMT
+      Etag:
+      - W/"98edeee67bfa9122e370cd377abbadda"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "996"
+      X-Request-Id:
+      - 209db87e-efc3-4c91-ae67-7ca9d802a060
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"properties":{"allow_all_inbound":false,"allow_all_outbound":true,"associations":[],"name":"tf-acc-test-invalid-OtlxDPpmz76D"},"security_group":{"id":"sg_SmTNrEl9yoNbYvEj"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/security_groups/security_group
+    method: PATCH
+  response:
+    body: '{"security_group":{"id":"sg_SmTNrEl9yoNbYvEj","name":"tf-acc-test-invalid-OtlxDPpmz76D","allow_all_inbound":false,"allow_all_outbound":true,"associations":[]},"annotations":[]}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "176"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 21 Aug 2026 13:17:58 GMT
+      Etag:
+      - W/"4e7e1855a0e5b049b00f9233cd374b54"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "995"
+      X-Request-Id:
+      - bf9f4b0b-b459-484b-a0e4-ce5f5cc7f6a3
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"properties":{"direction":"outbound","notes":"","ports":"","protocol":"TCP","targets":[]},"security_group":{"id":"sg_SmTNrEl9yoNbYvEj"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/security_groups/security_group/rules
+    method: POST
+  response:
+    body: '{"error":{"code":"validation_error","description":"A validation error occurred
+      with the object that was being created/updated/deleted","detail":{"errors":["Security
+      group cannot have outbound rules while all outbound traffic is allowed"]}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache
+      Content-Length:
+      - "240"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 21 Aug 2026 13:17:58 GMT
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Api-Schema:
+      - json-error
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "994"
+      X-Request-Id:
+      - c1efafb2-c451-4297-b27e-1596c3a7061a
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{"security_group":{"id":"sg_SmTNrEl9yoNbYvEj"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/security_groups/security_group
+    method: DELETE
+  response:
+    body: '{"security_group":{"id":"sg_SmTNrEl9yoNbYvEj","name":"tf-acc-test-invalid-OtlxDPpmz76D"}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "89"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 21 Aug 2026 13:17:59 GMT
+      Etag:
+      - W/"e818f681780d50a608bca32a054deb31"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "993"
+      X-Request-Id:
+      - 4a238cec-2e68-4ca5-a852-4815240747c2
+    status: 200 OK
+    code: 200
+    duration: ""

@@ -129,10 +129,7 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 						"Defaults to `info`.",
 				},
 			},
-			ResourcesMap: map[string]*schema.Resource{
-				"katapult_security_group":      resourceSecurityGroup(),
-				"katapult_security_group_rule": resourceSecurityGroupRule(),
-			},
+			ResourcesMap: map[string]*schema.Resource{},
 
 			DataSourcesMap: map[string]*schema.Resource{
 				"katapult_data_center":              dataSourceDataCenter(),
@@ -140,10 +137,6 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 				"katapult_disk_templates":           dataSourceDiskTemplates(),
 				"katapult_network_speed_profile":    dataSourceNetworkSpeedProfile(),
 				"katapult_network_speed_profiles":   dataSourceNetworkSpeedProfiles(),
-				"katapult_security_group":           dataSourceSecurityGroup(),
-				"katapult_security_group_rule":      dataSourceSecurityGroupRule(),
-				"katapult_security_group_rules":     dataSourceSecurityGroupRules(),
-				"katapult_security_groups":          dataSourceSecurityGroups(),
 				"katapult_virtual_machine_package":  dataSourceVirtualMachinePackage(),
 				"katapult_virtual_machine_packages": dataSourceVirtualMachinePackages(),
 			},
@@ -158,6 +151,8 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 			p.ResourcesMap["katapult_legacy_virtual_machine"] = resourceVirtualMachine()
 
 			p.ResourcesMap["katapult_legacy_virtual_machine_group"] = resourceVirtualMachineGroup()
+			p.ResourcesMap["katapult_legacy_security_group"] = resourceSecurityGroup()
+			p.ResourcesMap["katapult_legacy_security_group_rule"] = resourceSecurityGroupRule()
 
 			// TEST DATA SOURCES
 
@@ -170,6 +165,10 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 			p.DataSourcesMap["katapult_legacy_virtual_machine_group"] = dataSourceVirtualMachineGroup()
 
 			p.DataSourcesMap["katapult_legacy_virtual_machine_groups"] = dataSourceVirtualMachineGroups()
+			p.DataSourcesMap["katapult_legacy_security_group"] = dataSourceSecurityGroup()
+			p.DataSourcesMap["katapult_legacy_security_group_rule"] = dataSourceSecurityGroupRule()
+			p.DataSourcesMap["katapult_legacy_security_group_rules"] = dataSourceSecurityGroupRules()
+			p.DataSourcesMap["katapult_legacy_security_groups"] = dataSourceSecurityGroups()
 		}
 
 		p.ConfigureContextFunc = configure(c, p)

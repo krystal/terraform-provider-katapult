@@ -1,9 +1,9 @@
-package provider
+package v6provider
 
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/jimeh/undent"
 )
 
@@ -13,9 +13,9 @@ func TestAccKatapultDataSourceSecurityGroups_default(t *testing.T) {
 	name := tt.ResourceName()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: tt.ProviderFactories,
-		CheckDestroy:      testAccCheckKatapultSecurityGroupDestroy(tt),
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupDestroy(tt),
 		Steps: []resource.TestStep{
 			{
 				Config: undent.Stringf(`
@@ -79,6 +79,14 @@ func TestAccKatapultDataSourceSecurityGroups_default(t *testing.T) {
 					),
 					resource.TestCheckResourceAttr(
 						"data.katapult_security_groups.all",
+						"security_groups.0.inbound_rules.#", "0",
+					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_security_groups.all",
+						"security_groups.0.outbound_rules.#", "0",
+					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_security_groups.all",
 						"security_groups.1.name", name+"-2",
 					),
 					resource.TestCheckResourceAttr(
@@ -88,6 +96,14 @@ func TestAccKatapultDataSourceSecurityGroups_default(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.katapult_security_groups.all",
 						"security_groups.1.allow_all_outbound", "true",
+					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_security_groups.all",
+						"security_groups.1.inbound_rules.#", "0",
+					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_security_groups.all",
+						"security_groups.1.outbound_rules.#", "0",
 					),
 				),
 			},
