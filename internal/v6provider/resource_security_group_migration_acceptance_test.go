@@ -210,6 +210,13 @@ func TestAccKatapultSecurityGroup_migrate_v5_blocks_and_round_trip(t *testing.T)
 						if actionCount == 0 {
 							return fmt.Errorf("imported security group has %d rules but no action attributes", ruleCount)
 						}
+						if actionCount != ruleCount {
+							return fmt.Errorf(
+								"imported security group has %d rules but only %d action attributes",
+								ruleCount,
+								actionCount,
+							)
+						}
 						return nil
 					}
 					return fmt.Errorf("imported security group state contained no rules")

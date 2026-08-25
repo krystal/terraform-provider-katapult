@@ -200,6 +200,10 @@ func (r *SecurityGroupRuleResource) ValidateConfig(
 
 //nolint:lll // API argument projection remains explicit.
 func securityGroupRuleArguments(ctx context.Context, model SecurityGroupRuleResourceModel) (core.SecurityGroupRuleArguments, error) {
+	if model.Action.IsUnknown() {
+		return core.SecurityGroupRuleArguments{}, errors.New("security group rule action is unknown")
+	}
+
 	var targets []string
 	diags := model.Targets.ElementsAs(ctx, &targets, false)
 	if diags.HasError() {

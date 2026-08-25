@@ -258,6 +258,20 @@ func TestSecurityGroupRuleArgumentsIncludesNormalizedAction(t *testing.T) {
 	assert.Equal(t, string(core.Deny), string(*arguments.Action))
 }
 
+func TestSecurityGroupRuleArgumentsRejectsUnknownAction(t *testing.T) {
+	t.Parallel()
+
+	model := SecurityGroupRuleResourceModel{
+		Direction: types.StringValue("inbound"), Action: types.StringUnknown(),
+		Protocol: caseInsensitiveStringValueOf("tcp"), Ports: types.StringValue("22"),
+		Targets: types.SetValueMust(types.StringType, []attr.Value{types.StringValue("all:ipv4")}),
+	}
+	arguments, err := securityGroupRuleArguments(context.Background(), model)
+
+	assert.Empty(t, arguments)
+	require.EqualError(t, err, "security group rule action is unknown")
+}
+
 func TestSecurityGroupSchemaSupportsBothRuleRepresentations(t *testing.T) {
 	t.Parallel()
 
