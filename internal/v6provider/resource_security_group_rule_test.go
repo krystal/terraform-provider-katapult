@@ -30,6 +30,9 @@ func TestAccKatapultSecurityGroupRule_example(t *testing.T) {
 						tt, "katapult_security_group_rule.minimal",
 					),
 					testAccCheckKatapultSecurityGroupRuleExists(
+						tt, "katapult_security_group_rule.deny_ssh_cgnat",
+					),
+					testAccCheckKatapultSecurityGroupRuleExists(
 						tt, "katapult_security_group_rule.http",
 					),
 					testAccCheckKatapultSecurityGroupRuleExists(
@@ -104,6 +107,81 @@ func TestAccKatapultSecurityGroupRule_minimal(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccKatapultSecurityGroupRule_action(t *testing.T) {
+	tt := newTestTools(t)
+	name := tt.ResourceName("rule-action")
+	var ruleID string
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupRuleDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: securityGroupRuleActionConfig(name, ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultSecurityGroupRuleExists(tt, "katapult_security_group_rule.test"),
+					captureResourceAttr("katapult_security_group_rule.test", "id", &ruleID),
+					resource.TestCheckResourceAttr("katapult_security_group_rule.test", "action", string(core.Allow)),
+				),
+			},
+			{
+				Config:           securityGroupRuleActionConfig(name, string(core.Allow)),
+				PlanOnly:         true,
+				ConfigPlanChecks: emptyPostRefreshPlanChecks(),
+			},
+			{
+				Config: securityGroupRuleActionConfig(name, string(core.Deny)),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr("katapult_security_group_rule.test", "id", &ruleID),
+					resource.TestCheckResourceAttr("katapult_security_group_rule.test", "action", string(core.Deny)),
+				),
+			},
+			{
+				ResourceName:            "katapult_security_group_rule.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"protocol"},
+			},
+			{
+				Config:           securityGroupRuleActionConfig(name, string(core.Deny)),
+				PlanOnly:         true,
+				ConfigPlanChecks: emptyPostRefreshPlanChecks(),
+			},
+			{
+				Config: securityGroupRuleActionConfig(name, string(core.Allow)),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr("katapult_security_group_rule.test", "id", &ruleID),
+					resource.TestCheckResourceAttr("katapult_security_group_rule.test", "action", string(core.Allow)),
+				),
+			},
+		},
+	})
+}
+
+func securityGroupRuleActionConfig(name, action string) string {
+	actionConfig := ""
+	if action != "" {
+		actionConfig = fmt.Sprintf("action = %q", action)
+	}
+	return undent.Stringf(`
+		resource "katapult_security_group" "test" {
+			name           = "%s"
+			external_rules = true
+		}
+
+		resource "katapult_security_group_rule" "test" {
+			security_group_id = katapult_security_group.test.id
+			direction         = "inbound"
+			%s
+			protocol          = "TCP"
+			ports             = "22"
+			targets           = ["100.64.0.0/10"]
+			notes             = "SSH action lifecycle"
+		}
+	`, name, actionConfig)
 }
 
 func TestAccKatapultSecurityGroupRule_update(t *testing.T) {

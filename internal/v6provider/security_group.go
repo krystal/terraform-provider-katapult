@@ -15,6 +15,16 @@ import (
 type SecurityGroupRuleModel struct {
 	ID        types.String               `tfsdk:"id"`
 	Direction types.String               `tfsdk:"direction"`
+	Action    types.String               `tfsdk:"action"`
+	Protocol  caseInsensitiveStringValue `tfsdk:"protocol"`
+	Ports     types.String               `tfsdk:"ports"`
+	Targets   types.Set                  `tfsdk:"targets"`
+	Notes     types.String               `tfsdk:"notes"`
+}
+
+type securityGroupRuleModelV0 struct {
+	ID        types.String               `tfsdk:"id"`
+	Direction types.String               `tfsdk:"direction"`
 	Protocol  caseInsensitiveStringValue `tfsdk:"protocol"`
 	Ports     types.String               `tfsdk:"ports"`
 	Targets   types.Set                  `tfsdk:"targets"`
@@ -22,26 +32,37 @@ type SecurityGroupRuleModel struct {
 }
 
 const (
-	securityGroupAssociationsAttribute = "associations"
-	securityGroupDirectionInbound      = "inbound"
-	securityGroupDirectionOutbound     = "outbound"
+	securityGroupAssociationsAttribute     = "associations"
+	securityGroupActionJSONField           = "action"
+	securityGroupDirectionJSONField        = "direction"
+	securityGroupAllowAllInboundJSONField  = "allow_all_inbound"
+	securityGroupAllowAllOutboundJSONField = "allow_all_outbound"
+	securityGroupDirectionInbound          = "inbound"
+	securityGroupDirectionOutbound         = "outbound"
 )
 
 type canonicalSecurityGroupRule struct {
-	ID        string
-	Direction string
-	Protocol  string
-	Ports     string
-	Targets   []string
-	Notes     string
+	ID            string
+	Direction     string
+	Action        string
+	ActionUnknown bool
+	Protocol      string
+	Ports         string
+	Targets       []string
+	Notes         string
 }
 
 func (r canonicalSecurityGroupRule) fingerprint() string {
 	targets := append([]string(nil), r.Targets...)
 	sort.Strings(targets)
+	action := normalizeSecurityGroupRuleAction(r.Action)
+	if r.ActionUnknown {
+		action = "\x02unknown"
+	}
 
 	return strings.Join([]string{
-		strings.ToLower(r.Direction), strings.ToUpper(r.Protocol), r.Ports,
+		strings.ToLower(r.Direction), action,
+		strings.ToUpper(r.Protocol), r.Ports,
 		strings.Join(targets, "\x00"), r.Notes,
 	}, "\x01")
 }
@@ -73,12 +94,14 @@ func canonicalRulesFromList(
 			ruleDirection = strings.ToLower(model.Direction.ValueString())
 		}
 		rules = append(rules, canonicalSecurityGroupRule{
-			ID:        model.ID.ValueString(),
-			Direction: ruleDirection,
-			Protocol:  model.Protocol.ValueString(),
-			Ports:     model.Ports.ValueString(),
-			Targets:   targets,
-			Notes:     model.Notes.ValueString(),
+			ID:            model.ID.ValueString(),
+			Direction:     ruleDirection,
+			Action:        terraformSecurityGroupRuleAction(model.Action),
+			ActionUnknown: model.Action.IsUnknown(),
+			Protocol:      model.Protocol.ValueString(),
+			Ports:         model.Ports.ValueString(),
+			Targets:       targets,
+			Notes:         model.Notes.ValueString(),
 		})
 	}
 
@@ -101,7 +124,7 @@ func securityGroupRuleListHasUnknownConfiguredFields(value types.List) bool {
 			continue
 		}
 		attributes := object.Attributes()
-		for _, name := range []string{"protocol", "ports", "notes"} {
+		for _, name := range []string{securityGroupActionJSONField, "protocol", "ports", "notes"} {
 			field, exists := attributes[name]
 			if !exists || field.IsUnknown() {
 				return true
@@ -137,9 +160,14 @@ func securityGroupRuleModels(
 		if unknownEmptyIDs && rule.ID == "" {
 			id = types.StringUnknown()
 		}
+		action := types.StringValue(normalizeSecurityGroupRuleAction(rule.Action))
+		if rule.ActionUnknown {
+			action = types.StringUnknown()
+		}
 		models = append(models, SecurityGroupRuleModel{
 			ID:        id,
 			Direction: types.StringValue(strings.ToLower(rule.Direction)),
+			Action:    action,
 			Protocol:  caseInsensitiveStringValueOf(rule.Protocol),
 			Ports:     types.StringValue(rule.Ports),
 			Targets:   targets,
@@ -209,11 +237,49 @@ func securityGroupRuleBlockPlanValue(
 
 func securityGroupRuleObjectType() types.ObjectType {
 	return types.ObjectType{AttrTypes: map[string]attr.Type{
-		"id": types.StringType, "direction": types.StringType,
+		"id": types.StringType, securityGroupDirectionJSONField: types.StringType,
+		securityGroupActionJSONField: types.StringType,
+		"protocol":                   caseInsensitiveStringType{}, "ports": types.StringType,
+		"targets": types.SetType{ElemType: types.StringType},
+		"notes":   types.StringType,
+	}}
+}
+
+func securityGroupRuleObjectTypeV0() types.ObjectType {
+	return types.ObjectType{AttrTypes: map[string]attr.Type{
+		"id": types.StringType, securityGroupDirectionJSONField: types.StringType,
 		"protocol": caseInsensitiveStringType{}, "ports": types.StringType,
 		"targets": types.SetType{ElemType: types.StringType},
 		"notes":   types.StringType,
 	}}
+}
+
+func upgradeSecurityGroupRuleListV0(
+	ctx context.Context,
+	value types.List,
+) (types.List, diag.Diagnostics) {
+	if value.IsNull() {
+		return types.ListNull(securityGroupRuleObjectType()), nil
+	}
+	if value.IsUnknown() {
+		return types.ListUnknown(securityGroupRuleObjectType()), nil
+	}
+	var prior []securityGroupRuleModelV0
+	diags := value.ElementsAs(ctx, &prior, false)
+	if diags.HasError() {
+		return types.ListNull(securityGroupRuleObjectType()), diags
+	}
+	upgraded := make([]SecurityGroupRuleModel, 0, len(prior))
+	for _, rule := range prior {
+		upgraded = append(upgraded, SecurityGroupRuleModel{
+			ID: rule.ID, Direction: rule.Direction,
+			Action: types.StringValue(string(core.Allow)), Protocol: rule.Protocol,
+			Ports: rule.Ports, Targets: rule.Targets, Notes: rule.Notes,
+		})
+	}
+	result, valueDiags := types.ListValueFrom(ctx, securityGroupRuleObjectType(), upgraded)
+	diags.Append(valueDiags...)
+	return result, diags
 }
 
 // transferSecurityGroupRuleIDs deterministically pairs equivalent rules. ID
@@ -330,6 +396,30 @@ func nullableString(value interface {
 	return result
 }
 
+func normalizeSecurityGroupRuleAction(action string) string {
+	if action == "" {
+		return string(core.Allow)
+	}
+
+	return strings.ToLower(action)
+}
+
+func terraformSecurityGroupRuleAction(action types.String) string {
+	if action.IsUnknown() {
+		return ""
+	}
+
+	return normalizeSecurityGroupRuleAction(action.ValueString())
+}
+
+func apiSecurityGroupRuleAction(action *core.SecurityGroupRuleActionEnum) string {
+	if action == nil {
+		return string(core.Allow)
+	}
+
+	return normalizeSecurityGroupRuleAction(string(*action))
+}
+
 func canonicalRuleFromListResult(
 	rule core.GetSecurityGroupRules200ResponseSecurityGroupRules,
 ) canonicalSecurityGroupRule {
@@ -340,6 +430,7 @@ func canonicalRuleFromListResult(
 	if rule.Direction != nil {
 		result.Direction = strings.ToLower(string(*rule.Direction))
 	}
+	result.Action = apiSecurityGroupRuleAction(rule.Action)
 	if rule.Protocol != nil {
 		result.Protocol = strings.ToUpper(string(*rule.Protocol))
 	}

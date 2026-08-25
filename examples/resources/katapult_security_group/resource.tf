@@ -24,7 +24,16 @@ resource "katapult_security_group" "practical" {
   allow_all_outbound = true
 
   inbound_rules = [
-    # Allow inbound SSH, HTTP, HTTPS, and QUIC traffic from anywhere.
+    # Deny SSH from the carrier-grade NAT range. Katapult evaluates deny rules
+    # before allow rules, regardless of list order.
+    {
+      action   = "deny"
+      protocol = "TCP"
+      ports    = "22"
+      targets  = ["100.64.0.0/10"]
+      notes    = "Deny SSH from CGNAT"
+    },
+    # Action defaults to allow, so SSH is allowed from everywhere else.
     {
       protocol = "TCP"
       ports    = "22"

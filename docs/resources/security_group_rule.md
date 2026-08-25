@@ -21,12 +21,24 @@ resource "katapult_security_group" "web" {
   external_rules = true
 }
 
-# Minimal - Allows no traffic as there are no targets.
+# Minimal - action defaults to allow, but an empty target set matches no traffic.
 resource "katapult_security_group_rule" "minimal" {
   security_group_id = katapult_security_group.web.id
   direction         = "inbound"
   protocol          = "tcp"
   targets           = []
+}
+
+# Deny incoming SSH traffic from the carrier-grade NAT range. Deny rules are
+# evaluated before allow rules, regardless of declaration order.
+resource "katapult_security_group_rule" "deny_ssh_cgnat" {
+  security_group_id = katapult_security_group.web.id
+  direction         = "inbound"
+  action            = "deny"
+  protocol          = "tcp"
+  ports             = "22"
+  notes             = "Deny SSH from CGNAT"
+  targets           = ["100.64.0.0/10"]
 }
 
 # Allow incoming HTTP/HTTPS traffic from anywhere
@@ -112,6 +124,7 @@ resource "katapult_security_group_rule" "http_out" {
 
 ### Optional
 
+- `action` (String) Whether the rule permits (`allow`) or drops (`deny`) matching traffic. Defaults to `allow`. Katapult evaluates all deny rules before allow rules, then applies an implicit deny-all rule. List order does not control evaluation.
 - `notes` (String) Human-readable notes for the rule.
 - `ports` (String) The port, ports, or range of ports. Omit to match all ports.
 

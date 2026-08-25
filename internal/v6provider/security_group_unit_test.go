@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	datasourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -27,6 +29,42 @@ func TestSecurityGroupRuleFingerprintNormalizesProtocolAndTargets(t *testing.T) 
 	b := canonicalSecurityGroupRule{Direction: "INBOUND", Protocol: "TCP", Ports: "22", Targets: []string{"all:ipv4", "all:ipv6"}, Notes: "SSH"}
 
 	assert.Equal(t, a.fingerprint(), b.fingerprint())
+}
+
+func TestSecurityGroupRuleFingerprintNormalizesDefaultActionAndDistinguishesDeny(t *testing.T) {
+	t.Parallel()
+
+	omitted := canonicalSecurityGroupRule{Direction: "inbound", Protocol: "TCP", Targets: []string{"all:ipv4"}}
+	allow := omitted
+	allow.Action = string(core.Allow)
+	deny := omitted
+	deny.Action = string(core.Deny)
+	unknown := omitted
+	unknown.ActionUnknown = true
+
+	assert.Equal(t, omitted.fingerprint(), allow.fingerprint())
+	assert.NotEqual(t, allow.fingerprint(), deny.fingerprint())
+	assert.NotEqual(t, allow.fingerprint(), unknown.fingerprint())
+}
+
+//nolint:lll // Side-by-side rules make the action-only identity distinction explicit.
+func TestTransferSecurityGroupRuleIDsKeepsOtherwiseEqualActionsDistinct(t *testing.T) {
+	t.Parallel()
+
+	prior := []canonicalSecurityGroupRule{
+		{ID: "allow", Direction: "inbound", Action: string(core.Allow), Protocol: "TCP", Ports: "22", Targets: []string{"all:ipv4"}},
+		{ID: "deny", Direction: "inbound", Action: string(core.Deny), Protocol: "TCP", Ports: "22", Targets: []string{"all:ipv4"}},
+	}
+	planned := []canonicalSecurityGroupRule{
+		{Direction: "inbound", Action: string(core.Deny), Protocol: "TCP", Ports: "22", Targets: []string{"all:ipv4"}},
+		{Direction: "inbound", Action: string(core.Allow), Protocol: "TCP", Ports: "22", Targets: []string{"all:ipv4"}},
+	}
+
+	result := transferSecurityGroupRuleIDs(prior, planned, false)
+	require.Len(t, result, 2)
+	assert.Equal(t, "deny", result[0].ID)
+	assert.Equal(t, "allow", result[1].ID)
+	assert.Empty(t, classifySecurityGroupRuleReconciliation(prior, result).UpdateIndexes)
 }
 
 func TestTransferSecurityGroupRuleIDsPreservesDuplicateMultiset(t *testing.T) {
@@ -202,6 +240,22 @@ func TestSecurityGroupRuleReadClearsTargetsWhenAPIValueIsMissing(t *testing.T) {
 	assert.False(t, missing)
 	assert.False(t, model.Targets.IsNull())
 	assert.Empty(t, model.Targets.Elements())
+	assert.Equal(t, string(core.Allow), model.Action.ValueString())
+}
+
+func TestSecurityGroupRuleArgumentsIncludesNormalizedAction(t *testing.T) {
+	t.Parallel()
+
+	model := SecurityGroupRuleResourceModel{
+		Direction: types.StringValue("inbound"), Action: types.StringValue(string(core.Deny)),
+		Protocol: caseInsensitiveStringValueOf("tcp"), Ports: types.StringValue("22"),
+		Targets: types.SetValueMust(types.StringType, []attr.Value{types.StringValue("all:ipv4")}),
+		Notes:   types.StringValue("SSH"),
+	}
+	arguments, err := securityGroupRuleArguments(context.Background(), model)
+	require.NoError(t, err)
+	require.NotNil(t, arguments.Action)
+	assert.Equal(t, string(core.Deny), string(*arguments.Action))
 }
 
 func TestSecurityGroupSchemaSupportsBothRuleRepresentations(t *testing.T) {
@@ -210,10 +264,127 @@ func TestSecurityGroupSchemaSupportsBothRuleRepresentations(t *testing.T) {
 	var response resource.SchemaResponse
 	(&SecurityGroupResource{}).Schema(context.Background(), resource.SchemaRequest{}, &response)
 	require.False(t, response.Diagnostics.HasError())
+	assert.EqualValues(t, 1, response.Schema.Version)
 	assert.Contains(t, response.Schema.Attributes, "inbound_rules")
 	assert.Contains(t, response.Schema.Attributes, "outbound_rules")
 	assert.Contains(t, response.Schema.Blocks, "inbound_rule")
 	assert.Contains(t, response.Schema.Blocks, "outbound_rule")
+	plural := response.Schema.Attributes["inbound_rules"].(schema.ListNestedAttribute)
+	block := response.Schema.Blocks["inbound_rule"].(schema.ListNestedBlock)
+	assert.Contains(t, plural.NestedObject.Attributes, "action")
+	assert.Contains(t, block.NestedObject.Attributes, "action")
+	action := plural.NestedObject.Attributes["action"].(schema.StringAttribute)
+	assert.True(t, action.Optional)
+	assert.True(t, action.Computed)
+	require.NotNil(t, action.Default)
+	require.Len(t, action.Validators, 1)
+}
+
+func TestSecurityGroupRuleActionSchemasAndValidator(t *testing.T) {
+	t.Parallel()
+
+	var resourceResponse resource.SchemaResponse
+	(&SecurityGroupRuleResource{}).Schema(context.Background(), resource.SchemaRequest{}, &resourceResponse)
+	require.False(t, resourceResponse.Diagnostics.HasError(), resourceResponse.Diagnostics.Errors())
+	assert.EqualValues(t, 1, resourceResponse.Schema.Version)
+	action := resourceResponse.Schema.Attributes["action"].(schema.StringAttribute)
+	assert.True(t, action.Optional)
+	assert.True(t, action.Computed)
+	require.NotNil(t, action.Default)
+	require.Len(t, action.Validators, 1)
+
+	for _, test := range []struct {
+		value     string
+		wantError bool
+	}{
+		{value: string(core.Allow)},
+		{value: string(core.Deny)},
+		{value: "ALLOW", wantError: true},
+		{value: "reject", wantError: true},
+	} {
+		response := schemavalidator.StringResponse{}
+		action.Validators[0].ValidateString(context.Background(), schemavalidator.StringRequest{
+			Path: path.Root("action"), ConfigValue: types.StringValue(test.value),
+		}, &response)
+		assert.Equal(t, test.wantError, response.Diagnostics.HasError(), test.value)
+	}
+
+	var dataResponse datasource.SchemaResponse
+	(&SecurityGroupRuleDataSource{}).Schema(context.Background(), datasource.SchemaRequest{}, &dataResponse)
+	require.False(t, dataResponse.Diagnostics.HasError(), dataResponse.Diagnostics.Errors())
+	dataAction := dataResponse.Schema.Attributes["action"].(datasourceschema.StringAttribute)
+	assert.True(t, dataAction.Computed)
+	assert.Contains(t, securityGroupRuleObjectType().AttrTypes, "action")
+}
+
+func TestSecurityGroupRuleStateUpgraderDefaultsActionToAllow(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	resourceUnderTest := &SecurityGroupRuleResource{}
+	upgrader := resourceUnderTest.UpgradeState(ctx)[0]
+	require.NotNil(t, upgrader.PriorSchema)
+
+	prior := securityGroupRuleResourceModelV0{
+		ID: types.StringValue("rule-1"), SecurityGroupID: types.StringValue("group-1"),
+		Direction: types.StringValue("inbound"), Protocol: caseInsensitiveStringValueOf("TCP"),
+		Ports:   types.StringValue("22"),
+		Targets: types.SetValueMust(types.StringType, []attr.Value{types.StringValue("all:ipv4")}),
+		Notes:   types.StringValue("SSH"),
+	}
+	priorState := tfsdk.State{Schema: *upgrader.PriorSchema}
+	require.False(t, priorState.Set(ctx, &prior).HasError())
+	var schemaResponse resource.SchemaResponse
+	resourceUnderTest.Schema(ctx, resource.SchemaRequest{}, &schemaResponse)
+	response := resource.UpgradeStateResponse{State: tfsdk.State{Schema: schemaResponse.Schema}}
+	upgrader.StateUpgrader(ctx, resource.UpgradeStateRequest{State: &priorState}, &response)
+	require.False(t, response.Diagnostics.HasError(), response.Diagnostics.Errors())
+
+	var upgraded SecurityGroupRuleResourceModel
+	require.False(t, response.State.Get(ctx, &upgraded).HasError())
+	assert.Equal(t, "rule-1", upgraded.ID.ValueString())
+	assert.Equal(t, string(core.Allow), upgraded.Action.ValueString())
+}
+
+func TestSecurityGroupStateUpgraderDefaultsEveryRuleActionToAllow(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	resourceUnderTest := &SecurityGroupResource{}
+	upgrader := resourceUnderTest.UpgradeState(ctx)[0]
+	require.NotNil(t, upgrader.PriorSchema)
+
+	priorRules, diags := types.ListValueFrom(ctx, securityGroupRuleObjectTypeV0(), []securityGroupRuleModelV0{{
+		ID: types.StringValue("rule-1"), Direction: types.StringValue("inbound"),
+		Protocol: caseInsensitiveStringValueOf("TCP"), Ports: types.StringValue("22"),
+		Targets: types.SetValueMust(types.StringType, []attr.Value{types.StringValue("all:ipv4")}),
+		Notes:   types.StringValue("SSH"),
+	}})
+	require.False(t, diags.HasError(), diags.Errors())
+	null := types.ListNull(securityGroupRuleObjectTypeV0())
+	prior := securityGroupResourceModelV0{
+		ID: types.StringValue("group-1"), Name: types.StringValue("Test"),
+		Associations:    types.SetValueMust(types.StringType, nil),
+		AllowAllInbound: types.BoolValue(false), AllowAllOutbound: types.BoolValue(false),
+		ExternalRules: types.BoolValue(false),
+		InboundRule:   priorRules, OutboundRule: null, InboundRules: null, OutboundRules: null,
+	}
+	priorState := tfsdk.State{Schema: *upgrader.PriorSchema}
+	require.False(t, priorState.Set(ctx, &prior).HasError())
+	var schemaResponse resource.SchemaResponse
+	resourceUnderTest.Schema(ctx, resource.SchemaRequest{}, &schemaResponse)
+	response := resource.UpgradeStateResponse{State: tfsdk.State{Schema: schemaResponse.Schema}}
+	upgrader.StateUpgrader(ctx, resource.UpgradeStateRequest{State: &priorState}, &response)
+	require.False(t, response.Diagnostics.HasError(), response.Diagnostics.Errors())
+
+	var upgraded SecurityGroupResourceModel
+	require.False(t, response.State.Get(ctx, &upgraded).HasError())
+	rules, diags := canonicalRulesFromList(ctx, upgraded.InboundRule, securityGroupDirectionInbound)
+	require.False(t, diags.HasError(), diags.Errors())
+	require.Len(t, rules, 1)
+	assert.Equal(t, "rule-1", rules[0].ID)
+	assert.Equal(t, string(core.Allow), rules[0].Action)
+	assert.Equal(t, string(core.Allow), terraformSecurityGroupRuleAction(types.StringValue("")))
+	assert.Equal(t, string(core.Allow), apiSecurityGroupRuleAction(nil))
+	assert.True(t, upgraded.InboundRules.IsNull())
 }
 
 func TestSecurityGroupStringSetSchemasRejectEmptyAndNullValues(t *testing.T) {
@@ -744,6 +915,7 @@ func TestSecurityGroupRuleListHasUnknownConfiguredFields(t *testing.T) {
 
 	base := SecurityGroupRuleModel{
 		ID: types.StringUnknown(), Direction: types.StringUnknown(),
+		Action:   types.StringValue(string(core.Allow)),
 		Protocol: caseInsensitiveStringValueOf("TCP"), Ports: types.StringNull(),
 		Targets: types.SetValueMust(types.StringType, []attr.Value{types.StringValue("all:ipv4")}),
 		Notes:   types.StringNull(),
@@ -755,6 +927,7 @@ func TestSecurityGroupRuleListHasUnknownConfiguredFields(t *testing.T) {
 		{name: "custom protocol", mutate: func(rule *SecurityGroupRuleModel) {
 			rule.Protocol = caseInsensitiveStringValue{StringValue: types.StringUnknown()}
 		}},
+		{name: "action", mutate: func(rule *SecurityGroupRuleModel) { rule.Action = types.StringUnknown() }},
 		{name: "ports", mutate: func(rule *SecurityGroupRuleModel) { rule.Ports = types.StringUnknown() }},
 		{name: "notes", mutate: func(rule *SecurityGroupRuleModel) { rule.Notes = types.StringUnknown() }},
 		{
@@ -1031,6 +1204,7 @@ func TestSecurityGroupRuleCanonicalizationNormalizesOptionalValues(t *testing.T)
 	})
 	model := SecurityGroupRuleModel{
 		ID: types.StringNull(), Direction: types.StringNull(),
+		Action:   types.StringNull(),
 		Protocol: caseInsensitiveStringValueOf("tcp"), Ports: types.StringNull(),
 		Targets: targets, Notes: types.StringNull(),
 	}
@@ -1042,6 +1216,7 @@ func TestSecurityGroupRuleCanonicalizationNormalizesOptionalValues(t *testing.T)
 	require.False(t, diags.HasError(), diags.Errors())
 	require.Len(t, rules, 1)
 	assert.Equal(t, securityGroupDirectionInbound, rules[0].Direction)
+	assert.Equal(t, string(core.Allow), rules[0].Action)
 	assert.Equal(t, "tcp", rules[0].Protocol)
 	assert.Empty(t, rules[0].Ports)
 	assert.Empty(t, rules[0].Notes)
@@ -1051,10 +1226,12 @@ func TestSecurityGroupRuleCanonicalizationNormalizesOptionalValues(t *testing.T)
 
 	arguments := securityGroupRuleAPIArguments(rules[0])
 	require.NotNil(t, arguments.Direction)
+	require.NotNil(t, arguments.Action)
 	require.NotNil(t, arguments.Protocol)
 	require.NotNil(t, arguments.Ports)
 	require.NotNil(t, arguments.Notes)
 	assert.Equal(t, "inbound", string(*arguments.Direction))
+	assert.Equal(t, string(core.Allow), string(*arguments.Action))
 	assert.Equal(t, "TCP", string(*arguments.Protocol))
 	assert.Empty(t, *arguments.Ports)
 	assert.Empty(t, *arguments.Notes)
@@ -1073,6 +1250,7 @@ func TestSecurityGroupRulePropertiesEqualIgnoresSemanticCasing(t *testing.T) {
 
 	state := SecurityGroupRuleResourceModel{
 		SecurityGroupID: types.StringValue("group-1"), Direction: types.StringValue("inbound"),
+		Action:   types.StringValue(string(core.Allow)),
 		Protocol: caseInsensitiveStringValueOf("tcp"), Ports: types.StringValue("22"),
 		Targets: types.SetValueMust(types.StringType, []attr.Value{types.StringValue("all:ipv4")}),
 		Notes:   types.StringValue("SSH"),
@@ -1083,6 +1261,10 @@ func TestSecurityGroupRulePropertiesEqualIgnoresSemanticCasing(t *testing.T) {
 	assert.True(t, securityGroupRulePropertiesEqual(state, plan))
 
 	plan.Ports = types.StringValue("2222")
+	assert.False(t, securityGroupRulePropertiesEqual(state, plan))
+
+	plan = state
+	plan.Action = types.StringValue(string(core.Deny))
 	assert.False(t, securityGroupRulePropertiesEqual(state, plan))
 }
 

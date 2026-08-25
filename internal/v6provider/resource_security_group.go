@@ -44,9 +44,23 @@ type SecurityGroupResourceModel struct {
 	OutboundRule     types.List   `tfsdk:"outbound_rule"`
 }
 
+type securityGroupResourceModelV0 struct {
+	ID               types.String `tfsdk:"id"`
+	Name             types.String `tfsdk:"name"`
+	Associations     types.Set    `tfsdk:"associations"`
+	AllowAllInbound  types.Bool   `tfsdk:"allow_all_inbound"`
+	AllowAllOutbound types.Bool   `tfsdk:"allow_all_outbound"`
+	ExternalRules    types.Bool   `tfsdk:"external_rules"`
+	InboundRules     types.List   `tfsdk:"inbound_rules"`
+	OutboundRules    types.List   `tfsdk:"outbound_rules"`
+	InboundRule      types.List   `tfsdk:"inbound_rule"`
+	OutboundRule     types.List   `tfsdk:"outbound_rule"`
+}
+
 var (
 	_ resource.ResourceWithImportState    = (*SecurityGroupResource)(nil)
 	_ resource.ResourceWithModifyPlan     = (*SecurityGroupResource)(nil)
+	_ resource.ResourceWithUpgradeState   = (*SecurityGroupResource)(nil)
 	_ resource.ResourceWithValidateConfig = (*SecurityGroupResource)(nil)
 )
 
@@ -74,23 +88,79 @@ func securityGroupRuleNestedAttributes() map[string]schema.Attribute {
 
 //nolint:lll // Keep the complete compatibility schema together.
 func (r *SecurityGroupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	ruleDescription := "Rules managed as an expression-friendly list."
+	ruleDescription := "Rules managed as an expression-friendly list. List order does not control firewall evaluation. Katapult evaluates deny rules before allow rules."
 	deprecated := "Use the corresponding plural rules attribute. This block remains supported for backwards compatibility."
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manages a security group, its associations, and optionally its complete inline rule set.",
 		Attributes: map[string]schema.Attribute{
-			"id":                                schema.StringAttribute{Computed: true, MarkdownDescription: "The unique identifier of the security group.", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
-			"name":                              schema.StringAttribute{Required: true, MarkdownDescription: "The security group name.", Validators: []validator.String{stringvalidator.LengthAtLeast(1)}},
-			securityGroupAssociationsAttribute:  schema.SetAttribute{Optional: true, Computed: true, ElementType: types.StringType, MarkdownDescription: "Resource IDs to which the group applies.", Validators: []validator.Set{setvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)), setvalidator.NoNullValues()}, PlanModifiers: []planmodifier.Set{NullToEmptySetPlanModifier(), setplanmodifier.UseStateForUnknown()}},
-			"allow_all_inbound":                 schema.BoolAttribute{Optional: true, Computed: true, Default: booldefault.StaticBool(false), MarkdownDescription: "Allow all inbound traffic."},
-			"allow_all_outbound":                schema.BoolAttribute{Optional: true, Computed: true, Default: booldefault.StaticBool(false), MarkdownDescription: "Allow all outbound traffic."},
-			"external_rules":                    schema.BoolAttribute{Optional: true, Computed: true, MarkdownDescription: "Do not manage the group's complete rule list inline. Standalone rule resources can still be used.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}},
-			securityGroupInboundRulesAttribute:  schema.ListNestedAttribute{Optional: true, Computed: true, MarkdownDescription: "Inbound " + ruleDescription, NestedObject: schema.NestedAttributeObject{Attributes: securityGroupRuleNestedAttributes()}},
-			securityGroupOutboundRulesAttribute: schema.ListNestedAttribute{Optional: true, Computed: true, MarkdownDescription: "Outbound " + ruleDescription, NestedObject: schema.NestedAttributeObject{Attributes: securityGroupRuleNestedAttributes()}},
+			"id":                                   schema.StringAttribute{Computed: true, MarkdownDescription: "The unique identifier of the security group.", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+			"name":                                 schema.StringAttribute{Required: true, MarkdownDescription: "The security group name.", Validators: []validator.String{stringvalidator.LengthAtLeast(1)}},
+			securityGroupAssociationsAttribute:     schema.SetAttribute{Optional: true, Computed: true, ElementType: types.StringType, MarkdownDescription: "Resource IDs to which the group applies.", Validators: []validator.Set{setvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)), setvalidator.NoNullValues()}, PlanModifiers: []planmodifier.Set{NullToEmptySetPlanModifier(), setplanmodifier.UseStateForUnknown()}},
+			securityGroupAllowAllInboundJSONField:  schema.BoolAttribute{Optional: true, Computed: true, Default: booldefault.StaticBool(false), MarkdownDescription: "Allow all inbound traffic."},
+			securityGroupAllowAllOutboundJSONField: schema.BoolAttribute{Optional: true, Computed: true, Default: booldefault.StaticBool(false), MarkdownDescription: "Allow all outbound traffic."},
+			"external_rules":                       schema.BoolAttribute{Optional: true, Computed: true, MarkdownDescription: "Do not manage the group's complete rule list inline. Standalone rule resources can still be used.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}},
+			securityGroupInboundRulesAttribute:     schema.ListNestedAttribute{Optional: true, Computed: true, MarkdownDescription: "Inbound " + ruleDescription, NestedObject: schema.NestedAttributeObject{Attributes: securityGroupRuleNestedAttributes()}},
+			securityGroupOutboundRulesAttribute:    schema.ListNestedAttribute{Optional: true, Computed: true, MarkdownDescription: "Outbound " + ruleDescription, NestedObject: schema.NestedAttributeObject{Attributes: securityGroupRuleNestedAttributes()}},
 		},
 		Blocks: map[string]schema.Block{
 			"inbound_rule":  schema.ListNestedBlock{MarkdownDescription: "Deprecated inbound rule blocks.", DeprecationMessage: deprecated, NestedObject: schema.NestedBlockObject{Attributes: securityGroupRuleNestedAttributes()}},
 			"outbound_rule": schema.ListNestedBlock{MarkdownDescription: "Deprecated outbound rule blocks.", DeprecationMessage: deprecated, NestedObject: schema.NestedBlockObject{Attributes: securityGroupRuleNestedAttributes()}},
+		},
+		Version: 1,
+	}
+}
+
+//nolint:lll // The prior schema must remain explicit and reviewable beside its upgrader.
+func (r *SecurityGroupResource) UpgradeState(_ context.Context) map[int64]resource.StateUpgrader {
+	ruleAttributes := securityGroupRuleAttributes(false)
+	delete(ruleAttributes, securityGroupActionJSONField)
+	ruleDescription := "Rules managed as an expression-friendly list."
+	deprecated := "Use the corresponding plural rules attribute. This block remains supported for backwards compatibility."
+	priorSchema := schema.Schema{
+		MarkdownDescription: "Manages a security group, its associations, and optionally its complete inline rule set.",
+		Attributes: map[string]schema.Attribute{
+			"id":                                   schema.StringAttribute{Computed: true, MarkdownDescription: "The unique identifier of the security group.", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+			"name":                                 schema.StringAttribute{Required: true, MarkdownDescription: "The security group name.", Validators: []validator.String{stringvalidator.LengthAtLeast(1)}},
+			securityGroupAssociationsAttribute:     schema.SetAttribute{Optional: true, Computed: true, ElementType: types.StringType, MarkdownDescription: "Resource IDs to which the group applies.", Validators: []validator.Set{setvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)), setvalidator.NoNullValues()}, PlanModifiers: []planmodifier.Set{NullToEmptySetPlanModifier(), setplanmodifier.UseStateForUnknown()}},
+			securityGroupAllowAllInboundJSONField:  schema.BoolAttribute{Optional: true, Computed: true, Default: booldefault.StaticBool(false), MarkdownDescription: "Allow all inbound traffic."},
+			securityGroupAllowAllOutboundJSONField: schema.BoolAttribute{Optional: true, Computed: true, Default: booldefault.StaticBool(false), MarkdownDescription: "Allow all outbound traffic."},
+			"external_rules":                       schema.BoolAttribute{Optional: true, Computed: true, MarkdownDescription: "Do not manage the group's complete rule list inline. Standalone rule resources can still be used.", PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}},
+			securityGroupInboundRulesAttribute:     schema.ListNestedAttribute{Optional: true, Computed: true, MarkdownDescription: "Inbound " + ruleDescription, NestedObject: schema.NestedAttributeObject{Attributes: ruleAttributes}},
+			securityGroupOutboundRulesAttribute:    schema.ListNestedAttribute{Optional: true, Computed: true, MarkdownDescription: "Outbound " + ruleDescription, NestedObject: schema.NestedAttributeObject{Attributes: ruleAttributes}},
+		},
+		Blocks: map[string]schema.Block{
+			"inbound_rule":  schema.ListNestedBlock{MarkdownDescription: "Deprecated inbound rule blocks.", DeprecationMessage: deprecated, NestedObject: schema.NestedBlockObject{Attributes: ruleAttributes}},
+			"outbound_rule": schema.ListNestedBlock{MarkdownDescription: "Deprecated outbound rule blocks.", DeprecationMessage: deprecated, NestedObject: schema.NestedBlockObject{Attributes: ruleAttributes}},
+		},
+	}
+	return map[int64]resource.StateUpgrader{
+		0: {
+			PriorSchema: &priorSchema,
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var prior securityGroupResourceModelV0
+				resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				upgraded := SecurityGroupResourceModel{
+					ID: prior.ID, Name: prior.Name, Associations: prior.Associations,
+					AllowAllInbound: prior.AllowAllInbound, AllowAllOutbound: prior.AllowAllOutbound,
+					ExternalRules: prior.ExternalRules,
+				}
+				var diags diag.Diagnostics
+				upgraded.InboundRules, diags = upgradeSecurityGroupRuleListV0(ctx, prior.InboundRules)
+				resp.Diagnostics.Append(diags...)
+				upgraded.OutboundRules, diags = upgradeSecurityGroupRuleListV0(ctx, prior.OutboundRules)
+				resp.Diagnostics.Append(diags...)
+				upgraded.InboundRule, diags = upgradeSecurityGroupRuleListV0(ctx, prior.InboundRule)
+				resp.Diagnostics.Append(diags...)
+				upgraded.OutboundRule, diags = upgradeSecurityGroupRuleListV0(ctx, prior.OutboundRule)
+				resp.Diagnostics.Append(diags...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				resp.Diagnostics.Append(resp.State.Set(ctx, &upgraded)...)
+			},
 		},
 	}
 }
@@ -900,9 +970,10 @@ func setSecurityGroupRules(ctx context.Context, model *SecurityGroupResourceMode
 //nolint:lll // API request projection remains explicit.
 func securityGroupRuleAPIArguments(rule canonicalSecurityGroupRule) core.SecurityGroupRuleArguments {
 	direction := core.SecurityGroupRuleDirectionEnum(strings.ToLower(rule.Direction))
+	action := core.SecurityGroupRuleActionEnum(normalizeSecurityGroupRuleAction(rule.Action))
 	protocol := core.SecurityGroupRuleProtocolEnum(strings.ToUpper(rule.Protocol))
 	targets := append([]string(nil), rule.Targets...)
-	return core.SecurityGroupRuleArguments{Direction: &direction, Protocol: &protocol, Ports: &rule.Ports, Targets: &targets, Notes: &rule.Notes}
+	return core.SecurityGroupRuleArguments{Action: &action, Direction: &direction, Protocol: &protocol, Ports: &rule.Ports, Targets: &targets, Notes: &rule.Notes}
 }
 
 type securityGroupRuleReconciliation struct {

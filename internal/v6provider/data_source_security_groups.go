@@ -34,6 +34,7 @@ type SecurityGroupRuleDataSourceModel struct {
 	ID              types.String `tfsdk:"id"`
 	SecurityGroupID types.String `tfsdk:"security_group_id"`
 	Direction       types.String `tfsdk:"direction"`
+	Action          types.String `tfsdk:"action"`
 	Protocol        types.String `tfsdk:"protocol"`
 	Ports           types.String `tfsdk:"ports"`
 	Targets         types.Set    `tfsdk:"targets"`
@@ -77,23 +78,28 @@ func configureSecurityGroupDataSource(req datasource.ConfigureRequest, resp *dat
 
 func computedSecurityGroupRuleAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
-		"id":        schema.StringAttribute{Computed: true},
-		"direction": schema.StringAttribute{Computed: true},
-		"protocol":  schema.StringAttribute{Computed: true},
-		"ports":     schema.StringAttribute{Computed: true},
-		"targets":   schema.SetAttribute{Computed: true, ElementType: types.StringType},
-		"notes":     schema.StringAttribute{Computed: true},
+		"id":                            schema.StringAttribute{Computed: true},
+		securityGroupDirectionJSONField: schema.StringAttribute{Computed: true},
+		securityGroupActionJSONField: schema.StringAttribute{
+			Computed: true,
+			MarkdownDescription: "Whether the rule permits (`allow`) or drops (`deny`) " +
+				"matching traffic.",
+		},
+		"protocol": schema.StringAttribute{Computed: true},
+		"ports":    schema.StringAttribute{Computed: true},
+		"targets":  schema.SetAttribute{Computed: true, ElementType: types.StringType},
+		"notes":    schema.StringAttribute{Computed: true},
 	}
 }
 
 //nolint:lll // Nested schema is assembled in one place for parity.
 func computedSecurityGroupAttributes(includeRules bool) map[string]schema.Attribute {
 	attrs := map[string]schema.Attribute{
-		"id":                               schema.StringAttribute{Computed: true},
-		"name":                             schema.StringAttribute{Computed: true},
-		securityGroupAssociationsAttribute: schema.SetAttribute{Computed: true, ElementType: types.StringType},
-		"allow_all_inbound":                schema.BoolAttribute{Computed: true},
-		"allow_all_outbound":               schema.BoolAttribute{Computed: true},
+		"id":                                   schema.StringAttribute{Computed: true},
+		"name":                                 schema.StringAttribute{Computed: true},
+		securityGroupAssociationsAttribute:     schema.SetAttribute{Computed: true, ElementType: types.StringType},
+		securityGroupAllowAllInboundJSONField:  schema.BoolAttribute{Computed: true},
+		securityGroupAllowAllOutboundJSONField: schema.BoolAttribute{Computed: true},
 	}
 	if includeRules {
 		attrs[securityGroupInboundRulesAttribute] = schema.ListNestedAttribute{Computed: true, NestedObject: schema.NestedAttributeObject{Attributes: computedSecurityGroupRuleAttributes()}}
@@ -229,6 +235,7 @@ func (d *SecurityGroupRuleDataSource) Read(ctx context.Context, req datasource.R
 	if rule.Direction != nil {
 		data.Direction = types.StringValue(strings.ToLower(string(*rule.Direction)))
 	}
+	data.Action = types.StringValue(apiSecurityGroupRuleAction(rule.Action))
 	if rule.Protocol != nil {
 		data.Protocol = types.StringValue(strings.ToUpper(string(*rule.Protocol)))
 	}
