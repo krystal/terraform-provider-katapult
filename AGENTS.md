@@ -51,6 +51,8 @@ over invoking the CLI directly; use the CLI forms below as fallbacks:
 - Run `mise run setup` to download Go dependencies, install the Lefthook Git
   hooks, and initialize or sync CodeGraph. Mise installs missing task tools
   automatically.
+- If golangci-lint reports source-code paths from a deleted sibling worktree,
+  run `mise exec -- golangci-lint cache clean` before retrying the lint task.
 - Keep credentials and developer overrides in ignored `.envrc`,
   `mise.local.toml`, or `.mise.local.toml` files. Never print or commit them.
 

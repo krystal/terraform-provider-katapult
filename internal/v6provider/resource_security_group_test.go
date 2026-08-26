@@ -927,6 +927,94 @@ func TestAccKatapultSecurityGroup_rule_actions(t *testing.T) {
 	})
 }
 
+//nolint:lll // Full state paths make positional ID preservation directly auditable.
+func TestAccKatapultSecurityGroup_rule_action_middle_insert(t *testing.T) {
+	tt := newTestTools(t)
+	name := tt.ResourceName("rule-action-middle-insert")
+	var sshID, httpID, quicID, denyID string
+
+	initial := securityGroupRuleActionMiddleInsertConfig(name, false)
+	withDeny := securityGroupRuleActionMiddleInsertConfig(name, true)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: initial,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultSecurityGroupExists(tt, "katapult_security_group.test"),
+					captureResourceAttr("katapult_security_group.test", "inbound_rules.0.id", &sshID),
+					captureResourceAttr("katapult_security_group.test", "inbound_rules.1.id", &httpID),
+					captureResourceAttr("katapult_security_group.test", "inbound_rules.2.id", &quicID),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.0.action", string(core.Allow)),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.1.action", string(core.Allow)),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.2.action", string(core.Allow)),
+				),
+			},
+			{
+				Config: withDeny,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr("katapult_security_group.test", "inbound_rules.0.id", &sshID),
+					captureResourceAttr("katapult_security_group.test", "inbound_rules.1.id", &denyID),
+					resource.TestCheckResourceAttrPtr("katapult_security_group.test", "inbound_rules.2.id", &httpID),
+					resource.TestCheckResourceAttrPtr("katapult_security_group.test", "inbound_rules.3.id", &quicID),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.0.action", string(core.Allow)),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.1.action", string(core.Deny)),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.2.action", string(core.Allow)),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.3.action", string(core.Allow)),
+				),
+			},
+			{
+				Config:           withDeny,
+				PlanOnly:         true,
+				ConfigPlanChecks: emptyPostRefreshPlanChecks(),
+			},
+		},
+	})
+}
+
+func securityGroupRuleActionMiddleInsertConfig(name string, withDeny bool) string {
+	denyRule := ""
+	if withDeny {
+		denyRule = `
+			{
+				action   = "deny"
+				protocol = "TCP"
+				ports    = "22"
+				targets  = ["100.64.0.0/10"]
+				notes    = "Block SSH from CGNAT"
+			},`
+	}
+
+	return undent.Stringf(`
+		resource "katapult_security_group" "test" {
+			name = %q
+			inbound_rules = [
+				{
+					protocol = "TCP"
+					ports    = "22"
+					targets  = ["all:ipv4", "all:ipv6"]
+					notes    = "SSH"
+				},%s
+				{
+					protocol = "TCP"
+					ports    = "80,443"
+					targets  = ["all:ipv4", "all:ipv6"]
+					notes    = "HTTP & HTTPS"
+				},
+				{
+					protocol = "UDP"
+					ports    = "443"
+					targets  = ["all:ipv4", "all:ipv6"]
+					notes    = "QUIC"
+				},
+			]
+		}
+	`, name, denyRule)
+}
+
 func securityGroupRuleActionsConfig(name string, legacy bool, firstAction, secondAction string) string {
 	rules := fmt.Sprintf(`
 		inbound_rules = [
