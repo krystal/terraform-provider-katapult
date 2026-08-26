@@ -305,6 +305,8 @@ func (k *KatapultProvider) DataSources(
 		func() datasource.DataSource { return &VirtualMachineDataSource{} },
 		func() datasource.DataSource { return &VirtualMachineDisksDataSource{} },
 		func() datasource.DataSource { return &VirtualMachinesDataSource{} },
+		func() datasource.DataSource { return &VirtualMachinePackageDataSource{} },
+		func() datasource.DataSource { return &VirtualMachinePackagesDataSource{} },
 		func() datasource.DataSource { return &SecurityGroupDataSource{} },
 		func() datasource.DataSource { return &SecurityGroupRuleDataSource{} },
 		func() datasource.DataSource { return &SecurityGroupRulesDataSource{} },

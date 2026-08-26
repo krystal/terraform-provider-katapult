@@ -32,8 +32,6 @@ func TestLegacyProviderRegistrations(t *testing.T) {
 	assert.Equal(t, []string{
 		"katapult_disk_template",
 		"katapult_disk_templates",
-		"katapult_virtual_machine_package",
-		"katapult_virtual_machine_packages",
 	}, sortedKeys(legacyProvider.DataSourcesMap),
 		"new data sources belong in internal/v6provider; "+
 			"only remove entries during migration")

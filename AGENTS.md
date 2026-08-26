@@ -106,6 +106,10 @@ The organization VM list endpoint may lowercase hostnames while VM resource
 state retains configured casing. Collection tests and consumers must not assume
 casing is identical across those views.
 
+The virtual machine package list endpoint rejects `per_page` values above 100.
+Keep package pagination at 100 or lower even though the generated parameter type
+does not encode that limit.
+
 Route every `StateChangeConf` delay, minimum timeout, and poll interval through
 the provider `Meta` timing helpers, including test sweepers. Compress any
 additional wall-clock settling window in replay mode so recorded state

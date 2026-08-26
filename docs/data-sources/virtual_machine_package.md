@@ -3,12 +3,12 @@
 page_title: "katapult_virtual_machine_package Data Source - terraform-provider-katapult"
 subcategory: "Compute"
 description: |-
-  Fetch details of a single Virtual Machine Package using package id or permalink.
+  Retrieves a virtual machine package by ID or permalink.
 ---
 
 # katapult_virtual_machine_package (Data Source)
 
-Fetch details of a single Virtual Machine Package using package `id` or `permalink`.
+Retrieves a virtual machine package by ID or permalink.
 
 ## Example Usage
 
@@ -30,13 +30,13 @@ data "katapult_virtual_machine_package" "rock3" {
 ### Optional
 
 - `id` (String) The ID of this resource.
-- `permalink` (String)
+- `permalink` (String) The permalink of the virtual machine package.
 
 ### Read-Only
 
 - `cpu_cores` (Number) Number of CPU cores.
 - `ipv4_addresses` (Number) Number of included IPv4 addresses.
 - `memory_in_gb` (Number) Memory in GB.
-- `name` (String)
-- `privacy` (String)
+- `name` (String) The name of the virtual machine package.
+- `privacy` (String) The visibility of the virtual machine package.
 - `storage_in_gb` (Number) Storage in GB.
