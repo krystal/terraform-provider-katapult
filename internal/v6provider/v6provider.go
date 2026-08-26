@@ -277,6 +277,8 @@ func (k *KatapultProvider) DataSources(
 		func() datasource.DataSource { return &DiskDataSource{} },
 		func() datasource.DataSource { return &DiskIOProfileDataSource{} },
 		func() datasource.DataSource { return &DiskIOProfilesDataSource{} },
+		func() datasource.DataSource { return &DiskTemplateDataSource{} },
+		func() datasource.DataSource { return &DiskTemplatesDataSource{} },
 		func() datasource.DataSource { return &DisksDataSource{} },
 		func() datasource.DataSource { return &FileStorageVolumeDataSource{} },
 		func() datasource.DataSource { return &GlobalAddressListsDataSource{} },

@@ -3,12 +3,12 @@
 page_title: "katapult_disk_templates Data Source - terraform-provider-katapult"
 subcategory: "Storage"
 description: |-
-  
+  Lists disk templates available to the provider organization.
 ---
 
 # katapult_disk_templates (Data Source)
 
-
+Lists disk templates available to the provider organization.
 
 ## Example Usage
 
@@ -26,18 +26,18 @@ data "katapult_disk_templates" "all" {}
 
 ### Read-Only
 
-- `id` (String) Always set to provider organization value.
-- `templates` (List of Object) (see [below for nested schema](#nestedatt--templates))
+- `id` (String) Always set to the provider organization value.
+- `templates` (Attributes List) The available disk templates. (see [below for nested schema](#nestedatt--templates))
 
 <a id="nestedatt--templates"></a>
 ### Nested Schema for `templates`
 
 Read-Only:
 
-- `description` (String)
-- `id` (String)
-- `name` (String)
-- `os_family` (String)
-- `permalink` (String)
-- `template_version` (Number)
-- `universal` (Boolean)
+- `description` (String) The description of the disk template.
+- `id` (String) The ID of this resource.
+- `name` (String) The name of the disk template.
+- `os_family` (String) The operating system family name.
+- `permalink` (String) The permalink of the disk template.
+- `template_version` (Number) The latest disk template version number.
+- `universal` (Boolean) Whether the disk template is available to all organizations.

@@ -29,10 +29,7 @@ func TestLegacyProviderRegistrations(t *testing.T) {
 		"new resources belong in internal/v6provider; "+
 			"only remove entries during migration")
 
-	assert.Equal(t, []string{
-		"katapult_disk_template",
-		"katapult_disk_templates",
-	}, sortedKeys(legacyProvider.DataSourcesMap),
+	assert.Equal(t, []string{}, sortedKeys(legacyProvider.DataSourcesMap),
 		"new data sources belong in internal/v6provider; "+
 			"only remove entries during migration")
 }

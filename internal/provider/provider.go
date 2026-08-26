@@ -131,10 +131,7 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 			},
 			ResourcesMap: map[string]*schema.Resource{},
 
-			DataSourcesMap: map[string]*schema.Resource{
-				"katapult_disk_template":  dataSourceDiskTemplate(),
-				"katapult_disk_templates": dataSourceDiskTemplates(),
-			},
+			DataSourcesMap: map[string]*schema.Resource{},
 		}
 
 		if os.Getenv("TF_ACC") == "1" {
