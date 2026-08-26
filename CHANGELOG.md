@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.21](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.20...v0.0.21) (2026-08-26)
+
+
+### Features
+
+* migrate security groups to Terraform Plugin Framework ([#202](https://github.com/krystal/terraform-provider-katapult/issues/202)) ([d934d82](https://github.com/krystal/terraform-provider-katapult/commit/d934d8216010e6cceff01b7f51c47f5b5ea40588))
+* support security group rule actions ([#204](https://github.com/krystal/terraform-provider-katapult/issues/204)) ([4c6b99b](https://github.com/krystal/terraform-provider-katapult/commit/4c6b99b884baee774398211046b109b14f1d97ae))
+
 ## [0.0.20](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.19...v0.0.20) (2026-08-18)
 
 
