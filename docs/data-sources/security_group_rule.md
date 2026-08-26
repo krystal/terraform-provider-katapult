@@ -28,6 +28,7 @@ data "katapult_security_group_rule" "ssh" {
 
 ### Read-Only
 
+- `action` (String) Whether the rule permits (`allow`) or drops (`deny`) matching traffic.
 - `direction` (String)
 - `notes` (String)
 - `ports` (String)

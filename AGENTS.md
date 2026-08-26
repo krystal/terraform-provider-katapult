@@ -51,6 +51,8 @@ over invoking the CLI directly; use the CLI forms below as fallbacks:
 - Run `mise run setup` to download Go dependencies, install the Lefthook Git
   hooks, and initialize or sync CodeGraph. Mise installs missing task tools
   automatically.
+- If golangci-lint reports source-code paths from a deleted sibling worktree,
+  run `mise exec -- golangci-lint cache clean` before retrying the lint task.
 - Keep credentials and developer overrides in ignored `.envrc`,
   `mise.local.toml`, or `.mise.local.toml` files. Never print or commit them.
 
@@ -152,6 +154,10 @@ an order-insensitive set, matching the strict request matcher.
   and its configured fields cannot be rewritten as unknown. During staged
   adoption, preserve configured fields, leave only computed fields unknown,
   and let refresh expose remote differences for the follow-up plan.
+- Adding an `Optional` and `Computed` field with a schema default does not
+  rewrite existing Framework state before planning, including fields nested in
+  lists or blocks. When legacy state must remain plan-empty, increment the
+  schema version and use an explicit state upgrader to materialize the default.
 - Keep GitHub Actions pinned to full commit SHAs with accurate version comments.
 - Preserve the three-day dependency maturity policy in mise, Pinact, and
   Dependabot.

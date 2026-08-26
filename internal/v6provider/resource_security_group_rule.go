@@ -25,6 +25,17 @@ type SecurityGroupRuleResourceModel struct {
 	ID              types.String               `tfsdk:"id"`
 	SecurityGroupID types.String               `tfsdk:"security_group_id"`
 	Direction       types.String               `tfsdk:"direction"`
+	Action          types.String               `tfsdk:"action"`
+	Protocol        caseInsensitiveStringValue `tfsdk:"protocol"`
+	Ports           types.String               `tfsdk:"ports"`
+	Targets         types.Set                  `tfsdk:"targets"`
+	Notes           types.String               `tfsdk:"notes"`
+}
+
+type securityGroupRuleResourceModelV0 struct {
+	ID              types.String               `tfsdk:"id"`
+	SecurityGroupID types.String               `tfsdk:"security_group_id"`
+	Direction       types.String               `tfsdk:"direction"`
 	Protocol        caseInsensitiveStringValue `tfsdk:"protocol"`
 	Ports           types.String               `tfsdk:"ports"`
 	Targets         types.Set                  `tfsdk:"targets"`
@@ -33,6 +44,7 @@ type SecurityGroupRuleResourceModel struct {
 
 var (
 	_ resource.ResourceWithImportState    = (*SecurityGroupRuleResource)(nil)
+	_ resource.ResourceWithUpgradeState   = (*SecurityGroupRuleResource)(nil)
 	_ resource.ResourceWithValidateConfig = (*SecurityGroupRuleResource)(nil)
 )
 
@@ -58,11 +70,17 @@ func (r *SecurityGroupRuleResource) Configure(_ context.Context, req resource.Co
 func securityGroupRuleAttributes(standalone bool) map[string]schema.Attribute {
 	attrs := map[string]schema.Attribute{
 		"id": schema.StringAttribute{Computed: true, MarkdownDescription: "The unique identifier of the security group rule.", PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
-		"direction": schema.StringAttribute{
+		securityGroupDirectionJSONField: schema.StringAttribute{
 			Required: standalone, Computed: !standalone,
 			MarkdownDescription: "The rule direction (`inbound` or `outbound`). Comparisons are case-insensitive and configured casing is preserved when it matches the API value.",
 			Validators:          []validator.String{stringvalidator.OneOfCaseInsensitive("inbound", "outbound")},
 			PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+		},
+		securityGroupActionJSONField: schema.StringAttribute{
+			Optional: true, Computed: true,
+			MarkdownDescription: "Whether the rule permits (`allow`) or drops (`deny`) matching traffic. Defaults to `allow`. Katapult evaluates all deny rules before allow rules, then applies an implicit deny-all rule. List order does not control evaluation.",
+			Default:             stringdefault.StaticString(string(core.Allow)),
+			Validators:          []validator.String{stringvalidator.OneOf(string(core.Allow), string(core.Deny))},
 		},
 		"protocol": schema.StringAttribute{
 			Required: true, MarkdownDescription: "The rule protocol (`TCP`, `UDP`, or `ICMP`). Comparisons are case-insensitive. Existing and imported API casing remains stable, newly configured casing remains as written, and API requests use uppercase protocol values.",
@@ -131,6 +149,35 @@ func (r *SecurityGroupRuleResource) Schema(_ context.Context, _ resource.SchemaR
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manages an individual security group rule. Use this with a group whose `external_rules` setting is enabled.",
 		Attributes:          securityGroupRuleAttributes(true),
+		Version:             1,
+	}
+}
+
+//nolint:lll // The prior schema must remain explicit and reviewable beside its upgrader.
+func (r *SecurityGroupRuleResource) UpgradeState(_ context.Context) map[int64]resource.StateUpgrader {
+	priorAttributes := securityGroupRuleAttributes(true)
+	delete(priorAttributes, securityGroupActionJSONField)
+	priorSchema := schema.Schema{
+		MarkdownDescription: "Manages an individual security group rule. Use this with a group whose `external_rules` setting is enabled.",
+		Attributes:          priorAttributes,
+	}
+	return map[int64]resource.StateUpgrader{
+		0: {
+			PriorSchema: &priorSchema,
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var prior securityGroupRuleResourceModelV0
+				resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				upgraded := SecurityGroupRuleResourceModel{
+					ID: prior.ID, SecurityGroupID: prior.SecurityGroupID,
+					Direction: prior.Direction, Action: types.StringValue(string(core.Allow)),
+					Protocol: prior.Protocol, Ports: prior.Ports, Targets: prior.Targets, Notes: prior.Notes,
+				}
+				resp.Diagnostics.Append(resp.State.Set(ctx, &upgraded)...)
+			},
+		},
 	}
 }
 
@@ -153,6 +200,10 @@ func (r *SecurityGroupRuleResource) ValidateConfig(
 
 //nolint:lll // API argument projection remains explicit.
 func securityGroupRuleArguments(ctx context.Context, model SecurityGroupRuleResourceModel) (core.SecurityGroupRuleArguments, error) {
+	if model.Action.IsUnknown() {
+		return core.SecurityGroupRuleArguments{}, errors.New("security group rule action is unknown")
+	}
+
 	var targets []string
 	diags := model.Targets.ElementsAs(ctx, &targets, false)
 	if diags.HasError() {
@@ -160,8 +211,9 @@ func securityGroupRuleArguments(ctx context.Context, model SecurityGroupRuleReso
 		return core.SecurityGroupRuleArguments{}, fmt.Errorf("%s: %s", first.Summary(), first.Detail())
 	}
 	direction := core.SecurityGroupRuleDirectionEnum(strings.ToLower(model.Direction.ValueString()))
+	action := core.SecurityGroupRuleActionEnum(normalizeSecurityGroupRuleAction(model.Action.ValueString()))
 	protocol := core.SecurityGroupRuleProtocolEnum(strings.ToUpper(model.Protocol.ValueString()))
-	args := core.SecurityGroupRuleArguments{Direction: &direction, Protocol: &protocol, Targets: &targets}
+	args := core.SecurityGroupRuleArguments{Action: &action, Direction: &direction, Protocol: &protocol, Targets: &targets}
 	if !model.Ports.IsNull() && !model.Ports.IsUnknown() {
 		args.Ports = model.Ports.ValueStringPointer()
 	}
@@ -209,6 +261,7 @@ func (r *SecurityGroupRuleResource) Create(ctx context.Context, req resource.Cre
 			plan.Direction.ValueString(), remoteDirection,
 		))
 	}
+	plan.Action = types.StringValue(apiSecurityGroupRuleAction(created.Action))
 	if created.Protocol != nil {
 		plan.Protocol = caseInsensitiveStringValueOf(strings.ToUpper(string(*created.Protocol)))
 	}
@@ -278,6 +331,7 @@ func (r *SecurityGroupRuleResource) Update(ctx context.Context, req resource.Upd
 func securityGroupRulePropertiesEqual(state, plan SecurityGroupRuleResourceModel) bool {
 	return state.SecurityGroupID.Equal(plan.SecurityGroupID) &&
 		strings.EqualFold(state.Direction.ValueString(), plan.Direction.ValueString()) &&
+		state.Action.Equal(plan.Action) &&
 		strings.EqualFold(state.Protocol.ValueString(), plan.Protocol.ValueString()) &&
 		state.Ports.Equal(plan.Ports) &&
 		state.Targets.Equal(plan.Targets) &&
@@ -346,6 +400,7 @@ func (r *SecurityGroupRuleResource) readMaybeMissing(ctx context.Context, id str
 			priorDirection, strings.ToLower(string(*rule.Direction)),
 		))
 	}
+	model.Action = types.StringValue(apiSecurityGroupRuleAction(rule.Action))
 	if rule.Protocol != nil {
 		remoteProtocol := strings.ToUpper(string(*rule.Protocol))
 		if strings.EqualFold(priorProtocol, remoteProtocol) && priorProtocol != "" {

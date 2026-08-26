@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/dnaeon/go-vcr/cassette"
+	"github.com/krystal/go-katapult/next/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -449,11 +450,8 @@ func securityGroupCassetteRequestKey(method, rawURL string, body []byte) string 
 }
 
 const (
-	securityGroupAssociationsJSONField     = "associations"
-	securityGroupTargetsJSONField          = "targets"
-	securityGroupDirectionJSONField        = "direction"
-	securityGroupAllowAllInboundJSONField  = "allow_all_inbound"
-	securityGroupAllowAllOutboundJSONField = "allow_all_outbound"
+	securityGroupAssociationsJSONField = "associations"
+	securityGroupTargetsJSONField      = "targets"
 )
 
 func newSecurityGroupCharacterizationTestTools(t *testing.T) *testTools {
@@ -584,6 +582,12 @@ func securityGroupJSONBodiesEqual(actual, recorded []byte) bool {
 			actualProperties, actualHasProperties := actualMap["properties"].(map[string]any)
 			recordedProperties, recordedHasProperties := recordedMap["properties"].(map[string]any)
 			if actualHasProperties && recordedHasProperties {
+				if action, ok := actualProperties[securityGroupActionJSONField].(string); ok &&
+					action == string(core.Allow) {
+					if _, recordedAction := recordedProperties[securityGroupActionJSONField]; !recordedAction {
+						delete(actualProperties, securityGroupActionJSONField)
+					}
+				}
 				for key := range actualProperties {
 					if _, ok := recordedProperties[key]; !ok &&
 						securityGroupLegacyOmittableJSONProperty(key) {
@@ -832,6 +836,18 @@ func TestSecurityGroupJSONBodiesEqualRejectsUnknownActualProperties(t *testing.T
 		[]byte(`{"properties":{"name":"web","unexpected":"regression"}}`),
 		[]byte(`{"properties":{"name":"web"}}`),
 	))
+}
+
+func TestSecurityGroupJSONBodiesEqualTreatsOnlyAllowAsLegacyOmission(t *testing.T) {
+	t.Parallel()
+
+	recorded := []byte(`{"properties":{"protocol":"TCP","targets":["all:ipv4"]}}`)
+	allow := []byte(`{"properties":{"action":"allow","protocol":"TCP","targets":["all:ipv4"]}}`)
+	deny := []byte(`{"properties":{"action":"deny","protocol":"TCP","targets":["all:ipv4"]}}`)
+
+	assert.True(t, securityGroupJSONBodiesEqual(allow, recorded))
+	assert.False(t, securityGroupJSONBodiesEqual(deny, recorded))
+	assert.False(t, securityGroupJSONBodiesEqual(recorded, allow))
 }
 
 func TestOrderedSecurityGroupCassetteTransportGETFallbackRequiresMatchingBody(t *testing.T) {

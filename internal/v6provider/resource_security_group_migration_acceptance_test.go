@@ -1,11 +1,16 @@
 package v6provider
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jimeh/undent"
+	"github.com/krystal/go-katapult/next/core"
 )
 
 //nolint:lll // The complete handover and representation matrix is one lifecycle.
@@ -15,6 +20,7 @@ func TestAccKatapultSecurityGroup_migrate_v5_blocks_and_round_trip(t *testing.T)
 	var groupID, sshID, firstICMPID, secondICMPID, dnsID, webID string
 
 	blocks := securityGroupMigrationConfig(name, securityGroupMigrationBlockRules(), false)
+	blocksExplicitAllow := securityGroupMigrationExplicitAllow(blocks)
 	attributesUnknown := securityGroupMigrationConfigWithDirection(name, securityGroupMigrationUnknownAttributeRules(), false, "INBOUND") + undent.String(`
 		resource "terraform_data" "rule_dependency" {
 			input = "enabled"
@@ -50,16 +56,26 @@ func TestAccKatapultSecurityGroup_migrate_v5_blocks_and_round_trip(t *testing.T)
 			},
 			{
 				ProtoV6ProviderFactories: tt.ProviderFactories,
+				Config:                   blocksExplicitAllow,
+				PlanOnly:                 true,
+				ConfigPlanChecks:         emptyPostRefreshPlanChecks(),
+			},
+			{
+				ProtoV6ProviderFactories: tt.ProviderFactories,
 				Config:                   attributesUnknown,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "id", &groupID),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "inbound_rules.0.id", &firstICMPID),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "inbound_rules.1.id", &sshID),
 					resource.TestCheckResourceAttr("katapult_security_group.main", "inbound_rules.1.ports", "2222"),
+					resource.TestCheckResourceAttr("katapult_security_group.main", "inbound_rules.0.action", "allow"),
+					resource.TestCheckResourceAttr("katapult_security_group.main", "inbound_rules.1.action", "allow"),
+					resource.TestCheckResourceAttr("katapult_security_group.main", "inbound_rules.2.action", "allow"),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "inbound_rules.2.id", &secondICMPID),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "outbound_rules.0.id", &webID),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "outbound_rules.1.id", &dnsID),
 					resource.TestCheckResourceAttr("katapult_security_group_rule.standalone", "direction", "INBOUND"),
+					resource.TestCheckResourceAttr("katapult_security_group_rule.standalone", "action", "allow"),
 				),
 			},
 			{ProtoV6ProviderFactories: tt.ProviderFactories, Config: attributesMaterial},
@@ -99,6 +115,8 @@ func TestAccKatapultSecurityGroup_migrate_v5_blocks_and_round_trip(t *testing.T)
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "inbound_rule.2.id", &secondICMPID),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "outbound_rule.0.id", &dnsID),
 					resource.TestCheckResourceAttr("katapult_security_group.main", "outbound_rule.0.ports", "5353"),
+					resource.TestCheckResourceAttr("katapult_security_group.main", "inbound_rule.0.action", "allow"),
+					resource.TestCheckResourceAttr("katapult_security_group.main", "outbound_rule.0.action", "allow"),
 					resource.TestCheckResourceAttrPtr("katapult_security_group.main", "outbound_rule.1.id", &webID),
 				),
 			},
@@ -138,9 +156,13 @@ func TestAccKatapultSecurityGroup_migrate_v5_blocks_and_round_trip(t *testing.T)
 					resource.TestCheckResourceAttr("katapult_security_group_rule.standalone", "direction", "inbound"),
 					resource.TestCheckResourceAttr("katapult_security_group_rule.standalone", "ports", ""),
 					resource.TestCheckResourceAttr("katapult_security_group_rule.standalone", "notes", ""),
+					resource.TestCheckResourceAttr("katapult_security_group_rule.standalone", "action", "allow"),
 					resource.TestCheckResourceAttr("data.katapult_security_group.group", "name", name+"-main"),
+					resource.TestCheckResourceAttr("data.katapult_security_group.group", "inbound_rules.0.action", "allow"),
 					resource.TestCheckResourceAttr("data.katapult_security_group_rule.rule", "direction", "inbound"),
+					resource.TestCheckResourceAttr("data.katapult_security_group_rule.rule", "action", "allow"),
 					resource.TestCheckResourceAttrSet("data.katapult_security_group_rules.rules", "id"),
+					resource.TestCheckResourceAttr("data.katapult_security_group_rules.rules", "inbound_rules.0.action", "allow"),
 					resource.TestCheckResourceAttrSet("data.katapult_security_groups.groups", "id"),
 				),
 			},
@@ -150,6 +172,55 @@ func TestAccKatapultSecurityGroup_migrate_v5_blocks_and_round_trip(t *testing.T)
 				ImportState:              true,
 				ImportStateVerify:        true,
 				ImportStateVerifyIgnore:  securityGroupRuleRepresentationAttributes,
+				ImportStateCheck: func(states []*terraform.InstanceState) error {
+					for _, state := range states {
+						if state == nil {
+							continue
+						}
+
+						ruleCount := 0
+						for _, representation := range securityGroupRuleRepresentationAttributes {
+							countValue, ok := state.Attributes[representation+".#"]
+							if !ok {
+								continue
+							}
+							count, err := strconv.Atoi(countValue)
+							if err != nil {
+								return fmt.Errorf("imported %s count is %q: %w", representation, countValue, err)
+							}
+							ruleCount += count
+						}
+						if ruleCount == 0 {
+							continue
+						}
+
+						actionCount := 0
+						for key, value := range state.Attributes {
+							for _, representation := range securityGroupRuleRepresentationAttributes {
+								if !strings.HasPrefix(key, representation+".") || !strings.HasSuffix(key, ".action") {
+									continue
+								}
+								actionCount++
+								if value != string(core.Allow) {
+									return fmt.Errorf("imported %s is %q, want allow", key, value)
+								}
+								break
+							}
+						}
+						if actionCount == 0 {
+							return fmt.Errorf("imported security group has %d rules but no action attributes", ruleCount)
+						}
+						if actionCount != ruleCount {
+							return fmt.Errorf(
+								"imported security group has %d rules but only %d action attributes",
+								ruleCount,
+								actionCount,
+							)
+						}
+						return nil
+					}
+					return fmt.Errorf("imported security group state contained no rules")
+				},
 			},
 			{
 				ProtoV6ProviderFactories: tt.ProviderFactories,
@@ -172,6 +243,19 @@ func TestAccKatapultSecurityGroup_migrate_v5_blocks_and_round_trip(t *testing.T)
 			},
 		},
 	})
+}
+
+func securityGroupMigrationExplicitAllow(config string) string {
+	lines := strings.Split(config, "\n")
+	result := make([]string, 0, len(lines)*2)
+	for _, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "protocol") {
+			indent := line[:len(line)-len(strings.TrimLeft(line, " \t"))]
+			result = append(result, indent+`action = "allow"`)
+		}
+		result = append(result, line)
+	}
+	return strings.Join(result, "\n")
 }
 
 func emptyPostRefreshPlanChecks() resource.ConfigPlanChecks {

@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -861,6 +864,260 @@ func TestAccKatapultSecurityGroup_rules(t *testing.T) {
 			},
 		},
 	})
+}
+
+//nolint:lll // Full state paths make action and ID assertions directly auditable.
+func TestAccKatapultSecurityGroup_rule_actions(t *testing.T) {
+	tt := newTestTools(t)
+	name := tt.ResourceName("rule-actions")
+	var groupID, allowID, denyID string
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: securityGroupRuleActionsConfig(name, false, string(core.Deny), string(core.Allow)),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultSecurityGroupExists(tt, "katapult_security_group.test"),
+					captureResourceAttr("katapult_security_group.test", "id", &groupID),
+					captureResourceAttr("katapult_security_group.test", "inbound_rules.0.id", &denyID),
+					captureResourceAttr("katapult_security_group.test", "inbound_rules.1.id", &allowID),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.0.action", string(core.Deny)),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.1.action", string(core.Allow)),
+					resource.TestCheckResourceAttr("data.katapult_security_group.group", "inbound_rules.0.action", string(core.Deny)),
+					resource.TestCheckResourceAttr("data.katapult_security_group.group", "inbound_rules.1.action", string(core.Allow)),
+					resource.TestCheckResourceAttr("data.katapult_security_group_rule.rule", "action", string(core.Deny)),
+					resource.TestCheckResourceAttr("data.katapult_security_group_rules.rules", "inbound_rules.0.action", string(core.Deny)),
+					resource.TestCheckResourceAttr("data.katapult_security_group_rules.rules", "inbound_rules.1.action", string(core.Allow)),
+					testAccCheckSecurityGroupsDataSourceRuleActions("data.katapult_security_groups.groups", &groupID, []string{string(core.Deny), string(core.Allow)}),
+				),
+			},
+			{
+				Config: securityGroupRuleActionsConfig(name, false, string(core.Allow), string(core.Deny)),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr("katapult_security_group.test", "inbound_rules.0.id", &allowID),
+					resource.TestCheckResourceAttrPtr("katapult_security_group.test", "inbound_rules.1.id", &denyID),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.0.action", string(core.Allow)),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.1.action", string(core.Deny)),
+				),
+			},
+			{
+				Config: securityGroupRuleActionsConfig(name, false, string(core.Deny), string(core.Deny)),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr("katapult_security_group.test", "inbound_rules.0.id", &allowID),
+					resource.TestCheckResourceAttrPtr("katapult_security_group.test", "inbound_rules.1.id", &denyID),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.0.action", string(core.Deny)),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.1.action", string(core.Deny)),
+				),
+			},
+			{
+				Config: securityGroupRuleActionsConfig(name, true, string(core.Deny), string(core.Deny)),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr("katapult_security_group.test", "inbound_rule.0.id", &allowID),
+					resource.TestCheckResourceAttrPtr("katapult_security_group.test", "inbound_rule.1.id", &denyID),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rule.0.action", string(core.Deny)),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rule.1.action", string(core.Deny)),
+					resource.TestCheckResourceAttr("data.katapult_security_group_rule.rule", "action", string(core.Deny)),
+					testAccCheckSecurityGroupsDataSourceRuleActions("data.katapult_security_groups.groups", &groupID, []string{string(core.Deny), string(core.Deny)}),
+				),
+			},
+		},
+	})
+}
+
+//nolint:lll // Full state paths make positional ID preservation directly auditable.
+func TestAccKatapultSecurityGroup_rule_action_middle_insert(t *testing.T) {
+	tt := newTestTools(t)
+	name := tt.ResourceName("rule-action-middle-insert")
+	var sshID, httpID, quicID, denyID string
+
+	initial := securityGroupRuleActionMiddleInsertConfig(name, false)
+	withDeny := securityGroupRuleActionMiddleInsertConfig(name, true)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy:             testAccCheckKatapultSecurityGroupDestroy(tt),
+		Steps: []resource.TestStep{
+			{
+				Config: initial,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultSecurityGroupExists(tt, "katapult_security_group.test"),
+					captureResourceAttr("katapult_security_group.test", "inbound_rules.0.id", &sshID),
+					captureResourceAttr("katapult_security_group.test", "inbound_rules.1.id", &httpID),
+					captureResourceAttr("katapult_security_group.test", "inbound_rules.2.id", &quicID),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.0.action", string(core.Allow)),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.1.action", string(core.Allow)),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.2.action", string(core.Allow)),
+				),
+			},
+			{
+				Config: withDeny,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPtr("katapult_security_group.test", "inbound_rules.0.id", &sshID),
+					captureResourceAttr("katapult_security_group.test", "inbound_rules.1.id", &denyID),
+					resource.TestCheckResourceAttrPtr("katapult_security_group.test", "inbound_rules.2.id", &httpID),
+					resource.TestCheckResourceAttrPtr("katapult_security_group.test", "inbound_rules.3.id", &quicID),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.0.action", string(core.Allow)),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.1.action", string(core.Deny)),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.2.action", string(core.Allow)),
+					resource.TestCheckResourceAttr("katapult_security_group.test", "inbound_rules.3.action", string(core.Allow)),
+				),
+			},
+			{
+				Config:           withDeny,
+				PlanOnly:         true,
+				ConfigPlanChecks: emptyPostRefreshPlanChecks(),
+			},
+		},
+	})
+}
+
+func securityGroupRuleActionMiddleInsertConfig(name string, withDeny bool) string {
+	denyRule := ""
+	if withDeny {
+		denyRule = `
+			{
+				action   = "deny"
+				protocol = "TCP"
+				ports    = "22"
+				targets  = ["100.64.0.0/10"]
+				notes    = "Block SSH from CGNAT"
+			},`
+	}
+
+	return undent.Stringf(`
+		resource "katapult_security_group" "test" {
+			name = %q
+			inbound_rules = [
+				{
+					protocol = "TCP"
+					ports    = "22"
+					targets  = ["all:ipv4", "all:ipv6"]
+					notes    = "SSH"
+				},%s
+				{
+					protocol = "TCP"
+					ports    = "80,443"
+					targets  = ["all:ipv4", "all:ipv6"]
+					notes    = "HTTP & HTTPS"
+				},
+				{
+					protocol = "UDP"
+					ports    = "443"
+					targets  = ["all:ipv4", "all:ipv6"]
+					notes    = "QUIC"
+				},
+			]
+		}
+	`, name, denyRule)
+}
+
+func securityGroupRuleActionsConfig(name string, legacy bool, firstAction, secondAction string) string {
+	rules := fmt.Sprintf(`
+		inbound_rules = [
+			{
+				action   = %q
+				protocol = "TCP"
+				ports    = "22"
+				targets  = ["all:ipv4"]
+				notes    = "Same match"
+			},
+			{
+				action   = %q
+				protocol = "TCP"
+				ports    = "22"
+				targets  = ["all:ipv4"]
+				notes    = "Same match"
+			},
+		]
+	`, firstAction, secondAction)
+	ruleReference := "katapult_security_group.test.inbound_rules[0].id"
+	if legacy {
+		rules = fmt.Sprintf(`
+			inbound_rule {
+				action   = %q
+				protocol = "TCP"
+				ports    = "22"
+				targets  = ["all:ipv4"]
+				notes    = "Same match"
+			}
+			inbound_rule {
+				action   = %q
+				protocol = "TCP"
+				ports    = "22"
+				targets  = ["all:ipv4"]
+				notes    = "Same match"
+			}
+		`, firstAction, secondAction)
+		ruleReference = "katapult_security_group.test.inbound_rule[0].id"
+	}
+
+	return undent.Stringf(`
+		resource "katapult_security_group" "test" {
+			name = %q
+			%s
+		}
+
+		data "katapult_security_group" "group" {
+			id = katapult_security_group.test.id
+		}
+
+		data "katapult_security_group_rule" "rule" {
+			id = %s
+		}
+
+		data "katapult_security_group_rules" "rules" {
+			security_group_id = katapult_security_group.test.id
+		}
+
+		data "katapult_security_groups" "groups" {
+			include_rules = true
+			depends_on    = [katapult_security_group.test]
+		}
+	`, name, rules, ruleReference)
+}
+
+func testAccCheckSecurityGroupsDataSourceRuleActions(
+	resourceName string,
+	groupID *string,
+	want []string,
+) resource.TestCheckFunc {
+	return func(state *terraform.State) error {
+		resourceState, ok := state.RootModule().Resources[resourceName]
+		if !ok || resourceState.Primary == nil {
+			return fmt.Errorf("resource %s not found", resourceName)
+		}
+		attributes := resourceState.Primary.Attributes
+		count, err := strconv.Atoi(attributes["security_groups.#"])
+		if err != nil {
+			return fmt.Errorf("reading security_groups count: %w", err)
+		}
+		for i := 0; i < count; i++ {
+			prefix := fmt.Sprintf("security_groups.%d", i)
+			if attributes[prefix+".id"] != *groupID {
+				continue
+			}
+			ruleCount, err := strconv.Atoi(attributes[prefix+".inbound_rules.#"])
+			if err != nil {
+				return fmt.Errorf("reading %s inbound rule count: %w", prefix, err)
+			}
+			got := make([]string, 0, ruleCount)
+			for ruleIndex := 0; ruleIndex < ruleCount; ruleIndex++ {
+				got = append(got, attributes[fmt.Sprintf("%s.inbound_rules.%d.action", prefix, ruleIndex)])
+			}
+			sort.Strings(got)
+			expected := append([]string(nil), want...)
+			sort.Strings(expected)
+			if !reflect.DeepEqual(got, expected) {
+				return fmt.Errorf("%s rule actions are %v, want %v", resourceName, got, expected)
+			}
+			return nil
+		}
+		return fmt.Errorf("security group %s not found in %s", *groupID, resourceName)
+	}
 }
 
 func TestAccKatapultSecurityGroup_dynamic_rules(t *testing.T) {

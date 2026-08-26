@@ -47,6 +47,7 @@ Read-Only:
 
 Read-Only:
 
+- `action` (String) Whether the rule permits (`allow`) or drops (`deny`) matching traffic.
 - `direction` (String)
 - `id` (String)
 - `notes` (String)
@@ -60,6 +61,7 @@ Read-Only:
 
 Read-Only:
 
+- `action` (String) Whether the rule permits (`allow`) or drops (`deny`) matching traffic.
 - `direction` (String)
 - `id` (String)
 - `notes` (String)

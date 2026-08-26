@@ -39,7 +39,16 @@ resource "katapult_security_group" "practical" {
   allow_all_outbound = true
 
   inbound_rules = [
-    # Allow inbound SSH, HTTP, HTTPS, and QUIC traffic from anywhere.
+    # Deny SSH from the carrier-grade NAT range. Katapult evaluates deny rules
+    # before allow rules, regardless of list order.
+    {
+      action   = "deny"
+      protocol = "TCP"
+      ports    = "22"
+      targets  = ["100.64.0.0/10"]
+      notes    = "Deny SSH from CGNAT"
+    },
+    # Action defaults to allow, so SSH is allowed from everywhere else.
     {
       protocol = "TCP"
       ports    = "22"
@@ -120,9 +129,9 @@ resource "katapult_security_group" "dynamic" {
 - `associations` (Set of String) Resource IDs to which the group applies.
 - `external_rules` (Boolean) Do not manage the group's complete rule list inline. Standalone rule resources can still be used.
 - `inbound_rule` (Block List, Deprecated) Deprecated inbound rule blocks. (see [below for nested schema](#nestedblock--inbound_rule))
-- `inbound_rules` (Attributes List) Inbound Rules managed as an expression-friendly list. (see [below for nested schema](#nestedatt--inbound_rules))
+- `inbound_rules` (Attributes List) Inbound Rules managed as an expression-friendly list. List order does not control firewall evaluation. Katapult evaluates deny rules before allow rules. (see [below for nested schema](#nestedatt--inbound_rules))
 - `outbound_rule` (Block List, Deprecated) Deprecated outbound rule blocks. (see [below for nested schema](#nestedblock--outbound_rule))
-- `outbound_rules` (Attributes List) Outbound Rules managed as an expression-friendly list. (see [below for nested schema](#nestedatt--outbound_rules))
+- `outbound_rules` (Attributes List) Outbound Rules managed as an expression-friendly list. List order does not control firewall evaluation. Katapult evaluates deny rules before allow rules. (see [below for nested schema](#nestedatt--outbound_rules))
 
 ### Read-Only
 
@@ -138,6 +147,7 @@ Required:
 
 Optional:
 
+- `action` (String) Whether the rule permits (`allow`) or drops (`deny`) matching traffic. Defaults to `allow`. Katapult evaluates all deny rules before allow rules, then applies an implicit deny-all rule. List order does not control evaluation.
 - `notes` (String) Human-readable notes for the rule.
 - `ports` (String) The port, ports, or range of ports. Omit to match all ports.
 
@@ -157,6 +167,7 @@ Required:
 
 Optional:
 
+- `action` (String) Whether the rule permits (`allow`) or drops (`deny`) matching traffic. Defaults to `allow`. Katapult evaluates all deny rules before allow rules, then applies an implicit deny-all rule. List order does not control evaluation.
 - `notes` (String) Human-readable notes for the rule.
 - `ports` (String) The port, ports, or range of ports. Omit to match all ports.
 
@@ -176,6 +187,7 @@ Required:
 
 Optional:
 
+- `action` (String) Whether the rule permits (`allow`) or drops (`deny`) matching traffic. Defaults to `allow`. Katapult evaluates all deny rules before allow rules, then applies an implicit deny-all rule. List order does not control evaluation.
 - `notes` (String) Human-readable notes for the rule.
 - `ports` (String) The port, ports, or range of ports. Omit to match all ports.
 
@@ -195,6 +207,7 @@ Required:
 
 Optional:
 
+- `action` (String) Whether the rule permits (`allow`) or drops (`deny`) matching traffic. Defaults to `allow`. Katapult evaluates all deny rules before allow rules, then applies an implicit deny-all rule. List order does not control evaluation.
 - `notes` (String) Human-readable notes for the rule.
 - `ports` (String) The port, ports, or range of ports. Omit to match all ports.
 
