@@ -32,8 +32,6 @@ func TestLegacyProviderRegistrations(t *testing.T) {
 	assert.Equal(t, []string{
 		"katapult_disk_template",
 		"katapult_disk_templates",
-		"katapult_network_speed_profile",
-		"katapult_network_speed_profiles",
 		"katapult_virtual_machine_package",
 		"katapult_virtual_machine_packages",
 	}, sortedKeys(legacyProvider.DataSourcesMap),

@@ -287,6 +287,8 @@ func (k *KatapultProvider) DataSources(
 		func() datasource.DataSource { return &LoadBalancerRulesDataSource{} },
 		func() datasource.DataSource { return &LoadBalancersDataSource{} },
 		func() datasource.DataSource { return &NetworkDataSource{} },
+		func() datasource.DataSource { return &NetworkSpeedProfileDataSource{} },
+		func() datasource.DataSource { return &NetworkSpeedProfilesDataSource{} },
 		func() datasource.DataSource { return &NetworksDataSource{} },
 		func() datasource.DataSource { return &ObjectStorageAccountDataSource{} },
 		func() datasource.DataSource { return &ObjectStorageBucketDataSource{} },
