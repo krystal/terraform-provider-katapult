@@ -60,6 +60,10 @@ over invoking the CLI directly; use the CLI forms below as fallbacks:
 
 Use the narrowest relevant command while working, then broaden before handoff:
 
+- When deleting tracked Go files, stage the deletions before running
+  `mise run format`. The task enumerates index-tracked Go paths, so unstaged
+  deletions make `goimports` fail on missing files.
+
 - `mise run build` builds the provider.
 - `mise run test` runs the race-enabled unit-test path against recorded
   cassettes.

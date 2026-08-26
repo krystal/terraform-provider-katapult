@@ -30,7 +30,6 @@ func TestLegacyProviderRegistrations(t *testing.T) {
 			"only remove entries during migration")
 
 	assert.Equal(t, []string{
-		"katapult_data_center",
 		"katapult_disk_template",
 		"katapult_disk_templates",
 		"katapult_network_speed_profile",

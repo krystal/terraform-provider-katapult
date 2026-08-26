@@ -132,7 +132,6 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 			ResourcesMap: map[string]*schema.Resource{},
 
 			DataSourcesMap: map[string]*schema.Resource{
-				"katapult_data_center":              dataSourceDataCenter(),
 				"katapult_disk_template":            dataSourceDiskTemplate(),
 				"katapult_disk_templates":           dataSourceDiskTemplates(),
 				"katapult_network_speed_profile":    dataSourceNetworkSpeedProfile(),

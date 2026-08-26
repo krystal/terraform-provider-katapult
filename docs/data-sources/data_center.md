@@ -3,12 +3,12 @@
 page_title: "katapult_data_center Data Source - terraform-provider-katapult"
 subcategory: "Infrastructure"
 description: |-
-  
+  Retrieves a data center by ID or permalink. When neither is configured, the provider's data center is returned.
 ---
 
 # katapult_data_center (Data Source)
 
-
+Retrieves a data center by ID or permalink. When neither is configured, the provider's data center is returned.
 
 ## Example Usage
 
@@ -33,10 +33,10 @@ data "katapult_data_center" "lon" {
 ### Optional
 
 - `id` (String) The ID of this resource.
-- `permalink` (String)
+- `permalink` (String) The permalink of the data center.
 
 ### Read-Only
 
-- `country_id` (String)
-- `country_name` (String)
-- `name` (String)
+- `country_id` (String) The ID of the data center's country.
+- `country_name` (String) The name of the data center's country.
+- `name` (String) The name of the data center.
