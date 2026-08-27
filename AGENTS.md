@@ -110,6 +110,10 @@ The virtual machine package list endpoint rejects `per_page` values above 100.
 Keep package pagination at 100 or lower even though the generated parameter type
 does not encode that limit.
 
+Released SDKv2 singular disk-template state may contain `template_version = 0`
+because its get response omits the version number. Framework handover must accept
+that state and refresh it from the disk-template-version endpoint.
+
 Route every `StateChangeConf` delay, minimum timeout, and poll interval through
 the provider `Meta` timing helpers, including test sweepers. Compress any
 additional wall-clock settling window in replay mode so recorded state
