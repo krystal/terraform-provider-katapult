@@ -131,15 +131,7 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 			},
 			ResourcesMap: map[string]*schema.Resource{},
 
-			DataSourcesMap: map[string]*schema.Resource{
-				"katapult_data_center":              dataSourceDataCenter(),
-				"katapult_disk_template":            dataSourceDiskTemplate(),
-				"katapult_disk_templates":           dataSourceDiskTemplates(),
-				"katapult_network_speed_profile":    dataSourceNetworkSpeedProfile(),
-				"katapult_network_speed_profiles":   dataSourceNetworkSpeedProfiles(),
-				"katapult_virtual_machine_package":  dataSourceVirtualMachinePackage(),
-				"katapult_virtual_machine_packages": dataSourceVirtualMachinePackages(),
-			},
+			DataSourcesMap: map[string]*schema.Resource{},
 		}
 
 		if os.Getenv("TF_ACC") == "1" {
@@ -155,6 +147,13 @@ Skip purging deleted resources from Katapult's trash when they are destroyed by 
 			p.ResourcesMap["katapult_legacy_security_group_rule"] = resourceSecurityGroupRule()
 
 			// TEST DATA SOURCES
+			p.DataSourcesMap["katapult_legacy_data_center"] = dataSourceDataCenter()
+			p.DataSourcesMap["katapult_legacy_disk_template"] = dataSourceDiskTemplate()
+			p.DataSourcesMap["katapult_legacy_disk_templates"] = dataSourceDiskTemplates()
+			p.DataSourcesMap["katapult_legacy_network_speed_profile"] = dataSourceNetworkSpeedProfile()
+			p.DataSourcesMap["katapult_legacy_network_speed_profiles"] = dataSourceNetworkSpeedProfiles()
+			p.DataSourcesMap["katapult_legacy_virtual_machine_package"] = dataSourceVirtualMachinePackage()
+			p.DataSourcesMap["katapult_legacy_virtual_machine_packages"] = dataSourceVirtualMachinePackages()
 
 			p.DataSourcesMap["katapult_legacy_file_storage_volume"] = dataSourceFileStorageVolume()
 

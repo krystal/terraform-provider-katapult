@@ -3,12 +3,12 @@
 page_title: "katapult_network_speed_profile Data Source - terraform-provider-katapult"
 subcategory: "Networking"
 description: |-
-  
+  Retrieves a network speed profile by ID or permalink.
 ---
 
 # katapult_network_speed_profile (Data Source)
 
-
+Retrieves a network speed profile by ID or permalink.
 
 ## Example Usage
 
@@ -30,10 +30,10 @@ data "katapult_network_speed_profile" "10gbps" {
 ### Optional
 
 - `id` (String) The ID of this resource.
-- `permalink` (String)
+- `permalink` (String) The permalink of the network speed profile.
 
 ### Read-Only
 
-- `download_speed` (Number) Download speed in Mbit. A  value of `0` means unrestricted.
-- `name` (String)
+- `download_speed` (Number) Download speed in Mbit. A value of `0` means unrestricted.
+- `name` (String) The name of the network speed profile.
 - `upload_speed` (Number) Upload speed in Mbit. A value of `0` means unrestricted.

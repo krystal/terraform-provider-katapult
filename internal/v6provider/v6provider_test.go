@@ -80,7 +80,7 @@ type providerFactoryList map[string]func() (tfprotov6.ProviderServer, error)
 
 type v5ProviderFactoryList map[string]func() (tfprotov5.ProviderServer, error)
 
-func aliasLegacySecurityGroupTestEntry(
+func aliasLegacyTestEntry(
 	entries map[string]*schema.Resource,
 	productionName string,
 ) {
@@ -105,6 +105,7 @@ type testTools struct {
 	HTTPClient                   *http.Client
 	Meta                         *Meta
 	ProviderFactories            providerFactoryList
+	LegacyDataSourceFactories    v5ProviderFactoryList
 	LegacyVMFactories            v5ProviderFactoryList
 	LegacySecurityGroupFactories v5ProviderFactoryList
 	noHTTP                       bool
@@ -169,6 +170,25 @@ func newTestTools(t *testing.T) *testTools {
 	)
 
 	tt.Meta = meta
+	tt.LegacyDataSourceFactories = v5ProviderFactoryList{
+		//nolint:unparam
+		"katapult": func() (tfprotov5.ProviderServer, error) {
+			p := v5provider.New(v5Config)()
+			for _, productionName := range []string{
+				"katapult_data_center",
+				"katapult_disk_template",
+				"katapult_disk_templates",
+				"katapult_network_speed_profile",
+				"katapult_network_speed_profiles",
+				"katapult_virtual_machine_package",
+				"katapult_virtual_machine_packages",
+			} {
+				aliasLegacyTestEntry(p.DataSourcesMap, productionName)
+			}
+
+			return p.GRPCProvider(), nil
+		},
+	}
 	tt.LegacyVMFactories = v5ProviderFactoryList{
 		//nolint:unparam
 		"katapult": func() (tfprotov5.ProviderServer, error) {
@@ -186,12 +206,12 @@ func newTestTools(t *testing.T) *testTools {
 		//nolint:unparam
 		"katapult": func() (tfprotov5.ProviderServer, error) {
 			p := v5provider.New(v5Config)()
-			aliasLegacySecurityGroupTestEntry(p.ResourcesMap, "katapult_security_group")
-			aliasLegacySecurityGroupTestEntry(p.ResourcesMap, "katapult_security_group_rule")
-			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_group")
-			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_group_rule")
-			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_group_rules")
-			aliasLegacySecurityGroupTestEntry(p.DataSourcesMap, "katapult_security_groups")
+			aliasLegacyTestEntry(p.ResourcesMap, "katapult_security_group")
+			aliasLegacyTestEntry(p.ResourcesMap, "katapult_security_group_rule")
+			aliasLegacyTestEntry(p.DataSourcesMap, "katapult_security_group")
+			aliasLegacyTestEntry(p.DataSourcesMap, "katapult_security_group_rule")
+			aliasLegacyTestEntry(p.DataSourcesMap, "katapult_security_group_rules")
+			aliasLegacyTestEntry(p.DataSourcesMap, "katapult_security_groups")
 
 			return p.GRPCProvider(), nil
 		},

@@ -3,12 +3,12 @@
 page_title: "katapult_disk_template Data Source - terraform-provider-katapult"
 subcategory: "Storage"
 description: |-
-  
+  Retrieves a disk template by ID or permalink.
 ---
 
 # katapult_disk_template (Data Source)
 
-
+Retrieves a disk template by ID or permalink.
 
 ## Example Usage
 
@@ -30,12 +30,12 @@ data "katapult_disk_template" "ubuntu-18-04" {
 ### Optional
 
 - `id` (String) The ID of this resource.
-- `permalink` (String)
+- `permalink` (String) The permalink of the disk template.
 
 ### Read-Only
 
-- `description` (String)
-- `name` (String)
-- `os_family` (String)
-- `template_version` (Number)
-- `universal` (Boolean)
+- `description` (String) The description of the disk template.
+- `name` (String) The name of the disk template.
+- `os_family` (String) The operating system family name.
+- `template_version` (Number) The latest disk template version number.
+- `universal` (Boolean) Whether the disk template is available to all organizations.

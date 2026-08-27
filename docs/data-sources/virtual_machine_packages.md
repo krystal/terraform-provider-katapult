@@ -3,12 +3,12 @@
 page_title: "katapult_virtual_machine_packages Data Source - terraform-provider-katapult"
 subcategory: "Compute"
 description: |-
-  Fetch details of all Virtual Machine Packages
+  Lists all available virtual machine packages.
 ---
 
 # katapult_virtual_machine_packages (Data Source)
 
-Fetch details of all Virtual Machine Packages
+Lists all available virtual machine packages.
 
 ## Example Usage
 
@@ -23,18 +23,18 @@ data "katapult_virtual_machine_packages" "all" {}
 ### Read-Only
 
 - `id` (String) Always set to `all`.
-- `packages` (List of Object) (see [below for nested schema](#nestedatt--packages))
+- `packages` (Attributes List) The available virtual machine packages. (see [below for nested schema](#nestedatt--packages))
 
 <a id="nestedatt--packages"></a>
 ### Nested Schema for `packages`
 
 Read-Only:
 
-- `cpu_cores` (Number)
-- `id` (String)
-- `ipv4_addresses` (Number)
-- `memory_in_gb` (Number)
-- `name` (String)
-- `permalink` (String)
-- `privacy` (String)
-- `storage_in_gb` (Number)
+- `cpu_cores` (Number) Number of CPU cores.
+- `id` (String) The ID of this resource.
+- `ipv4_addresses` (Number) Number of included IPv4 addresses.
+- `memory_in_gb` (Number) Memory in GB.
+- `name` (String) The name of the virtual machine package.
+- `permalink` (String) The permalink of the virtual machine package.
+- `privacy` (String) The visibility of the virtual machine package.
+- `storage_in_gb` (Number) Storage in GB.

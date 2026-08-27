@@ -3,12 +3,12 @@
 page_title: "katapult_network_speed_profiles Data Source - terraform-provider-katapult"
 subcategory: "Networking"
 description: |-
-  
+  Lists network speed profiles available to the provider organization.
 ---
 
 # katapult_network_speed_profiles (Data Source)
 
-
+Lists network speed profiles available to the provider organization.
 
 ## Example Usage
 
@@ -22,16 +22,16 @@ data "katapult_network_speed_profiles" "all" {}
 
 ### Read-Only
 
-- `id` (String) Always set to provider organization value.
-- `profiles` (List of Object) (see [below for nested schema](#nestedatt--profiles))
+- `id` (String) Always set to the provider organization value.
+- `profiles` (Attributes List) The available network speed profiles. (see [below for nested schema](#nestedatt--profiles))
 
 <a id="nestedatt--profiles"></a>
 ### Nested Schema for `profiles`
 
 Read-Only:
 
-- `download_speed` (Number)
-- `id` (String)
-- `name` (String)
-- `permalink` (String)
-- `upload_speed` (Number)
+- `download_speed` (Number) Download speed in Mbit. A value of `0` means unrestricted.
+- `id` (String) The ID of this resource.
+- `name` (String) The name of the network speed profile.
+- `permalink` (String) The permalink of the network speed profile.
+- `upload_speed` (Number) Upload speed in Mbit. A value of `0` means unrestricted.

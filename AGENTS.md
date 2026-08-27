@@ -60,6 +60,10 @@ over invoking the CLI directly; use the CLI forms below as fallbacks:
 
 Use the narrowest relevant command while working, then broaden before handoff:
 
+- When deleting tracked Go files, stage the deletions before running
+  `mise run format`. The task enumerates index-tracked Go paths, so unstaged
+  deletions make `goimports` fail on missing files.
+
 - `mise run build` builds the provider.
 - `mise run test` runs the race-enabled unit-test path against recorded
   cassettes.
@@ -101,6 +105,14 @@ For nullable relationships such as `Disk.VirtualMachineDisk`, check both
 The organization VM list endpoint may lowercase hostnames while VM resource
 state retains configured casing. Collection tests and consumers must not assume
 casing is identical across those views.
+
+The virtual machine package list endpoint rejects `per_page` values above 100.
+Keep package pagination at 100 or lower even though the generated parameter type
+does not encode that limit.
+
+Released SDKv2 singular disk-template state may contain `template_version = 0`
+because its get response omits the version number. Framework handover must accept
+that state and refresh it from the disk-template-version endpoint.
 
 Route every `StateChangeConf` delay, minimum timeout, and poll interval through
 the provider `Meta` timing helpers, including test sweepers. Compress any
