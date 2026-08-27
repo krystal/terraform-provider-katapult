@@ -36,7 +36,7 @@ func TestDiskTemplateDataSourceModelsHandleNullableRelationships(t *testing.T) {
 	listed.LatestVersion.SetNull()
 	listed.OperatingSystem.SetNull()
 	listedModel := diskTemplateDataSourceModelFromList(&listed)
-	assert.True(t, listedModel.Description.IsNull())
+	assert.Equal(t, types.StringValue(""), listedModel.Description)
 	assert.True(t, listedModel.TemplateVersion.IsNull())
 	assert.True(t, listedModel.OSFamily.IsNull())
 }

@@ -164,7 +164,7 @@ func diskTemplateDataSourceModelFromList(
 		template.Id,
 		template.Name,
 		template.Permalink,
-		nullableStringValue(template.Description),
+		nullableStringValueOrEmpty(template.Description),
 		types.BoolPointerValue(template.Universal),
 	)
 

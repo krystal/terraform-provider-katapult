@@ -56,7 +56,7 @@ func TestNetworkSpeedProfileDataSourceModelNullables(t *testing.T) {
 	profile.DownloadSpeedInMbit.SetNull()
 	model := networkSpeedProfileDataSourceModel(&profile)
 	assert.Equal(t, types.Int64Value(500), model.UploadSpeed)
-	assert.True(t, model.DownloadSpeed.IsNull())
+	assert.Equal(t, types.Int64Value(0), model.DownloadSpeed)
 }
 
 func TestFetchAllOrganizationNetworkSpeedProfilesPaginationAndErrors(t *testing.T) {

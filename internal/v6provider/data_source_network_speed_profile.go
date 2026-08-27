@@ -4,11 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/datasourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	core "github.com/krystal/go-katapult/next/core"
 )
@@ -68,9 +65,7 @@ func networkSpeedProfileSchemaAttributes(selector bool) map[string]schema.Attrib
 	}
 	if selector {
 		id.Optional = true
-		id.Validators = []validator.String{stringValidatorNotEmpty()}
 		permalink.Optional = true
-		permalink.Validators = []validator.String{stringValidatorNotEmpty()}
 	}
 
 	return map[string]schema.Attribute{
@@ -97,10 +92,7 @@ func (d *NetworkSpeedProfileDataSource) ConfigValidators(
 	_ context.Context,
 ) []datasource.ConfigValidator {
 	return []datasource.ConfigValidator{
-		datasourcevalidator.AtLeastOneOf(
-			path.MatchRoot("id"),
-			path.MatchRoot("permalink"),
-		),
+		nonEmptySelectorConfigValidator{},
 	}
 }
 
@@ -155,12 +147,7 @@ func findNetworkSpeedProfile(
 	id types.String,
 	permalink types.String,
 ) (*core.NetworkSpeedProfile, string, string) {
-	selectorName := "id"
-	selectorValue := id.ValueString()
-	if id.IsNull() || id.IsUnknown() {
-		selectorName = "permalink"
-		selectorValue = permalink.ValueString()
-	}
+	selectorName, selectorValue := selectedStringSelector(id, permalink)
 
 	for i := range profiles {
 		candidate := profiles[i].Id
@@ -228,7 +215,21 @@ func networkSpeedProfileDataSourceModel(
 		ID:            types.StringPointerValue(profile.Id),
 		Name:          types.StringPointerValue(profile.Name),
 		Permalink:     types.StringPointerValue(profile.Permalink),
-		UploadSpeed:   nullableIntValue(profile.UploadSpeedInMbit),
-		DownloadSpeed: nullableIntValue(profile.DownloadSpeedInMbit),
+		UploadSpeed:   nullableIntValueOrZero(profile.UploadSpeedInMbit),
+		DownloadSpeed: nullableIntValueOrZero(profile.DownloadSpeedInMbit),
 	}
+}
+
+func nullableIntValueOrZero(value interface {
+	IsSpecified() bool
+	IsNull() bool
+	Get() (int, error)
+},
+) types.Int64 {
+	result := nullableIntValue(value)
+	if result.IsNull() {
+		return types.Int64Value(0)
+	}
+
+	return result
 }

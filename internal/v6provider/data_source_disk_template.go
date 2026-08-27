@@ -4,11 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/datasourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	core "github.com/krystal/go-katapult/next/core"
 )
@@ -70,9 +67,7 @@ func diskTemplateSchemaAttributes(selector bool) map[string]schema.Attribute {
 	}
 	if selector {
 		id.Optional = true
-		id.Validators = []validator.String{stringValidatorNotEmpty()}
 		permalink.Optional = true
-		permalink.Validators = []validator.String{stringValidatorNotEmpty()}
 	}
 
 	return map[string]schema.Attribute{
@@ -106,10 +101,7 @@ func (d *DiskTemplateDataSource) ConfigValidators(
 	_ context.Context,
 ) []datasource.ConfigValidator {
 	return []datasource.ConfigValidator{
-		datasourcevalidator.AtLeastOneOf(
-			path.MatchRoot("id"),
-			path.MatchRoot("permalink"),
-		),
+		nonEmptySelectorConfigValidator{},
 	}
 }
 
@@ -136,13 +128,10 @@ func (d *DiskTemplateDataSource) Read(
 	}
 
 	params := &core.GetDiskTemplateParams{}
-	selectorName := "id"
-	selectorValue := data.ID.ValueString()
-	if !data.ID.IsNull() && !data.ID.IsUnknown() {
+	selectorName, selectorValue := selectedStringSelector(data.ID, data.Permalink)
+	if selectorName == "id" {
 		params.DiskTemplateId = data.ID.ValueStringPointer()
 	} else {
-		selectorName = "permalink"
-		selectorValue = data.Permalink.ValueString()
 		params.DiskTemplatePermalink = data.Permalink.ValueStringPointer()
 	}
 
@@ -234,7 +223,7 @@ func diskTemplateDataSourceModelFromGet(
 		template.Id,
 		template.Name,
 		template.Permalink,
-		nullableStringValue(template.Description),
+		nullableStringValueOrEmpty(template.Description),
 		types.BoolPointerValue(template.Universal),
 	)
 
@@ -265,17 +254,17 @@ func newDiskTemplateDataSourceModel(
 	}
 }
 
-func nullableStringValue(value interface {
+func nullableStringValueOrEmpty(value interface {
 	IsSpecified() bool
 	IsNull() bool
 	Get() (string, error)
 },
 ) types.String {
 	if !value.IsSpecified() || value.IsNull() {
-		return types.StringNull()
+		return types.StringValue("")
 	}
 	if v, err := value.Get(); err == nil {
 		return types.StringValue(v)
 	}
-	return types.StringNull()
+	return types.StringValue("")
 }

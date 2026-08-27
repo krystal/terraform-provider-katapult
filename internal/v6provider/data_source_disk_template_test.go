@@ -37,6 +37,16 @@ func TestAccKatapultDataSourceDiskTemplate_selectorsAndFilters(t *testing.T) {
 					data "katapult_disk_template" "both" {
 					  id        = data.katapult_disk_templates.all.templates[0].id
 					  permalink = "ignored"
+					}
+
+					data "katapult_disk_template" "empty_id" {
+					  id        = ""
+					  permalink = data.katapult_disk_templates.all.templates[0].permalink
+					}
+
+					data "katapult_disk_template" "empty_permalink" {
+					  id        = data.katapult_disk_templates.all.templates[0].id
+					  permalink = ""
 					}`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
@@ -54,11 +64,43 @@ func TestAccKatapultDataSourceDiskTemplate_selectorsAndFilters(t *testing.T) {
 						"data.katapult_disk_templates.all", "templates.0.id",
 					),
 					resource.TestCheckResourceAttrPair(
+						"data.katapult_disk_template.by_id", "name",
+						"data.katapult_disk_templates.all", "templates.0.name",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_disk_template.by_id", "description",
+						"data.katapult_disk_templates.all", "templates.0.description",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_disk_template.by_id", "permalink",
+						"data.katapult_disk_templates.all", "templates.0.permalink",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_disk_template.by_id", "universal",
+						"data.katapult_disk_templates.all", "templates.0.universal",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_disk_template.by_id", "template_version",
+						"data.katapult_disk_templates.all", "templates.0.template_version",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_disk_template.by_id", "os_family",
+						"data.katapult_disk_templates.all", "templates.0.os_family",
+					),
+					resource.TestCheckResourceAttrPair(
 						"data.katapult_disk_template.by_permalink", "id",
 						"data.katapult_disk_templates.all", "templates.0.id",
 					),
 					resource.TestCheckResourceAttrPair(
 						"data.katapult_disk_template.both", "id",
+						"data.katapult_disk_templates.all", "templates.0.id",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_disk_template.empty_id", "id",
+						"data.katapult_disk_templates.all", "templates.0.id",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_disk_template.empty_permalink", "id",
 						"data.katapult_disk_templates.all", "templates.0.id",
 					),
 				),

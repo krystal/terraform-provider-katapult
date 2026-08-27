@@ -34,6 +34,16 @@ func TestAccKatapultDataSourceNetworkSpeedProfile_selectors(t *testing.T) {
 					data "katapult_network_speed_profile" "both" {
 					  id        = data.katapult_network_speed_profiles.all.profiles[0].id
 					  permalink = "ignored"
+					}
+
+					data "katapult_network_speed_profile" "empty_id" {
+					  id        = ""
+					  permalink = data.katapult_network_speed_profiles.all.profiles[0].permalink
+					}
+
+					data "katapult_network_speed_profile" "empty_permalink" {
+					  id        = data.katapult_network_speed_profiles.all.profiles[0].id
+					  permalink = ""
 					}`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
@@ -43,9 +53,37 @@ func TestAccKatapultDataSourceNetworkSpeedProfile_selectors(t *testing.T) {
 					resource.TestCheckResourceAttrSet(
 						"data.katapult_network_speed_profiles.all", "profiles.0.id",
 					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_network_speed_profiles.all",
+						"profiles.1.download_speed", "0",
+					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_network_speed_profiles.all",
+						"profiles.3.upload_speed", "0",
+					),
+					resource.TestCheckResourceAttr(
+						"data.katapult_network_speed_profiles.all",
+						"profiles.3.download_speed", "0",
+					),
 					resource.TestCheckResourceAttrPair(
 						"data.katapult_network_speed_profile.by_id", "id",
 						"data.katapult_network_speed_profiles.all", "profiles.0.id",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_network_speed_profile.by_id", "name",
+						"data.katapult_network_speed_profiles.all", "profiles.0.name",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_network_speed_profile.by_id", "permalink",
+						"data.katapult_network_speed_profiles.all", "profiles.0.permalink",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_network_speed_profile.by_id", "upload_speed",
+						"data.katapult_network_speed_profiles.all", "profiles.0.upload_speed",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_network_speed_profile.by_id", "download_speed",
+						"data.katapult_network_speed_profiles.all", "profiles.0.download_speed",
 					),
 					resource.TestCheckResourceAttrPair(
 						"data.katapult_network_speed_profile.by_permalink", "id",
@@ -53,6 +91,14 @@ func TestAccKatapultDataSourceNetworkSpeedProfile_selectors(t *testing.T) {
 					),
 					resource.TestCheckResourceAttrPair(
 						"data.katapult_network_speed_profile.both", "id",
+						"data.katapult_network_speed_profiles.all", "profiles.0.id",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_network_speed_profile.empty_id", "id",
+						"data.katapult_network_speed_profiles.all", "profiles.0.id",
+					),
+					resource.TestCheckResourceAttrPair(
+						"data.katapult_network_speed_profile.empty_permalink", "id",
 						"data.katapult_network_speed_profiles.all", "profiles.0.id",
 					),
 				),
