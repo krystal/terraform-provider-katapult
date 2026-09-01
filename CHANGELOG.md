@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.22](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.21...v0.0.22) (2026-09-01)
+
+
+### Features
+
+* migrate remaining SDKv2 data sources to Framework ([#206](https://github.com/krystal/terraform-provider-katapult/issues/206)) ([364b594](https://github.com/krystal/terraform-provider-katapult/commit/364b594aaded68a3558685a8a3543f33a1191b70))
+
 ## [0.0.21](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.20...v0.0.21) (2026-08-26)
 
 
