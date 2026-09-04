@@ -1,0 +1,572 @@
+---
+version: 1
+interactions:
+- request:
+    body: '{"organization":{"sub_domain":"terraform-acc-test"},"properties":{"issuer":"self_signed","name":"tf-acc-test-self-signed-miromnatjept.example.com"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/organizations/organization/certificates
+    method: POST
+  response:
+    body: '{"certificate":{"additional_names":[],"authorization_method":null,"certificate":null,"certificate_api_url":"[REDACTED]","chain":null,"created_at":1788533633,"expires_at":null,"id":"cert_WCjyM29WA3XcPjFA","issue_error":null,"issuer":"self_signed","last_issued_at":null,"name":"tf-acc-test-self-signed-miromnatjept.example.com","private_key":null,"state":"pending"},"task":{"created_at":1788533633,"finished_at":null,"id":"task_YX44W80atQet5dQe","name":"Issue
+      certificate","progress":0,"started_at":null,"status":"pending"}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "600"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 04 Sep 2026 14:53:53 GMT
+      Etag:
+      - W/"b5e4e6a5c27c80be2a68f8cc4daa39d1"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "998"
+      X-Request-Id:
+      - a3af0f9d-dc44-435d-a4b2-55d7e4c8034f
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/tasks/task?task%5Bid%5D=task_YX44W80atQet5dQe
+    method: GET
+  response:
+    body: '{"task":{"id":"task_YX44W80atQet5dQe","name":"Issue certificate","status":"running","created_at":1788533633,"started_at":1788533634,"finished_at":null,"progress":29}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "166"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 04 Sep 2026 14:53:54 GMT
+      Etag:
+      - W/"459af8e49086786a557fac9d47a0b6d7"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "997"
+      X-Request-Id:
+      - f6782f91-c0b6-4f14-bd6a-54bed1fe9420
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/tasks/task?task%5Bid%5D=task_YX44W80atQet5dQe
+    method: GET
+  response:
+    body: '{"task":{"id":"task_YX44W80atQet5dQe","name":"Issue certificate","status":"completed","created_at":1788533633,"started_at":1788533634,"finished_at":1788533638,"progress":100}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "175"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 04 Sep 2026 14:53:59 GMT
+      Etag:
+      - W/"389ae9a4aed12e1af80a9861024ad4f8"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "996"
+      X-Request-Id:
+      - 36d559e3-dd6d-4284-becd-f73c5ddfda48
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/certificates/certificate?certificate%5Bid%5D=cert_WCjyM29WA3XcPjFA
+    method: GET
+  response:
+    body: '{"certificate":{"additional_names":[],"authorization_method":null,"certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIG4jCCBMqgAwIBAgIBATANBgkqhkiG9w0BAQsFADCBjzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE5MDcGA1UEAwwwdGYtYWNjLXRlc3Qtc2VsZi1zaWdu\nZWQtbWlyb21uYXRqZXB0LmV4YW1wbGUuY29tMREwDwYDVQQKDAhLYXRhcHVsdDEh\nMB8GA1UECwwYU2VsZiBTaWduZWQgQ2VydGlmaWNhdGVzMB4XDTI2MDkwNDE0NTM1\nOFoXDTI3MDkwNDE0NTM1OFowgY8xCzAJBgNVBAYTAkdCMQ8wDQYDVQQIDAZMb25k\nb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVkLW1pcm9tbmF0amVw\ndC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAfBgNVBAsMGFNlbGYg\nU2lnbmVkIENlcnRpZmljYXRlczCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC\nggIBAJcyIApjMkR7aUdjPicIG46X5vUfct2KPqr5p3tuzA+3Lt3i7r8KccLRb5xb\nzHbZlXVQ084HNqDun3hynwUfFqi+R1rd93hNEEjIoj138jqmKEFli9QDr7EbrewJ\nKo3u/Ypb2ZOeVAnvD6Wr5IkFsn/cu26dA6zR1FS2oRmPwIjSZvrcB0z4T7CFlfCr\nPleTuPuiAGFERGxTsqINOCYs7VkXktjilqIwfa02dWfqK1NpJNtdIKEpbOaKtVqA\n7/7/A/TU8tES5yKqyS+lNQ0ul73CUkLxujLHUVk+ORAcG7MtIKCX+SgIBy1kLfyo\nyF6Kwhoup5fqofreN+aQY0YOq09As+G0OSVluJ8rh/xvN0Q9yhGN78lDweKOkSld\nnjTieJjwGrxxFF0XLlAZN26P0Xe3gMHQos/290BoFtRmT6CskqfgbK0kpNP6RR+t\nlpJs/GZmTp+8VavwF+yOvBXDqdIBrJ2FXyp/DCQSi8hvOO3WQbL6T4Bkq+ZIGUu0\n5n2bmYCNQyoK9OW1W2CRkeVn/vQzIADI7aT19rcxBRUpwuz96x7/cxooKHM9f/S+\nnYHeowIUfxGllPyjA1hmFKIqN3sRoTNRwHt8CJjmnLV1xfD1urrcnmrWGKkn8ETg\nAxYTGtPXbJanJaum7+K/ohREXHgXI/7LmAJ0gGz2PX4M5rpFAgMBAAGjggFFMIIB\nQTAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTiIk+3xcTiMFMOsrkESOZiVppg\n4TATBgNVHSUEDDAKBggrBgEFBQcDATA7BgNVHREENDAygjB0Zi1hY2MtdGVzdC1z\nZWxmLXNpZ25lZC1taXJvbW5hdGplcHQuZXhhbXBsZS5jb20wgbwGA1UdIwSBtDCB\nsYAU4iJPt8XE4jBTDrK5BEjmYlaaYOGhgZWkgZIwgY8xCzAJBgNVBAYTAkdCMQ8w\nDQYDVQQIDAZMb25kb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVk\nLW1pcm9tbmF0amVwdC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAf\nBgNVBAsMGFNlbGYgU2lnbmVkIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsF\nAAOCAgEAKo80DxYMEK7YSBtiBIGxNCZIm1J5rkBq3g0SYcmny2Bj2NfqEQisEDw5\nqewy/vFCXPIT0tTyAQiGf8ifgFP2BfMwbEtGN+y3/iJ8KcuBYbJc08QRPRUCTG2Q\nOlW0a+RcR+QnaibYZ0ZvUocB1tZqqLEo4pIuzLa88hSGk8OqHPFT7+NwYznPW9Gk\nMRy5soj/HXJBGbtHTSKiLecVTTOQIw1znw9tYehW2YU41K4UFhQ8HXBpAl9FOUPu\n0X/8dbKaFEGbU/2kxe6gTyjiTzN4i2Z9p5pcEhyZaamVqUgTdYt9mf87IQ7Vusnz\nU8gznnpRiuHViCXlbydeLQbHh22grPXlIOOI1DP0VL+95SXNn2CmDYwfdH1vvy+h\n12EYWyXCfxi+JuPYifzOZB1OXFbfW7gVeZlyHVOVdp+vRXQ1RYbb+Cjr8rEhJqi1\nCQt+26AMOe20417w6EvlE9cVZIAM/v59SEejRHcVG9hJ/pOED+7BEShZB8AgndKT\nVazQ1cjTL/urS++PHnU/y3pEErjbB5CcoXLPH/i21e5Td8jfd/YnV1kw5dFBxQg0\n9Ig8GEns2c7WepR521GMHD/oCsCGP7BJU2Mo4xLYvTZUQgU+PsgXTd80hp+aNWGt\nlMhq2RPAhC8o/7zEYrFOW9k/K8rkL9rZIyVpjiqZQmTjgmKNJx4=\n-----END
+      CERTIFICATE-----\n","certificate_api_url":"[REDACTED]","chain":null,"created_at":1788533633,"expires_at":1820069638,"id":"cert_WCjyM29WA3XcPjFA","issue_error":null,"issuer":"self_signed","last_issued_at":1788533638,"name":"tf-acc-test-self-signed-miromnatjept.example.com","private_key":"[REDACTED]","state":"issued"}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 04 Sep 2026 14:53:59 GMT
+      Etag:
+      - W/"99921828963d9ef65aea8dc2001f7d84"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "995"
+      X-Request-Id:
+      - adc152fa-f818-48ba-af04-c9e52fa29c5a
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"certificate":{"id":"cert_WCjyM29WA3XcPjFA"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/certificates/certificate/issue
+    method: POST
+  response:
+    body: '{"certificate":{"additional_names":[],"authorization_method":null,"certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIG4jCCBMqgAwIBAgIBATANBgkqhkiG9w0BAQsFADCBjzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE5MDcGA1UEAwwwdGYtYWNjLXRlc3Qtc2VsZi1zaWdu\nZWQtbWlyb21uYXRqZXB0LmV4YW1wbGUuY29tMREwDwYDVQQKDAhLYXRhcHVsdDEh\nMB8GA1UECwwYU2VsZiBTaWduZWQgQ2VydGlmaWNhdGVzMB4XDTI2MDkwNDE0NTM1\nOFoXDTI3MDkwNDE0NTM1OFowgY8xCzAJBgNVBAYTAkdCMQ8wDQYDVQQIDAZMb25k\nb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVkLW1pcm9tbmF0amVw\ndC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAfBgNVBAsMGFNlbGYg\nU2lnbmVkIENlcnRpZmljYXRlczCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC\nggIBAJcyIApjMkR7aUdjPicIG46X5vUfct2KPqr5p3tuzA+3Lt3i7r8KccLRb5xb\nzHbZlXVQ084HNqDun3hynwUfFqi+R1rd93hNEEjIoj138jqmKEFli9QDr7EbrewJ\nKo3u/Ypb2ZOeVAnvD6Wr5IkFsn/cu26dA6zR1FS2oRmPwIjSZvrcB0z4T7CFlfCr\nPleTuPuiAGFERGxTsqINOCYs7VkXktjilqIwfa02dWfqK1NpJNtdIKEpbOaKtVqA\n7/7/A/TU8tES5yKqyS+lNQ0ul73CUkLxujLHUVk+ORAcG7MtIKCX+SgIBy1kLfyo\nyF6Kwhoup5fqofreN+aQY0YOq09As+G0OSVluJ8rh/xvN0Q9yhGN78lDweKOkSld\nnjTieJjwGrxxFF0XLlAZN26P0Xe3gMHQos/290BoFtRmT6CskqfgbK0kpNP6RR+t\nlpJs/GZmTp+8VavwF+yOvBXDqdIBrJ2FXyp/DCQSi8hvOO3WQbL6T4Bkq+ZIGUu0\n5n2bmYCNQyoK9OW1W2CRkeVn/vQzIADI7aT19rcxBRUpwuz96x7/cxooKHM9f/S+\nnYHeowIUfxGllPyjA1hmFKIqN3sRoTNRwHt8CJjmnLV1xfD1urrcnmrWGKkn8ETg\nAxYTGtPXbJanJaum7+K/ohREXHgXI/7LmAJ0gGz2PX4M5rpFAgMBAAGjggFFMIIB\nQTAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTiIk+3xcTiMFMOsrkESOZiVppg\n4TATBgNVHSUEDDAKBggrBgEFBQcDATA7BgNVHREENDAygjB0Zi1hY2MtdGVzdC1z\nZWxmLXNpZ25lZC1taXJvbW5hdGplcHQuZXhhbXBsZS5jb20wgbwGA1UdIwSBtDCB\nsYAU4iJPt8XE4jBTDrK5BEjmYlaaYOGhgZWkgZIwgY8xCzAJBgNVBAYTAkdCMQ8w\nDQYDVQQIDAZMb25kb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVk\nLW1pcm9tbmF0amVwdC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAf\nBgNVBAsMGFNlbGYgU2lnbmVkIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsF\nAAOCAgEAKo80DxYMEK7YSBtiBIGxNCZIm1J5rkBq3g0SYcmny2Bj2NfqEQisEDw5\nqewy/vFCXPIT0tTyAQiGf8ifgFP2BfMwbEtGN+y3/iJ8KcuBYbJc08QRPRUCTG2Q\nOlW0a+RcR+QnaibYZ0ZvUocB1tZqqLEo4pIuzLa88hSGk8OqHPFT7+NwYznPW9Gk\nMRy5soj/HXJBGbtHTSKiLecVTTOQIw1znw9tYehW2YU41K4UFhQ8HXBpAl9FOUPu\n0X/8dbKaFEGbU/2kxe6gTyjiTzN4i2Z9p5pcEhyZaamVqUgTdYt9mf87IQ7Vusnz\nU8gznnpRiuHViCXlbydeLQbHh22grPXlIOOI1DP0VL+95SXNn2CmDYwfdH1vvy+h\n12EYWyXCfxi+JuPYifzOZB1OXFbfW7gVeZlyHVOVdp+vRXQ1RYbb+Cjr8rEhJqi1\nCQt+26AMOe20417w6EvlE9cVZIAM/v59SEejRHcVG9hJ/pOED+7BEShZB8AgndKT\nVazQ1cjTL/urS++PHnU/y3pEErjbB5CcoXLPH/i21e5Td8jfd/YnV1kw5dFBxQg0\n9Ig8GEns2c7WepR521GMHD/oCsCGP7BJU2Mo4xLYvTZUQgU+PsgXTd80hp+aNWGt\nlMhq2RPAhC8o/7zEYrFOW9k/K8rkL9rZIyVpjiqZQmTjgmKNJx4=\n-----END
+      CERTIFICATE-----\n","certificate_api_url":"[REDACTED]","chain":null,"created_at":1788533633,"expires_at":1820069638,"id":"cert_WCjyM29WA3XcPjFA","issue_error":null,"issuer":"self_signed","last_issued_at":1788533638,"name":"tf-acc-test-self-signed-miromnatjept.example.com","private_key":"[REDACTED]","state":"issued"},"task":{"created_at":1788533639,"finished_at":null,"id":"task_6xV2bWgPOkdORwLx","name":"Issue
+      certificate","progress":0,"started_at":null,"status":"pending"}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 04 Sep 2026 14:53:59 GMT
+      Etag:
+      - W/"304533e31d9e0e3e608b6838f51b4b33"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "994"
+      X-Request-Id:
+      - e00c0993-d730-48fc-a024-8c713ea0645c
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/tasks/task?task%5Bid%5D=task_6xV2bWgPOkdORwLx
+    method: GET
+  response:
+    body: '{"task":{"id":"task_6xV2bWgPOkdORwLx","name":"Issue certificate","status":"running","created_at":1788533639,"started_at":1788533640,"finished_at":null,"progress":29}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "166"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 04 Sep 2026 14:54:00 GMT
+      Etag:
+      - W/"81362acf2d7e27444333780c70637580"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "999"
+      X-Request-Id:
+      - 40ee36f6-8a67-4b0b-a4ac-731c2406afd6
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/tasks/task?task%5Bid%5D=task_6xV2bWgPOkdORwLx
+    method: GET
+  response:
+    body: '{"task":{"id":"task_6xV2bWgPOkdORwLx","name":"Issue certificate","status":"completed","created_at":1788533639,"started_at":1788533640,"finished_at":1788533644,"progress":100}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Length:
+      - "175"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 04 Sep 2026 14:54:05 GMT
+      Etag:
+      - W/"a326ac26071e82341c087f09cb80ede7"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "998"
+      X-Request-Id:
+      - cbdcd541-0d16-4878-a26a-531468b84a39
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/certificates/certificate?certificate%5Bid%5D=cert_WCjyM29WA3XcPjFA
+    method: GET
+  response:
+    body: '{"certificate":{"additional_names":[],"authorization_method":null,"certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIG4jCCBMqgAwIBAgIBATANBgkqhkiG9w0BAQsFADCBjzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE5MDcGA1UEAwwwdGYtYWNjLXRlc3Qtc2VsZi1zaWdu\nZWQtbWlyb21uYXRqZXB0LmV4YW1wbGUuY29tMREwDwYDVQQKDAhLYXRhcHVsdDEh\nMB8GA1UECwwYU2VsZiBTaWduZWQgQ2VydGlmaWNhdGVzMB4XDTI2MDkwNDE0NTQw\nM1oXDTI3MDkwNDE0NTQwM1owgY8xCzAJBgNVBAYTAkdCMQ8wDQYDVQQIDAZMb25k\nb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVkLW1pcm9tbmF0amVw\ndC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAfBgNVBAsMGFNlbGYg\nU2lnbmVkIENlcnRpZmljYXRlczCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC\nggIBAM9HAEcQFEf+cx8VNMNalf3kcgU89p7a3kWclPNwfCrR9ndYlqmP3HuHSqGu\nV/5UaEKuYBH3Lag+q4XXE8Ame25qIa7IuPmzVDjQVJTWq1KDCw0Wjgn1ki9SLl5w\net8TWMHVlXUuw2PlE0uPceW+LPiQS6lHnTXSSSy4/fpFh3+eIKKO1tzDchz9qLg7\nG92vPLIGMCx25mDni23MkAn+ccLis7i76ht2CocY17bhS3jggowQVax2hE/PY497\n9v1GPihkqS8d7RJELCjsGXthJnnSZcC03+xfU7WMmYEZwLFUk0QAxbcAQg1a4RfW\nRzy+a3+D4cn3drmsWrkqbjjXOe/m+Xy+0mr+YUHSd1j+VPj7ms9+dnV0ce/MSH41\nhR2Ybctzo44BGlvU/HIxJi6qogZIrVZJd4xL9zlb+jv9DnD9hjw/oeTjNuzdO0k1\nf9Yy1/2nGzni6vZN0U0Eau06B6sqggCORA7Alzj6ZzSQTAFI7CCzryM+ymhW9KN7\nEFj/4kDlg0JZ/kGJgE0ugC/RU4kpOv34yjc2o6QiZTdvmrlQn7qrw3UZmbOmHlJE\nY+hSmO3K76tRFYZ7dKEQutadBCNPxaWgCwVhKBAqzDljYfqPGk8Yfc9PAWK0E8Rc\nvN8ivpPdMmrT6Jgh//6m7jS/1p16EpWW89lm9dtYDGGYt8JPAgMBAAGjggFFMIIB\nQTAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRTHmnkHOP+YTJWPFzwHuXpS0na\nZTATBgNVHSUEDDAKBggrBgEFBQcDATA7BgNVHREENDAygjB0Zi1hY2MtdGVzdC1z\nZWxmLXNpZ25lZC1taXJvbW5hdGplcHQuZXhhbXBsZS5jb20wgbwGA1UdIwSBtDCB\nsYAUUx5p5Bzj/mEyVjxc8B7l6UtJ2mWhgZWkgZIwgY8xCzAJBgNVBAYTAkdCMQ8w\nDQYDVQQIDAZMb25kb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVk\nLW1pcm9tbmF0amVwdC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAf\nBgNVBAsMGFNlbGYgU2lnbmVkIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsF\nAAOCAgEAITD3QeG1A5ptIfVxB2ktpHgAHlwaf8Bv4sg7hZZoIgk/GaBLyjMhoOXQ\nasN8So4mK908izQ/uezbeDMKjvNT3pi+G2sjoKLhg0r5IEzlcL4YOROUh8cgV5vQ\nYwmMMUEAoOJvk3DmyvP7xHEPm6e/m2YuiR9JNunKc+eqmKHUqtFdyN/wrFJ4ETyB\njGsMj9FKlFHhuKICTh017051oLmPzHz05nwXVhl0qVz9aWCkC01ZSJiebqfLhlGX\npeJA5pVw8TBwIANoC22049LaMV6CJyIo1S6+tJKht+HQNhT5YjnJgJ9mzrqcRhAY\nxlTaltGUxN0627U3UKz+PZ3ART0bB4DX6ommvrwdfe/GFa/oN7TFy7A2M+/TDpv0\n40IRTzLiaW79Y+TvfJf0w8Ev/So0w52qN1hzgXH1AKkwJVKgN7Ij/xKxUq5jZvzg\nKyjadO2tE2O2EaLnojX0MYbE0BPpauBAWQ+a1lzEnVZVt61GRnboXRxjup4nuD/p\nQScor222wyjmNToSzn1ZzxIndjk3iiiYRwVcYisg5bC2drPKI4FTCNvtmPuQbCft\nqcBzNJqHWCXo6K8C2F5UTwn5h/ivtduACWETBzIYJqq3qdqqvECY1cBLZtLbL0Up\ngVPt+luZMR22PUsrHMvr5eTqh0RX1+A9qHqqYZFaHvBV/LC7TZo=\n-----END
+      CERTIFICATE-----\n","certificate_api_url":"[REDACTED]","chain":null,"created_at":1788533633,"expires_at":1820069643,"id":"cert_WCjyM29WA3XcPjFA","issue_error":null,"issuer":"self_signed","last_issued_at":1788533643,"name":"tf-acc-test-self-signed-miromnatjept.example.com","private_key":"[REDACTED]","state":"issued"}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 04 Sep 2026 14:54:05 GMT
+      Etag:
+      - W/"2648b0836092a8a41b67aa51743c0e68"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "997"
+      X-Request-Id:
+      - 0daca4cb-f3a7-4d1d-a6d2-9fe04174a9c8
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/certificates/certificate?certificate%5Bid%5D=cert_WCjyM29WA3XcPjFA
+    method: GET
+  response:
+    body: '{"certificate":{"additional_names":[],"authorization_method":null,"certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIG4jCCBMqgAwIBAgIBATANBgkqhkiG9w0BAQsFADCBjzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE5MDcGA1UEAwwwdGYtYWNjLXRlc3Qtc2VsZi1zaWdu\nZWQtbWlyb21uYXRqZXB0LmV4YW1wbGUuY29tMREwDwYDVQQKDAhLYXRhcHVsdDEh\nMB8GA1UECwwYU2VsZiBTaWduZWQgQ2VydGlmaWNhdGVzMB4XDTI2MDkwNDE0NTQw\nM1oXDTI3MDkwNDE0NTQwM1owgY8xCzAJBgNVBAYTAkdCMQ8wDQYDVQQIDAZMb25k\nb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVkLW1pcm9tbmF0amVw\ndC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAfBgNVBAsMGFNlbGYg\nU2lnbmVkIENlcnRpZmljYXRlczCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC\nggIBAM9HAEcQFEf+cx8VNMNalf3kcgU89p7a3kWclPNwfCrR9ndYlqmP3HuHSqGu\nV/5UaEKuYBH3Lag+q4XXE8Ame25qIa7IuPmzVDjQVJTWq1KDCw0Wjgn1ki9SLl5w\net8TWMHVlXUuw2PlE0uPceW+LPiQS6lHnTXSSSy4/fpFh3+eIKKO1tzDchz9qLg7\nG92vPLIGMCx25mDni23MkAn+ccLis7i76ht2CocY17bhS3jggowQVax2hE/PY497\n9v1GPihkqS8d7RJELCjsGXthJnnSZcC03+xfU7WMmYEZwLFUk0QAxbcAQg1a4RfW\nRzy+a3+D4cn3drmsWrkqbjjXOe/m+Xy+0mr+YUHSd1j+VPj7ms9+dnV0ce/MSH41\nhR2Ybctzo44BGlvU/HIxJi6qogZIrVZJd4xL9zlb+jv9DnD9hjw/oeTjNuzdO0k1\nf9Yy1/2nGzni6vZN0U0Eau06B6sqggCORA7Alzj6ZzSQTAFI7CCzryM+ymhW9KN7\nEFj/4kDlg0JZ/kGJgE0ugC/RU4kpOv34yjc2o6QiZTdvmrlQn7qrw3UZmbOmHlJE\nY+hSmO3K76tRFYZ7dKEQutadBCNPxaWgCwVhKBAqzDljYfqPGk8Yfc9PAWK0E8Rc\nvN8ivpPdMmrT6Jgh//6m7jS/1p16EpWW89lm9dtYDGGYt8JPAgMBAAGjggFFMIIB\nQTAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRTHmnkHOP+YTJWPFzwHuXpS0na\nZTATBgNVHSUEDDAKBggrBgEFBQcDATA7BgNVHREENDAygjB0Zi1hY2MtdGVzdC1z\nZWxmLXNpZ25lZC1taXJvbW5hdGplcHQuZXhhbXBsZS5jb20wgbwGA1UdIwSBtDCB\nsYAUUx5p5Bzj/mEyVjxc8B7l6UtJ2mWhgZWkgZIwgY8xCzAJBgNVBAYTAkdCMQ8w\nDQYDVQQIDAZMb25kb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVk\nLW1pcm9tbmF0amVwdC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAf\nBgNVBAsMGFNlbGYgU2lnbmVkIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsF\nAAOCAgEAITD3QeG1A5ptIfVxB2ktpHgAHlwaf8Bv4sg7hZZoIgk/GaBLyjMhoOXQ\nasN8So4mK908izQ/uezbeDMKjvNT3pi+G2sjoKLhg0r5IEzlcL4YOROUh8cgV5vQ\nYwmMMUEAoOJvk3DmyvP7xHEPm6e/m2YuiR9JNunKc+eqmKHUqtFdyN/wrFJ4ETyB\njGsMj9FKlFHhuKICTh017051oLmPzHz05nwXVhl0qVz9aWCkC01ZSJiebqfLhlGX\npeJA5pVw8TBwIANoC22049LaMV6CJyIo1S6+tJKht+HQNhT5YjnJgJ9mzrqcRhAY\nxlTaltGUxN0627U3UKz+PZ3ART0bB4DX6ommvrwdfe/GFa/oN7TFy7A2M+/TDpv0\n40IRTzLiaW79Y+TvfJf0w8Ev/So0w52qN1hzgXH1AKkwJVKgN7Ij/xKxUq5jZvzg\nKyjadO2tE2O2EaLnojX0MYbE0BPpauBAWQ+a1lzEnVZVt61GRnboXRxjup4nuD/p\nQScor222wyjmNToSzn1ZzxIndjk3iiiYRwVcYisg5bC2drPKI4FTCNvtmPuQbCft\nqcBzNJqHWCXo6K8C2F5UTwn5h/ivtduACWETBzIYJqq3qdqqvECY1cBLZtLbL0Up\ngVPt+luZMR22PUsrHMvr5eTqh0RX1+A9qHqqYZFaHvBV/LC7TZo=\n-----END
+      CERTIFICATE-----\n","certificate_api_url":"[REDACTED]","chain":null,"created_at":1788533633,"expires_at":1820069643,"id":"cert_WCjyM29WA3XcPjFA","issue_error":null,"issuer":"self_signed","last_issued_at":1788533643,"name":"tf-acc-test-self-signed-miromnatjept.example.com","private_key":"[REDACTED]","state":"issued"}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 04 Sep 2026 14:54:06 GMT
+      Etag:
+      - W/"2648b0836092a8a41b67aa51743c0e68"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "996"
+      X-Request-Id:
+      - d13303e5-98ac-4759-a314-71ce2a8a4f92
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/certificates/certificate?certificate%5Bid%5D=cert_WCjyM29WA3XcPjFA
+    method: GET
+  response:
+    body: '{"certificate":{"additional_names":[],"authorization_method":null,"certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIG4jCCBMqgAwIBAgIBATANBgkqhkiG9w0BAQsFADCBjzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE5MDcGA1UEAwwwdGYtYWNjLXRlc3Qtc2VsZi1zaWdu\nZWQtbWlyb21uYXRqZXB0LmV4YW1wbGUuY29tMREwDwYDVQQKDAhLYXRhcHVsdDEh\nMB8GA1UECwwYU2VsZiBTaWduZWQgQ2VydGlmaWNhdGVzMB4XDTI2MDkwNDE0NTQw\nM1oXDTI3MDkwNDE0NTQwM1owgY8xCzAJBgNVBAYTAkdCMQ8wDQYDVQQIDAZMb25k\nb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVkLW1pcm9tbmF0amVw\ndC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAfBgNVBAsMGFNlbGYg\nU2lnbmVkIENlcnRpZmljYXRlczCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC\nggIBAM9HAEcQFEf+cx8VNMNalf3kcgU89p7a3kWclPNwfCrR9ndYlqmP3HuHSqGu\nV/5UaEKuYBH3Lag+q4XXE8Ame25qIa7IuPmzVDjQVJTWq1KDCw0Wjgn1ki9SLl5w\net8TWMHVlXUuw2PlE0uPceW+LPiQS6lHnTXSSSy4/fpFh3+eIKKO1tzDchz9qLg7\nG92vPLIGMCx25mDni23MkAn+ccLis7i76ht2CocY17bhS3jggowQVax2hE/PY497\n9v1GPihkqS8d7RJELCjsGXthJnnSZcC03+xfU7WMmYEZwLFUk0QAxbcAQg1a4RfW\nRzy+a3+D4cn3drmsWrkqbjjXOe/m+Xy+0mr+YUHSd1j+VPj7ms9+dnV0ce/MSH41\nhR2Ybctzo44BGlvU/HIxJi6qogZIrVZJd4xL9zlb+jv9DnD9hjw/oeTjNuzdO0k1\nf9Yy1/2nGzni6vZN0U0Eau06B6sqggCORA7Alzj6ZzSQTAFI7CCzryM+ymhW9KN7\nEFj/4kDlg0JZ/kGJgE0ugC/RU4kpOv34yjc2o6QiZTdvmrlQn7qrw3UZmbOmHlJE\nY+hSmO3K76tRFYZ7dKEQutadBCNPxaWgCwVhKBAqzDljYfqPGk8Yfc9PAWK0E8Rc\nvN8ivpPdMmrT6Jgh//6m7jS/1p16EpWW89lm9dtYDGGYt8JPAgMBAAGjggFFMIIB\nQTAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRTHmnkHOP+YTJWPFzwHuXpS0na\nZTATBgNVHSUEDDAKBggrBgEFBQcDATA7BgNVHREENDAygjB0Zi1hY2MtdGVzdC1z\nZWxmLXNpZ25lZC1taXJvbW5hdGplcHQuZXhhbXBsZS5jb20wgbwGA1UdIwSBtDCB\nsYAUUx5p5Bzj/mEyVjxc8B7l6UtJ2mWhgZWkgZIwgY8xCzAJBgNVBAYTAkdCMQ8w\nDQYDVQQIDAZMb25kb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVk\nLW1pcm9tbmF0amVwdC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAf\nBgNVBAsMGFNlbGYgU2lnbmVkIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsF\nAAOCAgEAITD3QeG1A5ptIfVxB2ktpHgAHlwaf8Bv4sg7hZZoIgk/GaBLyjMhoOXQ\nasN8So4mK908izQ/uezbeDMKjvNT3pi+G2sjoKLhg0r5IEzlcL4YOROUh8cgV5vQ\nYwmMMUEAoOJvk3DmyvP7xHEPm6e/m2YuiR9JNunKc+eqmKHUqtFdyN/wrFJ4ETyB\njGsMj9FKlFHhuKICTh017051oLmPzHz05nwXVhl0qVz9aWCkC01ZSJiebqfLhlGX\npeJA5pVw8TBwIANoC22049LaMV6CJyIo1S6+tJKht+HQNhT5YjnJgJ9mzrqcRhAY\nxlTaltGUxN0627U3UKz+PZ3ART0bB4DX6ommvrwdfe/GFa/oN7TFy7A2M+/TDpv0\n40IRTzLiaW79Y+TvfJf0w8Ev/So0w52qN1hzgXH1AKkwJVKgN7Ij/xKxUq5jZvzg\nKyjadO2tE2O2EaLnojX0MYbE0BPpauBAWQ+a1lzEnVZVt61GRnboXRxjup4nuD/p\nQScor222wyjmNToSzn1ZzxIndjk3iiiYRwVcYisg5bC2drPKI4FTCNvtmPuQbCft\nqcBzNJqHWCXo6K8C2F5UTwn5h/ivtduACWETBzIYJqq3qdqqvECY1cBLZtLbL0Up\ngVPt+luZMR22PUsrHMvr5eTqh0RX1+A9qHqqYZFaHvBV/LC7TZo=\n-----END
+      CERTIFICATE-----\n","certificate_api_url":"[REDACTED]","chain":null,"created_at":1788533633,"expires_at":1820069643,"id":"cert_WCjyM29WA3XcPjFA","issue_error":null,"issuer":"self_signed","last_issued_at":1788533643,"name":"tf-acc-test-self-signed-miromnatjept.example.com","private_key":"[REDACTED]","state":"issued"}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 04 Sep 2026 14:54:06 GMT
+      Etag:
+      - W/"2648b0836092a8a41b67aa51743c0e68"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "995"
+      X-Request-Id:
+      - 5795e55a-bb22-49d1-b8be-fb6bef9aa7b7
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/certificates/certificate?certificate%5Bid%5D=cert_WCjyM29WA3XcPjFA
+    method: GET
+  response:
+    body: '{"certificate":{"additional_names":[],"authorization_method":null,"certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIG4jCCBMqgAwIBAgIBATANBgkqhkiG9w0BAQsFADCBjzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE5MDcGA1UEAwwwdGYtYWNjLXRlc3Qtc2VsZi1zaWdu\nZWQtbWlyb21uYXRqZXB0LmV4YW1wbGUuY29tMREwDwYDVQQKDAhLYXRhcHVsdDEh\nMB8GA1UECwwYU2VsZiBTaWduZWQgQ2VydGlmaWNhdGVzMB4XDTI2MDkwNDE0NTQw\nM1oXDTI3MDkwNDE0NTQwM1owgY8xCzAJBgNVBAYTAkdCMQ8wDQYDVQQIDAZMb25k\nb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVkLW1pcm9tbmF0amVw\ndC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAfBgNVBAsMGFNlbGYg\nU2lnbmVkIENlcnRpZmljYXRlczCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC\nggIBAM9HAEcQFEf+cx8VNMNalf3kcgU89p7a3kWclPNwfCrR9ndYlqmP3HuHSqGu\nV/5UaEKuYBH3Lag+q4XXE8Ame25qIa7IuPmzVDjQVJTWq1KDCw0Wjgn1ki9SLl5w\net8TWMHVlXUuw2PlE0uPceW+LPiQS6lHnTXSSSy4/fpFh3+eIKKO1tzDchz9qLg7\nG92vPLIGMCx25mDni23MkAn+ccLis7i76ht2CocY17bhS3jggowQVax2hE/PY497\n9v1GPihkqS8d7RJELCjsGXthJnnSZcC03+xfU7WMmYEZwLFUk0QAxbcAQg1a4RfW\nRzy+a3+D4cn3drmsWrkqbjjXOe/m+Xy+0mr+YUHSd1j+VPj7ms9+dnV0ce/MSH41\nhR2Ybctzo44BGlvU/HIxJi6qogZIrVZJd4xL9zlb+jv9DnD9hjw/oeTjNuzdO0k1\nf9Yy1/2nGzni6vZN0U0Eau06B6sqggCORA7Alzj6ZzSQTAFI7CCzryM+ymhW9KN7\nEFj/4kDlg0JZ/kGJgE0ugC/RU4kpOv34yjc2o6QiZTdvmrlQn7qrw3UZmbOmHlJE\nY+hSmO3K76tRFYZ7dKEQutadBCNPxaWgCwVhKBAqzDljYfqPGk8Yfc9PAWK0E8Rc\nvN8ivpPdMmrT6Jgh//6m7jS/1p16EpWW89lm9dtYDGGYt8JPAgMBAAGjggFFMIIB\nQTAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRTHmnkHOP+YTJWPFzwHuXpS0na\nZTATBgNVHSUEDDAKBggrBgEFBQcDATA7BgNVHREENDAygjB0Zi1hY2MtdGVzdC1z\nZWxmLXNpZ25lZC1taXJvbW5hdGplcHQuZXhhbXBsZS5jb20wgbwGA1UdIwSBtDCB\nsYAUUx5p5Bzj/mEyVjxc8B7l6UtJ2mWhgZWkgZIwgY8xCzAJBgNVBAYTAkdCMQ8w\nDQYDVQQIDAZMb25kb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVk\nLW1pcm9tbmF0amVwdC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAf\nBgNVBAsMGFNlbGYgU2lnbmVkIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsF\nAAOCAgEAITD3QeG1A5ptIfVxB2ktpHgAHlwaf8Bv4sg7hZZoIgk/GaBLyjMhoOXQ\nasN8So4mK908izQ/uezbeDMKjvNT3pi+G2sjoKLhg0r5IEzlcL4YOROUh8cgV5vQ\nYwmMMUEAoOJvk3DmyvP7xHEPm6e/m2YuiR9JNunKc+eqmKHUqtFdyN/wrFJ4ETyB\njGsMj9FKlFHhuKICTh017051oLmPzHz05nwXVhl0qVz9aWCkC01ZSJiebqfLhlGX\npeJA5pVw8TBwIANoC22049LaMV6CJyIo1S6+tJKht+HQNhT5YjnJgJ9mzrqcRhAY\nxlTaltGUxN0627U3UKz+PZ3ART0bB4DX6ommvrwdfe/GFa/oN7TFy7A2M+/TDpv0\n40IRTzLiaW79Y+TvfJf0w8Ev/So0w52qN1hzgXH1AKkwJVKgN7Ij/xKxUq5jZvzg\nKyjadO2tE2O2EaLnojX0MYbE0BPpauBAWQ+a1lzEnVZVt61GRnboXRxjup4nuD/p\nQScor222wyjmNToSzn1ZzxIndjk3iiiYRwVcYisg5bC2drPKI4FTCNvtmPuQbCft\nqcBzNJqHWCXo6K8C2F5UTwn5h/ivtduACWETBzIYJqq3qdqqvECY1cBLZtLbL0Up\ngVPt+luZMR22PUsrHMvr5eTqh0RX1+A9qHqqYZFaHvBV/LC7TZo=\n-----END
+      CERTIFICATE-----\n","certificate_api_url":"[REDACTED]","chain":null,"created_at":1788533633,"expires_at":1820069643,"id":"cert_WCjyM29WA3XcPjFA","issue_error":null,"issuer":"self_signed","last_issued_at":1788533643,"name":"tf-acc-test-self-signed-miromnatjept.example.com","private_key":"[REDACTED]","state":"issued"}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 04 Sep 2026 14:54:06 GMT
+      Etag:
+      - W/"2648b0836092a8a41b67aa51743c0e68"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "994"
+      X-Request-Id:
+      - 47016a17-3cc9-4d57-b0e8-2e6f6ec2d319
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/certificates/certificate?certificate%5Bid%5D=cert_WCjyM29WA3XcPjFA
+    method: GET
+  response:
+    body: '{"certificate":{"additional_names":[],"authorization_method":null,"certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIG4jCCBMqgAwIBAgIBATANBgkqhkiG9w0BAQsFADCBjzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE5MDcGA1UEAwwwdGYtYWNjLXRlc3Qtc2VsZi1zaWdu\nZWQtbWlyb21uYXRqZXB0LmV4YW1wbGUuY29tMREwDwYDVQQKDAhLYXRhcHVsdDEh\nMB8GA1UECwwYU2VsZiBTaWduZWQgQ2VydGlmaWNhdGVzMB4XDTI2MDkwNDE0NTQw\nM1oXDTI3MDkwNDE0NTQwM1owgY8xCzAJBgNVBAYTAkdCMQ8wDQYDVQQIDAZMb25k\nb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVkLW1pcm9tbmF0amVw\ndC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAfBgNVBAsMGFNlbGYg\nU2lnbmVkIENlcnRpZmljYXRlczCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC\nggIBAM9HAEcQFEf+cx8VNMNalf3kcgU89p7a3kWclPNwfCrR9ndYlqmP3HuHSqGu\nV/5UaEKuYBH3Lag+q4XXE8Ame25qIa7IuPmzVDjQVJTWq1KDCw0Wjgn1ki9SLl5w\net8TWMHVlXUuw2PlE0uPceW+LPiQS6lHnTXSSSy4/fpFh3+eIKKO1tzDchz9qLg7\nG92vPLIGMCx25mDni23MkAn+ccLis7i76ht2CocY17bhS3jggowQVax2hE/PY497\n9v1GPihkqS8d7RJELCjsGXthJnnSZcC03+xfU7WMmYEZwLFUk0QAxbcAQg1a4RfW\nRzy+a3+D4cn3drmsWrkqbjjXOe/m+Xy+0mr+YUHSd1j+VPj7ms9+dnV0ce/MSH41\nhR2Ybctzo44BGlvU/HIxJi6qogZIrVZJd4xL9zlb+jv9DnD9hjw/oeTjNuzdO0k1\nf9Yy1/2nGzni6vZN0U0Eau06B6sqggCORA7Alzj6ZzSQTAFI7CCzryM+ymhW9KN7\nEFj/4kDlg0JZ/kGJgE0ugC/RU4kpOv34yjc2o6QiZTdvmrlQn7qrw3UZmbOmHlJE\nY+hSmO3K76tRFYZ7dKEQutadBCNPxaWgCwVhKBAqzDljYfqPGk8Yfc9PAWK0E8Rc\nvN8ivpPdMmrT6Jgh//6m7jS/1p16EpWW89lm9dtYDGGYt8JPAgMBAAGjggFFMIIB\nQTAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRTHmnkHOP+YTJWPFzwHuXpS0na\nZTATBgNVHSUEDDAKBggrBgEFBQcDATA7BgNVHREENDAygjB0Zi1hY2MtdGVzdC1z\nZWxmLXNpZ25lZC1taXJvbW5hdGplcHQuZXhhbXBsZS5jb20wgbwGA1UdIwSBtDCB\nsYAUUx5p5Bzj/mEyVjxc8B7l6UtJ2mWhgZWkgZIwgY8xCzAJBgNVBAYTAkdCMQ8w\nDQYDVQQIDAZMb25kb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVk\nLW1pcm9tbmF0amVwdC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAf\nBgNVBAsMGFNlbGYgU2lnbmVkIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsF\nAAOCAgEAITD3QeG1A5ptIfVxB2ktpHgAHlwaf8Bv4sg7hZZoIgk/GaBLyjMhoOXQ\nasN8So4mK908izQ/uezbeDMKjvNT3pi+G2sjoKLhg0r5IEzlcL4YOROUh8cgV5vQ\nYwmMMUEAoOJvk3DmyvP7xHEPm6e/m2YuiR9JNunKc+eqmKHUqtFdyN/wrFJ4ETyB\njGsMj9FKlFHhuKICTh017051oLmPzHz05nwXVhl0qVz9aWCkC01ZSJiebqfLhlGX\npeJA5pVw8TBwIANoC22049LaMV6CJyIo1S6+tJKht+HQNhT5YjnJgJ9mzrqcRhAY\nxlTaltGUxN0627U3UKz+PZ3ART0bB4DX6ommvrwdfe/GFa/oN7TFy7A2M+/TDpv0\n40IRTzLiaW79Y+TvfJf0w8Ev/So0w52qN1hzgXH1AKkwJVKgN7Ij/xKxUq5jZvzg\nKyjadO2tE2O2EaLnojX0MYbE0BPpauBAWQ+a1lzEnVZVt61GRnboXRxjup4nuD/p\nQScor222wyjmNToSzn1ZzxIndjk3iiiYRwVcYisg5bC2drPKI4FTCNvtmPuQbCft\nqcBzNJqHWCXo6K8C2F5UTwn5h/ivtduACWETBzIYJqq3qdqqvECY1cBLZtLbL0Up\ngVPt+luZMR22PUsrHMvr5eTqh0RX1+A9qHqqYZFaHvBV/LC7TZo=\n-----END
+      CERTIFICATE-----\n","certificate_api_url":"[REDACTED]","chain":null,"created_at":1788533633,"expires_at":1820069643,"id":"cert_WCjyM29WA3XcPjFA","issue_error":null,"issuer":"self_signed","last_issued_at":1788533643,"name":"tf-acc-test-self-signed-miromnatjept.example.com","private_key":"[REDACTED]","state":"issued"}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 04 Sep 2026 14:54:06 GMT
+      Etag:
+      - W/"2648b0836092a8a41b67aa51743c0e68"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "993"
+      X-Request-Id:
+      - c6a00e95-add9-4ad7-8bb8-87577cb912d3
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"certificate":{"id":"cert_WCjyM29WA3XcPjFA"}}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/certificates/certificate
+    method: DELETE
+  response:
+    body: '{"certificate":{"additional_names":[],"authorization_method":null,"certificate":"-----BEGIN
+      CERTIFICATE-----\nMIIG4jCCBMqgAwIBAgIBATANBgkqhkiG9w0BAQsFADCBjzELMAkGA1UEBhMCR0Ix\nDzANBgNVBAgMBkxvbmRvbjE5MDcGA1UEAwwwdGYtYWNjLXRlc3Qtc2VsZi1zaWdu\nZWQtbWlyb21uYXRqZXB0LmV4YW1wbGUuY29tMREwDwYDVQQKDAhLYXRhcHVsdDEh\nMB8GA1UECwwYU2VsZiBTaWduZWQgQ2VydGlmaWNhdGVzMB4XDTI2MDkwNDE0NTQw\nM1oXDTI3MDkwNDE0NTQwM1owgY8xCzAJBgNVBAYTAkdCMQ8wDQYDVQQIDAZMb25k\nb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVkLW1pcm9tbmF0amVw\ndC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAfBgNVBAsMGFNlbGYg\nU2lnbmVkIENlcnRpZmljYXRlczCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoC\nggIBAM9HAEcQFEf+cx8VNMNalf3kcgU89p7a3kWclPNwfCrR9ndYlqmP3HuHSqGu\nV/5UaEKuYBH3Lag+q4XXE8Ame25qIa7IuPmzVDjQVJTWq1KDCw0Wjgn1ki9SLl5w\net8TWMHVlXUuw2PlE0uPceW+LPiQS6lHnTXSSSy4/fpFh3+eIKKO1tzDchz9qLg7\nG92vPLIGMCx25mDni23MkAn+ccLis7i76ht2CocY17bhS3jggowQVax2hE/PY497\n9v1GPihkqS8d7RJELCjsGXthJnnSZcC03+xfU7WMmYEZwLFUk0QAxbcAQg1a4RfW\nRzy+a3+D4cn3drmsWrkqbjjXOe/m+Xy+0mr+YUHSd1j+VPj7ms9+dnV0ce/MSH41\nhR2Ybctzo44BGlvU/HIxJi6qogZIrVZJd4xL9zlb+jv9DnD9hjw/oeTjNuzdO0k1\nf9Yy1/2nGzni6vZN0U0Eau06B6sqggCORA7Alzj6ZzSQTAFI7CCzryM+ymhW9KN7\nEFj/4kDlg0JZ/kGJgE0ugC/RU4kpOv34yjc2o6QiZTdvmrlQn7qrw3UZmbOmHlJE\nY+hSmO3K76tRFYZ7dKEQutadBCNPxaWgCwVhKBAqzDljYfqPGk8Yfc9PAWK0E8Rc\nvN8ivpPdMmrT6Jgh//6m7jS/1p16EpWW89lm9dtYDGGYt8JPAgMBAAGjggFFMIIB\nQTAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRTHmnkHOP+YTJWPFzwHuXpS0na\nZTATBgNVHSUEDDAKBggrBgEFBQcDATA7BgNVHREENDAygjB0Zi1hY2MtdGVzdC1z\nZWxmLXNpZ25lZC1taXJvbW5hdGplcHQuZXhhbXBsZS5jb20wgbwGA1UdIwSBtDCB\nsYAUUx5p5Bzj/mEyVjxc8B7l6UtJ2mWhgZWkgZIwgY8xCzAJBgNVBAYTAkdCMQ8w\nDQYDVQQIDAZMb25kb24xOTA3BgNVBAMMMHRmLWFjYy10ZXN0LXNlbGYtc2lnbmVk\nLW1pcm9tbmF0amVwdC5leGFtcGxlLmNvbTERMA8GA1UECgwIS2F0YXB1bHQxITAf\nBgNVBAsMGFNlbGYgU2lnbmVkIENlcnRpZmljYXRlc4IBATANBgkqhkiG9w0BAQsF\nAAOCAgEAITD3QeG1A5ptIfVxB2ktpHgAHlwaf8Bv4sg7hZZoIgk/GaBLyjMhoOXQ\nasN8So4mK908izQ/uezbeDMKjvNT3pi+G2sjoKLhg0r5IEzlcL4YOROUh8cgV5vQ\nYwmMMUEAoOJvk3DmyvP7xHEPm6e/m2YuiR9JNunKc+eqmKHUqtFdyN/wrFJ4ETyB\njGsMj9FKlFHhuKICTh017051oLmPzHz05nwXVhl0qVz9aWCkC01ZSJiebqfLhlGX\npeJA5pVw8TBwIANoC22049LaMV6CJyIo1S6+tJKht+HQNhT5YjnJgJ9mzrqcRhAY\nxlTaltGUxN0627U3UKz+PZ3ART0bB4DX6ommvrwdfe/GFa/oN7TFy7A2M+/TDpv0\n40IRTzLiaW79Y+TvfJf0w8Ev/So0w52qN1hzgXH1AKkwJVKgN7Ij/xKxUq5jZvzg\nKyjadO2tE2O2EaLnojX0MYbE0BPpauBAWQ+a1lzEnVZVt61GRnboXRxjup4nuD/p\nQScor222wyjmNToSzn1ZzxIndjk3iiiYRwVcYisg5bC2drPKI4FTCNvtmPuQbCft\nqcBzNJqHWCXo6K8C2F5UTwn5h/ivtduACWETBzIYJqq3qdqqvECY1cBLZtLbL0Up\ngVPt+luZMR22PUsrHMvr5eTqh0RX1+A9qHqqYZFaHvBV/LC7TZo=\n-----END
+      CERTIFICATE-----\n","certificate_api_url":"[REDACTED]","chain":null,"created_at":1788533633,"expires_at":1820069643,"id":"cert_WCjyM29WA3XcPjFA","issue_error":null,"issuer":"self_signed","last_issued_at":1788533643,"name":"tf-acc-test-self-signed-miromnatjept.example.com","private_key":"[REDACTED]","state":"issued"}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 04 Sep 2026 14:54:07 GMT
+      Etag:
+      - W/"2648b0836092a8a41b67aa51743c0e68"
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "992"
+      X-Request-Id:
+      - fe842866-7bc8-4729-ae47-d7f5981ff6d7
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Terraform/ (+https://www.terraform.io) Terraform-Plugin-Framework terraform-provider-katapult
+    url: https://api.katapult.io/core/v1/certificates/certificate?certificate%5Bid%5D=cert_WCjyM29WA3XcPjFA
+    method: GET
+  response:
+    body: '{"error":{"code":"certificate_not_found","description":"No certificate
+      was found matching any of the criteria provided in the arguments","detail":{}}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Content-Type
+      Access-Control-Allow-Methods:
+      - GET, POST, PUT, PATCH, DELETE, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache
+      Content-Length:
+      - "150"
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 04 Sep 2026 14:54:07 GMT
+      Strict-Transport-Security:
+      - max-age=63072000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Api-Schema:
+      - json-error
+      X-Ratelimit-Permitted:
+      - "1000"
+      X-Ratelimit-Remaining:
+      - "991"
+      X-Request-Id:
+      - 5bfc472f-980c-45b2-af34-351ba57f3ccd
+    status: 404 Not Found
+    code: 404
+    duration: ""
