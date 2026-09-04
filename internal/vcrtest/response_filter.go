@@ -12,7 +12,9 @@ const redactedValue = "[REDACTED]"
 
 var sensitiveResponseFields = map[string]struct{}{
 	"backend_certificate_key": {},
+	"certificate_api_url":     {},
 	"initial_root_password":   {},
+	"private_key":             {},
 }
 
 // RedactSensitiveResponseFields removes secret string values from JSON API
@@ -30,7 +32,7 @@ func RedactSensitiveResponseFields(i *cassette.Interaction) error {
 		return fmt.Errorf("decode VCR response: %w", err)
 	}
 
-	if !redactSensitiveFields(body) {
+	if !redactSensitiveFields(body, sensitiveResponseFields) {
 		return nil
 	}
 
@@ -44,7 +46,10 @@ func RedactSensitiveResponseFields(i *cassette.Interaction) error {
 	return nil
 }
 
-func redactSensitiveFields(value any) bool {
+// redactSensitiveFields replaces string values stored under the given keys
+// anywhere in a decoded JSON document, along with protected installation
+// attribute values. It reports whether anything changed.
+func redactSensitiveFields(value any, fields map[string]struct{}) bool {
 	switch value := value.(type) {
 	case map[string]any:
 		changed := false
@@ -58,7 +63,7 @@ func redactSensitiveFields(value any) bool {
 			}
 		}
 		for key, child := range value {
-			if _, sensitive := sensitiveResponseFields[key]; sensitive {
+			if _, sensitive := fields[key]; sensitive {
 				text, ok := child.(string)
 				if ok && text != "" && text != redactedValue {
 					value[key] = redactedValue
@@ -68,7 +73,7 @@ func redactSensitiveFields(value any) bool {
 				continue
 			}
 
-			if redactSensitiveFields(child) {
+			if redactSensitiveFields(child, fields) {
 				changed = true
 			}
 		}
@@ -77,7 +82,7 @@ func redactSensitiveFields(value any) bool {
 	case []any:
 		changed := false
 		for _, child := range value {
-			if redactSensitiveFields(child) {
+			if redactSensitiveFields(child, fields) {
 				changed = true
 			}
 		}

@@ -18,7 +18,8 @@ var (
 		`-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----`,
 	)
 	sensitiveStringFieldPattern = regexp.MustCompile(
-		`"(backend_certificate_key|initial_root_password)"\s*:\s*"([^"]*)"`,
+		`"(backend_certificate_key|certificate_api_url|initial_root_password|` +
+			`private_key)"\s*:\s*"([^"]*)"`,
 	)
 	protectedValueBeforeFlagPattern = regexp.MustCompile(
 		`(?s)"value"\s*:\s*"([^"]*)"[^{}]*"protect"\s*:\s*true`,
@@ -43,6 +44,11 @@ func TestRedactSensitiveResponseFields(t *testing.T) {
 					{"initial_root_password": null},
 					{"initial_root_password": ""}
 				],
+				"certificate": {
+					"certificate": "-----BEGIN CERTIFICATE-----",
+					"private_key": "key material",
+					"certificate_api_url": "https://certs.example.test/c/token"
+				},
 				"installation": {
 					"attributes": [
 						{"key": "root_password", "value": "secret", "protect": true},
@@ -66,6 +72,11 @@ func TestRedactSensitiveResponseFields(t *testing.T) {
 			{"initial_root_password": null},
 			{"initial_root_password": ""}
 		],
+		"certificate": {
+			"certificate": "-----BEGIN CERTIFICATE-----",
+			"private_key": "[REDACTED]",
+			"certificate_api_url": "[REDACTED]"
+		},
 		"installation": {
 			"attributes": [
 				{"key": "root_password", "value": "[REDACTED]", "protect": true},

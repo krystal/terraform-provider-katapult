@@ -262,6 +262,8 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource { return &VirtualMachineResource{} },
 		func() resource.Resource { return &SecurityGroupResource{} },
 		func() resource.Resource { return &SecurityGroupRuleResource{} },
+		func() resource.Resource { return &SelfSignedCertificateResource{} },
+		func() resource.Resource { return &CustomCertificateResource{} },
 	}
 }
 
