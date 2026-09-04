@@ -10,10 +10,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/krystal/go-katapult/next/core"
 	"github.com/oapi-codegen/nullable"
@@ -139,6 +145,49 @@ func certificateComputedAttributes() map[string]schema.Attribute {
 				"timestamp. Null until issued.",
 		),
 	}
+}
+
+// certificateAdditionalNamesAttribute returns the configurable
+// additional_names attribute shared by the resources that issue certificates
+// for configured hostnames. An omitted value plans as an empty set, so
+// removing previously configured names is a change that replaces the
+// certificate.
+func certificateAdditionalNamesAttribute() schema.SetAttribute {
+	return schema.SetAttribute{
+		Optional:    true,
+		Computed:    true,
+		ElementType: types.StringType,
+		Default: setdefault.StaticValue(
+			types.SetValueMust(types.StringType, []attr.Value{}),
+		),
+		MarkdownDescription: "Additional hostnames to include in the " +
+			"certificate. Defaults to an empty set. Adding, changing, or " +
+			"removing names replaces the certificate.",
+		Validators: []validator.Set{
+			setvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)),
+		},
+		PlanModifiers: []planmodifier.Set{
+			setplanmodifier.RequiresReplace(),
+		},
+	}
+}
+
+// certificateAdditionalNamesArgument converts a planned additional_names set
+// into the create request argument, omitting it when null, unknown, or empty.
+func certificateAdditionalNamesArgument(
+	ctx context.Context,
+	set types.Set,
+) (*[]string, diag.Diagnostics) {
+	if set.IsNull() || set.IsUnknown() || len(set.Elements()) == 0 {
+		return nil, nil
+	}
+
+	names, diags := stringSetValueStrings(ctx, "additional_names", set)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return &names, diags
 }
 
 func nullableStringValue(value nullable.Nullable[string]) types.String {

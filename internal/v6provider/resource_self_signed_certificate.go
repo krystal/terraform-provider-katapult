@@ -6,18 +6,13 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
-	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/krystal/go-katapult/next/core"
 )
 
@@ -99,23 +94,7 @@ func (r SelfSignedCertificateResource) Schema(
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
-	attributes["additional_names"] = schema.SetAttribute{
-		Optional:    true,
-		Computed:    true,
-		ElementType: types.StringType,
-		Default: setdefault.StaticValue(
-			types.SetValueMust(types.StringType, []attr.Value{}),
-		),
-		MarkdownDescription: "Additional hostnames to include in the " +
-			"certificate. Defaults to an empty set. Adding, changing, or " +
-			"removing names replaces the certificate.",
-		Validators: []validator.Set{
-			setvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)),
-		},
-		PlanModifiers: []planmodifier.Set{
-			setplanmodifier.RequiresReplace(),
-		},
-	}
+	attributes["additional_names"] = certificateAdditionalNamesAttribute()
 	attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 		Create: true,
 		Delete: true,
@@ -157,20 +136,12 @@ func (r *SelfSignedCertificateResource) Create(
 		Issuer: core.SelfSigned,
 		Name:   plan.Name.ValueStringPointer(),
 	}
-	if !plan.AdditionalNames.IsNull() && !plan.AdditionalNames.IsUnknown() {
-		names, diags := stringSetValueStrings(
-			ctx, "additional_names", plan.AdditionalNames,
-		)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		// The API treats an omitted list and an empty list identically, so
-		// only send names when there are some.
-		if len(names) > 0 {
-			args.AdditionalNames = &names
-		}
+	names, diags := certificateAdditionalNamesArgument(ctx, plan.AdditionalNames)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
+	args.AdditionalNames = names
 
 	cert, task, err := createCertificate(ctx, r.M, args)
 	if err != nil {

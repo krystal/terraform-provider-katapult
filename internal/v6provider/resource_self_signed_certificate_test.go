@@ -471,6 +471,34 @@ func testAccCheckKatapultCertificateAttrs(
 	}
 }
 
+// testAccCheckKatapultCertificateIssued asserts that the API reports the
+// certificate as issued, without comparing outputs that an action may have
+// changed after the resource state was written. Those converge on the next
+// refresh.
+func testAccCheckKatapultCertificateIssued(
+	tt *testTools,
+	res string,
+) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[res]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", res)
+		}
+
+		cert, err := getCertificate(tt.Ctx, tt.Meta, rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+		if cert.State == nil || *cert.State != core.CertificateStateEnumIssued {
+			return fmt.Errorf(
+				"certificate %s state is %v, want issued", rs.Primary.ID, cert.State,
+			)
+		}
+
+		return nil
+	}
+}
+
 func testAccCheckKatapultCertificateDestroy(
 	tt *testTools,
 ) resource.TestCheckFunc {

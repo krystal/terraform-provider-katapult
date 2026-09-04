@@ -4,10 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	datasourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	resourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/krystal/go-katapult/next/core"
 	"github.com/oapi-codegen/nullable"
@@ -93,7 +98,7 @@ func TestCertificateModelFromAPI(t *testing.T) {
 		var m CertificateModel
 		m.FromAPI(cert)
 
-		require.Equal(t, "pending", m.State.ValueString())
+		require.Equal(t, string(core.CertificateStateEnumPending), m.State.ValueString())
 		for attrName, value := range map[string]types.String{
 			"issue_error":         m.IssueError,
 			"certificate":         m.Certificate,
@@ -286,4 +291,105 @@ func TestDeleteCertificate(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestCertificateSchemasMarkSecretsSensitive walks every certificate schema,
+// including nested attributes, and asserts that private_key and
+// certificate_api_url are Sensitive wherever they appear. Redaction and
+// behavioral tests cannot catch a missing flag.
+func TestCertificateSchemasMarkSecretsSensitive(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	secrets := map[string]bool{"private_key": true, "certificate_api_url": true}
+
+	var walk func(prefix string, attributes map[string]sensitiveSchemaAttribute, seen *int)
+	walk = func(prefix string, attributes map[string]sensitiveSchemaAttribute, seen *int) {
+		for name, attribute := range attributes {
+			if secrets[name] {
+				*seen++
+				require.Truef(t, attribute.IsSensitive(),
+					"%s%s must be Sensitive", prefix, name)
+			}
+			switch nested := attribute.(type) {
+			case resourceschema.ListNestedAttribute:
+				walk(prefix+name+".", resourceAttributes(nested.NestedObject.Attributes), seen)
+			case resourceschema.SetNestedAttribute:
+				walk(prefix+name+".", resourceAttributes(nested.NestedObject.Attributes), seen)
+			case resourceschema.SingleNestedAttribute:
+				walk(prefix+name+".", resourceAttributes(nested.Attributes), seen)
+			case datasourceschema.ListNestedAttribute:
+				walk(prefix+name+".", datasourceAttributes(nested.NestedObject.Attributes), seen)
+			case datasourceschema.SetNestedAttribute:
+				walk(prefix+name+".", datasourceAttributes(nested.NestedObject.Attributes), seen)
+			case datasourceschema.SingleNestedAttribute:
+				walk(prefix+name+".", datasourceAttributes(nested.Attributes), seen)
+			}
+		}
+	}
+
+	type resourceSchemaFunc = func(
+		context.Context, resource.SchemaRequest, *resource.SchemaResponse,
+	)
+	for name, schemaFunc := range map[string]resourceSchemaFunc{
+		"katapult_self_signed_certificate":  SelfSignedCertificateResource{}.Schema,
+		"katapult_custom_certificate":       CustomCertificateResource{}.Schema,
+		"katapult_lets_encrypt_certificate": LetsEncryptCertificateResource{}.Schema,
+	} {
+		var resp resource.SchemaResponse
+		schemaFunc(ctx, resource.SchemaRequest{}, &resp)
+		require.False(t, resp.Diagnostics.HasError(), name)
+		seen := 0
+		walk(name+".", resourceAttributes(resp.Schema.Attributes), &seen)
+		require.Equalf(t, 2, seen, "%s must expose both secret attributes", name)
+	}
+
+	type datasourceSchemaFunc = func(
+		context.Context, datasource.SchemaRequest, *datasource.SchemaResponse,
+	)
+	for name, schemaFunc := range map[string]datasourceSchemaFunc{
+		"katapult_certificate":  CertificateDataSource{}.Schema,
+		"katapult_certificates": CertificatesDataSource{}.Schema,
+	} {
+		var resp datasource.SchemaResponse
+		schemaFunc(ctx, datasource.SchemaRequest{}, &resp)
+		require.False(t, resp.Diagnostics.HasError(), name)
+		seen := 0
+		walk(name+".", datasourceAttributes(resp.Schema.Attributes), &seen)
+		if name == "katapult_certificate" {
+			require.Equal(t, 2, seen, "singular data source must expose both secrets")
+		}
+	}
+}
+
+type sensitiveSchemaAttribute interface {
+	IsSensitive() bool
+}
+
+func resourceAttributes(
+	attributes map[string]resourceschema.Attribute,
+) map[string]sensitiveSchemaAttribute {
+	out := make(map[string]sensitiveSchemaAttribute, len(attributes))
+	for name, attribute := range attributes {
+		out[name] = attribute
+	}
+
+	return out
+}
+
+func datasourceAttributes(
+	attributes map[string]datasourceschema.Attribute,
+) map[string]sensitiveSchemaAttribute {
+	out := make(map[string]sensitiveSchemaAttribute, len(attributes))
+	for name, attribute := range attributes {
+		out[name] = attribute
+	}
+
+	return out
+}
+
+func readAllBody(req *http.Request) ([]byte, error) {
+	defer func() { _ = req.Body.Close() }()
+
+	return io.ReadAll(req.Body)
 }
