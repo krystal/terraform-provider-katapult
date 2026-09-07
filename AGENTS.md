@@ -176,3 +176,16 @@ an order-insensitive set, matching the strict request matcher.
 - Give required top-level `id` attributes an explicit description. Otherwise,
   tfplugindocs 0.25.0 renders them as read-only regardless of the schema mode.
 - Use Conventional Commit messages.
+
+Trash purge polling must return a non-nil result for a pending object;
+`StateChangeConf` treats nil as a missing resource and fails after 21 polls.
+Before accepting a missing trash object as completed deletion, verify the original
+resource is absent too. An `object_in_trash` response is still pending, and a
+resource found outside trash must produce an error without another delete attempt.
+Disk-size polling must reject responses without a size immediately; a nil pending
+result triggers the same misleading 21-poll error.
+
+VCR replay copies must set both `cassette.Name` and `cassette.File` before saving;
+changing `Name` alone still overwrites the source file. The trash deletion replay
+adapter duplicates only a recorded final resource 404 in a temporary cassette so
+the provider verification and acceptance destroy check can each consume it.

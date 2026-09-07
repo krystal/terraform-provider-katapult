@@ -92,6 +92,67 @@ func TestWaitForDiskSizeRequiresAPIConvergence(t *testing.T) {
 	}
 }
 
+func TestWaitForDiskSizeRejectsIncompleteResponse(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name       string
+		statusCode int
+		body       string
+	}{
+		{name: "missing success body", statusCode: http.StatusNoContent},
+		{name: "missing disk", statusCode: http.StatusOK, body: `{}`},
+		{name: "missing size", statusCode: http.StatusOK, body: `{"disk":{"id":"disk_test"}}`},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			var requests atomic.Int32
+			client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
+				requests.Add(1)
+				writeTestJSON(w, test.statusCode, test.body)
+			})
+			err := waitForDiskSize(
+				context.Background(), &Meta{Core: client, testMode: true},
+				"disk_test", 30, time.Second,
+			)
+			require.ErrorContains(t, err, "disk lookup returned no size")
+			require.ErrorContains(t, err, "waiting for disk disk_test size 30 GB")
+			require.Equal(t, int32(1), requests.Load())
+		})
+	}
+}
+
+func TestWaitForDiskSizePreservesTransportErrorWithNilResponse(t *testing.T) {
+	t.Parallel()
+	wantErr := errors.New("transport unavailable")
+	client, err := core.NewClientWithResponses("https://api.example.test", "test-token",
+		core.WithHTTPClient(errorHTTPDoer{err: wantErr}))
+	require.NoError(t, err)
+	err = waitForDiskSize(
+		context.Background(), &Meta{Core: client, testMode: true},
+		"disk_test", 30, time.Second,
+	)
+	require.ErrorIs(t, err, wantErr)
+}
+
+func TestWaitForDiskSizeConvergesAfterManyPolls(t *testing.T) {
+	t.Parallel()
+	var requests atomic.Int32
+	client := newVirtualMachineTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
+		size := 20
+		if requests.Add(1) > 22 {
+			size = 30
+		}
+		writeTestJSON(w, http.StatusOK, fmt.Sprintf(`{"disk":{"id":"disk_test","size_in_gb":%d}}`, size))
+	})
+	err := waitForDiskSize(
+		context.Background(), &Meta{Core: client, testMode: true},
+		"disk_test", 30, time.Second,
+	)
+	require.NoError(t, err)
+	require.Equal(t, int32(23), requests.Load())
+}
+
 func TestFetchAllVMDisksPaginates(t *testing.T) {
 	t.Parallel()
 
@@ -148,6 +209,7 @@ func TestPurgeTrashObjectPreservesTransportErrorWithNilResponse(t *testing.T) {
 		&Meta{Core: client, testMode: true},
 		time.Second,
 		"vm_test",
+		virtualMachineDeletionCheck(&Meta{Core: client}, "vm_test"),
 	)
 
 	require.ErrorIs(t, err, wantErr)

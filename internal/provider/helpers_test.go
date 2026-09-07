@@ -1,10 +1,37 @@
 package provider
 
 import (
+	"context"
+	"errors"
+	"net/http"
 	"testing"
+	"time"
 
+	"github.com/krystal/go-katapult"
+	"github.com/krystal/go-katapult/core"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+type errorHTTPDoer struct {
+	err error
+}
+
+func (d errorHTTPDoer) Do(*http.Request) (*http.Response, error) {
+	return nil, d.err
+}
+
+func TestWaitForTrashObjectNotFoundPreservesTransportError(t *testing.T) {
+	t.Parallel()
+	wantErr := errors.New("transport unavailable")
+	client, err := katapult.New(katapult.WithAPIKey("test-token"),
+		katapult.WithHTTPClient(errorHTTPDoer{err: wantErr}))
+	require.NoError(t, err)
+	err = waitForTrashObjectNotFound(context.Background(),
+		&Meta{Core: core.New(client), testMode: true},
+		20*time.Millisecond, core.TrashObjectRef{ID: "trsh_test"})
+	require.ErrorIs(t, err, wantErr)
+}
 
 func Test_stringsDiff(t *testing.T) {
 	tests := []struct {

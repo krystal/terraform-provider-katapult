@@ -426,6 +426,7 @@ func newVCRRecorder(t *testing.T) *recorder.Recorder {
 		return nil
 	case recorder.ModeReplaying:
 		transport = &stopRequests{}
+		cassettePath = trashDeletionReplayCassette(t, cassettePath)
 	case recorder.ModeRecording, recorder.ModeReplayingOrRecording:
 		// Use the default transport.
 	}

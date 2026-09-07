@@ -599,6 +599,9 @@ func TestObjectStorageAccountDeleteResumesTrashPurgeFromPrivateState(
 						"detail": {}
 					}
 				}`))
+			case http.MethodGet + " /core/v1/organizations/organization/" +
+				"object_storage/object_storage_cluster":
+				writeTestJSON(w, http.StatusNotFound, `{"error":{"code":"object_storage_account_not_found"}}`)
 			case http.MethodDelete + " /core/v1/organizations/organization/" +
 				"object_storage/object_storage_cluster":
 				accountDeleteCalls.Add(1)
@@ -811,10 +814,16 @@ func TestObjectStorageAccountDeleteClearsPrivateStateWhenTrashAlreadyGone(
 				}`))
 				return
 			}
+			if req.Method == http.MethodGet && (req.URL.Path == "/core/v1/trash_objects/trash_object" ||
+				req.URL.Path == "/core/v1/organizations/organization/object_storage/object_storage_cluster") {
+				writeTestJSON(w, http.StatusNotFound, `{"error":{"code":"object_storage_account_not_found"}}`)
+				return
+			}
 			unexpectedCalls.Add(1)
 			http.Error(w, "unexpected request", http.StatusInternalServerError)
 		},
 	))
+	meta.testMode = true
 	r := &ObjectStorageAccountResource{M: meta}
 	ctx := context.Background()
 	state := objectStorageAccountTestState(t, r)

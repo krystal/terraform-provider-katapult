@@ -66,6 +66,7 @@ func TestWaitForTrashObjectNotFoundReturnsAPIError(t *testing.T) {
 
 	err := waitForTrashObjectNotFound(
 		context.Background(), meta, time.Second, core.TrashObject{},
+		func(context.Context) (bool, error) { return true, nil },
 	)
 
 	require.EqualError(t, err, "permission_denied: Not permitted")
@@ -86,6 +87,7 @@ func TestWaitForTrashObjectNotFoundHandlesNotFound(t *testing.T) {
 
 	err := waitForTrashObjectNotFound(
 		context.Background(), meta, time.Second, core.TrashObject{},
+		func(context.Context) (bool, error) { return true, nil },
 	)
 
 	require.NoError(t, err)
@@ -195,4 +197,22 @@ func fileStorageVolumeResponse(
 			},
 		},
 	}
+}
+
+func TestWaitForTrashObjectNotFoundWaitsPastTwentyPolls(t *testing.T) {
+	calls := 0
+	client := &pollingCoreClient{getTrashObject: func(
+		context.Context, *core.GetTrashObjectParams, ...core.RequestEditorFn,
+	) (*core.GetTrashObjectResponse, error) {
+		calls++
+		if calls > 22 {
+			return &core.GetTrashObjectResponse{}, core.ErrNotFound
+		}
+		return &core.GetTrashObjectResponse{}, nil
+	}}
+	err := waitForTrashObjectNotFound(
+		context.Background(), &Meta{Core: client, testMode: true}, time.Second, core.TrashObject{},
+		func(context.Context) (bool, error) { return true, nil })
+	require.NoError(t, err)
+	require.Equal(t, 23, calls)
 }

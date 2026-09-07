@@ -84,8 +84,11 @@ func waitForTrashObjectNotFound(
 			if e != nil && errors.Is(e, katapult.ErrNotFound) {
 				return 1, "not_found", nil
 			}
+			if e != nil {
+				return nil, "", e
+			}
 
-			return nil, "exists", nil
+			return 1, "exists", nil
 		},
 		Timeout:                   timeout,
 		Delay:                     m.stateChangeDelay(1 * time.Second),

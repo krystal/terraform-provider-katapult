@@ -736,7 +736,8 @@ func (r *DiskResource) Delete(
 
 	if !r.M.SkipTrashObjectPurge && delRes != nil && delRes.JSON200 != nil {
 		trashObj := delRes.JSON200.TrashObject
-		if e := purgeTrashObject(ctx, r.M, timeout, trashObj); e != nil &&
+		trashObj.ObjectId = &diskID
+		if e := purgeTrashObject(ctx, r.M, timeout, trashObj, diskDeletionCheck(r.M, diskID)); e != nil &&
 			!isErrNotFoundOrInTrash(e, nil) {
 			resp.Diagnostics.AddError("Delete Error",
 				fmt.Sprintf("failed to purge disk from trash: %s", e))
