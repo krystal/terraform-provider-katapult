@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.23](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.22...v0.0.23) (2026-09-07)
+
+
+### Bug Fixes
+
+* keep deletion waiters pending until resources are absent ([#210](https://github.com/krystal/terraform-provider-katapult/issues/210)) ([74c18df](https://github.com/krystal/terraform-provider-katapult/commit/74c18df0e7d91e243b02879ce5878fbd33b30f5a))
+
 ## [0.0.22](https://github.com/krystal/terraform-provider-katapult/compare/v0.0.21...v0.0.22) (2026-09-01)
 
 
