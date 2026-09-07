@@ -98,7 +98,11 @@ func testSweepFileStorageVolumes(_ string) error {
 					return 1, "not_found", nil
 				}
 
-				return nil, "exists", nil
+				if e != nil {
+					return nil, "", e
+				}
+
+				return 1, "exists", nil
 			},
 			Timeout:                   5 * time.Minute,
 			Delay:                     m.stateChangeDelay(2 * time.Second),

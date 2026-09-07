@@ -123,9 +123,12 @@ func TestVirtualMachineResourceDeleteAlreadyInTrash(t *testing.T) {
 		skipPurge   bool
 		purgeStatus int
 		wantPurge   int
+		restored    bool
 	}{
 		{name: "skip purge", skipPurge: true},
 		{name: "purge", purgeStatus: http.StatusOK, wantPurge: 1},
+		{name: "restored before purge", purgeStatus: http.StatusNotFound, wantPurge: 1, restored: true},
+		{name: "restored after purge", purgeStatus: http.StatusOK, wantPurge: 1, restored: true},
 		{
 			name:        "purge entry disappeared",
 			purgeStatus: http.StatusNotFound,
@@ -148,6 +151,14 @@ func TestVirtualMachineResourceDeleteAlreadyInTrash(t *testing.T) {
 					writeObjectInTrashResponse(w)
 				case r.Method == http.MethodGet &&
 					r.URL.Path == "/virtual_machines/virtual_machine":
+					if purgeCalls > 0 {
+						if tt.restored {
+							writeTestJSON(w, http.StatusOK, `{"virtual_machine":{"id":"vm_trashed","state":"stopped"}}`)
+							return
+						}
+						writeTestJSON(w, http.StatusNotFound, `{"error":{"code":"virtual_machine_not_found"}}`)
+						return
+					}
 					writeObjectInTrashResponse(w)
 				case r.Method == http.MethodDelete &&
 					r.URL.Path == "/trash_objects/trash_object":
@@ -180,9 +191,12 @@ func TestVirtualMachineResourceDeleteAlreadyInTrash(t *testing.T) {
 			resp := frameworkresource.DeleteResponse{State: state}
 			resource.Delete(context.Background(), req, &resp)
 
-			require.False(
-				t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors(),
-			)
+			if tt.restored {
+				requireDiagnosticContains(t, resp.Diagnostics, "still exists outside trash")
+				require.Equal(t, state.Raw, resp.State.Raw)
+			} else {
+				require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+			}
 			require.Equal(t, tt.wantPurge, purgeCalls)
 		})
 	}
@@ -202,6 +216,10 @@ func TestVirtualMachineResourceDeleteRacePurgesByObjectID(t *testing.T) {
 		switch {
 		case r.Method == http.MethodGet &&
 			r.URL.Path == "/virtual_machines/virtual_machine":
+			if purgeCalls > 0 {
+				writeTestJSON(w, http.StatusNotFound, `{"error":{"code":"virtual_machine_not_found"}}`)
+				return
+			}
 			writeTestJSON(w, http.StatusOK, `{
 				"annotations": [],
 				"virtual_machine": {

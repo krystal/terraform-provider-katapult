@@ -1857,7 +1857,7 @@ func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 				return
 			}
 
-			err = purgeTrashObjectByObjectID(ctx, r.M, timeout, vmID)
+			err = purgeTrashObjectByObjectID(ctx, r.M, timeout, vmID, virtualMachineDeletionCheck(r.M, vmID))
 			if err != nil && !isErrNotFoundOrInTrash(err, nil) {
 				resp.Diagnostics.AddError(
 					"Delete Error",
@@ -2018,9 +2018,11 @@ func (r *VirtualMachineResource) Delete( //nolint:funlen,gocyclo
 		var e error
 		switch {
 		case deleteReturnedInTrash:
-			e = purgeTrashObjectByObjectID(ctx, r.M, timeout, vmID)
+			e = purgeTrashObjectByObjectID(ctx, r.M, timeout, vmID, virtualMachineDeletionCheck(r.M, vmID))
 		case delRes != nil && delRes.JSON200 != nil:
-			e = purgeTrashObject(ctx, r.M, timeout, delRes.JSON200.TrashObject)
+			trashObject := delRes.JSON200.TrashObject
+			trashObject.ObjectId = &vmID
+			e = purgeTrashObject(ctx, r.M, timeout, trashObject, virtualMachineDeletionCheck(r.M, vmID))
 		}
 		if e != nil && !isErrNotFoundOrInTrash(e, nil) {
 			resp.Diagnostics.AddError(

@@ -327,6 +327,7 @@ func (r *ObjectStorageAccountResource) Delete(
 		}
 		if purgeErr := purgeTrashObject(
 			ctx, r.M, 5*time.Minute, core.TrashObject{Id: &trashID},
+			objectStorageAccountDeletionCheck(r.M, state.Region.ValueString()),
 		); purgeErr != nil && !errors.Is(purgeErr, core.ErrNotFound) {
 			resp.Diagnostics.AddError(
 				"Failed to purge object storage account from trash.",
@@ -412,6 +413,7 @@ func (r *ObjectStorageAccountResource) Delete(
 
 	if err := purgeTrashObject(
 		ctx, r.M, 5*time.Minute, core.TrashObject{Id: &trashID},
+		objectStorageAccountDeletionCheck(r.M, state.Region.ValueString()),
 	); err != nil {
 		resp.Diagnostics.AddError(
 			"Failed to purge object storage account from trash.",

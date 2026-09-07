@@ -308,6 +308,7 @@ func deleteObjectStorageAccountForTest(t *testing.T, tt *testTools) {
 	if err := purgeTrashObject(
 		tt.Ctx, tt.Meta, 5*time.Minute,
 		core.TrashObject{Id: &trashID},
+		objectStorageAccountDeletionCheck(tt.Meta, region),
 	); err != nil {
 		t.Errorf("cleanup trash purge failed: %s", err)
 	}

@@ -152,6 +152,7 @@ func teardownSharedObjectStorageAccount(
 	if err := purgeTrashObject(
 		tt.Ctx, tt.Meta, 5*time.Minute,
 		core.TrashObject{Id: &trashID},
+		objectStorageAccountDeletionCheck(tt.Meta, objectStorageAccTestRegion),
 	); err != nil {
 		t.Errorf("object storage account trash purge failed: %s", err)
 	}

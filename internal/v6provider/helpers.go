@@ -66,9 +66,10 @@ func purgeTrashObjectByObjectID(
 	m *Meta,
 	timeout time.Duration,
 	objectID string,
+	checkDeleted resourceDeletionCheck,
 ) error {
 	return purgeTrashObject(
-		ctx, m, timeout, core.TrashObject{ObjectId: &objectID},
+		ctx, m, timeout, core.TrashObject{ObjectId: &objectID}, checkDeleted,
 	)
 }
 
@@ -77,6 +78,7 @@ func purgeTrashObject(
 	m *Meta,
 	timeout time.Duration,
 	trashObject core.TrashObject,
+	checkDeleted resourceDeletionCheck,
 ) error {
 	lookup := core.TrashObjectLookup{}
 	if trashObject.Id != nil {
@@ -89,14 +91,14 @@ func purgeTrashObject(
 		core.DeleteTrashObjectJSONRequestBody{
 			TrashObject: lookup,
 		})
-	if err != nil {
-		if res != nil && res.JSON404 != nil {
-			return nil
+	if err != nil && !errors.Is(err, core.ErrNotFound) {
+		if res != nil {
+			err = genericAPIError(err, res.Body)
 		}
 		return err
 	}
 
-	err = waitForTrashObjectNotFound(ctx, m, timeout, trashObject)
+	err = waitForTrashObjectNotFound(ctx, m, timeout, trashObject, checkDeleted)
 
 	return err
 }
@@ -177,7 +179,7 @@ func waitForDiskSize(
 				return nil, "", err
 			}
 			if res == nil || res.JSON200 == nil || res.JSON200.Disk.SizeInGb == nil {
-				return nil, unknownStateValue, nil
+				return nil, "", errors.New("disk lookup returned no size")
 			}
 			size := int64(*res.JSON200.Disk.SizeInGb)
 			state := fmt.Sprintf("%d", size)
@@ -211,6 +213,7 @@ func waitForTrashObjectNotFound(
 	m *Meta,
 	timeout time.Duration,
 	trashObject core.TrashObject,
+	checkDeleted resourceDeletionCheck,
 ) error {
 	waiter := &retry.StateChangeConf{
 		Pending: []string{"exists"},
@@ -225,7 +228,19 @@ func waitForTrashObjectNotFound(
 			res, err := m.Core.GetTrashObjectWithResponse(ctx, params)
 			if err != nil {
 				if errors.Is(err, core.ErrNotFound) {
-					return 1, "not_found", nil
+					deleted, checkErr := checkDeleted(ctx)
+					if checkErr != nil {
+						return nil, "", checkErr
+					}
+					if deleted {
+						return 1, "not_found", nil
+					}
+					// A restore and subsequent deletion can replace the trash
+					// entry. Retry using the original resource ID when available.
+					if trashObject.ObjectId != nil {
+						trashObject.Id = nil
+					}
+					return 1, "exists", nil
 				}
 				if res != nil {
 					err = genericAPIError(err, res.Body)
@@ -234,7 +249,7 @@ func waitForTrashObjectNotFound(
 				return nil, "", err
 			}
 
-			return nil, "exists", nil
+			return 1, "exists", nil
 		},
 		Timeout:                   timeout,
 		Delay:                     m.stateChangeDelay(1 * time.Second),

@@ -376,6 +376,7 @@ func (r *FileStorageVolumeResource) Delete(
 
 			purgeError := purgeTrashObjectByObjectID(
 				ctx, r.M, deleteTime, state.ID.ValueString(),
+				fileStorageVolumeDeletionCheck(r.M, state.ID.ValueString()),
 			)
 			if purgeError != nil {
 				resp.Diagnostics.AddError(
@@ -444,6 +445,7 @@ func (r *FileStorageVolumeResource) Delete(
 	if !r.M.SkipTrashObjectPurge {
 		err = purgeTrashObjectByObjectID(
 			ctx, r.M, deleteTime, *fsv.Id,
+			fileStorageVolumeDeletionCheck(r.M, *fsv.Id),
 		)
 		if err != nil {
 			resp.Diagnostics.AddError(
