@@ -1,6 +1,6 @@
 module github.com/krystal/terraform-provider-katapult
 
-go 1.26
+go 1.26.0
 
 require (
 	github.com/dnaeon/go-vcr v1.2.0
@@ -19,7 +19,7 @@ require (
 	github.com/krystal/go-katapult v0.2.13
 	github.com/stretchr/testify v1.12.1
 	github.com/tidwall/gjson v1.19.0
-	golang.org/x/sync v0.22.0
+	golang.org/x/sync v0.23.0
 )
 
 require (
