@@ -4,14 +4,14 @@ page_title: "katapult_self_signed_certificate Resource - terraform-provider-kata
 subcategory: "Networking"
 description: |-
   Manages a self-signed certificate in Katapult. Katapult issues an RSA 4096 certificate valid for one year and re-issues it automatically a month before expiry. Create waits for the initial issuance to complete.
-  Every configurable argument replaces the certificate when changed. Deleting a certificate fails while a load balancer rule references it, so set lifecycle { create_before_destroy = true } when rotating certificates that are attached to rules.
+  Every configurable argument other than timeouts replaces the certificate when changed. Deleting a certificate fails while a load balancer rule references it, so set lifecycle { create_before_destroy = true } when rotating certificates that are attached to rules.
 ---
 
 # katapult_self_signed_certificate (Resource)
 
 Manages a self-signed certificate in Katapult. Katapult issues an RSA 4096 certificate valid for one year and re-issues it automatically a month before expiry. Create waits for the initial issuance to complete.
 
-Every configurable argument replaces the certificate when changed. Deleting a certificate fails while a load balancer rule references it, so set `lifecycle { create_before_destroy = true }` when rotating certificates that are attached to rules.
+Every configurable argument other than `timeouts` replaces the certificate when changed. Deleting a certificate fails while a load balancer rule references it, so set `lifecycle { create_before_destroy = true }` when rotating certificates that are attached to rules.
 
 ## Example Usage
 

@@ -164,6 +164,7 @@ func certificateAdditionalNamesAttribute() schema.SetAttribute {
 			"certificate. Defaults to an empty set. Adding, changing, or " +
 			"removing names replaces the certificate.",
 		Validators: []validator.Set{
+			setvalidator.NoNullValues(),
 			setvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)),
 		},
 		PlanModifiers: []planmodifier.Set{

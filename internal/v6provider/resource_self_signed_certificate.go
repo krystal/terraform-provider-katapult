@@ -105,8 +105,8 @@ func (r SelfSignedCertificateResource) Schema(
 			"Katapult issues an RSA 4096 certificate valid for one year and " +
 			"re-issues it automatically a month before expiry. Create waits " +
 			"for the initial issuance to complete.\n\n" +
-			"Every configurable argument replaces the certificate when " +
-			"changed. Deleting a certificate fails while a load balancer " +
+			"Every configurable argument other than `timeouts` replaces " +
+			"the certificate when changed. Deleting a certificate fails while a load balancer " +
 			"rule references it, so set `lifecycle { create_before_destroy " +
 			"= true }` when rotating certificates that are attached to rules.",
 		Attributes: attributes,

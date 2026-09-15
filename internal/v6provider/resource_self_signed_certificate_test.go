@@ -506,7 +506,8 @@ func testAccCheckKatapultCertificateDestroy(
 		for _, rs := range s.RootModule().Resources {
 			switch rs.Type {
 			case "katapult_self_signed_certificate",
-				"katapult_custom_certificate":
+				"katapult_custom_certificate",
+				"katapult_lets_encrypt_certificate":
 			default:
 				continue
 			}

@@ -4,17 +4,17 @@ page_title: "katapult_custom_certificate Resource - terraform-provider-katapult"
 subcategory: "Networking"
 description: |-
   Manages a custom certificate uploaded to Katapult. Katapult derives name and additional_names from the certificate and issues it immediately.
-  The configured certificate, private_key, and chain values are kept in state as written and are not refreshed from the API. Import reads them from the API once.
-  Every configurable argument replaces the certificate when changed. Deleting a certificate fails while a load balancer rule references it, so set lifecycle { create_before_destroy = true } when rotating certificates that are attached to rules.
+  The configured certificate, private_key, and chain values are kept in state as written and are not refreshed from the API. Import reads them from the API once. After import, the configured certificate, private_key, and chain must match the imported values or the first plan replaces the certificate; when the API token cannot view private certificate material the imported private_key is null and the first plan replaces it.
+  Every configurable argument other than timeouts replaces the certificate when changed. Deleting a certificate fails while a load balancer rule references it, so set lifecycle { create_before_destroy = true } when rotating certificates that are attached to rules.
 ---
 
 # katapult_custom_certificate (Resource)
 
 Manages a custom certificate uploaded to Katapult. Katapult derives `name` and `additional_names` from the certificate and issues it immediately.
 
-The configured `certificate`, `private_key`, and `chain` values are kept in state as written and are not refreshed from the API. Import reads them from the API once.
+The configured `certificate`, `private_key`, and `chain` values are kept in state as written and are not refreshed from the API. Import reads them from the API once. After import, the configured `certificate`, `private_key`, and `chain` must match the imported values or the first plan replaces the certificate; when the API token cannot view private certificate material the imported `private_key` is null and the first plan replaces it.
 
-Every configurable argument replaces the certificate when changed. Deleting a certificate fails while a load balancer rule references it, so set `lifecycle { create_before_destroy = true }` when rotating certificates that are attached to rules.
+Every configurable argument other than `timeouts` replaces the certificate when changed. Deleting a certificate fails while a load balancer rule references it, so set `lifecycle { create_before_destroy = true }` when rotating certificates that are attached to rules.
 
 ## Example Usage
 

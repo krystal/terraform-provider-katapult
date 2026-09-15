@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -145,40 +145,46 @@ func (r CustomCertificateResource) Schema(
 			"the certificate and issues it immediately.\n\n" +
 			"The configured `certificate`, `private_key`, and `chain` " +
 			"values are kept in state as written and are not refreshed " +
-			"from the API. Import reads them from the API once.\n\n" +
-			"Every configurable argument replaces the certificate when " +
-			"changed. Deleting a certificate fails while a load balancer " +
-			"rule references it, so set `lifecycle { create_before_destroy " +
-			"= true }` when rotating certificates that are attached to rules.",
+			"from the API. Import reads them from the API once. After " +
+			"import, the configured `certificate`, `private_key`, and " +
+			"`chain` must match the imported values or the first plan " +
+			"replaces the certificate; when the API token cannot view " +
+			"private certificate material the imported `private_key` is " +
+			"null and the first plan replaces it.\n\n" +
+			"Every configurable argument other than `timeouts` replaces " +
+			"the certificate when changed. Deleting a certificate fails " +
+			"while a load balancer rule references it, so set `lifecycle { " +
+			"create_before_destroy = true }` when rotating certificates " +
+			"that are attached to rules.",
 		Attributes: attributes,
 	}
 }
 
-// applyAPI maps an API certificate into the model while keeping the
-// configured PEM values, so server-side normalization and redacted replay
-// responses never produce a diff. Null PEM values, as after import, are taken
-// from the API.
+// applyAPI maps an API certificate into the model while keeping the PEM
+// inputs exactly as stored, including a null chain, so server-side
+// normalization and redacted replay responses never produce a diff. Only
+// ImportState fills the PEM inputs from the API.
 func (m *CustomCertificateResourceModel) applyAPI(cert *core.Certificate) {
-	certificate := m.Certificate
-	privateKey := m.PrivateKey
-	chain := m.Chain
+	certificate, privateKey, chain := m.Certificate, m.PrivateKey, m.Chain
 
 	m.FromAPI(cert)
 
-	m.Certificate = retainConfiguredString(certificate, m.Certificate)
-	m.PrivateKey = retainConfiguredString(privateKey, m.PrivateKey)
-	m.Chain = retainConfiguredString(chain, m.Chain)
+	m.Certificate, m.PrivateKey, m.Chain = certificate, privateKey, chain
 }
 
-func retainConfiguredString(
-	configured types.String,
-	remote types.String,
-) types.String {
-	if configured.IsNull() || configured.IsUnknown() {
-		return remote
+// customCertificateNullTimeouts returns a null timeouts value with the
+// attribute types of the resource schema, for state written without a
+// configuration such as import.
+func customCertificateNullTimeouts(ctx context.Context) timeouts.Value {
+	attrType := timeouts.Attributes(ctx, timeouts.Opts{Delete: true}).GetType()
+	objectType, ok := attrType.(attr.TypeWithAttributeTypes)
+	if !ok {
+		return timeouts.Value{Object: types.ObjectNull(nil)}
 	}
 
-	return configured
+	return timeouts.Value{
+		Object: types.ObjectNull(objectType.AttributeTypes()),
+	}
 }
 
 func (r *CustomCertificateResource) Create(
@@ -317,5 +323,13 @@ func (r *CustomCertificateResource) ImportState(
 		return
 	}
 
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	// Import is the one time the PEM inputs are read from the API. Later
+	// reads keep whatever state holds, so the imported values must match the
+	// configuration or the first plan replaces the certificate.
+	model := CustomCertificateResourceModel{
+		Timeouts: customCertificateNullTimeouts(ctx),
+	}
+	model.FromAPI(cert)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
 }

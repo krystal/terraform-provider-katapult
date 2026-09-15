@@ -126,7 +126,7 @@ func TestCertificateReissueActionInvoke(t *testing.T) {
 			wantMinPolls: 1,
 		},
 		"honors timeout": {
-			timeout:      types.StringValue("30ms"),
+			timeout:      types.StringValue("500ms"),
 			issueStatus:  http.StatusOK,
 			taskStatuses: []string{"running"},
 			wantErr:      []string{"Certificate Reissue Error", "timeout"},
