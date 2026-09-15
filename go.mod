@@ -16,7 +16,8 @@ require (
 	github.com/hashicorp/terraform-plugin-testing v1.16.0
 	github.com/jimeh/rands v0.5.0
 	github.com/jimeh/undent v1.1.2
-	github.com/krystal/go-katapult v0.2.13
+	github.com/krystal/go-katapult v0.2.14
+	github.com/oapi-codegen/nullable v1.1.0
 	github.com/stretchr/testify v1.12.1
 	github.com/tidwall/gjson v1.19.0
 	golang.org/x/sync v0.22.0
@@ -58,7 +59,6 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/oapi-codegen/nullable v1.1.0 // indirect
 	github.com/oapi-codegen/oapi-codegen/v2 v2.7.1 // indirect
 	github.com/oapi-codegen/runtime v1.1.1 // indirect
 	github.com/oklog/run v1.2.0 // indirect

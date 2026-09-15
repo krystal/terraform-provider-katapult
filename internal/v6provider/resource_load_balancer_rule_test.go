@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -538,6 +539,72 @@ func TestAccKatapultLoadBalancerRule_invalid(t *testing.T) {
 //
 // Helpers
 //
+
+// TestAccKatapultLoadBalancerRule_certificate attaches a real certificate to
+// an HTTPS rule through certificate_ids and checks the ID round-trips through
+// the rule resource and data source.
+func TestAccKatapultLoadBalancerRule_certificate(t *testing.T) {
+	tt := newTestTools(t)
+
+	name := tt.ResourceName()
+	certName := strings.ToLower(name) + ".example.com"
+	cert := "katapult_self_signed_certificate.web"
+	rule := "katapult_load_balancer_rule.https"
+	dataRule := "data.katapult_load_balancer_rule.https"
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: tt.ProviderFactories,
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testAccCheckKatapultLoadBalancerDestroy(tt),
+			testAccCheckKatapultCertificateDestroy(tt),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: undent.Stringf(`
+					resource "katapult_self_signed_certificate" "web" {
+					  name = "%s"
+					}
+
+					resource "katapult_load_balancer" "my_lb" {
+					  name = "%s"
+					}
+
+					resource "katapult_load_balancer_rule" "https" {
+					  load_balancer_id = katapult_load_balancer.my_lb.id
+					  destination_port = 8443
+					  listen_port      = 443
+					  protocol         = "HTTPS"
+					  certificate_ids  = [katapult_self_signed_certificate.web.id]
+					}
+
+					data "katapult_load_balancer_rule" "https" {
+					  id = katapult_load_balancer_rule.https.id
+					}`,
+					certName, name,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckKatapultLoadBalancerRuleAttrs(tt, rule),
+					testAccCheckKatapultLoadBalancerRuleAttrs(tt, dataRule),
+					resource.TestCheckResourceAttr(cert, "state", "issued"),
+					resource.TestCheckResourceAttr(rule, "certificate_ids.#", "1"),
+					resource.TestCheckTypeSetElemAttrPair(
+						rule, "certificate_ids.*", cert, "id",
+					),
+					resource.TestCheckResourceAttr(dataRule, "certificate_ids.#", "1"),
+					resource.TestCheckTypeSetElemAttrPair(
+						dataRule, "certificate_ids.*", cert, "id",
+					),
+				),
+			},
+			{
+				ResourceName:      rule,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
 
 func testAccCheckKatapultLoadBalancerRuleExists(
 	tt *testTools,

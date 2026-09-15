@@ -1,0 +1,1 @@
+terraform import katapult_self_signed_certificate.internal cert_xxxxxxxxxxx

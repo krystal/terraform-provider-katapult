@@ -442,6 +442,7 @@ func newVCRRecorder(t *testing.T) *recorder.Recorder {
 		return nil
 	})
 	r.AddSaveFilter(vcrtest.RedactSensitiveResponseFields)
+	r.AddSaveFilter(vcrtest.RedactSensitiveRequestFields)
 
 	t.Cleanup(func() {
 		assert.NoError(t, r.Stop())

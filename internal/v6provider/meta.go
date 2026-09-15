@@ -2,6 +2,7 @@ package v6provider
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/url"
 	"os"
@@ -20,6 +21,11 @@ type Meta struct {
 	Core        core.ClientWithResponsesInterface
 	Logger      hclog.Logger
 	retryClient *retryablehttp.Client
+
+	// coreRaw exposes the underlying client for endpoints whose generated
+	// response types do not match the API, so callers can decode bodies
+	// themselves.
+	coreRaw core.ClientInterface
 
 	GeneratedNamePrefix  string
 	SkipTrashObjectPurge bool
@@ -175,6 +181,20 @@ func NewMeta(
 	}
 
 	m.Core = coreClient
+	m.coreRaw = coreClient.ClientInterface
 
 	return m, nil
+}
+
+// rawCore returns the underlying generated client without response parsing.
+func (m *Meta) rawCore() (core.ClientInterface, error) {
+	if m.coreRaw != nil {
+		return m.coreRaw, nil
+	}
+
+	if client, ok := m.Core.(*core.ClientWithResponses); ok {
+		return client.ClientInterface, nil
+	}
+
+	return nil, errors.New("raw Katapult API client is not available")
 }

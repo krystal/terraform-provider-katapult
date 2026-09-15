@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -210,6 +211,7 @@ func (k *KatapultProvider) Configure(
 	if k.m != nil {
 		resp.ResourceData = k.m
 		resp.DataSourceData = k.m
+		resp.ActionData = k.m
 		return
 	}
 
@@ -239,6 +241,18 @@ func (k *KatapultProvider) Configure(
 	k.m = m
 	resp.ResourceData = m
 	resp.DataSourceData = m
+	resp.ActionData = m
+}
+
+var _ provider.ProviderWithActions = (*KatapultProvider)(nil)
+
+func (k *KatapultProvider) Actions(
+	_ context.Context,
+) []func() action.Action {
+	return []func() action.Action{
+		func() action.Action { return &CertificateReissueAction{} },
+		func() action.Action { return &CertificateResetTokenAction{} },
+	}
 }
 
 func (k *KatapultProvider) Resources(
@@ -262,6 +276,9 @@ func (k *KatapultProvider) Resources(
 		func() resource.Resource { return &VirtualMachineResource{} },
 		func() resource.Resource { return &SecurityGroupResource{} },
 		func() resource.Resource { return &SecurityGroupRuleResource{} },
+		func() resource.Resource { return &SelfSignedCertificateResource{} },
+		func() resource.Resource { return &CustomCertificateResource{} },
+		func() resource.Resource { return &LetsEncryptCertificateResource{} },
 	}
 }
 
@@ -273,6 +290,8 @@ func (k *KatapultProvider) DataSources(
 		func() datasource.DataSource { return &AddressListEntriesDataSource{} },
 		func() datasource.DataSource { return &AddressListEntryDataSource{} },
 		func() datasource.DataSource { return &AddressListsDataSource{} },
+		func() datasource.DataSource { return &CertificateDataSource{} },
+		func() datasource.DataSource { return &CertificatesDataSource{} },
 		func() datasource.DataSource { return &DataCenterDataSource{} },
 		func() datasource.DataSource { return &DiskDataSource{} },
 		func() datasource.DataSource { return &DiskIOProfileDataSource{} },

@@ -1,0 +1,1 @@
+terraform import katapult_lets_encrypt_certificate.web cert_xxxxxxxxxxx
