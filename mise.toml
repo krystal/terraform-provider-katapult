@@ -154,7 +154,7 @@ tfplugindocs validate --provider-name terraform-provider-katapult
 
 uncategorized_docs="$(
   rg --files-without-match '^subcategory: "[^"]+"$' \
-    docs/resources docs/data-sources || true
+    docs/resources docs/data-sources docs/actions || true
 )"
 if [ -n "$uncategorized_docs" ]; then
   echo "Provider documents must have a non-empty subcategory:" >&2

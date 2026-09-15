@@ -15,11 +15,13 @@ the legacy Terraform Plugin SDK and the Terraform Plugin Framework.
 - `docs` is generated provider documentation. Change provider schemas or
   templates, then run `mise run docs:generate`; do not hand-edit generated
   output.
-- Every resource and data source belongs to a documentation subcategory:
-  `Compute`, `Infrastructure`, `Storage`, `Networking`, or `Organization`.
-  Maintain the mappings in `templates/resources.md.tmpl` and
-  `templates/data-sources.md.tmpl`; bespoke templates must use the matching
-  category. `mise run docs:check` rejects uncategorized pages.
+- Every resource, data source, and action belongs to a documentation
+  subcategory: `Compute`, `Infrastructure`, `Storage`, `Networking`, or
+  `Organization`. Maintain the mappings in `templates/resources.md.tmpl`,
+  `templates/data-sources.md.tmpl`, and `templates/actions.md.tmpl`; bespoke
+  templates must use the matching category. `mise run docs:check` rejects
+  uncategorized pages under `docs/resources`, `docs/data-sources`, and
+  `docs/actions`.
 - `CONTRIBUTING.md` documents the intentionally gradual v5-to-v6 migration and
   the ownership rules between both implementations.
 
@@ -55,6 +57,8 @@ over invoking the CLI directly; use the CLI forms below as fallbacks:
   run `mise exec -- golangci-lint cache clean` before retrying the lint task.
 - Keep credentials and developer overrides in ignored `.envrc`,
   `mise.local.toml`, or `.mise.local.toml` files. Never print or commit them.
+- `mise run format` only formats tracked files. Run `mise exec -- goimports -w`
+  and `mise exec -- gofumpt -w` on new files before `mise run lint`.
 
 ## Validation
 
@@ -78,6 +82,12 @@ Use the narrowest relevant command while working, then broaden before handoff:
 - Keep `TESTARGS` regexes free of unescaped shell metacharacters such as
   parentheses; the Makefile expands the value unquoted. Prefer exact names or
   simple prefixes, or run grouped cases as separate commands.
+- Make swallows a `$` anchor when anything follows it in `TESTARGS`:
+  `-run ^TestName$ -v` runs nothing. Put `-v` before `-run`, or escape the
+  anchor as `$$`.
+- Action acceptance tests must gate with
+  `tfversion.SkipBelow(tfversion.Version1_14_0)`. The Terraform 1.9 to 1.13 CI
+  replay jobs report them as skipped; the local mise pin is 1.15.
 - `mise run check` runs the fast local suite, including format, lint, unit,
   dependency, documentation, and offline workflow checks.
 - `mise run verify` adds replay acceptance tests, generated-doc freshness,
@@ -154,6 +164,19 @@ When the ordered Security Group cassette transport accepts a create through a
 compatibility fallback, observe the mutation before returning so synthetic
 follow-up reads use the created resource snapshot. Normalize `associations` as
 an order-insensitive set, matching the strict request matcher.
+
+The Katapult spec declares the GET certificate response `certificate` field as
+an array, but the live API returns an object, so the generated
+`GetCertificateWithResponse` cannot decode it. Read certificates through
+`getCertificate`, which decodes the body from the raw client and accepts both
+shapes.
+
+Custom certificate PEM inputs (`certificate`, `private_key`, `chain`) are
+retained from configuration, not refreshed from the API. Import fills them from
+the API once. Custom certificate tests use the committed throwaway fixture in
+`internal/v6provider/testdata/fixtures`; the recorder redacts `private_key` in
+request bodies as well as responses, so replay serves a redacted key and
+`private_key` must stay in `ImportStateVerifyIgnore`.
 
 ## Repository Rules
 

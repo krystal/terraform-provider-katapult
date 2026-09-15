@@ -138,10 +138,11 @@ func (r LetsEncryptCertificateResource) Schema(
 		MarkdownDescription: strings.TrimSpace(`
 Manages a Let's Encrypt certificate issued through Katapult. Katapult issues the certificate as a background task and renews it automatically.
 
-Issuance depends on prerequisites this resource cannot create:
+Issuance depends on prerequisites this resource cannot create.
 
-- With ` + "`authorization_method = \"dns\"`" + `, every name, or a parent domain of it, must be in a verified Katapult DNS zone. Katapult creates the ` + "`_acme-challenge`" + ` records in its own DNS service and removes them after validation. Domains hosted outside Katapult DNS cannot use ` + "`dns`" + ` authorization. Wildcard names require ` + "`dns`" + `.
-- With ` + "`authorization_method = \"http\"`" + `, every name must resolve to a Katapult load balancer in the same organization that listens on port 80, either through an HTTP ` + "`katapult_load_balancer_rule`" + ` with ` + "`listen_port = 80`" + ` or through a load balancer with ` + "`https_redirect`" + ` enabled. Katapult answers the ` + "`/.well-known/acme-challenge/*`" + ` requests itself, so the certificate does not need to be attached to a rule before it is issued. The port-80 listener can be managed in the same configuration; declare ` + "`depends_on`" + ` for it on the certificate so one apply creates the listener, issues the certificate, and attaches it to an HTTPS rule.
+With ` + "`authorization_method = \"dns\"`" + `, every name, or a parent domain of it, must be in a verified Katapult DNS zone. Katapult creates the ` + "`_acme-challenge`" + ` records in its own DNS service and removes them after validation. Domains hosted outside Katapult DNS cannot use ` + "`dns`" + ` authorization. Wildcard names require ` + "`dns`" + `.
+
+With ` + "`authorization_method = \"http\"`" + `, every name must resolve to a Katapult load balancer in the same organization that listens on port 80, either through an HTTP ` + "`katapult_load_balancer_rule`" + ` with ` + "`listen_port = 80`" + ` or through a load balancer with ` + "`https_redirect`" + ` enabled. Katapult answers the ` + "`/.well-known/acme-challenge/*`" + ` requests itself, so the certificate does not need to be attached to a rule before it is issued. The port-80 listener can be managed in the same configuration; declare ` + "`depends_on`" + ` for it on the certificate so one apply creates the listener, issues the certificate, and attaches it to an HTTPS rule.
 
 Create waits for issuance by default. Set ` + "`wait_for_issuance = false`" + ` only when DNS is pointed at the load balancer outside Terraform; the certificate is created in the ` + "`pending`" + ` state and Katapult retries issuance on its own schedule.
 
