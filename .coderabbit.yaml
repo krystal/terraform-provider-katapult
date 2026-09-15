@@ -9,3 +9,12 @@ reviews:
       - "coderabbit:review"
   path_filters:
     - "!**/testdata/**/*.cassette.*"
+  pre_merge_checks:
+    # Around half of this provider's functions are Terraform Plugin Framework
+    # interface methods (Metadata, Configure, Schema, CRUD, ImportState,
+    # Invoke) whose signatures already say everything a comment would. A
+    # coverage percentage cannot tell those apart from functions with real
+    # logic, so no threshold is meaningful here. golangci-lint enforces Go doc
+    # comment conventions through revive and godot instead.
+    docstrings:
+      mode: "off"
